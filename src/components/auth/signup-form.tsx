@@ -159,7 +159,7 @@ export function SignupForm() {
           variant="outline"
           className="w-full h-11 border-zinc-800 bg-transparent text-zinc-300 hover:bg-zinc-900 hover:text-white transition-all rounded-xl"
           onClick={() =>
-            signIn.social({ provider: "google", callbackURL: "/app" })
+            signIn.social({ provider: "google", callbackURL: "/journal" })
           }
         >
           {/* Google SVG same as above */}

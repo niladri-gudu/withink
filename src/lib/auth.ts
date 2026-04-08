@@ -32,7 +32,7 @@ export const auth = betterAuth({
     sendVerificationEmail: async ({ user, url }) => {
       await resend.emails.send({
         from: process.env.EMAIL_FROM!,
-        to: "niladrigudu@gmail.com",
+        to: user.email,
         subject: "Verify your email — Dear Diary",
         react: VerifyEmail({ name: user.name, url }),
       });

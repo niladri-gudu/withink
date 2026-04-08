@@ -10,7 +10,7 @@ export async function middleware(request: NextRequest) {
       headers: {
         cookie: request.headers.get("cookie") ?? "",
       },
-    }
+    },
   );
 
   if (!session) {
@@ -24,5 +24,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/app", "/app/:path*"],
+  matcher: ["/journal/:path*"],
 };
