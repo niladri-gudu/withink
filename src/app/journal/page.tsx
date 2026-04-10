@@ -5,6 +5,7 @@ import { connectDB } from "@/lib/mongoose";
 import { Entry } from "@/models/entry";
 import Link from "next/link";
 import { PenLine } from "lucide-react";
+import { getLocalDateString } from "@/lib/utils/date";
 
 export default async function JournalPage() {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -12,7 +13,7 @@ export default async function JournalPage() {
 
   await connectDB();
 
-  const today = new Date().toISOString().split("T")[0];
+  const today = getLocalDateString();
 
   const entries = await Entry.find(
     { userId: session.user.id },

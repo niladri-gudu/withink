@@ -6,6 +6,7 @@ import { SaveIndicator } from "@/components/save-indicator";
 import { useAutoSave } from "@/hooks/use-auto-save";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { getLocalDateString } from "@/lib/utils/date";
 
 interface Props {
   date: string;
@@ -39,7 +40,7 @@ export function JournalEditor({ date, initialTitle, initialContent }: Props) {
     contentJson: editorContent.json,
   });
 
-  const isToday = date === new Date().toISOString().split("T")[0];
+  const isToday = date === getLocalDateString();
 
   return (
     <div className="min-h-screen bg-[#020617] text-white">

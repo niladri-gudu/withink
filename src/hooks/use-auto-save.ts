@@ -29,7 +29,7 @@ export function useAutoSave(data: EntryData, debounceMs = 1500) {
 
     timerRef.current = setTimeout(async () => {
       try {
-        const res = await fetch("/journal/api", {
+        const res = await fetch("/api/journal", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(latestData.current),

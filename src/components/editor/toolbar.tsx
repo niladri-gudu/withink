@@ -71,12 +71,63 @@ function Divider() {
 export function Toolbar({ editor }: ToolbarProps) {
   const imageInputRef = useRef<HTMLInputElement>(null);
 
-  const addImage = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const addImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const url = URL.createObjectURL(file);
-    editor.chain().focus().setImage({ src: url }).run();
     e.target.value = "";
+
+    const tempId = `upload-${Date.now()}`;
+    editor
+      .chain()
+      .focus()
+      .setImage({ src: "/uploading.png", alt: tempId })
+      .run();
+
+    try {
+      const res = await fetch("/api/journal/upload", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          filename: file.name,
+          contentType: file.type,
+          size: file.size,
+        }),
+      });
+
+      if (!res.ok) throw new Error("Failed to get upload URL");
+      const { presignedUrl, publicUrl } = await res.json();
+
+      await fetch(presignedUrl, {
+        method: "PUT",
+        body: file,
+        headers: { "Content-Type": file.type },
+      });
+
+      const { state } = editor;
+      state.doc.descendants((node, pos) => {
+        if (node.type.name === "image" && node.attrs.alt === tempId) {
+          editor
+            .chain()
+            .focus()
+            .deleteRange({ from: pos, to: pos + node.nodeSize })
+            .setImage({ src: publicUrl })
+            .run();
+        }
+      });
+    } catch (error) {
+      const { state } = editor;
+      state.doc.descendants((node, pos) => {
+        if (node.type.name === "image" && node.attrs.alt === tempId) {
+          editor
+            .chain()
+            .deleteRange({ from: pos, to: pos + node.nodeSize })
+            .run();
+        }
+      });
+      alert("Image upload failed. Please try again.");
+    }
   };
 
   const addYoutube = () => {
