@@ -15,6 +15,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 
 export function SigninForm() {
   const router = useRouter();
@@ -27,7 +28,7 @@ export function SigninForm() {
     const res = await signIn.email({ email, password });
     setIsLoading(false);
     if (res.error) {
-      alert(res.error.message);
+      toast.error(res.error.message);
       return;
     }
     router.refresh();

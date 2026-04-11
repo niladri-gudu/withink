@@ -7,7 +7,14 @@ import { Loader2, Lock, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { toast } from "sonner";
 
 export function ResetPasswordForm() {
   const searchParams = useSearchParams();
@@ -19,17 +26,29 @@ export function ResetPasswordForm() {
   const [loading, setLoading] = useState(false);
 
   const handleReset = async () => {
-    if (!token) { alert("Invalid or missing token."); return; }
-    if (password !== confirmPassword) { alert("Passwords do not match."); return; }
+    if (!token) {
+      toast.error("Invalid or missing token. Please request a new reset link.");
+      return;
+    }
+    if (password !== confirmPassword) {
+      toast.error("Passwords do not match.");
+      return;
+    }
 
     setLoading(true);
-    const res = await authClient.resetPassword({ token, newPassword: password });
+    const res = await authClient.resetPassword({
+      token,
+      newPassword: password,
+    });
     setLoading(false);
 
-    if (res.error) { alert(res.error.message); return; }
+    if (res.error) {
+      toast.error(res.error.message);
+      return;
+    }
 
-    alert("Password reset successful!");
-    router.push("/signin");
+    toast.success("Password updated successfully.");
+    setTimeout(() => router.push("/signin"), 1500);
   };
 
   return (
@@ -51,7 +70,10 @@ export function ResetPasswordForm() {
       <CardContent className="grid gap-6">
         <div className="grid gap-4">
           <div className="grid gap-2">
-            <Label htmlFor="password" className="text-muted-foreground font-medium ml-1">
+            <Label
+              htmlFor="password"
+              className="text-muted-foreground font-medium ml-1"
+            >
               New Password
             </Label>
             <div className="relative group">
@@ -68,7 +90,10 @@ export function ResetPasswordForm() {
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="confirm-password" className="text-muted-foreground font-medium ml-1">
+            <Label
+              htmlFor="confirm-password"
+              className="text-muted-foreground font-medium ml-1"
+            >
               Confirm New Password
             </Label>
             <div className="relative group">

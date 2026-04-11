@@ -4,6 +4,7 @@ import "./globals.css";
 import { cn } from "@/lib/utils";
 import { Navbar } from "@/components/layout/Navbar";
 import { ThemeProvider } from "next-themes";
+import { Toaster } from "@/components/ui/sonner";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -56,6 +57,7 @@ export default function RootLayout({
         >
           <Navbar />
           <main>{children}</main>
+          <Toaster position="bottom-right" />
         </ThemeProvider>
       </body>
     </html>

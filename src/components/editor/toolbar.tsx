@@ -23,6 +23,7 @@ import {
   Minus,
 } from "lucide-react";
 import { useRef } from "react";
+import { toast } from "sonner";
 
 interface ToolbarProps {
   editor: Editor;
@@ -122,7 +123,7 @@ export function Toolbar({ editor }: ToolbarProps) {
             .run();
         }
       });
-      alert("Image upload failed. Please try again.");
+      toast.error("Image upload failed. Please try again.");
     }
   };
 
