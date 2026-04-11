@@ -5,6 +5,7 @@ import { useState } from "react";
 import Editor from "@/components/editor";
 import { SaveIndicator } from "@/components/save-indicator";
 import { useAutoSave } from "@/hooks/use-auto-save";
+import { Toolbar } from "./editor/toolbar";
 
 interface Props {
   date: string;
@@ -29,6 +30,7 @@ export function JournalEditor({ date, initialTitle, initialContent }: Props) {
     text: "",
     json: initialContent,
   });
+  const [editorInstance, setEditorInstance] = useState<any>(null);
 
   const saveStatus = useAutoSave({
     date,
@@ -40,7 +42,15 @@ export function JournalEditor({ date, initialTitle, initialContent }: Props) {
 
   return (
     <div className="min-h-screen bg-background text-foreground pt-16">
-      <main className="max-w-3xl mx-auto px-6 py-14">
+      <div className="fixed top-20 left-0 right-0 z-10 flex justify-center pointer-events-none">
+        {editorInstance && (
+          <div className="pointer-events-auto">
+            <Toolbar editor={editorInstance} />
+          </div>
+        )}
+      </div>
+
+      <main className="max-w-3xl mx-auto px-6 pt-26 pb-14">
         <input
           placeholder="Untitled"
           value={title}
@@ -48,7 +58,11 @@ export function JournalEditor({ date, initialTitle, initialContent }: Props) {
           className="w-full text-4xl font-bold bg-transparent outline-none text-foreground placeholder:text-muted-foreground/20 tracking-tight mb-3"
         />
         <p className="text-sm text-muted-foreground mb-8">{formatDate(date)}</p>
-        <Editor content={initialContent} onChange={setEditorContent} />
+        <Editor
+          content={initialContent}
+          onChange={setEditorContent}
+          onEditorReady={setEditorInstance}
+        />
       </main>
 
       {/* Save indicator — fixed bottom right */}

@@ -7,14 +7,15 @@ import Placeholder from "@tiptap/extension-placeholder";
 import UnderlineExt from "@tiptap/extension-underline";
 import ImageExt from "@tiptap/extension-image";
 import Link from "@tiptap/extension-link";
-import { Toolbar } from "./toolbar";
 
 export default function Editor({
   content = "",
   onChange,
+  onEditorReady,
 }: {
   content?: string;
   onChange?: (data: { html: string; text: string; json: any }) => void;
+  onEditorReady?: (editor: any) => void;
 }) {
   const editor = useEditor({
     extensions: [
@@ -42,6 +43,9 @@ export default function Editor({
           "tiptap max-w-none focus:outline-none text-lg leading-snug text-foreground",
       },
     },
+    onCreate({ editor }) {
+      onEditorReady?.(editor);
+    },
     onUpdate({ editor }) {
       onChange?.({
         html: editor.getHTML(),
@@ -56,7 +60,6 @@ export default function Editor({
 
   return (
     <div className="bg-background">
-      <Toolbar editor={editor} />
       <div className="px-8 py-8">
         <EditorContent editor={editor} />
       </div>

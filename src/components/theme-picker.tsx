@@ -46,12 +46,15 @@ export function ThemePicker() {
           <Palette className="h-5 w-5" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="bg-zinc-950 border-zinc-800">
+      <DropdownMenuContent
+        align="end"
+        className="bg-zinc-950 border-zinc-800 [--accent:var(--color-zinc-800)] [--accent-foreground:var(--color-zinc-100)]"
+      >
         {themes.map((t) => (
           <DropdownMenuItem
             key={t.id}
             onClick={() => setTheme(t.id)}
-            className="flex items-center justify-between gap-3 text-zinc-300 focus:bg-zinc-900 focus:text-zinc-100 cursor-pointer"
+            className="flex items-center justify-between gap-3 text-zinc-300 cursor-pointer focus:bg-accent focus:text-accent-foreground"
           >
             <div className="flex items-center gap-2">
               <div

@@ -1,7 +1,7 @@
 /* eslint-disable jsx-a11y/alt-text */
 "use client";
 
-import { Editor } from "@tiptap/react";
+import { Editor, useEditorState } from "@tiptap/react";
 import {
   Bold,
   Italic,
@@ -65,6 +65,25 @@ function Divider() {
 }
 
 export function Toolbar({ editor }: ToolbarProps) {
+  const editorState = useEditorState({
+    editor,
+    selector: (ctx) => ({
+      isBold: ctx.editor.isActive("bold"),
+      isItalic: ctx.editor.isActive("italic"),
+      isUnderline: ctx.editor.isActive("underline"),
+      isStrike: ctx.editor.isActive("strike"),
+      isCode: ctx.editor.isActive("code"),
+      isH1: ctx.editor.isActive("heading", { level: 1 }),
+      isH2: ctx.editor.isActive("heading", { level: 2 }),
+      isH3: ctx.editor.isActive("heading", { level: 3 }),
+      isBulletList: ctx.editor.isActive("bulletList"),
+      isOrderedList: ctx.editor.isActive("orderedList"),
+      isLink: ctx.editor.isActive("link"),
+      canUndo: ctx.editor.can().undo(),
+      canRedo: ctx.editor.can().redo(),
+    }),
+  });
+
   const imageInputRef = useRef<HTMLInputElement>(null);
 
   const addLink = () => {
@@ -137,115 +156,96 @@ export function Toolbar({ editor }: ToolbarProps) {
   };
 
   return (
-    <div className="flex items-center gap-1 px-3 py-2 border-b border-border bg-background/80 backdrop-blur sticky top-0 z-10">
-      {/* Undo / Redo */}
+    <div className="flex items-center gap-1 px-3 py-2 rounded-xl border border-border bg-background shadow-lg">
       <ToolbarButton
         onClick={() => editor.chain().focus().undo().run()}
-        disabled={!editor.can().undo()}
+        disabled={!editorState.canUndo}
         title="Undo (Ctrl+Z)"
       >
         <Undo className="h-4 w-4" />
       </ToolbarButton>
-
       <ToolbarButton
         onClick={() => editor.chain().focus().redo().run()}
-        disabled={!editor.can().redo()}
+        disabled={!editorState.canRedo}
         title="Redo (Ctrl+Y)"
       >
         <Redo className="h-4 w-4" />
       </ToolbarButton>
-
       <Divider />
-
-      {/* Heading */}
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-        active={editor.isActive("heading", { level: 1 })}
+        active={editorState.isH1}
         title="Heading 1"
       >
         <Heading1 className="h-4 w-4" />
       </ToolbarButton>
-
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-        active={editor.isActive("heading", { level: 2 })}
+        active={editorState.isH2}
         title="Heading 2"
       >
         <Heading2 className="h-4 w-4" />
       </ToolbarButton>
-
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-        active={editor.isActive("heading", { level: 3 })}
+        active={editorState.isH3}
         title="Heading 3"
       >
         <Heading3 className="h-4 w-4" />
       </ToolbarButton>
-
       <Divider />
-
-      {/* Text */}
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleBold().run()}
-        active={editor.isActive("bold")}
+        active={editorState.isBold}
         title="Bold (Ctrl+B)"
       >
         <Bold className="h-4 w-4" />
       </ToolbarButton>
-
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleItalic().run()}
-        active={editor.isActive("italic")}
+        active={editorState.isItalic}
         title="Italic (Ctrl+I)"
       >
         <Italic className="h-4 w-4" />
       </ToolbarButton>
-
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleUnderline().run()}
-        active={editor.isActive("underline")}
+        active={editorState.isUnderline}
         title="Underline (Ctrl+U)"
       >
         <Underline className="h-4 w-4" />
       </ToolbarButton>
-
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleStrike().run()}
-        active={editor.isActive("strike")}
+        active={editorState.isStrike}
         title="Strikethrough"
       >
         <Strikethrough className="h-4 w-4" />
       </ToolbarButton>
-
       <Divider />
-
-      {/* Lists */}
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleBulletList().run()}
-        active={editor.isActive("bulletList")}
+        active={editorState.isBulletList}
+        title="Bullet list"
       >
         <List className="h-4 w-4" />
       </ToolbarButton>
-
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleOrderedList().run()}
-        active={editor.isActive("orderedList")}
+        active={editorState.isOrderedList}
         title="Numbered list"
       >
         <ListOrdered className="h-4 w-4" />
       </ToolbarButton>
-
       <Divider />
-
-      {/* Extras */}
       <ToolbarButton
         onClick={addLink}
-        active={editor.isActive("link")}
+        active={editorState.isLink}
         title="Add link"
       >
         <LinkIcon className="h-4 w-4" />
       </ToolbarButton>
-      {editor.isActive("link") && (
+      {editorState.isLink && (
         <ToolbarButton
           onClick={() => editor.chain().focus().unsetLink().run()}
           title="Remove link"
@@ -253,17 +253,13 @@ export function Toolbar({ editor }: ToolbarProps) {
           <Unlink className="h-4 w-4" />
         </ToolbarButton>
       )}
-
       <Divider />
-
-      {/* Image */}
       <ToolbarButton
         onClick={() => imageInputRef.current?.click()}
         title="Add image"
       >
         <Image className="h-4 w-4" />
       </ToolbarButton>
-
       <input
         ref={imageInputRef}
         type="file"
