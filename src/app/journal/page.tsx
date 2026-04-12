@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
@@ -6,6 +7,7 @@ import { Entry } from "@/models/entry";
 import Link from "next/link";
 import { PenLine } from "lucide-react";
 import { getLocalDateString } from "@/lib/utils/date";
+import { DeleteEntryButton } from "@/components/delete-entry-button";
 
 export default async function JournalPage() {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -28,6 +30,7 @@ export default async function JournalPage() {
   return (
     <div className="min-h-screen bg-background text-foreground pt-16">
       <main className="max-w-2xl mx-auto px-6 py-16 space-y-12">
+
         <div className="space-y-1">
           <h1 className="text-3xl font-bold tracking-tight text-foreground">
             Hey, {session.user.name?.split(" ")[0]} 👋
@@ -41,9 +44,10 @@ export default async function JournalPage() {
           </p>
         </div>
 
-        <Link href={`/journal/${today}`}>
-          <div className="group border border-border hover:border-border/80 rounded-2xl p-6 transition-all cursor-pointer bg-card/30 hover:bg-card/60">
-            <div className="flex items-center justify-between">
+        {/* Today card */}
+        <div className="group border border-border hover:border-border/80 rounded-2xl p-6 transition-all bg-card/30 hover:bg-card/60">
+          <div className="flex items-center justify-between">
+            <Link href={`/journal/${today}`} className="flex-1">
               <div className="space-y-1">
                 <p className="text-xs text-muted-foreground uppercase tracking-widest">
                   Today
@@ -63,11 +67,17 @@ export default async function JournalPage() {
                   </p>
                 )}
               </div>
-              <PenLine className="h-5 w-5 text-muted-foreground/50 group-hover:text-muted-foreground transition-colors" />
+            </Link>
+            <div className="flex items-center gap-3">
+              <Link href={`/journal/${today}`}>
+                <PenLine className="h-5 w-5 text-muted-foreground/50 group-hover:text-muted-foreground transition-colors" />
+              </Link>
+              {todayEntry && <DeleteEntryButton date={today} />}
             </div>
           </div>
-        </Link>
+        </div>
 
+        {/* Recent entries */}
         {entries.filter((e) => e.date !== today).length > 0 && (
           <div className="space-y-3">
             <h2 className="text-xs text-muted-foreground uppercase tracking-widest">
@@ -77,8 +87,14 @@ export default async function JournalPage() {
               {(entries as any[])
                 .filter((e) => e.date !== today)
                 .map((entry) => (
-                  <Link key={entry.date} href={`/journal/${entry.date}`}>
-                    <div className="flex items-center justify-between px-4 py-3 rounded-xl hover:bg-accent/30 transition-all group border border-transparent hover:border-border">
+                  <div
+                    key={entry.date}
+                    className="flex items-center justify-between px-4 py-3 rounded-xl hover:bg-accent/30 transition-all group border border-transparent hover:border-border"
+                  >
+                    <Link
+                      href={`/journal/${entry.date}`}
+                      className="flex-1 min-w-0"
+                    >
                       <div className="space-y-0.5">
                         <p className="text-sm font-medium text-foreground/70 group-hover:text-foreground transition-colors">
                           {entry.title || "Untitled"}
@@ -93,15 +109,19 @@ export default async function JournalPage() {
                           })}
                         </p>
                       </div>
+                    </Link>
+                    <div className="flex items-center gap-3 shrink-0 ml-4">
                       <span className="text-xs text-muted-foreground">
                         {entry.wordCount} words
                       </span>
+                      <DeleteEntryButton date={entry.date} />
                     </div>
-                  </Link>
+                  </div>
                 ))}
             </div>
           </div>
         )}
+
       </main>
     </div>
   );
