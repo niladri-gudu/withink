@@ -19,7 +19,7 @@ export default async function JournalPage() {
     Entry.findOne({ userId: session.user.id, date: today }).lean(),
     Entry.find(
       { userId: session.user.id },
-      { date: 1, title: 1, wordCount: 1, contentText: 1, contentHtml: 1 }
+      { date: 1, title: 1, wordCount: 1, contentText: 1, contentHtml: 1 },
     )
       .sort({ date: -1 })
       .lean(),
@@ -36,6 +36,7 @@ export default async function JournalPage() {
   return (
     <JournalHome
       today={today}
+      // Pass null or empty strings if no entry exists for today
       todayHtml={(todayEntry as any)?.contentHtml || ""}
       todayTitle={(todayEntry as any)?.title || ""}
       entries={entries}

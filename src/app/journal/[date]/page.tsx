@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { JournalEditor } from "@/components/journal-editor";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
