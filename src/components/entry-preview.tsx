@@ -56,7 +56,7 @@ export function EntryPreview({ date, title, contentHtml, wordCount, today }: Pro
       </div>
 
       <div
-        className="tiptap prose prose-zinc dark:prose-invert max-w-none text-foreground/90 text-lg leading-relaxed"
+        className="tiptap max-w-none text-foreground/90 text-lg leading-relaxed"
         dangerouslySetInnerHTML={{ __html: contentHtml }}
       />
     </div>

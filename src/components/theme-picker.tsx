@@ -71,7 +71,7 @@ export function ThemePicker() {
 
       <DropdownMenuContent
         align="end"
-        className="bg-zinc-950 border-zinc-800 min-w-40"
+        className="border-zinc-800 min-w-40"
       >
         {themes.map((t) => (
           <DropdownMenuItem
