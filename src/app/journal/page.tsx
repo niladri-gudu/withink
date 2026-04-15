@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { connectDB } from "@/lib/mongoose";
 import { Entry } from "@/models/entry";
 import { getLocalDateString } from "@/lib/utils/date";
-import { JournalHome } from "@/components/journal-home";
+import { JournalHome } from "@/components/journal/journal-home";
 
 export default async function JournalPage() {
   const session = await auth.api.getSession({ headers: await headers() });

@@ -1,8 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { JournalSidebar } from "@/components/journal-sidebar";
-import { EntryPreview } from "@/components/entry-preview";
+import { JournalSidebar } from "@/components/journal/journal-sidebar";
+import { EntryPreview } from "@/components/journal/entry-preview";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { LayoutDashboard, Menu, PenLine, X } from "lucide-react";

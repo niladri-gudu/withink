@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { JournalEditor } from "@/components/journal-editor";
+import { JournalEditor } from "@/components/journal/journal-editor";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";

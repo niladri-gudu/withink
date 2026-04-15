@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useSession, signOut } from "@/lib/auth-client";
 import { LogOut, BookOpen, Loader2, PenLine } from "lucide-react";
-import { ThemePicker } from "../theme-picker";
+import { ThemePicker } from "../ui/theme-picker";
 
 export function Navbar() {
   const { data: session, isPending } = useSession();

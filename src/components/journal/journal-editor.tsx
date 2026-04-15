@@ -3,12 +3,12 @@
 
 import { useEffect, useState } from "react";
 import Editor from "@/components/editor";
-import { SaveIndicator } from "@/components/save-indicator";
+import { SaveIndicator } from "@/components/journal/save-indicator";
 import { useAutoSave } from "@/hooks/use-auto-save";
-import { Toolbar } from "./editor/toolbar";
+import { Toolbar } from "../editor/toolbar";
 import Link from "next/link";
-import { Button } from "./ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Button } from "../ui/button";
+import { ChevronLeft } from "lucide-react";
 
 interface Props {
   date: string;

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { DeleteEntryButton } from "@/components/delete-entry-button";
+import { DeleteEntryButton } from "@/components/journal/delete-entry-button";
 
 interface Props {
   date: string;
