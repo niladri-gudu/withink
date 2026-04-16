@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { connectDB } from "@/lib/mongoose";
 import { Entry } from "@/models/entry";
+import { safeDecrypt } from "@/lib/encryption";
 
 interface Props {
   params: Promise<{ date: string }>;
@@ -26,11 +27,27 @@ export default async function JournalDatePage({ params }: Props) {
     date,
   }).lean();
 
+  let decryptedContent = "";
+
+  if (entry) {
+    const rawJson = safeDecrypt((entry as any).contentJson);
+    try {
+      decryptedContent =
+        (typeof rawJson === "string" && rawJson.startsWith("{")) ||
+        rawJson.startsWith("[")
+          ? JSON.parse(rawJson)
+          : rawJson;
+    } catch (e) {
+      console.error("Failed to parse entry JSON:", e);
+      decryptedContent = rawJson;
+    }
+  }
+
   return (
     <JournalEditor
       date={date}
       initialTitle={(entry as any)?.title ?? ""}
-      initialContent={(entry as any)?.contentJson ?? ""}
+      initialContent={decryptedContent ?? ""}
     />
   );
 }

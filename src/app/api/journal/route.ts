@@ -3,6 +3,9 @@ import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongoose";
 import { Entry } from "@/models/entry";
+import { encrypt, safeDecrypt } from "@/lib/encryption";
+
+console.log("Journal API route loaded");
 
 export async function POST(req: NextRequest) {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -20,14 +23,35 @@ export async function POST(req: NextRequest) {
   const wordCount =
     contentText?.trim().split(/\s+/).filter(Boolean).length ?? 0;
 
+  const encryptedHtml = contentHtml ? encrypt(contentHtml) : "";
+  const encryptedText = contentText ? encrypt(contentText) : "";
+  const encryptedJson = contentJson ? encrypt(JSON.stringify(contentJson)) : "";
+
   const entry = await Entry.findOneAndUpdate(
     { userId: session.user.id, date },
     {
-      $set: { title, contentHtml, contentText, contentJson, wordCount },
+      $set: {
+        title,
+        contentHtml: encryptedHtml,
+        contentText: encryptedText,
+        contentJson: encryptedJson,
+        wordCount: contentText?.trim().split(/\s+/).filter(Boolean).length ?? 0,
+      },
       $setOnInsert: { userId: session.user.id, date },
     },
-    { upsert: true, returnDocument: "after" },
+    { upsert: true, new: true, lean: true },
   );
+
+  if (entry) {
+    entry.contentHtml = safeDecrypt(entry.contentHtml);
+    entry.contentText = safeDecrypt(entry.contentText);
+    const decryptedJson = safeDecrypt(entry.contentJson);
+    try {
+      entry.contentJson = decryptedJson ? JSON.parse(decryptedJson) : null;
+    } catch (e) {
+      entry.contentJson = decryptedJson;
+    }
+  }
 
   return NextResponse.json({ entry });
 }
@@ -43,16 +67,42 @@ export async function GET(req: NextRequest) {
   await connectDB();
 
   if (date) {
-    // single entry by date
-    const entry = await Entry.findOne({ userId: session.user.id, date });
+    const entry = await Entry.findOne({ userId: session.user.id, date }).lean();
+
+    if (entry) {
+      entry.contentHtml = safeDecrypt(entry.contentHtml);
+      entry.contentText = safeDecrypt(entry.contentText);
+
+      const decryptedJson = safeDecrypt(entry.contentJson);
+      try {
+        entry.contentJson = decryptedJson ? JSON.parse(decryptedJson) : null;
+      } catch (e) {
+        entry.contentJson = decryptedJson;
+      }
+    }
     return NextResponse.json({ entry });
   }
 
-  // all entries for sidebar/calendar
   const entries = await Entry.find(
     { userId: session.user.id },
     { date: 1, title: 1, wordCount: 1, contentText: 1 },
-  ).sort({ date: -1 });
+  )
+    .sort({ date: -1 })
+    .lean();
 
-  return NextResponse.json({ entries });
+  const decryptedEntries = entries.map((entry) => ({
+    ...entry,
+    contentText: safeDecrypt(entry.contentText),
+  }));
+
+  return NextResponse.json(
+    { entries: decryptedEntries },
+    {
+      headers: {
+        "Cache-Control": "no-store, max-age=0",
+      },
+    },
+  );
 }
+
+export const dynamic = "force-dynamic";

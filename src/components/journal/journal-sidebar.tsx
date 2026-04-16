@@ -252,6 +252,8 @@ export function JournalSidebar({
                         )}
                       >
                         <div
+
+                        
                           className={cn(
                             "shrink-0 w-9 h-9 rounded-xl flex items-center justify-center border transition-colors text-xs font-bold",
                             isSelected

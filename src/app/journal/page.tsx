@@ -6,6 +6,7 @@ import { connectDB } from "@/lib/mongoose";
 import { Entry } from "@/models/entry";
 import { getLocalDateString } from "@/lib/utils/date";
 import { JournalHome } from "@/components/journal/journal-home";
+import { safeDecrypt } from "@/lib/encryption";
 
 export default async function JournalPage() {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -25,19 +26,26 @@ export default async function JournalPage() {
       .lean(),
   ]);
 
-  const entries = (allEntries as any[]).map((e) => ({
-    date: e.date,
-    title: e.title || "",
-    wordCount: e.wordCount || 0,
-    preview: e.contentText?.trim().split("\n")[0]?.slice(0, 80) || "",
-    contentHtml: e.contentHtml || "",
-  }));
+  const entries = (allEntries as any[]).map((e) => {
+    const decryptedText = safeDecrypt(e.contentText || "");
+    return {
+      date: e.date,
+      title: e.title || "",
+      wordCount: e.wordCount || 0,
+      preview: decryptedText.trim().split("\n")[0]?.slice(0, 80) || "",
+      contentHtml: safeDecrypt(e.contentHtml || ""), // Also decrypt HTML for consistency
+    };
+  });
+
+  const todayHtml = todayEntry
+    ? safeDecrypt((todayEntry as any).contentHtml)
+    : "";
 
   return (
     <JournalHome
       today={today}
       // Pass null or empty strings if no entry exists for today
-      todayHtml={(todayEntry as any)?.contentHtml || ""}
+      todayHtml={todayHtml}
       todayTitle={(todayEntry as any)?.title || ""}
       entries={entries}
       userName={session.user.name?.split(" ")[0] ?? ""}
