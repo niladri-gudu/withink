@@ -1,16 +1,24 @@
 "use client";
+
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useSession } from "@/lib/auth-client";
 import { PenLine } from "lucide-react";
 import { ThemePicker } from "../ui/theme-picker";
+import { useEffect, useState } from "react";
+import { getGithubStars } from "@/app/actions/github";
 
 export function Navbar() {
-  const { data: session, isPending } = useSession();
+  const [starCount, setStarCount] = useState<number | null>(null);
 
-  // You can fetch this from Github API eventually, but for now let's hardcode it
-  // or pass it as a prop to keep the component clean.
-  const starCount = 128;
+  useEffect(() => {
+    const fetchStars = async () => {
+      const stars = await getGithubStars();
+      setStarCount(stars);
+    };
+
+    fetchStars();
+  }, []);
 
   return (
     <nav className="fixed top-0 w-full z-50 bg-background/60 backdrop-blur-xl border-b border-border/40 transition-colors duration-500">
@@ -47,7 +55,7 @@ export function Navbar() {
                 <GithubIcon className="h-4 w-4" />
                 <div className="w-px h-3 bg-muted-foreground/30" />
                 <span className="text-xs font-bold font-mono tracking-tighter">
-                  {starCount}
+                  {starCount ?? "..."}
                 </span>
               </Button>
             </Link>

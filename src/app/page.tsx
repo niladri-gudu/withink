@@ -161,7 +161,7 @@ export default function LandingPage() {
           <div className="hidden md:block h-10 w-px bg-border/20" />
           <StatItem label="Media" value="Image Support" />{" "}
           <div className="hidden md:block h-10 w-px bg-border/20" />
-          <StatItem label="Status" value="MIT License" isLink />
+          <StatItem label="Status" value="MIT License" />
         </div>
       </section>
 
