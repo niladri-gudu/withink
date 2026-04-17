@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { useSession } from "@/lib/auth-client";
 import { PenLine } from "lucide-react";
 import { ThemePicker } from "../ui/theme-picker";
 import { useEffect, useState } from "react";
@@ -16,50 +15,44 @@ export function Navbar() {
       const stars = await getGithubStars();
       setStarCount(stars);
     };
-
     fetchStars();
   }, []);
 
   return (
-    <nav className="fixed top-0 w-full z-50 bg-background/60 backdrop-blur-xl border-b border-border/40 transition-colors duration-500">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          {/* Left: Logo */}
-          <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="relative w-7 h-7 flex items-center justify-center">
-              <div className="absolute inset-0 bg-primary/20 rounded-lg blur-sm group-hover:blur-md transition-all" />
-              <PenLine className="relative h-4 w-4 text-primary" />
-            </div>
-            <span className="font-semibold tracking-tight text-foreground">
-              journal
-            </span>
-          </Link>
+    <nav className="fixed top-0 w-full z-50 bg-background/60 backdrop-blur-md antialiased border-b border-border/40">
+      <div className="max-w-7xl mx-auto px-6 h-16 flex justify-between items-center">
+        {/* Brand */}
+        <Link href="/" className="flex items-center gap-2.5 group">
+          <PenLine className="h-4 w-4 text-primary group-hover:-rotate-12 transition-transform" />
+          <span className="text-xl font-black tracking-tighter">
+            journal<span className="text-primary/60 italic font-serif font-light text-2xl ml-0.5">.</span>
+          </span>
+        </Link>
 
-          {/* Right: Actions */}
-          <div className="flex items-center gap-1">
-            <ThemePicker />
+        {/* Right Actions */}
+        <div className="flex items-center gap-3">
+          <ThemePicker />
+          
+          <div className="h-4 w-px bg-border/60 mx-1" />
 
-            <div className="w-px h-4 bg-border/60 mx-2" />
-
-            {/* GitHub Star Button */}
-            <Link
-              href="https://github.com/niladri-gudu/deardiary"
-              target="_blank"
-              rel="noreferrer"
+          {/* Proper GitHub Star Button */}
+          <Link
+            href="https://github.com/niladri-gudu/deardiary"
+            target="_blank"
+            className="flex items-center"
+          >
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-9 rounded-full px-3 gap-2.5 text-muted-foreground hover:text-foreground border border-transparent hover:border-border/40 transition-all"
             >
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-9 rounded-full px-3 gap-2 text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all border border-transparent hover:border-border/40"
-              >
-                <GithubIcon className="h-4 w-4" />
-                <div className="w-px h-3 bg-muted-foreground/30" />
-                <span className="text-xs font-bold font-mono tracking-tighter">
-                  {starCount ?? "..."}
-                </span>
-              </Button>
-            </Link>
-          </div>
+              <GithubIcon className="h-4 w-4" />
+              <div className="h-3 w-px bg-muted-foreground/20" />
+              <span className="text-xs font-mono font-bold tracking-tighter">
+                {starCount ?? "..."}
+              </span>
+            </Button>
+          </Link>
         </div>
       </div>
     </nav>
