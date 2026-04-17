@@ -161,7 +161,7 @@ export function SigninForm() {
         <div className="flex flex-col items-center gap-4">
           <Link
             href="/forgot-password"
-            className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground/30 hover:text-primary transition-colors italic"
+            className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors italic"
           >
             Forgot_Password?
           </Link>

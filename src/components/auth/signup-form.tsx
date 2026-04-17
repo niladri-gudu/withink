@@ -91,7 +91,7 @@ export function SignupForm() {
             <Button
               variant="ghost"
               onClick={() => setVerifyPending(false)}
-              className="group text-[10px] font-mono uppercase tracking-widest text-muted-foreground/40 hover:text-primary transition-all mt-4 block p-0 h-auto"
+              className="group text-[10px] font-mono uppercase tracking-widest text-muted-foreground hover:text-primary transition-all mt-4 block p-0 h-auto"
             >
               <span className="border-b border-transparent group-hover:border-primary/40 pb-0.5">
                 // Edit_Identity
@@ -197,7 +197,7 @@ export function SignupForm() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-0 top-1/2 -translate-y-1/2 text-[10px] font-mono uppercase tracking-widest text-muted-foreground/40 hover:text-primary transition-colors px-1"
+                    className="absolute cursor-pointer right-0 top-1/2 -translate-y-1/2 text-[10px] font-mono uppercase tracking-widest text-muted-foreground/40 hover:text-primary transition-colors px-1"
                   >
                     {showPassword ? "Hide" : "Show"}
                   </button>
