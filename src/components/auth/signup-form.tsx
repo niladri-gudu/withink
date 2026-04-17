@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { checkIdentityExists } from "@/app/actions/auth";
 
 export function SignupForm() {
   const [name, setName] = useState("");
@@ -17,30 +18,58 @@ export function SignupForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [verifyPending, setVerifyPending] = useState(false);
 
+  const [errors, setErrors] = useState<{
+    name?: string;
+    email?: string;
+    password?: string;
+  }>({});
+
+  const validate = () => {
+    const newErrors: typeof errors = {};
+    if (!name.trim()) newErrors.name = "Identity.Name required";
+    if (!email) newErrors.email = "Secure.Email required";
+    else if (!/\S+@\S+\.\S+/.test(email)) newErrors.email = "Invalid structure";
+    if (!password) newErrors.password = "Secret.Key required";
+    else if (password.length < 8) newErrors.password = "8+ characters needed";
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSignup = async () => {
+    setErrors({});
+    if (!validate()) return;
+
     setIsLoading(true);
-    const res = await signUp.email({ name, email, password });
-    setIsLoading(false);
-    if (res.error) {
-      if (
-        res.error.status === 422 ||
-        res.error.code === "USER_ALREADY_EXISTS"
-      ) {
-        toast.error("Identity already exists. Try signing in.");
+
+    try {
+      const exists = await checkIdentityExists(email);
+      if (exists) {
+        setIsLoading(false);
+        setErrors({ email: "Identity already established" });
         return;
       }
 
-      toast.error(res.error.message || "Failed to initialize identity.");
-      return;
+      const { data, error } = await signUp.email({ name, email, password });
+      setIsLoading(false);
+
+      if (error) {
+        toast.error(error.message || "Failed to initialize identity.");
+        return;
+      }
+
+      setVerifyPending(true);
+    } catch (e) {
+      setIsLoading(false);
+      console.error("Signup process failed", e);
     }
-    setVerifyPending(true);
   };
 
   return (
     <div className="min-h-[85vh] flex flex-col justify-center py-12 px-8 md:px-0 antialiased">
       <div className="w-full max-w-sm mx-auto">
         {verifyPending ? (
-          <div className="space-y-8">
+          <div className="space-y-8 animate-in fade-in zoom-in duration-500">
             <div className="space-y-3">
               <h2 className="text-5xl font-black tracking-tighter leading-[0.85]">
                 Check your <br />
@@ -52,27 +81,24 @@ export function SignupForm() {
                 Identity pending // Action required
               </p>
             </div>
-
             <p className="text-muted-foreground font-mono text-xs tracking-widest leading-relaxed">
               A verification link has been dispatched to <br />
               <span className="text-foreground block mt-2 underline decoration-primary/40 underline-offset-4">
                 {email}
               </span>
             </p>
-
             <Button
               variant="ghost"
               onClick={() => setVerifyPending(false)}
-              className="group text-[10px] font-mono uppercase tracking-widest text-muted-foreground/40 hover:text-primary transition-all mt-4 block"
+              className="group text-[10px] font-mono uppercase tracking-widest text-muted-foreground/40 hover:text-primary transition-all mt-4 block p-0 h-auto"
             >
               <span className="border-b border-transparent group-hover:border-primary/40 pb-0.5">
-                // Wrong email?
+                // Edit_Identity
               </span>
             </Button>
           </div>
         ) : (
           <div className="space-y-10">
-            {/* Header */}
             <div className="space-y-3">
               <h1 className="text-5xl font-black tracking-tighter leading-[0.85]">
                 New <br />
@@ -86,41 +112,89 @@ export function SignupForm() {
             </div>
 
             <div className="space-y-6">
+              {/* Name Field */}
               <div className="space-y-2">
-                <Label className="text-[10px] font-mono uppercase tracking-[0.3em] text-muted-foreground/60 ml-1">
-                  Identity.Name
-                </Label>
+                <div className="flex justify-between items-end">
+                  <Label className="text-[10px] font-mono uppercase tracking-[0.3em] text-muted-foreground/60 ml-1">
+                    Identity.Name
+                  </Label>
+                  {errors.name && (
+                    <span className="text-[9px] font-mono text-destructive uppercase tracking-tighter animate-in fade-in slide-in-from-right-1">
+                      // {errors.name}
+                    </span>
+                  )}
+                </div>
                 <Input
                   placeholder="How should we address you?"
-                  className="h-12 bg-transparent border-0 border-b border-border/50 rounded-none px-0 focus-visible:ring-0 focus-visible:border-primary transition-all placeholder:text-muted-foreground/30 text-lg"
+                  className={`h-12 bg-transparent border-0 border-b rounded-none px-0 focus-visible:ring-0 transition-all placeholder:text-muted-foreground/30 text-lg ${
+                    errors.name
+                      ? "border-destructive/50"
+                      : "border-border/50 focus-visible:border-primary"
+                  }`}
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={(e) => {
+                    setName(e.target.value);
+                    if (errors.name)
+                      setErrors((p) => ({ ...p, name: undefined }));
+                  }}
                 />
               </div>
 
+              {/* Email Field */}
               <div className="space-y-2">
-                <Label className="text-[10px] font-mono uppercase tracking-[0.3em] text-muted-foreground/60 ml-1">
-                  Secure.Email
-                </Label>
+                <div className="flex justify-between items-end">
+                  <Label className="text-[10px] font-mono uppercase tracking-[0.3em] text-muted-foreground/60 ml-1">
+                    Secure.Email
+                  </Label>
+                  {errors.email && (
+                    <span className="text-[9px] font-mono text-destructive uppercase tracking-tighter animate-in fade-in slide-in-from-right-1">
+                      // {errors.email}
+                    </span>
+                  )}
+                </div>
                 <Input
                   type="email"
                   placeholder="name@example.com"
-                  className="h-12 bg-transparent border-0 border-b border-border/50 rounded-none px-0 focus-visible:ring-0 focus-visible:border-primary transition-all placeholder:text-muted-foreground/30 text-lg"
+                  className={`h-12 bg-transparent border-0 border-b rounded-none px-0 focus-visible:ring-0 transition-all placeholder:text-muted-foreground/30 text-lg ${
+                    errors.email
+                      ? "border-destructive/50"
+                      : "border-border/50 focus-visible:border-primary"
+                  }`}
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (errors.email)
+                      setErrors((p) => ({ ...p, email: undefined }));
+                  }}
                 />
               </div>
 
+              {/* Password Field */}
               <div className="space-y-2">
-                <Label className="text-[10px] font-mono uppercase tracking-[0.3em] text-muted-foreground/60 ml-1">
-                  Secret.Key
-                </Label>
+                <div className="flex justify-between items-end">
+                  <Label className="text-[10px] font-mono uppercase tracking-[0.3em] text-muted-foreground/60 ml-1">
+                    Secret.Key
+                  </Label>
+                  {errors.password && (
+                    <span className="text-[9px] font-mono text-destructive uppercase tracking-tighter animate-in fade-in slide-in-from-right-1">
+                      // {errors.password}
+                    </span>
+                  )}
+                </div>
                 <Input
                   type="password"
                   placeholder="••••••••"
-                  className="h-12 bg-transparent border-0 border-b border-border/50 rounded-none px-0 focus-visible:ring-0 focus-visible:border-primary transition-all placeholder:text-muted-foreground/30 text-lg"
+                  className={`h-12 bg-transparent border-0 border-b rounded-none px-0 focus-visible:ring-0 transition-all placeholder:text-muted-foreground/30 text-lg ${
+                    errors.password
+                      ? "border-destructive/50"
+                      : "border-border/50 focus-visible:border-primary"
+                  }`}
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (errors.password)
+                      setErrors((p) => ({ ...p, password: undefined }));
+                  }}
                 />
               </div>
 
@@ -132,13 +206,11 @@ export function SignupForm() {
                 >
                   <div className="flex items-center justify-center gap-2 w-full transition-all duration-200">
                     {isLoading && (
-                      <div className="absolute inset-0 flex items-center justify-center gap-2 bg-primary rounded-full">
+                      <div className="absolute inset-0 flex items-center justify-center gap-2 bg-primary">
                         <Loader2 className="h-5 w-5 animate-spin shrink-0" />
                         <span>Inking...</span>
                       </div>
                     )}
-
-                    {/* Default State: Invisible when loading but still taking up space */}
                     <div
                       className={`flex items-center justify-center gap-2 transition-opacity duration-200 ${isLoading ? "opacity-0" : "opacity-100"}`}
                     >

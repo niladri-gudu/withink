@@ -11,14 +11,15 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 export const auth = betterAuth({
   database: mongodbAdapter(client.db("deardiary"), { client }),
 
+  account: {
+    accountEnumerationPrevention: false, 
+  },
+  
   emailAndPassword: {
     enabled: true,
     minPasswordLength: 8,
     requireEmailVerification: true,
     autoSignIn: false,
-    // account: {
-    //   accountEnumerationPrevention: false,
-    // },
     sendResetPassword: async ({ user, url }) => {
       await resend.emails.send({
         from: process.env.EMAIL_FROM!,

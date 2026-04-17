@@ -13,12 +13,33 @@ export function ForgotPasswordForm() {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [sent, setSent] = useState(false);
+  const [error, setError] = useState<string | undefined>();
 
   const handleSubmit = async () => {
+    if (!email) {
+      setError("Identity required");
+      return;
+    }
+    if (!/\S+@\S+\.\S+/.test(email)) {
+      setError("Invalid structure");
+      return;
+    }
+
     setIsLoading(true);
-    await authClient.requestPasswordReset({ email, redirectTo: "/reset-password" });
+    setError(undefined);
+
+    const res = await authClient.requestPasswordReset({
+      email,
+      redirectTo: "/reset-password",
+    });
+
     setIsLoading(false);
-    setSent(true);
+
+    if (res.error) {
+      setError(res.error.message || "Recovery failed");
+    } else {
+      setSent(true);
+    }
   };
 
   return (
@@ -38,11 +59,11 @@ export function ForgotPasswordForm() {
                 {email}
               </span>
             </p>
-            <Link 
-              href="/signin" 
-              className="inline-block text-[10px] font-mono uppercase tracking-widest text-muted-foreground/40 hover:text-primary transition-colors"
+            <Link
+              href="/signin"
+              className="inline-block text-[10px] font-mono uppercase tracking-widest text-muted-foreground/40 hover:text-primary transition-colors italic"
             >
-              // Return to Sign_In
+              // Return_to_SignIn
             </Link>
           </div>
         ) : (
@@ -61,38 +82,52 @@ export function ForgotPasswordForm() {
 
             <div className="space-y-6">
               <div className="space-y-2">
-                <Label className="text-[10px] font-mono uppercase tracking-[0.3em] text-muted-foreground/60 ml-1">
-                  Registered.Email
-                </Label>
+                <div className="flex justify-between items-end">
+                  <Label className="text-[10px] font-mono uppercase tracking-[0.3em] text-muted-foreground/60 ml-1">
+                    Registered.Email
+                  </Label>
+                  {error && (
+                    <span className="text-[9px] font-mono text-destructive uppercase tracking-tighter animate-in fade-in slide-in-from-right-1">
+                      // {error}
+                    </span>
+                  )}
+                </div>
                 <Input
                   type="email"
                   placeholder="name@example.com"
-                  className="h-12 bg-transparent border-0 border-b border-border/50 rounded-none px-0 focus-visible:ring-0 focus-visible:border-primary transition-all placeholder:text-muted-foreground/30 text-lg"
+                  className={`h-12 bg-transparent border-0 border-b rounded-none px-0 focus-visible:ring-0 transition-all placeholder:text-muted-foreground/30 text-lg ${
+                    error
+                      ? "border-destructive/50"
+                      : "border-border/50 focus-visible:border-primary"
+                  }`}
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (error) setError(undefined);
+                  }}
                 />
               </div>
 
               <div className="pt-4 space-y-4 text-center">
                 <Button
-                  className="w-full h-14 rounded-full font-bold text-lg hover:scale-[1.02] active:scale-[0.98] transition-all"
+                  className="w-full h-14 rounded-full font-bold text-lg hover:scale-[1.02] active:scale-[0.98] transition-all relative overflow-hidden"
                   onClick={handleSubmit}
-                  disabled={isLoading || !email}
+                  disabled={isLoading}
                 >
                   {isLoading ? (
-                    <span className="flex items-center gap-2">
-                      <Loader2 className="h-5 w-5 animate-spin" />
-                      Dispatching...
-                    </span>
+                    <div className="absolute inset-0 flex items-center justify-center gap-2 bg-primary">
+                      <Loader2 className="h-5 w-5 animate-spin shrink-0" />
+                      <span>Dispatching...</span>
+                    </div>
                   ) : (
                     <>
                       Send Reset Link <ArrowRight className="ml-2 h-5 w-5" />
                     </>
                   )}
                 </Button>
-                
-                <Link 
-                  href="/signin" 
+
+                <Link
+                  href="/signin"
                   className="inline-block text-[10px] font-mono uppercase tracking-widest text-muted-foreground/30 hover:text-primary transition-colors italic"
                 >
                   Back_to_SignIn

@@ -1,3 +1,4 @@
+/* eslint-disable react/jsx-no-comment-textnodes */
 "use client";
 
 import { useState } from "react";
@@ -16,14 +17,41 @@ export function SigninForm() {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  const [errors, setErrors] = useState<{ email?: string; password?: string }>(
+    {},
+  );
+
+  const validate = () => {
+    const newErrors: { email?: string; password?: string } = {};
+    if (!email) newErrors.email = "Identity required";
+    else if (!/\S+@\S+\.\S+/.test(email)) newErrors.email = "Invalid structure";
+
+    if (!password) newErrors.password = "Secret Key required";
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSignin = async () => {
+    setErrors({});
+    if (!validate()) return;
+
     setIsLoading(true);
     const res = await signIn.email({ email, password });
     setIsLoading(false);
+
     if (res.error) {
-      toast.error(res.error.message);
+      if (res.error.status === 401) {
+        setErrors({
+          email: "Invalid credentials",
+          password: "Check secret key",
+        });
+      } else {
+        toast.error(res.error.message);
+      }
       return;
     }
+
     router.refresh();
     router.push("/journal");
   };
@@ -44,29 +72,61 @@ export function SigninForm() {
         </div>
 
         <div className="space-y-6">
-          <div className="space-y-2">
-            <Label className="text-[10px] font-mono uppercase tracking-[0.3em] text-muted-foreground/60 ml-1">
-              Identity.Email
-            </Label>
+          {/* Email Field */}
+          <div className="space-y-2 relative">
+            <div className="flex justify-between items-end">
+              <Label className="text-[10px] font-mono uppercase tracking-[0.3em] text-muted-foreground/60 ml-1">
+                Identity.Email
+              </Label>
+              {errors.email && (
+                <span className="text-[9px] font-mono text-destructive uppercase tracking-tighter animate-in fade-in slide-in-from-right-1">
+                  // {errors.email}
+                </span>
+              )}
+            </div>
             <Input
               type="email"
               placeholder="name@example.com"
-              className="h-12 bg-transparent border-0 border-b border-border/50 rounded-none px-0 focus-visible:ring-0 focus-visible:border-primary transition-all placeholder:text-muted-foreground/30 text-lg"
+              className={`h-12 bg-transparent border-0 border-b rounded-none px-0 focus-visible:ring-0 transition-all placeholder:text-muted-foreground/30 text-lg ${
+                errors.email
+                  ? "border-destructive/50"
+                  : "border-border/50 focus-visible:border-primary"
+              }`}
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                if (errors.email)
+                  setErrors((prev) => ({ ...prev, email: undefined }));
+              }}
             />
           </div>
 
-          <div className="space-y-2">
-            <Label className="text-[10px] font-mono uppercase tracking-[0.3em] text-muted-foreground/60 ml-1">
-              Secret.Key
-            </Label>
+          {/* Password Field */}
+          <div className="space-y-2 relative">
+            <div className="flex justify-between items-end">
+              <Label className="text-[10px] font-mono uppercase tracking-[0.3em] text-muted-foreground/60 ml-1">
+                Secret.Key
+              </Label>
+              {errors.password && (
+                <span className="text-[9px] font-mono text-destructive uppercase tracking-tighter animate-in fade-in slide-in-from-right-1">
+                  // {errors.password}
+                </span>
+              )}
+            </div>
             <Input
               type="password"
               placeholder="••••••••"
-              className="h-12 bg-transparent border-0 border-b border-border/50 rounded-none px-0 focus-visible:ring-0 focus-visible:border-primary transition-all placeholder:text-muted-foreground/30 text-lg"
+              className={`h-12 bg-transparent border-0 border-b rounded-none px-0 focus-visible:ring-0 transition-all placeholder:text-muted-foreground/30 text-lg ${
+                errors.password
+                  ? "border-destructive/50"
+                  : "border-border/50 focus-visible:border-primary"
+              }`}
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                if (errors.password)
+                  setErrors((prev) => ({ ...prev, password: undefined }));
+              }}
             />
           </div>
 
@@ -83,7 +143,6 @@ export function SigninForm() {
                     <span>Accessing...</span>
                   </div>
                 )}
-
                 <div
                   className={`flex items-center justify-center gap-2 transition-opacity duration-200 ${isLoading ? "opacity-0" : "opacity-100"}`}
                 >
