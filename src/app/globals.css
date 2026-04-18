@@ -256,6 +256,22 @@
     background: var(--primary);
     color: var(--primary-foreground);
   }
+
+  body {
+    @apply bg-background text-foreground antialiased h-full;
+  }
+
+  /* Force hide scrollbars on the root elements */
+  html,
+  body {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
+  }
+
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar {
+    display: none; /* Chrome/Safari/Opera */
+  }
 }
 
 @layer utilities {

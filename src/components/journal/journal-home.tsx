@@ -1,12 +1,18 @@
 /* eslint-disable react-hooks/purity */
 "use client";
-
 import { useMemo, useState } from "react";
 import { JournalSidebar } from "@/components/journal/journal-sidebar";
 import { EntryPreview } from "@/components/journal/entry-preview";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, Menu, PenLine, X } from "lucide-react";
+import {
+  LayoutDashboard,
+  Menu,
+  PanelLeftClose,
+  PanelLeftOpen,
+  PenLine,
+  X,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Entry {
@@ -26,7 +32,8 @@ interface Props {
 }
 
 export function JournalHome({ today, entries, userName }: Props) {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [isDesktopSidebarOpen, setIsDesktopSidebarOpen] = useState(true);
 
   const todayEntry = useMemo(
     () => entries.find((e) => e.date === today),
@@ -39,10 +46,9 @@ export function JournalHome({ today, entries, userName }: Props) {
   const showStartWriting = !todayEntry && isTodaySelected;
   const showDashboard = selectedEntry === null;
 
-  // Helper to handle selection and close sidebar on mobile
   const handleSelect = (entry: Entry | null) => {
     setSelectedEntry(entry);
-    setIsSidebarOpen(false);
+    setIsMobileSidebarOpen(false);
   };
 
   const prompts = [
@@ -51,70 +57,83 @@ export function JournalHome({ today, entries, userName }: Props) {
     "What's been on your mind lately?",
     "If today was a movie, what would the title be?",
   ];
+
   const randomPrompt = useMemo(
     () => prompts[Math.floor(Math.random() * prompts.length)],
     [],
   );
 
   return (
-    <div className="min-h-screen bg-background text-foreground pt-16 lg:pt-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Mobile Header Toggle - Simplified and borderless */}
-        <div className="lg:hidden flex items-center justify-between mb-8 px-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="rounded-full"
-            onClick={() => setIsSidebarOpen(true)}
-          >
-            <Menu className="h-6 w-6" />
-          </Button>
-          <span className="font-bold tracking-tight">Journal</span>
-          <div className="w-10" />
-        </div>
-
-        <div className="flex gap-12 h-[calc(100vh-12rem)] lg:h-[calc(100vh-10rem)] relative">
-          {/* Sidebar Overlay for Mobile */}
-          {isSidebarOpen && (
+    <div className="min-h-screen bg-background text-foreground pt-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="flex gap-6 h-[calc(100vh-6rem)]">
+          {/* Mobile overlay */}
+          {isMobileSidebarOpen && (
             <div
               className="fixed inset-0 bg-background/90 backdrop-blur-md z-40 lg:hidden"
-              onClick={() => setIsSidebarOpen(false)}
+              onClick={() => setIsMobileSidebarOpen(false)}
             />
           )}
 
-          {/* Sidebar Container - Removed borders and card styling */}
+          {/* Sidebar */}
           <aside
             className={cn(
-              "fixed inset-y-0 left-0 z-50 w-80 bg-background lg:bg-transparent overflow-hidden flex flex-col transition-transform duration-300 lg:relative lg:translate-x-0 lg:z-auto",
-              isSidebarOpen ? "translate-x-0" : "-translate-x-full",
+              "flex-col overflow-hidden transition-all duration-300",
+              "fixed inset-y-0 left-0 z-50 w-80 lg:relative lg:z-auto lg:inset-auto",
+              isMobileSidebarOpen
+                ? "flex translate-x-0"
+                : "-translate-x-full lg:translate-x-0",
+              isDesktopSidebarOpen ? "lg:flex lg:w-80" : "lg:hidden lg:w-0",
             )}
           >
-            <div className="lg:hidden flex justify-end p-6">
+            <div className="lg:hidden flex justify-end p-4 shrink-0">
               <Button
                 variant="ghost"
                 size="icon"
                 className="rounded-full"
-                onClick={() => setIsSidebarOpen(false)}
+                onClick={() => setIsMobileSidebarOpen(false)}
               >
-                <X className="h-6 w-6" />
+                <X className="h-5 w-5" />
               </Button>
             </div>
 
-            <JournalSidebar
-              entries={entries}
-              selectedDate={selectedEntry?.date ?? null}
-              userName={userName}
-              today={today}
-              onSelect={handleSelect}
-              onClose={() => setIsSidebarOpen(false)}
-            />
+            <div className="flex-1 overflow-hidden">
+              <JournalSidebar
+                entries={entries}
+                selectedDate={selectedEntry?.date ?? null}
+                userName={userName}
+                today={today}
+                onSelect={handleSelect}
+                onClose={() => setIsMobileSidebarOpen(false)}
+              />
+            </div>
           </aside>
 
-          {/* Preview Panel Container - Borderless and background-free */}
-          <div className="flex-1 overflow-hidden flex flex-col w-full">
-            <div className="flex-1 overflow-y-auto px-2 lg:px-4 no-scrollbar">
+          {/* Main content */}
+          <div className="flex-1 min-w-0 flex flex-col gap-3">
+            <div className="flex items-center gap-3 shrink-0">
+              <button
+                onClick={() => setIsDesktopSidebarOpen((o) => !o)}
+                className="hidden lg:flex p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all"
+              >
+                {isDesktopSidebarOpen ? (
+                  <PanelLeftClose className="h-4 w-4" />
+                ) : (
+                  <PanelLeftOpen className="h-4 w-4" />
+                )}
+              </button>
+
+              <button
+                onClick={() => setIsMobileSidebarOpen(true)}
+                className="lg:hidden flex p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all"
+              >
+                <Menu className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Preview panel */}
+            <div className="flex-1 overflow-y-auto no-scrollbar px-2 lg:px-4">
               {showDashboard ? (
-                /* 1. DASHBOARD VIEW */
                 <div className="h-full flex flex-col items-center justify-center text-center max-w-md mx-auto">
                   <div className="bg-primary/5 p-8 rounded-full mb-6">
                     <LayoutDashboard className="h-10 w-10 text-primary opacity-40" />
@@ -128,7 +147,6 @@ export function JournalHome({ today, entries, userName }: Props) {
                   </p>
                 </div>
               ) : showStartWriting ? (
-                /* 2. START WRITING STATE */
                 <div className="h-full flex flex-col items-center justify-center text-center space-y-8 max-w-md mx-auto">
                   <div className="space-y-3">
                     <h2 className="text-3xl lg:text-4xl font-black tracking-tight">
@@ -149,7 +167,6 @@ export function JournalHome({ today, entries, userName }: Props) {
                   </Link>
                 </div>
               ) : (
-                /* 3. VIEW ENTRY STATE */
                 <EntryPreview
                   date={selectedEntry.date}
                   title={selectedEntry.title}

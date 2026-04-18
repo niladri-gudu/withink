@@ -1,86 +1,123 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import React from "react";
 import {
   ArrowRight,
   Leaf,
-  ShieldCheck,
   PenLine,
-  Sparkles,
   ImageIcon,
-  LinkIcon,
   List,
   Italic,
   Underline,
   Bold,
   Undo,
   Redo,
+  Flame,
+  Hash,
+  ShieldCheck,
+  Zap,
+  Sparkles,
+  Palette,
+  Type,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Footer } from "@/components/layout/Footer";
 import Link from "next/link";
 
+// Utility for tailwind class merging
+function cn(...inputs: any[]) {
+  return inputs.filter(Boolean).join(" ");
+}
+
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-background text-foreground transition-colors duration-500 overflow-x-hidden">
-      {/* Background Artifacts */}
       <div className="absolute inset-0 bg-[radial-gradient(var(--border)_1px,transparent_1px)] bg-[size:32px_32px] opacity-10 -z-20" />
-      <div className="absolute inset-0 bg-noise opacity-[0.02] -z-10 pointer-events-none" />
 
-      {/* --- HEADER --- */}
-      <header className="relative max-w-6xl mx-auto pt-40 md:pt-48 pb-20 px-6 grid lg:grid-cols-2 gap-12 items-center">
-        <div className="absolute top-20 md:top-40 left-0 w-72 h-72 bg-primary/10 blur-[100px] rounded-full -z-10" />
-        <div className="text-left space-y-6 md:space-y-8">
+      {/* HERO SECTION */}
+      <header className="relative max-w-6xl mx-auto pt-28 md:pt-40 pb-16 md:pb-20 px-6 grid lg:grid-cols-2 gap-10 md:gap-12 items-center">
+        <div className="absolute top-10 left-0 w-64 h-64 bg-primary/10 blur-[100px] rounded-full -z-10" />
+
+        <div className="text-left space-y-5 md:space-y-8">
           <div className="inline-flex items-center gap-3 px-3 py-1 rounded-lg border border-border bg-muted/50 text-muted-foreground text-[10px] font-mono uppercase tracking-tight">
             <span className="flex h-2 w-2 rounded-full bg-primary animate-pulse" />
-            v1.0.0 — Open Source
+            v1.0.0 — Now Public & Open Source
           </div>
-          {/* Mobile Typography: 5xl -> 8xl on desktop */}
-          <h1 className="text-5xl md:text-8xl font-black tracking-tighter leading-[0.85]">
+
+          <h1 className="text-[clamp(3.5rem,12vw,7rem)] font-black tracking-tighter leading-[0.85]">
             Think in <br />
             <span className="text-muted-foreground/30 italic font-serif font-light">
               ink.
             </span>
           </h1>
-          <p className="text-base md:text-xl text-muted-foreground max-w-lg leading-relaxed font-medium">
+
+          <p className="text-base md:text-lg text-muted-foreground max-w-md leading-relaxed font-medium">
             A sanctuary for your digital thoughts. No distractions, no tracking,
             just a clean slate for your mind to breathe.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4">
-            <Link href="/signup" className="w-full sm:w-auto">
-              <Button
-                size="lg"
-                className="w-full rounded-xl px-8 h-14 font-bold text-base shadow-2xl shadow-primary/20 hover:-translate-y-0.5 transition-all"
+
+          {/* ACTION AREA */}
+          <div className="flex flex-col gap-6">
+            <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
+              <Link href="/signup" className="w-full sm:w-auto">
+                <Button
+                  size="lg"
+                  className="w-full rounded-xl px-8 h-12 md:h-14 font-bold text-base shadow-xl shadow-primary/20 hover:-translate-y-0.5 transition-all"
+                >
+                  Get Started
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+
+              <a
+                href="https://github.com/niladri-gudu/deardiary"
+                target="_blank"
+                rel="noreferrer"
+                className="w-full sm:w-auto"
               >
-                Get Started
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
-            <a
-              href="https://github.com/niladri-gudu/deardiary"
-              target="_blank"
-              rel="noreferrer"
-              className="w-full sm:w-auto"
-            >
-              <Button
-                variant="outline"
-                size="lg"
-                className="w-full rounded-xl px-8 h-14 font-mono text-sm border-border/60"
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="w-full rounded-xl px-8 h-12 md:h-14 font-mono text-sm border-border/60"
+                >
+                  <GithubIcon className="mr-2 h-4 w-4" />
+                  view_source
+                </Button>
+              </a>
+            </div>
+
+            <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground/50">
+              <div className="h-px w-8 bg-border/50" />
+              <span>Returning to your sanctuary?</span>
+              <Link
+                href="/signin"
+                className="text-foreground hover:text-primary transition-colors hover:underline underline-offset-4 decoration-primary/30"
               >
-                <GithubIcon className="mr-2 h-4 w-4" />
-                view_source
-              </Button>
-            </a>
+                Sign in here
+              </Link>
+            </div>
           </div>
         </div>
-        {/* Keeping Artifact Hidden on Mobile */}
+
+        {/* Editor mockup */}
         <div className="relative hidden lg:block">
           <div className="absolute -inset-4 bg-linear-to-tr from-primary/10 to-transparent blur-2xl opacity-50" />
           <div className="relative border border-border/40 bg-card/60 backdrop-blur-xl rounded-3xl p-10 shadow-2xl rotate-2 hover:rotate-0 transition-all duration-700 group">
             <div className="space-y-2 mb-10">
-              <div className="flex items-center gap-2">
-                <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-                <span className="text-[10px] font-mono uppercase tracking-tighter opacity-50">
-                  Saved
-                </span>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+                  <span className="text-[10px] font-mono uppercase tracking-tighter opacity-50">
+                    Secure / AES-256
+                  </span>
+                </div>
+                <div className="flex gap-1">
+                  <span className="bg-primary/10 text-primary text-[10px] px-2 py-0.5 rounded-full font-bold">
+                    #reflection
+                  </span>
+                  <span className="bg-orange-500/10 text-orange-500 text-[10px] px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
+                    <Flame className="w-2.5 h-2.5" /> 12 day streak
+                  </span>
+                </div>
               </div>
               <h2 className="text-3xl font-black tracking-tight font-sans">
                 on finding focus.
@@ -106,44 +143,34 @@ export default function LandingPage() {
                 Focus on the process, not the record.
               </p>
             </div>
-            <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 w-[85%] h-14 bg-background/80 backdrop-blur-md border border-border/40 rounded-2xl shadow-2xl flex items-center justify-between px-6 transition-all group-hover:scale-105 group-hover:-bottom-8 duration-500">
-              <div className="flex items-center gap-3">
-                <Undo className="h-3.5 w-3.5 text-muted-foreground/40" />
-                <Redo className="h-3.5 w-3.5 text-muted-foreground/40" />
-              </div>
-              <div className="w-px h-4 bg-border/40" />
+
+            {/* MINIMALIST MOCK TOOLBAR */}
+            <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 w-[70%] h-12 bg-background/80 backdrop-blur-md border border-border/40 rounded-xl shadow-2xl flex items-center justify-center gap-8 px-6 transition-all group-hover:scale-105 group-hover:-bottom-8 duration-500">
               <div className="flex items-center gap-4">
-                {["H1", "H2", "H3"].map((h) => (
-                  <span
-                    key={h}
-                    className="text-[10px] font-bold text-muted-foreground/60"
-                  >
-                    {h}
-                  </span>
-                ))}
+                <Undo className="h-3.5 w-3.5 text-muted-foreground/30" />
+                <Redo className="h-3.5 w-3.5 text-muted-foreground/30" />
               </div>
-              <div className="w-px h-4 bg-border/40" />
-              <div className="flex items-center gap-4">
+
+              <div className="flex items-center gap-5">
+                <Type className="h-3.5 w-3.5 text-muted-foreground/60" />
                 <Bold className="h-3.5 w-3.5 text-muted-foreground/60" />
                 <Italic className="h-3.5 w-3.5 text-muted-foreground/60" />
-                <Underline className="h-3.5 w-3.5 text-muted-foreground/60" />
               </div>
-              <div className="w-px h-4 bg-border/40" />
-              <div className="flex items-center gap-4">
-                <List className="h-3.5 w-3.5 text-muted-foreground/40" />
-                <LinkIcon className="h-3.5 w-3.5 text-muted-foreground/40" />
-                <ImageIcon className="h-3.5 w-3.5 text-muted-foreground/40" />
+
+              <div className="flex items-center gap-5">
+                <List className="h-3.5 w-3.5 text-muted-foreground/30" />
+                <Hash className="h-3.5 w-3.5 text-primary" />
+                <ImageIcon className="h-3.5 w-3.5 text-muted-foreground/30" />
               </div>
             </div>
           </div>
         </div>
       </header>
 
-      {/* 2. STATS - Centered with a minimal header */}
-      <section className="max-w-6xl mx-auto px-6 py-20 md:py-24">
-        {/* Added Section Header */}
-        <div className="flex flex-col items-center text-center space-y-4 mb-12 md:mb-16">
-          <p className="text-muted-foreground font-mono text-[10px] md:text-xs uppercase tracking-[0.3em]">
+      {/* STATS SECTION */}
+      <section className="max-w-6xl mx-auto px-6 py-16 md:py-24">
+        <div className="flex flex-col items-center text-center space-y-3 mb-10 md:mb-16">
+          <p className="text-muted-foreground font-mono text-[10px] uppercase tracking-[0.3em]">
             System Specifications
           </p>
           <h2 className="text-3xl md:text-5xl font-black tracking-tighter">
@@ -154,77 +181,102 @@ export default function LandingPage() {
           </h2>
         </div>
 
-        <div className="grid grid-cols-2 md:flex md:flex-row md:items-center justify-between border-y border-border/40 py-10 gap-x-4 gap-y-10">
-          <StatItem label="Storage" value="Unlimited" />
-          <div className="hidden md:block h-10 w-px bg-border/20" />
-          <StatItem label="Cloud" value="Synced" />
-          <div className="hidden md:block h-10 w-px bg-border/20" />
-          <StatItem label="Media" value="Image Support" />{" "}
-          <div className="hidden md:block h-10 w-px bg-border/20" />
-          <StatItem label="Status" value="MIT License" />
+        <div className="grid grid-cols-2 md:grid-cols-4 border border-border/40 rounded-2xl md:rounded-3xl overflow-hidden">
+          {[
+            { label: "Security", value: "AES-256" },
+            { label: "Habits", value: "Streaks" },
+            { label: "Media", value: "R2 Hosted" },
+            { label: "Themes", value: "4 Varieties" },
+          ].map((stat, i) => (
+            <div
+              key={stat.label}
+              className={cn(
+                "flex flex-col gap-1 p-6 md:p-8 group",
+                i % 2 === 0 ? "border-r border-border/40" : "",
+                i < 2 ? "border-b md:border-b-0 border-border/40" : "",
+                i === 1 ? "md:border-r border-border/40" : "",
+                i === 2 ? "md:border-r border-border/40" : "",
+              )}
+            >
+              <span className="text-[9px] font-mono uppercase tracking-[0.2em] text-muted-foreground/40 group-hover:text-primary transition-colors">
+                {stat.label}
+              </span>
+              <span className="text-xl md:text-2xl font-black tracking-tight">
+                {stat.value}
+              </span>
+            </div>
+          ))}
         </div>
       </section>
 
-      {/* 3. FEATURES - Adjusted spacing for phone scrolling */}
-      <section className="max-w-5xl mx-auto px-6 py-20 md:py-32 space-y-24 md:space-y-32">
-        <div className="flex flex-col items-center text-center space-y-4 mb-16 md:mb-24">
+      {/* FEATURES SECTION */}
+      <section className="max-w-5xl mx-auto px-6 py-16 md:py-32 space-y-16 md:space-y-32">
+        <div className="flex flex-col items-center text-center space-y-3 mb-10 md:mb-24">
           <h2 className="text-4xl md:text-6xl font-black tracking-tighter text-balance">
             Purposefully{" "}
             <span className="text-muted-foreground/40 italic font-serif font-light">
               minimal.
             </span>
           </h2>
-          <p className="text-muted-foreground font-mono text-[10px] md:text-xs uppercase tracking-[0.3em]">
-            Built for the modern mind
+          <p className="text-muted-foreground font-mono text-[10px] uppercase tracking-[0.3em]">
+            The complete toolkit
           </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-20 md:gap-32">
+        <div className="grid grid-cols-1 gap-16 md:gap-32">
           <FeatureRow
             num="01"
-            title="Focus Mode"
-            desc="The editor fades into the background. Your words are the only thing that matters."
-            icon={<PenLine className="w-full h-full" />}
+            title="Focus & Habit"
+            desc="Keep the momentum alive with built-in streak tracking and reminder notifications. Consistency is the only metric that matters."
+            icon={<Flame className="w-full h-full" />}
           />
           <FeatureRow
             num="02"
-            title="Dark Mode"
-            desc="Themes inspired by your favorite IDEs. Optimized for late-night reflection."
-            icon={<Leaf className="w-full h-full" />}
+            title="Aesthetic Variety"
+            desc="Personalize your writing environment with 4 custom themes. Switch between modes that complement your focus and environment."
+            icon={<Palette className="w-full h-full" />}
             reverse
           />
           <FeatureRow
             num="03"
-            title="Seamless Sync"
-            desc="Sign in once and write everywhere. Your entries are tied to your account and synced across all your devices in real-time."
-            icon={<LinkIcon className="w-full h-full" />}
+            title="Military-Grade Privacy"
+            desc="AES-256 client-side encryption ensures your deepest thoughts remain yours. Private by default, secure by design."
+            icon={<ShieldCheck className="w-full h-full" />}
           />
           <FeatureRow
             num="04"
-            title="Visual Memories"
-            desc="A picture is worth a thousand words. Effortlessly drag and drop images into your entries to capture the moments that matter most."
+            title="Seamless Media"
+            desc="Effortlessly integrate images into your narrative. Hosted securely on Cloudflare R2 for lightning-fast, persistent memories."
             icon={<ImageIcon className="w-full h-full" />}
             reverse
           />
         </div>
       </section>
 
-      {/* 4. FINAL CTA - Scaled padding for mobile */}
-      <section className="max-w-4xl mx-auto px-6 py-24 md:py-48 text-center">
-        <div className="bg-card/30 border border-border/40 rounded-4xl md:rounded-[40px] p-10 md:p-24 backdrop-blur-sm relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-48 h-48 md:w-64 md:h-64 bg-primary/5 blur-[80px] md:blur-[100px] -z-10" />
-          <h2 className="text-4xl md:text-6xl font-black tracking-tighter mb-8 text-balance">
+      {/* FINAL CTA */}
+      <section className="max-w-4xl mx-auto px-6 py-16 md:py-40 text-center">
+        <div className="bg-card/30 border border-border/40 rounded-3xl md:rounded-[40px] p-10 md:p-24 backdrop-blur-sm relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-48 h-48 bg-primary/5 blur-[80px] -z-10" />
+          <h2 className="text-4xl md:text-6xl font-black tracking-tighter mb-6 md:mb-8 text-balance">
             Ready to write?
           </h2>
-          <Link href="/signup">
-            <Button
-              size="lg"
-              className="rounded-full px-8 md:px-10 h-14 md:h-16 font-bold text-base md:text-lg w-full sm:w-auto"
+          <div className="flex flex-col items-center gap-4">
+            <Link href="/signup" className="w-full sm:w-auto">
+              <Button
+                size="lg"
+                className="rounded-full px-8 md:px-10 h-12 md:h-16 font-bold text-base md:text-lg w-full sm:w-auto"
+              >
+                Open your diary
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
+            <Link
+              href="/signin"
+              className="text-sm font-medium opacity-50 hover:opacity-100 transition-opacity"
             >
-              Open your diary
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
-          </Link>
+              I already have an account
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -233,46 +285,17 @@ export default function LandingPage() {
   );
 }
 
-function StatItem({
-  label,
-  value,
-  isLink,
-}: {
-  label: string;
-  value: string;
-  isLink?: boolean;
-}) {
-  return (
-    <div className="flex flex-col gap-1 md:gap-2 group">
-      <span className="text-[9px] md:text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground/40 group-hover:text-primary transition-colors">
-        {label}
-      </span>
-      <span
-        className={cn(
-          "text-lg md:text-2xl font-black tracking-tight",
-          isLink &&
-            "underline underline-offset-8 decoration-primary/20 hover:decoration-primary transition-all cursor-pointer",
-        )}
-      >
-        {value}
-      </span>
-    </div>
-  );
-}
+/* --- COMPONENTS --- */
 
-function FeatureRow({
-  num,
-  title,
-  desc,
-  icon,
-  reverse,
-}: {
+interface FeatureRowProps {
   num: string;
   title: string;
   desc: string;
-  icon: any;
+  icon: React.ReactNode;
   reverse?: boolean;
-}) {
+}
+
+function FeatureRow({ num, title, desc, icon, reverse }: FeatureRowProps) {
   return (
     <div
       className={cn(
@@ -280,8 +303,7 @@ function FeatureRow({
         reverse && "md:flex-row-reverse",
       )}
     >
-      <div className="flex-1 space-y-4 md:space-y-6 text-center md:text-left">
-        {/* Mobile: 5xl, Desktop: 8xl */}
+      <div className="flex-1 space-y-4 text-center md:text-left">
         <span className="text-5xl md:text-8xl font-serif italic text-muted-foreground/10 select-none block">
           {num}
         </span>
@@ -293,10 +315,9 @@ function FeatureRow({
         </p>
       </div>
       <div className="flex-1 w-full flex justify-center items-center">
-        {/* Smaller container on mobile (48 -> 80) */}
-        <div className="relative w-48 h-48 md:w-80 md:h-80">
+        <div className="relative w-40 h-40 md:w-80 md:h-80">
           <div className="absolute inset-0 bg-primary/5 rounded-full blur-2xl md:blur-3xl" />
-          <div className="relative w-full h-full border border-border/40 bg-card/40 backdrop-blur-sm rounded-[40px] md:rounded-[60px] flex items-center justify-center p-12 md:p-16 shadow-inner group transition-all duration-500 hover:rotate-3">
+          <div className="relative w-full h-full border border-border/40 bg-card/40 backdrop-blur-sm rounded-[32px] md:rounded-[60px] flex items-center justify-center p-10 md:p-16 shadow-inner group transition-all duration-500 hover:rotate-3">
             <div className="w-full h-full text-primary/40 group-hover:text-primary transition-colors duration-500">
               {icon}
             </div>
@@ -305,10 +326,6 @@ function FeatureRow({
       </div>
     </div>
   );
-}
-
-function cn(...inputs: any[]) {
-  return inputs.filter(Boolean).join(" ");
 }
 
 const GithubIcon = ({ className }: { className?: string }) => (

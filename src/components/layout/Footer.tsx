@@ -1,3 +1,4 @@
+/* eslint-disable react/jsx-no-comment-textnodes */
 import Link from "next/link";
 import { PenLine } from "lucide-react";
 
@@ -11,8 +12,8 @@ export function Footer() {
           <div className="md:col-span-6 space-y-6">
             <div className="flex items-center gap-2">
               <PenLine className="h-5 w-5 text-primary" />
-              <span className="text-2xl font-black tracking-tighter">
-                journal
+              <span className="text-2xl font-extrabold tracking-tighter">
+                inked
                 <span className="text-primary/60 italic font-serif font-light text-3xl ml-0.5">
                   .
                 </span>
@@ -69,11 +70,13 @@ export function Footer() {
             </span>
           </div>
 
-          <p className="text-muted-foreground text-[10px] font-mono uppercase tracking-[0.1em]">
-            © {new Date().getFullYear()} Journal // Built by{" "}
-            <span className="text-foreground font-bold border-b border-primary/20">
-              Niladri
-            </span>
+          <p className="text-muted-foreground text-[10px] font-mono uppercase tracking-widest">
+            © {new Date().getFullYear()} inked // Built by{" "}
+            <Link href="https://github.com/niladri-gudu" target="_blank">
+              <span className="text-foreground font-bold border-b border-primary/20">
+                Niladri
+              </span>
+            </Link>
           </p>
         </div>
       </div>

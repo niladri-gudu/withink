@@ -24,15 +24,18 @@ export function Navbar() {
         {/* Brand */}
         <Link href="/" className="flex items-center gap-2.5 group">
           <PenLine className="h-4 w-4 text-primary group-hover:-rotate-12 transition-transform" />
-          <span className="text-xl font-black tracking-tighter">
-            journal<span className="text-primary/60 italic font-serif font-light text-2xl ml-0.5">.</span>
+          <span className="text-xl font-extrabold tracking-tighter">
+            inked
+            <span className="text-primary/60 italic font-serif font-light text-2xl ml-0.5">
+              .
+            </span>
           </span>
         </Link>
 
         {/* Right Actions */}
         <div className="flex items-center gap-3">
           <ThemePicker />
-          
+
           <div className="h-4 w-px bg-border/60 mx-1" />
 
           {/* Proper GitHub Star Button */}
