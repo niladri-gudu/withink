@@ -38,8 +38,8 @@ export async function POST(req: NextRequest) {
 
   // Determine folder based on environment
   // Vercel sets NODE_ENV to 'production' only on the main branch
-  const folder =
-    process.env.NODE_ENV === "production" ? "uploads" : "dev-uploads";
+  const isProduction = process.env.IS_PROD === "true";
+  const folder = isProduction ? "uploads" : "dev-uploads";
 
   const ext = filename.split(".").pop();
   // Key now looks like: dev-uploads/user_id/uuid.png
