@@ -5,8 +5,6 @@ import { connectDB } from "@/lib/mongoose";
 import { Entry } from "@/models/entry";
 import { encrypt, safeDecrypt } from "@/lib/encryption";
 
-console.log("Journal API route loaded");
-
 export async function POST(req: NextRequest) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session)

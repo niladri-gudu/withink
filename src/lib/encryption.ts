@@ -19,19 +19,15 @@ export function encrypt(text: string): string {
 }
 
 export function decrypt(encryptedData: string): string {
-  console.log("Input to decrypt:", encryptedData.substring(0, 20) + "..."); // Debug line
-
   if (
     !encryptedData ||
     typeof encryptedData !== "string" ||
     !encryptedData.includes(":")
   ) {
-    console.log("Not encrypted format, skipping.");
     return encryptedData;
   }
 
   const parts = encryptedData.split(":");
-  // Ensure we are getting exactly [iv, authTag, encryptedText]
   if (parts.length < 3) return encryptedData;
 
   const encryptedText = parts.pop()!;
@@ -48,7 +44,6 @@ export function decrypt(encryptedData: string): string {
     let decrypted = decipher.update(encryptedText, "hex", "utf8");
     decrypted += decipher.final("utf8");
 
-    console.log("Decryption successful!");
     return decrypted;
   } catch (e) {
     console.error("Decryption failed. Key might be wrong.");
