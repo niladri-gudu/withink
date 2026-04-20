@@ -9,13 +9,13 @@ import {
   Link,
   Section,
 } from "@react-email/components";
-import * as React from "react";
 
 interface WelcomeEmailProps {
   userFirstname: string;
+  baseUrl: string;
 }
 
-export const WelcomeEmail = ({ userFirstname }: WelcomeEmailProps) => (
+export const WelcomeEmail = ({ userFirstname, baseUrl }: WelcomeEmailProps) => (
   <Html>
     <Head />
     <Preview>Welcome to your new sanctuary for thoughts.</Preview>
@@ -24,16 +24,17 @@ export const WelcomeEmail = ({ userFirstname }: WelcomeEmailProps) => (
         <Heading style={h1}>think in ink.</Heading>
         <Text style={text}>Hi {userFirstname},</Text>
         <Text style={text}>
-          Welcome to <strong>withink.</strong>—a private, minimal space designed 
+          Welcome to <strong>withink.</strong>—a private, minimal space designed
           for your mind to breathe. Your sanctuary is now ready.
         </Text>
         <Section style={buttonContainer}>
-          <Link href="https://withink.me/journal" style={button}>
+          <Link href={`${baseUrl}/journal`} style={button}>
             Open Your Journal
           </Link>
         </Section>
         <Text style={footer}>
-          If you have any questions, just reply to this email. We&apos;re here to help.
+          If you have any questions, just reply to this email. We&apos;re here
+          to help.
         </Text>
       </Container>
     </Body>
@@ -42,7 +43,8 @@ export const WelcomeEmail = ({ userFirstname }: WelcomeEmailProps) => (
 
 const main = {
   backgroundColor: "#ffffff",
-  fontFamily: '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif',
+  fontFamily:
+    '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif',
 };
 
 const container = {
