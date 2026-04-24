@@ -1,10 +1,19 @@
+/* eslint-disable react/jsx-no-comment-textnodes */
 "use client";
 
-import { LayoutDashboard } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  Loader2,
+  LayoutDashboard,
+  Menu,
+  PanelLeftClose,
+  PanelLeftOpen,
+  PenLine,
+  X,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "../ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Calendar as CalendarIcon, ChevronDown } from "lucide-react";
 import {
@@ -50,12 +59,67 @@ function formatMonthLabel(key: string) {
 }
 
 export function JournalSidebar({
-  entries,
+  entries: initialEntries,
   selectedDate,
   userName,
   today,
   onSelect,
 }: Props) {
+  const [loadedEntries, setLoadedEntries] = useState<Entry[]>([]);
+  const entries = [
+    ...initialEntries,
+    ...loadedEntries.filter(
+      (loaded) => !initialEntries.some((entry) => entry.date === loaded.date),
+    ),
+  ];
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const observerRef = useRef<HTMLDivElement | null>(null);
+
+  const fetchMoreEntries = useCallback(async () => {
+    if (isLoading || !hasMore) return;
+
+    setIsLoading(true);
+    try {
+      const nextPage = page + 1;
+      const res = await fetch(`/api/journal?page=${nextPage}&limit=15`);
+      const data = await res.json();
+
+      if (data.entries.length === 0) {
+        setHasMore(false);
+      } else {
+        setLoadedEntries((prev) => [...prev, ...data.entries]);
+        setPage(nextPage);
+        if (data.pagination && nextPage >= data.pagination.totalPages) {
+          setHasMore(false);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to load more entries:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [hasMore, isLoading, page]);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          fetchMoreEntries();
+        }
+      },
+      { threshold: 1.0 },
+    );
+
+    if (observerRef.current) {
+      observer.observe(observerRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [fetchMoreEntries]);
+
   const [calendarDate, setCalendarDate] = useState<Date>(new Date());
 
   const entryDates = new Set(entries.map((e) => e.date));
@@ -221,69 +285,107 @@ export function JournalSidebar({
           </div>
         </div> */}
 
-        {/* 3. HISTORY SECTION */}
-        <div className="space-y-6">
-          {Object.entries(grouped).map(([monthKey, monthEntries]) => {
-            const historicalEntries = monthEntries.filter(
-              (e) => e.date !== today,
-            );
-            if (historicalEntries.length === 0) return null;
+{/* 3. HISTORY SECTION */}
+<div className="space-y-4">
+  {Object.entries(grouped).map(([monthKey, monthEntries]) => {
+    const historicalEntries = monthEntries.filter(
+      (e) => e.date !== today,
+    );
+    if (historicalEntries.length === 0) return null;
+
+    // 1. Get the current month key (e.g., "2026-04")
+    const [tYear, tMonth] = today.split("-");
+    const currentMonthKey = `${tYear}-${tMonth}`;
+
+    // 2. Logic: Open if it's the current month OR if it contains the selected entry
+    const isCurrentMonth = monthKey === currentMonthKey;
+    const containsSelected = historicalEntries.some(
+      (e) => e.date === selectedDate,
+    );
+
+    return (
+      <Collapsible
+        key={monthKey}
+        // Force open if it meets our criteria
+        defaultOpen={isCurrentMonth || containsSelected}
+        className="space-y-2 group"
+      >
+        <div className="flex items-center justify-between px-2">
+          <p className="text-[10px] font-bold text-muted-foreground/50 uppercase tracking-[0.2em]">
+            {formatMonthLabel(monthKey)}
+          </p>
+          <CollapsibleTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0 rounded-md hover:bg-muted opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <ChevronDown className="h-3 w-3 text-muted-foreground transition-transform duration-300 group-data-[state=open]:rotate-180" />
+            </Button>
+          </CollapsibleTrigger>
+        </div>
+
+        <CollapsibleContent className="space-y-1 animate-in fade-in slide-in-from-top-1 duration-300">
+          {historicalEntries.map((entry) => {
+            const isSelected = entry.date === selectedDate;
+            const day = entry.date.split("-")[2];
 
             return (
-              <div key={monthKey} className="space-y-3">
-                <p className="text-[10px] font-bold text-muted-foreground/50 uppercase tracking-[0.2em] px-2">
-                  {formatMonthLabel(monthKey)}
-                </p>
-                <div className="space-y-1">
-                  {historicalEntries.map((entry) => {
-                    const isSelected = entry.date === selectedDate;
-                    const day = entry.date.split("-")[2];
-
-                    return (
-                      <Button
-                        key={entry.date}
-                        variant="ghost"
-                        onClick={() => onSelect(entry)}
-                        className={cn(
-                          "w-full h-auto text-left justify-start px-3 py-3 rounded-2xl transition-all duration-200 flex items-center gap-4 shadow-none border border-transparent",
-                          isSelected
-                            ? "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground cursor-default"
-                            : "hover:bg-muted/50 text-muted-foreground hover:text-foreground",
-                        )}
-                      >
-                        <div
-                          className={cn(
-                            "shrink-0 w-9 h-9 rounded-xl flex items-center justify-center border transition-colors text-xs font-bold",
-                            isSelected
-                              ? "bg-primary-foreground/20 border-primary-foreground/20 text-primary-foreground"
-                              : "bg-muted border-transparent text-foreground",
-                          )}
-                        >
-                          {day}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-bold truncate leading-tight">
-                            {entry.title || "Untitled"}
-                          </p>
-                          <p
-                            className={cn(
-                              "text-[10px] truncate mt-1 leading-none opacity-60",
-                              isSelected
-                                ? "text-primary-foreground/70"
-                                : "text-muted-foreground",
-                            )}
-                          >
-                            {entry.wordCount} words •{" "}
-                            {entry.preview || "No content"}
-                          </p>
-                        </div>
-                      </Button>
-                    );
-                  })}
+              <Button
+                key={entry.date}
+                variant="ghost"
+                onClick={() => onSelect(entry)}
+                className={cn(
+                  "w-full h-auto text-left justify-start px-3 py-3 rounded-2xl transition-all duration-200 flex items-center gap-4 shadow-none border border-transparent",
+                  isSelected
+                    ? "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground cursor-default"
+                    : "hover:bg-muted/50 text-muted-foreground hover:text-foreground",
+                )}
+              >
+                <div
+                  className={cn(
+                    "shrink-0 w-9 h-9 rounded-xl flex items-center justify-center border transition-colors text-xs font-bold",
+                    isSelected
+                      ? "bg-primary-foreground/20 border-primary-foreground/20 text-primary-foreground"
+                      : "bg-muted border-transparent text-foreground",
+                  )}
+                >
+                  {day}
                 </div>
-              </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold truncate leading-tight">
+                    {entry.title || "Untitled"}
+                  </p>
+                  <p
+                    className={cn(
+                      "text-[10px] truncate mt-1 leading-none opacity-60",
+                      isSelected
+                        ? "text-primary-foreground/70"
+                        : "text-muted-foreground",
+                    )}
+                  >
+                    {entry.wordCount} words •{" "}
+                    {entry.preview || "No content"}
+                  </p>
+                </div>
+              </Button>
             );
           })}
+        </CollapsibleContent>
+      </Collapsible>
+    );
+  })}
+</div>
+
+        <div ref={observerRef} className="py-4 flex justify-center">
+          {isLoading && (
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground opacity-50" />
+          )}
+          {!hasMore && entries.length > 10 && (
+            <p className="text-[10px] font-mono text-muted-foreground/30 uppercase tracking-widest">
+              // End_of_Sanctuary
+            </p>
+          )}
         </div>
       </div>
     </div>

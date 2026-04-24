@@ -23,6 +23,7 @@ export default async function JournalPage() {
       { date: 1, title: 1, wordCount: 1, contentText: 1, contentHtml: 1 },
     )
       .sort({ date: -1 })
+      .limit(15)
       .lean(),
   ]);
 
@@ -33,7 +34,7 @@ export default async function JournalPage() {
       title: e.title || "",
       wordCount: e.wordCount || 0,
       preview: decryptedText.trim().split("\n")[0]?.slice(0, 80) || "",
-      contentHtml: safeDecrypt(e.contentHtml || ""), // Also decrypt HTML for consistency
+      contentHtml: safeDecrypt(e.contentHtml || ""),
     };
   });
 
@@ -44,7 +45,6 @@ export default async function JournalPage() {
   return (
     <JournalHome
       today={today}
-      // Pass null or empty strings if no entry exists for today
       todayHtml={todayHtml}
       todayTitle={(todayEntry as any)?.title || ""}
       entries={entries}

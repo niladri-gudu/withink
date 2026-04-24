@@ -69,6 +69,10 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const date = searchParams.get("date");
 
+  const page = parseInt(searchParams.get("page") || "1");
+  const limit = parseInt(searchParams.get("limit") || "10");
+  const skip = (page - 1) * limit;
+
   await connectDB();
 
   if (date) {
@@ -88,20 +92,33 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ entry });
   }
 
-  const entries = await Entry.find(
-    { userId: session.user.id },
-    { date: 1, title: 1, wordCount: 1, contentText: 1 },
-  )
-    .sort({ date: -1 })
-    .lean();
+  const [entries, total] = await Promise.all([
+    Entry.find(
+      { userId: session.user.id },
+      { date: 1, title: 1, wordCount: 1, contentText: 1 },
+    )
+      .sort({ date: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean(),
+    Entry.countDocuments({ userId: session.user.id }),
+  ]);
 
   const decryptedEntries = entries.map((entry) => ({
     ...entry,
-    contentText: safeDecrypt(entry.contentText),
+    contentText: safeDecrypt(entry.contentText || ""),
   }));
 
   return NextResponse.json(
-    { entries: decryptedEntries },
+    {
+      entries: decryptedEntries,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    },
     {
       headers: {
         "Cache-Control": "no-store, max-age=0",
