@@ -27,7 +27,7 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { signOut, updateUser, authClient } from "@/lib/auth-client";
+import { signOut, updateUser } from "@/lib/auth-client";
 import { useTheme } from "next-themes";
 import { getAvatarPresignedUrl, getStorageStats } from "@/app/actions/storage";
 import Image from "next/image";
@@ -35,6 +35,18 @@ import { toast } from "sonner";
 import Cropper from "react-easy-crop";
 
 type TabType = "profile" | "appearance" | "data";
+
+type StorageFile = {
+  key: string | undefined;
+  url: string;
+};
+
+type StorageStats = {
+  usedMB: number;
+  limitMB: number;
+  fileCount: number;
+  files: StorageFile[];
+};
 
 interface SettingsModalProps {
   user: any;
@@ -58,6 +70,8 @@ export function SettingsModal({
   // 📝 Profile & Avatar State
   const [name, setName] = React.useState(user?.name || "");
   const [isUpdating, setIsUpdating] = React.useState(false);
+
+  // 📸 Avatar & Cropping State
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [imageSrc, setImageSrc] = React.useState<string | null>(null);
   const [crop, setCrop] = React.useState({ x: 0, y: 0 });
@@ -65,12 +79,12 @@ export function SettingsModal({
   const [croppedAreaPixels, setCroppedAreaPixels] = React.useState<any>(null);
   const [showCropper, setShowCropper] = React.useState(false);
 
-  // 🚀 Local Preview States
+  // 🚀 Local Preview States (The Fix for visual updates)
   const [localPreview, setLocalPreview] = React.useState<string | null>(null);
   const [croppedBlob, setCroppedBlob] = React.useState<Blob | null>(null);
 
   // 📊 Storage Stats
-  const [stats, setStats] = React.useState({
+  const [stats, setStats] = React.useState<StorageStats>({
     usedMB: 0,
     limitMB: 50,
     fileCount: 0,
@@ -78,7 +92,14 @@ export function SettingsModal({
   });
   const [loading, setLoading] = React.useState(false);
 
-  // Handle File Pick
+  // 🛠️ Camera Trigger
+  const onCameraClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  // Handle File Selection
   const onFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
@@ -88,52 +109,56 @@ export function SettingsModal({
     }
   };
 
-  // 🛠️ Canvas logic to show preview and prepare blob
+  // 🛠️ Canvas logic to generate the local preview thumbnail
   const generatePreview = async () => {
     if (!imageSrc || !croppedAreaPixels) return;
 
-    const image = new window.Image();
-    image.src = imageSrc;
-    await new Promise((resolve) => (image.onload = resolve));
+    try {
+      const image = new window.Image();
+      image.src = imageSrc;
+      await new Promise((resolve) => (image.onload = resolve));
 
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
 
-    canvas.width = croppedAreaPixels.width;
-    canvas.height = croppedAreaPixels.height;
+      canvas.width = croppedAreaPixels.width;
+      canvas.height = croppedAreaPixels.height;
 
-    ctx.drawImage(
-      image,
-      croppedAreaPixels.x,
-      croppedAreaPixels.y,
-      croppedAreaPixels.width,
-      croppedAreaPixels.height,
-      0,
-      0,
-      croppedAreaPixels.width,
-      croppedAreaPixels.height,
-    );
+      ctx.drawImage(
+        image,
+        croppedAreaPixels.x,
+        croppedAreaPixels.y,
+        croppedAreaPixels.width,
+        croppedAreaPixels.height,
+        0,
+        0,
+        croppedAreaPixels.width,
+        croppedAreaPixels.height,
+      );
 
-    canvas.toBlob(
-      (blob) => {
-        if (blob) {
-          setCroppedBlob(blob);
-          const previewUrl = URL.createObjectURL(blob);
-          setLocalPreview(previewUrl);
-          setShowCropper(false);
-        }
-      },
-      "image/jpeg",
-      0.9,
-    );
+      canvas.toBlob(
+        (blob) => {
+          if (blob) {
+            setCroppedBlob(blob);
+            const previewUrl = URL.createObjectURL(blob);
+            setLocalPreview(previewUrl);
+            setShowCropper(false);
+          }
+        },
+        "image/jpeg",
+        0.9,
+      );
+    } catch (e) {
+      console.error("Failed to generate preview", e);
+      toast.error("Failed to process image crop.");
+    }
   };
 
-  // 💾 Save Profile: Uploads to R2 if blob exists, then updates DB
+  // 💾 Save Profile: Uploads to R2 if blob exists, then updates metadata
   const handleSaveProfile = async () => {
     setIsUpdating(true);
     const toastId = toast.loading("Syncing sanctuary profile...");
-
     try {
       let finalImageUrl = user.image;
 
@@ -150,16 +175,12 @@ export function SettingsModal({
         finalImageUrl = publicUrl;
       }
 
-      const { error } = await updateUser({
-        name: name,
-        image: finalImageUrl,
-      });
+      await updateUser({ name, image: finalImageUrl });
+      toast.success("Profile updated successfully", { id: toastId });
 
-      if (error) throw error;
-
-      toast.success("Identity updated", { id: toastId });
-      setCroppedBlob(null);
+      // Reset local states
       setLocalPreview(null);
+      setCroppedBlob(null);
       setImageSrc(null);
     } catch (err: any) {
       toast.error(err.message || "Update failed", { id: toastId });
@@ -168,21 +189,21 @@ export function SettingsModal({
     }
   };
 
-  // const handlePasswordReset = async () => {
-  //   const { error } = await authClient.forgetPassword({
-  //     email: user.email,
-  //     redirectTo: "/reset-password",
-  //   });
-  //   if (error) return toast.error(error.message);
-  //   toast.success("Security link sent to your email.");
-  // };
+  const handleOpenStateChange = (nextOpen: boolean) => {
+    if (nextOpen) {
+      setName(user?.name || "");
+      setLocalPreview(null);
+      setCroppedBlob(null);
+    }
+    onOpenChange(nextOpen);
+  };
 
   const handleTabChange = async (tab: TabType) => {
     setActiveTab(tab);
     if (tab === "data" && user?.id) {
       setLoading(true);
       try {
-        const data: any = await getStorageStats(user.id);
+        const data = await getStorageStats(user.id);
         setStats(data);
       } finally {
         setLoading(false);
@@ -192,24 +213,25 @@ export function SettingsModal({
 
   if (!mounted) return null;
 
+  // 🚀 Fallback Hierarchy: New Crop -> Database/Google -> Fallback Icon
   const currentDisplayImage = localPreview || user?.image;
 
   return (
     <>
-      <Dialog open={open} onOpenChange={onOpenChange}>
+      <Dialog open={open} onOpenChange={handleOpenStateChange}>
         <DialogContent className="max-w-[95vw] sm:max-w-180 h-[85vh] sm:h-135 p-0 gap-0 border-border/40 bg-background/95 backdrop-blur-xl rounded-3xl sm:rounded-4xl overflow-hidden shadow-2xl flex flex-col sm:flex-row">
           <div className="sr-only">
             <DialogTitle>Sanctuary Settings</DialogTitle>
             <DialogDescription>
-              Manage your sanctuary identity and archives.
+              Manage your identity and archives.
             </DialogDescription>
           </div>
 
           {/* 🏛️ Sidebar */}
           <div className="w-full sm:w-52.5 border-b sm:border-b-0 sm:border-r border-border/20 bg-secondary/10 p-3 sm:p-4 flex flex-row sm:flex-col justify-between items-center sm:items-stretch shrink-0">
             <div className="flex flex-row sm:flex-col items-center sm:items-stretch w-full gap-2 sm:gap-1 overflow-x-auto no-scrollbar">
-              <div className="hidden sm:block px-3 py-4 mb-2">
-                <span className="text-xl font-black tracking-tighter italic">
+              <div className="hidden sm:block px-3 py-4 mb-2 text-center">
+                <span className="text-xl font-black tracking-tighter italic text-foreground">
                   withink.
                 </span>
               </div>
@@ -224,7 +246,7 @@ export function SettingsModal({
                   className={cn(
                     "flex items-center gap-2.5 sm:gap-3 px-3 py-2 sm:py-2.5 rounded-full sm:rounded-xl text-xs sm:text-sm font-medium transition-all whitespace-nowrap",
                     activeTab === item.id
-                      ? "bg-foreground text-background shadow-md sm:shadow-lg sm:scale-[1.02]"
+                      ? "bg-foreground text-background shadow-md sm:scale-[1.02]"
                       : "hover:bg-secondary/50 text-muted-foreground",
                   )}
                 >
@@ -245,7 +267,7 @@ export function SettingsModal({
             </Button>
           </div>
 
-          {/* 🏛️ Content Area */}
+          {/* 🏛️ Content */}
           <div className="flex-1 p-5 sm:p-8 overflow-y-auto no-scrollbar pb-24 sm:pb-8">
             {activeTab === "profile" && (
               <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 sm:slide-in-from-right-4 duration-300">
@@ -262,20 +284,21 @@ export function SettingsModal({
                     accept="image/*"
                     onChange={onFileChange}
                   />
-
                   <button
-                    onClick={() => fileInputRef.current?.click()}
-                    className="relative group transition-transform active:scale-95"
+                    onClick={onCameraClick}
+                    className="relative group transition-transform active:scale-95 cursor-pointer"
                   >
                     <div className="h-24 w-24 rounded-full border-4 border-background shadow-2xl overflow-hidden bg-secondary/30 relative">
-                      {/* 🚀 PRIORITY LOGIC HERE */}
                       {currentDisplayImage ? (
                         <Image
                           src={currentDisplayImage}
                           alt={user.name || "User"}
                           fill
                           className="object-cover"
-                          unoptimized={currentDisplayImage.startsWith("blob:")} // Important for local previews
+                          unoptimized={
+                            currentDisplayImage.startsWith("blob:") ||
+                            currentDisplayImage.includes("googleusercontent")
+                          }
                         />
                       ) : (
                         <div className="h-full w-full flex items-center justify-center text-muted-foreground">
@@ -283,13 +306,13 @@ export function SettingsModal({
                         </div>
                       )}
                     </div>
-                    <div className="absolute bottom-0 right-0 p-1.5 bg-foreground text-background rounded-full border-2 border-background shadow-lg group-hover:scale-110 transition-transform">
+                    <div className="absolute bottom-0 right-0 p-1.5 bg-foreground text-background rounded-full border-2 border-background shadow-lg">
                       <Camera size={12} />
                     </div>
                   </button>
                   <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">
                     {localPreview
-                      ? "New Avatar Selected"
+                      ? "New Avatar Ready"
                       : "Click to change avatar"}
                   </p>
                 </div>
@@ -324,49 +347,9 @@ export function SettingsModal({
                     <div className="h-4 w-4 border-2 border-background border-t-transparent animate-spin rounded-full" />
                   ) : (
                     "Save Changes"
-                  )}{" "}
+                  )}
                   <Save size={16} />
                 </Button>
-
-                <div className="pt-4 space-y-4">
-                  <div className="grid gap-1.5">
-                    <label className="text-[10px] uppercase font-bold text-muted-foreground ml-1">
-                      Password
-                    </label>
-                    <Button
-                      variant="outline"
-                      className="justify-between rounded-2xl h-12 border-border/40 hover:bg-secondary/20 group transition-all"
-                      // onClick={handlePasswordReset}
-                    >
-                      <div className="flex items-center gap-3">
-                        <KeyRound
-                          size={16}
-                          className="text-muted-foreground group-hover:text-primary transition-colors"
-                        />
-                        <span className="text-xs sm:text-sm font-medium">
-                          Reset Password Link
-                        </span>
-                      </div>
-                      <ExternalLink size={14} className="opacity-40" />
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="pt-6 border-t border-destructive/20">
-                  <h4 className="text-sm font-bold text-destructive mb-1 flex items-center gap-2">
-                    <UserMinus size={16} /> Danger Zone
-                  </h4>
-                  <p className="text-[11px] text-muted-foreground mb-4 leading-relaxed">
-                    Permanent account deletion. This will wipe all your
-                    archives.
-                  </p>
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start text-destructive hover:bg-destructive/10 rounded-xl h-10 px-3 font-semibold text-xs sm:text-sm"
-                  >
-                    Delete Account
-                  </Button>
-                </div>
               </div>
             )}
 
@@ -542,15 +525,15 @@ export function SettingsModal({
         </DialogContent>
       </Dialog>
 
-      {/* 📸 Cropper Dialog */}
+      {/* 📸 Separate Avatar Cropper Dialog */}
       <Dialog open={showCropper} onOpenChange={setShowCropper}>
-        <DialogContent className="max-w-[400px] p-0 overflow-hidden bg-background rounded-3xl border-border/40 shadow-2xl">
+        <DialogContent className="max-w-100 p-0 overflow-hidden bg-background rounded-3xl border-border/40 shadow-2xl">
           <div className="p-6 pb-2 text-center">
             <DialogTitle className="text-lg font-black tracking-tighter uppercase italic">
               Adjust Avatar
             </DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground">
-              Position your picture.
+              Position your picture within the sanctuary lens.
             </DialogDescription>
           </div>
           <div className="relative h-80 w-full bg-black">

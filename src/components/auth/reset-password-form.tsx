@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { authClient } from "@/lib/auth-client";
+import { resetPassword } from "@/lib/auth-client";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,7 +44,7 @@ export function ResetPasswordForm() {
     }
 
     setIsLoading(true);
-    const res = await authClient.resetPassword({
+    const res = await resetPassword({
       token,
       newPassword: password,
     });

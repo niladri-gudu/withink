@@ -2,12 +2,12 @@
 "use client";
 
 import { useState } from "react";
-import { authClient } from "@/lib/auth-client";
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { requestPasswordReset } from "@/lib/auth-client";
 
 export function ForgotPasswordForm() {
   const [email, setEmail] = useState("");
@@ -29,7 +29,7 @@ export function ForgotPasswordForm() {
     setIsLoading(true);
     setError(undefined);
 
-    const res = await authClient.requestPasswordReset({
+    const res = await requestPasswordReset({
       email,
       redirectTo: "/reset-password",
     });
