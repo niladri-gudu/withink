@@ -29,7 +29,6 @@ interface UserDropdownProps {
 }
 
 export function UserDropdown({ session }: UserDropdownProps) {
-  // 🔄 Unified state for all overlay types
   const [activeView, setActiveView] = React.useState<"issue" | "feedback" | "settings" | null>(
     null,
   );
@@ -61,7 +60,7 @@ export function UserDropdown({ session }: UserDropdownProps) {
 
         <DropdownMenuContent
           align="end"
-          className="w-64 mt-3 rounded-[32px] border-border/40 bg-background/95 backdrop-blur-xl shadow-2xl antialiased p-2"
+          className="w-64 mt-3 rounded-4xl border-border/40 bg-background/95 backdrop-blur-xl shadow-2xl antialiased p-2"
         >
           <DropdownMenuLabel className="font-normal px-3 py-4">
             <div className="flex flex-col space-y-1.5">
