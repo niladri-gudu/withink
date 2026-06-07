@@ -25,16 +25,17 @@ export default async function JournalDatePage({ params, searchParams }: Props) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) redirect("/signin");
 
-  // 1. Fetch the entry FIRST to see if it exists
-  const entry = await getCachedEntry(session.user.id, date);
-
-  // 2. Determine "Today" and "Yesterday"
   const cookieToday = (await cookies()).get("withink-local-date")?.value;
   const today = isDateString(clientToday)
     ? clientToday
     : isDateString(cookieToday)
       ? cookieToday
       : getLocalDateString();
+
+  // 1. Fetch the entry FIRST to see if it exists
+  const entry = await getCachedEntry(session.user.id, date, today);
+
+  // 2. Determine "Yesterday"
   const yesterday = addDays(today, -1);
 
   // 3. Define the Firewall Logic

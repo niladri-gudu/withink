@@ -10,6 +10,7 @@ import { cookies } from "next/headers";
 import { isDateString } from "@/lib/utils/date";
 import {
   getCachedEntry,
+  getCachedEntryStats,
   getCachedEntrySummaries,
 } from "@/lib/entry-cache";
 
@@ -20,10 +21,11 @@ export default async function JournalPage() {
   const cookieToday = (await cookies()).get("withink-local-date")?.value;
   const today = isDateString(cookieToday) ? cookieToday : getLocalDateString();
 
-  const [todayEntry, allEntries, streakData] = await Promise.all([
-    getCachedEntry(session.user.id, today),
+  const [todayEntry, allEntries, streakData, entryStats] = await Promise.all([
+    getCachedEntry(session.user.id, today, today),
     getCachedEntrySummaries(session.user.id, 15),
     getStreakData(today),
+    getCachedEntryStats(session.user.id),
   ]);
 
   const entries = (allEntries as any[]).map((e) => {
@@ -51,6 +53,7 @@ export default async function JournalPage() {
       userName={session.user.name?.split(" ")[0] ?? ""}
       streak={streakData.currentStreak}
       totalEntries={streakData.totalEntries}
+      totalWords={entryStats.totalWords}
     />
   );
 }

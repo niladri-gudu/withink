@@ -44,6 +44,7 @@ interface Props {
   userName: string;
   streak: number;
   totalEntries: number;
+  totalWords: number;
 }
 
 export function JournalHome({
@@ -52,6 +53,7 @@ export function JournalHome({
   userName,
   streak,
   totalEntries,
+  totalWords,
 }: Props) {
   const router = useRouter();
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
@@ -80,12 +82,6 @@ export function JournalHome({
     serverEntries.forEach((e) => map.set(e.date, e));
     return Array.from(map.values());
   }, [serverEntries]);
-
-  const stats = useMemo(() => {
-    const total = entries.reduce((acc, curr) => acc + (curr.wordCount || 0), 0);
-    const avg = entries.length > 0 ? Math.round(total / entries.length) : 0;
-    return { total, avg };
-  }, [entries]);
 
   const yesterdayDate = useMemo(() => {
     return addDays(localToday, -1);
@@ -133,7 +129,11 @@ export function JournalHome({
     if (!entry.contentHtml && entry.wordCount > 0) {
       setIsFetchingEntry(true);
       try {
-        const res = await fetch(`/api/entries?date=${entry.date}`);
+        const params = new URLSearchParams({
+          date: entry.date,
+          today: localToday,
+        });
+        const res = await fetch(`/api/entries?${params.toString()}`);
         const data = await res.json();
         if (data.entry) {
           setEntryCache((prev) => ({ ...prev, [entry.date]: data.entry }));
@@ -326,7 +326,7 @@ export function JournalHome({
                         System.Analysis
                       </p>
                       <p className="text-xs sm:text-sm font-bold opacity-60">
-                        {stats.total.toLocaleString()} words
+                        {totalWords.toLocaleString()} words
                       </p>
                     </div>
                   </div>
@@ -368,7 +368,7 @@ export function JournalHome({
                   </Button>
                 </div>
               ) : showStartWriting ? (
-                <div className="h-full flex flex-col items-center justify-center text-center space-y-8 animate-in zoom-in duration-500">
+                <div className="h-full flex flex-col items-center justify-center text-center space-y-8">
                   <h2 className="text-3xl lg:text-4xl font-black tracking-tight leading-tight">
                     Today is a fresh start.
                   </h2>

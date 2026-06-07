@@ -94,7 +94,7 @@ export function JournalEditor({
   }, 1500, editorReady);
 
   return (
-    <div className="min-h-dvh bg-background text-foreground selection:bg-primary/10 transition-colors duration-500">
+    <div className="min-h-dvh bg-background text-foreground selection:bg-primary selection:text-primary-foreground transition-colors duration-500">
       <div className="fixed top-0 left-0 right-0 z-20 h-24 sm:h-32 bg-linear-to-b from-background via-background/80 to-transparent pointer-events-none" />
 
       <main className="max-w-4xl mx-auto px-4 sm:px-6 pt-22 sm:pt-32 pb-[45vh] relative z-30">

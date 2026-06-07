@@ -17,8 +17,6 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 
-const CACHE_KEY = "withink_journal_buffer";
-
 interface Entry {
   date: string;
   title: string;
@@ -75,20 +73,7 @@ export function JournalSidebar({
     setLoadedEntries([]);
     setPage(1);
     setHasMore(true);
-    localStorage.removeItem(CACHE_KEY);
   }, [initialEntries]);
-
-  useEffect(() => {
-    const saved = localStorage.getItem(CACHE_KEY);
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved) as Entry[];
-        setLoadedEntries(parsed);
-      } catch (e) {
-        console.error("Archive hydration failed", e);
-      }
-    }
-  }, []);
 
   const allEntries = useMemo(() => {
     const map = new Map<string, Entry>();

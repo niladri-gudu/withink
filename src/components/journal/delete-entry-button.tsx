@@ -27,15 +27,12 @@ export function DeleteEntryButton({
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
-  const CACHE_KEY = "withink_journal_buffer";
-
   const handleDelete = async () => {
     setLoading(true);
     try {
       const res = await fetch(`/api/entries/${date}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Failed to delete");
 
-      localStorage.removeItem(CACHE_KEY);
       toast.success("Entry deleted");
 
       if (onSuccess) onSuccess();

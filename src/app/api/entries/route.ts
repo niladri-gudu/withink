@@ -12,6 +12,7 @@ import {
   getCachedEntry,
   getCachedEntryPage,
   invalidateUserEntryCache,
+  setCachedEntry,
 } from "@/lib/entry-cache";
 
 export async function POST(req: NextRequest) {
@@ -88,6 +89,7 @@ export async function POST(req: NextRequest) {
     { upsert: true, new: true, lean: true },
   );
   await invalidateUserEntryCache(session.user.id);
+  await setCachedEntry(session.user.id, date, entry, userLocalToday);
 
   // Decrypt for response
   if (entry) {
@@ -112,6 +114,7 @@ export async function GET(req: NextRequest) {
 
   const { searchParams } = new URL(req.url);
   const date = searchParams.get("date");
+  const localToday = searchParams.get("today");
   const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10) || 1);
   const limit = Math.min(
     50,
@@ -123,7 +126,11 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Invalid date" }, { status: 400 });
     }
 
-    const entry = await getCachedEntry(session.user.id, date);
+    const entry = await getCachedEntry(
+      session.user.id,
+      date,
+      isDateString(localToday) ? localToday : undefined,
+    );
     if (entry) {
       entry.contentHtml = safeDecrypt(entry.contentHtml);
       entry.contentText = safeDecrypt(entry.contentText);
