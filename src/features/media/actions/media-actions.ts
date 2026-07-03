@@ -1,0 +1,250 @@
+"use server";
+
+import { headers } from "next/headers";
+import { ListObjectsV2Command, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import { auth } from "@/lib/auth";
+import { r2 } from "@/lib/r2";
+import { env } from "@/config/env";
+import { connectDB } from "@/lib/db/mongoose";
+import { EntryModel } from "@/features/journal/repositories/entry-model";
+import { EntryRepository } from "@/features/journal/repositories/entry-repository";
+import { safeDecrypt, encrypt } from "@/lib/encryption";
+import { handleError } from "@/server/errors";
+
+const isProduction = env.IS_PROD;
+const envPrefix = isProduction ? "" : "dev-";
+const STORAGE_LIMIT_MB = 50;
+
+export interface MediaFile {
+  key: string;
+  url: string;
+  size: number;
+  lastModified: string | null;
+}
+
+export interface StorageStats {
+  usedMB: number;
+  fileCount: number;
+  limitMB: number;
+  percentUsed: number;
+}
+
+/**
+ * Fetches storage statistics for the Media Library
+ */
+export async function getStorageStatsAction(): Promise<{
+  success: boolean;
+  data?: StorageStats;
+  error?: string;
+}> {
+  try {
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const prefix = `${envPrefix}journal/${session.user.id}/`;
+
+    const command = new ListObjectsV2Command({
+      Bucket: env.R2_BUCKET_NAME,
+      Prefix: prefix,
+    });
+
+    const response = await r2.send(command);
+
+    const totalSizeBytes =
+      response.Contents?.reduce((acc, obj) => acc + (obj.Size || 0), 0) || 0;
+    const fileCount = response.Contents?.length || 0;
+    const totalSizeMB = Number((totalSizeBytes / (1024 * 1024)).toFixed(2));
+    const percentUsed = Number(Math.min((totalSizeMB / STORAGE_LIMIT_MB) * 100, 100).toFixed(1));
+
+    return {
+      success: true,
+      data: {
+        usedMB: totalSizeMB,
+        fileCount,
+        limitMB: STORAGE_LIMIT_MB,
+        percentUsed,
+      },
+    };
+  } catch (err) {
+    const appError = handleError(err);
+    return { success: false, error: appError.safeMessage };
+  }
+}
+
+/**
+ * Fetches all media files uploaded by the user
+ */
+export async function getFullMediaLibraryAction(): Promise<{
+  success: boolean;
+  data?: MediaFile[];
+  error?: string;
+}> {
+  try {
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const prefix = `${envPrefix}journal/${session.user.id}/`;
+    const response = await r2.send(
+      new ListObjectsV2Command({
+        Bucket: env.R2_BUCKET_NAME,
+        Prefix: prefix,
+      }),
+    );
+
+    const files: MediaFile[] =
+      response.Contents?.map((file) => ({
+        key: file.Key!,
+        url: `${env.R2_PUBLIC_URL}/${file.Key}`,
+        size: file.Size || 0,
+        lastModified: file.LastModified?.toISOString() || null,
+      })) || [];
+
+    // Sort by last modified descending (most recent first)
+    files.sort((a, b) => {
+      const timeA = a.lastModified ? new Date(a.lastModified).getTime() : 0;
+      const timeB = b.lastModified ? new Date(b.lastModified).getTime() : 0;
+      return timeB - timeA;
+    });
+
+    return { success: true, data: files };
+  } catch (err) {
+    const appError = handleError(err);
+    return { success: false, error: appError.safeMessage };
+  }
+}
+
+/**
+ * Deletes a media file from R2 and scrubs all occurrences of its URL in user's entries.
+ */
+export async function deleteMediaFileAction(
+  fileKey: string,
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    // Safety check - make sure user is only deleting their own files
+    const userPathSegment = `/${session.user.id}/`;
+    if (!fileKey.includes(userPathSegment)) {
+      return { success: false, error: "You are not authorized to delete this file." };
+    }
+
+    // 1. Delete from R2
+    await r2.send(
+      new DeleteObjectCommand({
+        Bucket: env.R2_BUCKET_NAME,
+        Key: fileKey,
+      }),
+    );
+
+    const publicUrl = `${env.R2_PUBLIC_URL}/${fileKey}`;
+
+    // 2. Scrub from user entries in MongoDB
+    await connectDB();
+    const entries = await (EntryModel as any).find({ userId: session.user.id }).lean(); // eslint-disable-line @typescript-eslint/no-explicit-any
+    let entriesChanged = false;
+
+    interface TiptapNode {
+      type?: string;
+      attrs?: {
+        src?: string;
+        [key: string]: unknown;
+      };
+      content?: TiptapNode[];
+      [key: string]: unknown;
+    }
+
+    for (const entry of entries) {
+      const contentHtml = (safeDecrypt(entry.contentHtml) as string) || "";
+      const contentJsonRaw = (safeDecrypt(entry.contentJson) as string) || "";
+
+      if (!contentHtml.includes(publicUrl) && !contentJsonRaw.includes(publicUrl)) {
+        continue;
+      }
+
+      // Scrub from HTML img tags
+      const newHtml = contentHtml.replace(
+        new RegExp(`<img[^>]*src="${publicUrl}"[^>]*/?>`, "g"),
+        "",
+      );
+
+      // Scrub from Tiptap JSON node structure
+      let newJson = contentJsonRaw;
+      try {
+        const doc = JSON.parse(contentJsonRaw);
+        const scrub = (node: TiptapNode): TiptapNode | null => {
+          if (node?.type === "image" && node?.attrs?.src === publicUrl) {
+            return null;
+          }
+          if (Array.isArray(node?.content)) {
+            node.content = node.content.map((n) => scrub(n as TiptapNode)).filter(Boolean) as TiptapNode[];
+          }
+          return node;
+        };
+        newJson = JSON.stringify(scrub(doc));
+      } catch {
+        // malformed JSON, skip JSON structure scrub but keep HTML scrub
+      }
+
+      const dirty = newHtml !== contentHtml || newJson !== contentJsonRaw;
+
+      if (dirty) {
+        await (EntryModel as any).updateOne( // eslint-disable-line @typescript-eslint/no-explicit-any
+          { _id: entry._id },
+          {
+            contentHtml: encrypt(newHtml),
+            contentJson: encrypt(newJson),
+          },
+        );
+        entriesChanged = true;
+      }
+    }
+
+    if (entriesChanged) {
+      await EntryRepository.invalidateUserEntryCache(session.user.id);
+    }
+
+    return { success: true };
+  } catch (err) {
+    const appError = handleError(err);
+    return { success: false, error: appError.safeMessage };
+  }
+}
+
+/**
+ * Searches user's entries to find which date references this media url.
+ */
+export async function findEntryForMediaAction(
+  url: string,
+): Promise<{ success: boolean; date?: string | null; error?: string }> {
+  try {
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    await connectDB();
+    const entries = await (EntryModel as any).find( // eslint-disable-line @typescript-eslint/no-explicit-any
+      { userId: session.user.id },
+      { date: 1, contentHtml: 1 },
+    ).lean();
+
+    for (const entry of entries) {
+      const contentHtml = (safeDecrypt(entry.contentHtml) as string) || "";
+      if (contentHtml.includes(url)) {
+        return { success: true, date: entry.date };
+      }
+    }
+
+    return { success: true, date: null };
+  } catch (err) {
+    const appError = handleError(err);
+    return { success: false, error: appError.safeMessage };
+  }
+}
