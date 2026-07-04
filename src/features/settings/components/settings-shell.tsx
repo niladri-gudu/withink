@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
+import { DataExportCard } from "@/features/export/components/data-export-card";
 import { deleteAccountAction } from "../actions/settings-actions";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -852,6 +853,9 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
           </div>
         )}
       </SettingsSection>
+
+      {/* ==================== Your data (Export) ==================== */}
+      <DataExportCard />
 
       {/* ==================== Session ==================== */}
       <Card className="flex flex-col items-start justify-between gap-4 p-6 sm:flex-row sm:items-center sm:p-8">

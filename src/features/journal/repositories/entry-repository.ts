@@ -234,6 +234,20 @@ export class EntryRepository {
     return serializedResult;
   }
 
+  /**
+   * Returns every entry for a user in chronological order.
+   * Reads directly from MongoDB (no cache) so exports always reflect the
+   * complete, current dataset rather than a partial cached page.
+   */
+  static async getAllEntries(userId: string): Promise<IEntry[]> {
+    await connectDB();
+    const entries = await (EntryModel as any) // eslint-disable-line @typescript-eslint/no-explicit-any
+      .find({ userId })
+      .sort({ date: 1 })
+      .lean();
+    return serialize(entries);
+  }
+
   static async deleteEntry(userId: string, date: string): Promise<boolean> {
     await connectDB();
 

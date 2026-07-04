@@ -224,6 +224,16 @@ export class JournalService {
   }
 
   /**
+   * Returns every entry for a user, decrypted and chronologically ordered.
+   * Intended for full-account exports (data ownership); callers must already
+   * have verified that `userId` belongs to the requester.
+   */
+  static async getAllEntriesForExport(userId: string): Promise<DecryptedEntry[]> {
+    const entries = await EntryRepository.getAllEntries(userId);
+    return entries.map((entry) => this.decryptEntry(entry));
+  }
+
+  /**
    * Deletes a journal entry for a user on a given date.
    */
   static async deleteEntry(userId: string, date: string): Promise<boolean> {
