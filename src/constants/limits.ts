@@ -19,6 +19,15 @@ export const LIMITS = {
     // Allowed days in the past a user can create/backdate an entry
     BACKDATE_GRACE_PERIOD_DAYS: 3,
   },
+  FEEDBACK: {
+    SUBJECT_MIN_LENGTH: 3,
+    SUBJECT_MAX_LENGTH: 120,
+    MESSAGE_MIN_LENGTH: 10,
+    MESSAGE_MAX_LENGTH: 4000,
+    // A generous window that still stops abusive flooding.
+    RATE_LIMIT_MAX: 5,
+    RATE_LIMIT_WINDOW_SECONDS: 60 * 60, // 1 hour
+  },
 } as const;
 
 export type Limits = typeof LIMITS;

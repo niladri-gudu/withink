@@ -1,44 +1,36 @@
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+import { auth } from "@/lib/auth";
 import { ROUTES } from "@/constants/routes";
+import { FeedbackForm } from "@/features/feedback/components/feedback-form";
 
-export default function FeedbackPage() {
+export default async function FeedbackPage() {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session) {
+    redirect(ROUTES.AUTH.LOGIN);
+  }
+
   return (
-    <div className="flex-grow max-w-5xl mx-auto p-6 md:p-10 space-y-8 w-full animate-in fade-in duration-300">
-      <header className="flex items-center justify-between gap-4">
-        <div className="space-y-1">
-          <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-muted-foreground/60 block">
-            Community Support • Help
+    <div className="flex-grow max-w-3xl mx-auto p-6 md:p-10 space-y-8 w-full animate-in fade-in duration-300">
+      <header className="space-y-1">
+        <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-muted-foreground/60 block">
+          Direct Channel • Feedback Loop
+        </span>
+        <h1 className="text-3xl sm:text-4xl font-serif font-black tracking-tight leading-none text-foreground">
+          Share your{" "}
+          <span className="text-primary italic font-light text-4xl sm:text-5xl block sm:inline mt-1 sm:mt-0 pl-1">
+            thoughts.
           </span>
-          <h1 className="text-3xl sm:text-4xl font-serif font-black tracking-tight leading-none text-foreground">
-            Share your{" "}
-            <span className="text-primary italic font-light text-4xl sm:text-5xl block sm:inline mt-1 sm:mt-0 pl-1">
-              thoughts.
-            </span>
-          </h1>
-          <p className="text-body-small text-muted-foreground mt-1">Share your thoughts on your sanctuary experience</p>
-        </div>
-        <Button asChild variant="outline">
-          <Link href={ROUTES.APP.DASHBOARD}>Back to Today</Link>
-        </Button>
+        </h1>
+        <p className="text-body-small text-muted-foreground mt-1">
+          Report an issue, suggest an idea, or simply tell us how it feels.
+        </p>
       </header>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Share Feedback</CardTitle>
-          <CardDescription>Help us refine withink.</CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col items-center justify-center py-16 text-center space-y-4">
-          <span className="text-3xl">💬</span>
-          <p className="text-body-small text-muted-foreground max-w-sm">
-            We are dedicated to building the most peaceful journaling environment. Tell us what you love or what we can improve.
-          </p>
-          <Button disabled variant="outline">
-            Submit Feedback
-          </Button>
-        </CardContent>
-      </Card>
+      <FeedbackForm />
     </div>
   );
 }
