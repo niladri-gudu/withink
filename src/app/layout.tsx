@@ -22,7 +22,7 @@ const newsreader = Newsreader({
 
 export const metadata: Metadata = {
   title: {
-    default: "withink. — Your Digital Sanctuary",
+    default: "withink. - Your Digital Sanctuary",
     template: "%s | withink.",
   },
   description:

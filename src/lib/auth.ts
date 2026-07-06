@@ -77,6 +77,21 @@ export const auth = betterAuth({
         console.error("[Better Auth sendVerificationEmail] Failed to send verification email:", error);
       }
     },
+    afterEmailVerification: async (user) => {
+      try {
+        await resend.emails.send({
+          from: env.EMAIL_FROM,
+          to: user.email,
+          subject: "Welcome to your sanctuary - withink.",
+          react: WelcomeEmail({
+            userFirstname: (user.name || "friend").split(" ")[0] || "friend",
+            baseUrl: env.BETTER_AUTH_URL,
+          }),
+        });
+      } catch (error) {
+        console.error("[Better Auth afterEmailVerification] Welcome email failed:", error);
+      }
+    },
   },
 
   socialProviders: {
