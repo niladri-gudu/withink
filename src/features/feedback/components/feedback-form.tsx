@@ -3,6 +3,7 @@
 import * as React from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import Image from "next/image";
 import Link from "next/link";
 import { toast } from "sonner";
 import {
@@ -301,8 +302,14 @@ export function FeedbackForm() {
               transition={{ duration: 0.15 }}
               className="relative inline-flex overflow-hidden rounded-xl border border-border"
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={imageUrl} alt="Attached screenshot" className="max-h-44 w-auto object-contain" />
+              <Image
+                src={imageUrl}
+                alt="Attached screenshot"
+                width={176}
+                height={176}
+                className="max-h-44 w-auto h-auto object-contain"
+                style={{ width: "auto", height: "auto" }}
+              />
               <button
                 type="button"
                 onClick={removeImage}

@@ -31,6 +31,11 @@ type RateLimitOptions = {
  *
  * The window is keyed on `ratelimit:{identifier}`. `identifier` should already
  * be scoped by concern and subject, e.g. `feedback:{userId}`.
+ *
+ * All three Redis commands (`incr`, `expire`, `ttl`) are sent in a single
+ * pipelined round-trip rather than three sequential calls. `expire` is set on
+ * every hit — not only on the first — so a crash between `incr` and `expire`
+ * can never leave a counter that never expires.
  */
 export async function rateLimit(
   identifier: string,
@@ -43,14 +48,13 @@ export async function rateLimit(
   const key = `ratelimit:${identifier}`;
 
   try {
-    const count = await redis.incr(key);
+    const [count, , ttl] = await redis
+      .pipeline()
+      .incr(key)
+      .expire(key, windowSeconds)
+      .ttl(key)
+      .exec<[number, number, number]>();
 
-    // The first hit in a new window starts the expiry clock.
-    if (count === 1) {
-      await redis.expire(key, windowSeconds);
-    }
-
-    const ttl = await redis.ttl(key);
     const resetSeconds = ttl > 0 ? ttl : windowSeconds;
     const remaining = Math.max(0, limit - count);
 

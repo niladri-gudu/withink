@@ -1,23 +1,18 @@
 "use client";
 
 import * as React from "react";
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
 import {
-  Trash2,
   X,
   Loader2,
   ImageIcon,
-  ArrowLeft,
-  ArrowRight,
   Search,
   Grid,
   List,
-  Copy,
-  Check,
   Calendar,
   HardDrive,
-  ExternalLink,
   ChevronRight,
   RefreshCw,
 } from "lucide-react";
@@ -25,14 +20,19 @@ import { toast } from "sonner";
 import {
   getFullMediaLibraryAction,
   getStorageStatsAction,
-  deleteMediaFileAction,
-  findEntryForMediaAction,
   type MediaFile,
   type StorageStats,
 } from "../actions/media-actions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+
+// The full-screen lightbox only opens on user click. Load it lazily and skip
+// SSR so it never lands in the gallery's initial client bundle.
+const MediaLightbox = dynamic(
+  () => import("./media-lightbox").then((m) => ({ default: m.MediaLightbox })),
+  { ssr: false },
+);
 
 export function MediaGallery() {
   const [files, setFiles] = React.useState<MediaFile[]>([]);
@@ -43,13 +43,6 @@ export function MediaGallery() {
   const [searchQuery, setSearchQuery] = React.useState("");
   const [sortBy, setSortBy] = React.useState<"date-desc" | "date-asc" | "size-desc" | "size-asc">("date-desc");
   const [lightboxIndex, setLightboxIndex] = React.useState<number | null>(null);
-  
-  // Lightbox details
-  const [deleting, setDeleting] = React.useState<string | null>(null);
-  const [copiedKey, setCopiedKey] = React.useState<string | null>(null);
-  const [entryDate, setEntryDate] = React.useState<string | null>(null);
-  const [entrySearchLoading, setEntrySearchLoading] = React.useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
 
   const fetchLibrary = React.useCallback(async () => {
     setLoading(true);
@@ -77,85 +70,6 @@ export function MediaGallery() {
       fetchStats();
     });
   }, [fetchLibrary, fetchStats]);
-
-  // When lightbox image changes, search which entry it belongs to
-  React.useEffect(() => {
-    if (lightboxIndex === null) {
-      queueMicrotask(() => {
-        setEntryDate(null);
-        setShowDeleteConfirm(false);
-      });
-      return;
-    }
-
-    const currentFile = files[lightboxIndex];
-    if (!currentFile) return;
-
-    queueMicrotask(() => {
-      setEntryDate(null);
-      setShowDeleteConfirm(false);
-      setEntrySearchLoading(true);
-    });
-
-    findEntryForMediaAction(currentFile.url)
-      .then((res) => {
-        queueMicrotask(() => {
-          if (res.success && res.date) {
-            setEntryDate(res.date);
-          } else {
-            setEntryDate(null);
-          }
-        });
-      })
-      .finally(() => {
-        queueMicrotask(() => {
-          setEntrySearchLoading(false);
-        });
-      });
-  }, [lightboxIndex, files]);
-
-  const handleCopyLink = async (url: string) => {
-    try {
-      await navigator.clipboard.writeText(url);
-      setCopiedKey(url);
-      toast.success("Direct link copied to clipboard");
-      setTimeout(() => setCopiedKey(null), 2000);
-    } catch {
-      toast.error("Failed to copy link");
-    }
-  };
-
-  const handleDelete = async (file: MediaFile) => {
-    setDeleting(file.key);
-    try {
-      const res = await deleteMediaFileAction(file.key);
-      if (res.success) {
-        setFiles((prev) => prev.filter((f) => f.key !== file.key));
-        setLightboxIndex(null);
-        fetchStats();
-        toast.success("Memory removed from sanctuary");
-      } else {
-        toast.error(res.error || "Failed to delete file.");
-      }
-    } catch {
-      toast.error("An unexpected error occurred during deletion.");
-    } finally {
-      setDeleting(null);
-      setShowDeleteConfirm(false);
-    }
-  };
-
-  const handlePrev = () => {
-    if (lightboxIndex !== null && lightboxIndex > 0) {
-      setLightboxIndex(lightboxIndex - 1);
-    }
-  };
-
-  const handleNext = () => {
-    if (lightboxIndex !== null && lightboxIndex < filteredFiles.length - 1) {
-      setLightboxIndex(lightboxIndex + 1);
-    }
-  };
 
   // Filter & Sort logic computed inline to let React Compiler handle optimization
   let filteredFiles = [...files];
@@ -188,7 +102,21 @@ export function MediaGallery() {
     return 0;
   });
 
-  const lightboxFile = lightboxIndex !== null ? filteredFiles[lightboxIndex] : null;
+  // Lightbox navigation callbacks. Defined after `filteredFiles` is computed so
+  // they close over the live, sorted/filtered list.
+  const handlePrev = () => {
+    setLightboxIndex((prev) => (prev !== null && prev > 0 ? prev - 1 : prev));
+  };
+  const handleNext = () => {
+    setLightboxIndex((prev) =>
+      prev !== null && prev < filteredFiles.length - 1 ? prev + 1 : prev,
+    );
+  };
+  const handleLightboxDeleted = (key: string) => {
+    setFiles((prev) => prev.filter((f) => f.key !== key));
+    setLightboxIndex(null); // matches the original close-on-delete behavior
+    fetchStats();
+  };
 
   return (
     <div className="space-y-6">
@@ -412,164 +340,15 @@ export function MediaGallery() {
         </div>
       )}
 
-      {/* Lightbox / View Modal */}
-      {lightboxIndex !== null && lightboxFile && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm animate-in fade-in duration-200">
-          {/* Close backdrop click */}
-          <div className="absolute inset-0 cursor-default" onClick={() => setLightboxIndex(null)} />
-
-          <div className="relative max-w-3xl w-full mx-4 bg-card border border-border rounded-3xl overflow-hidden shadow-2xl flex flex-col z-10 animate-in zoom-in-95 duration-200">
-            {/* Close Button */}
-            <button
-              onClick={() => setLightboxIndex(null)}
-              className="absolute top-4 right-4 z-50 p-2 rounded-full bg-background/60 hover:bg-background text-foreground transition-all cursor-pointer backdrop-blur-sm shadow-sm border border-border/20"
-              aria-label="Close preview"
-            >
-              <X size={16} />
-            </button>
-
-            {/* Image Preview Container */}
-            <div className="relative w-full aspect-video bg-black/95 flex items-center justify-center">
-              <Image
-                src={lightboxFile.url}
-                alt="Preview"
-                fill
-                priority
-                sizes="100vw"
-                className="object-contain p-2"
-              />
-
-              {/* Prev Button */}
-              {lightboxIndex > 0 && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handlePrev();
-                  }}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-background/50 hover:bg-background/80 text-foreground transition-all shadow-md border border-border/20"
-                  aria-label="Previous image"
-                >
-                  <ArrowLeft size={16} />
-                </button>
-              )}
-
-              {/* Next Button */}
-              {lightboxIndex < filteredFiles.length - 1 && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleNext();
-                  }}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-background/50 hover:bg-background/80 text-foreground transition-all shadow-md border border-border/20"
-                  aria-label="Next image"
-                >
-                  <ArrowRight size={16} />
-                </button>
-              )}
-            </div>
-
-            {/* Info details footer */}
-            <div className="p-6 bg-card border-t border-border flex flex-col md:flex-row md:items-center justify-between gap-5 select-none">
-              <div className="min-w-0 space-y-1">
-                <p className="text-xs font-mono text-muted-foreground truncate max-w-sm sm:max-w-md">
-                  {lightboxFile.key.split("/").pop()}
-                </p>
-                <div className="flex items-center gap-2.5 text-xs text-muted-foreground">
-                  <span>{(lightboxFile.size / 1024).toFixed(1)} KB</span>
-                  <span>•</span>
-                  <span>
-                    {lightboxFile.lastModified
-                      ? new Date(lightboxFile.lastModified).toLocaleDateString()
-                      : "Unknown date"}
-                  </span>
-                  <span>•</span>
-                  {entrySearchLoading ? (
-                    <span className="flex items-center gap-1.5 text-accent font-medium">
-                      <Loader2 className="h-3 w-3 animate-spin" />
-                      Checking entries...
-                    </span>
-                  ) : entryDate ? (
-                    <span className="flex items-center gap-1 text-primary font-medium">
-                      Woven on{" "}
-                      <Link
-                        href={`/entries/${entryDate}`}
-                        className="underline hover:text-accent flex items-center gap-0.5 font-semibold"
-                      >
-                        {entryDate}
-                        <ExternalLink className="h-3 w-3 inline" />
-                      </Link>
-                    </span>
-                  ) : (
-                    <span className="text-muted-foreground/60 italic">Orphaned (Not in entries)</span>
-                  )}
-                </div>
-              </div>
-
-              {/* Actions panel */}
-              <div className="flex items-center gap-2 shrink-0 self-end md:self-auto">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleCopyLink(lightboxFile.url)}
-                  className="h-9 px-3 gap-1.5 rounded-xl text-xs font-medium border-border/60 hover:bg-secondary"
-                >
-                  {copiedKey === lightboxFile.url ? (
-                    <>
-                      <Check className="h-3.5 w-3.5 text-success" />
-                      Copied
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="h-3.5 w-3.5" />
-                      Copy Link
-                    </>
-                  )}
-                </Button>
-
-                {showDeleteConfirm ? (
-                  <div className="flex items-center gap-1 bg-destructive/10 border border-destructive/20 p-1 rounded-xl animate-in slide-in-from-right-2 duration-200">
-                    <span className="text-[10px] text-destructive font-semibold px-2 shrink-0">
-                      Delete from entries?
-                    </span>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => handleDelete(lightboxFile)}
-                      disabled={deleting !== null}
-                      className="h-7 px-2.5 rounded-lg text-[10px] font-semibold uppercase tracking-wider"
-                    >
-                      {deleting !== null ? (
-                        <Loader2 className="h-3 w-3 animate-spin" />
-                      ) : (
-                        "Yes, Delete"
-                      )}
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setShowDeleteConfirm(false)}
-                      disabled={deleting !== null}
-                      className="h-7 px-2.5 rounded-lg text-[10px] font-semibold text-muted-foreground hover:bg-secondary"
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                ) : (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowDeleteConfirm(true)}
-                    className="h-9 w-9 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                    title="Delete memory"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Lightbox / View Modal — lazy-loaded; only mounts when an image is opened. */}
+      <MediaLightbox
+        files={filteredFiles}
+        index={lightboxIndex}
+        onClose={() => setLightboxIndex(null)}
+        onPrev={handlePrev}
+        onNext={handleNext}
+        onDeleted={handleLightboxDeleted}
+      />
     </div>
   );
 }

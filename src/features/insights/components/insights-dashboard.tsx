@@ -1,14 +1,10 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import dynamic from "next/dynamic";
 import { Flame, Sparkles, Type, BarChart3, Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { CalendarHeatmap } from "./calendar-heatmap";
-import { MoodHistoryCharts } from "./mood-history-charts";
-import { WordCountCharts } from "./word-count-charts";
-import { ActivitySummaries } from "./activity-summaries";
-import { MonthlyOverview } from "./monthly-overview";
 import { getInsightsAction } from "../actions/insights-actions";
 import type { InsightsPayload } from "../services/insights-service";
 
@@ -16,6 +12,23 @@ interface InsightsDashboardProps {
   initialData: InsightsPayload;
   localToday: string;
 }
+
+// The below-fold visualizations (heatmap, mood/word charts, activity summaries,
+// monthly overview) are the SVG-heavy part of the page. Load them as one async
+// chunk so the header and stat cards above the fold render first.
+const InsightsCharts = dynamic(
+  () =>
+    import("./insights-charts").then((m) => ({ default: m.InsightsCharts })),
+  {
+    loading: () => <InsightsChartsSkeleton />,
+    ssr: true,
+  },
+);
+const InsightsChartsSkeleton = dynamic(
+  () =>
+    import("./insights-charts").then((m) => ({ default: m.InsightsChartsSkeleton })),
+  { ssr: true },
+);
 
 export function InsightsDashboard({ initialData, localToday }: InsightsDashboardProps) {
   const [data, setData] = useState<InsightsPayload>(initialData);
@@ -42,7 +55,7 @@ export function InsightsDashboard({ initialData, localToday }: InsightsDashboard
     }
   }, [localToday]);
 
-  const { streaks, heatmap, moodStats, wordCountStats, activitySummaries, monthlyOverview } = data;
+  const { streaks, heatmap, wordCountStats } = data;
 
   return (
     <div className="flex-1 max-w-5xl mx-auto p-6 md:p-10 space-y-10 relative">
@@ -144,58 +157,9 @@ export function InsightsDashboard({ initialData, localToday }: InsightsDashboard
         </Card>
       </section>
 
-      {/* Heatmap Card */}
-      <section className="space-y-4">
-        <div className="space-y-1">
-          <h3 className="text-lg font-serif font-black tracking-tight text-foreground uppercase">
-            Reflection Frequency
-          </h3>
-          <p className="text-body-small text-muted-foreground">
-            A visual summary of your consistency over the past 365 days
-          </p>
-        </div>
-        <Card className="border-border/60 p-6">
-          <CalendarHeatmap heatmap={heatmap} />
-        </Card>
-      </section>
-
-      {/* Mood distributions & Trends */}
-      <section className="space-y-4">
-        <h3 className="text-lg font-serif font-black tracking-tight text-foreground uppercase">
-          Emotional Patterns & Trends
-        </h3>
-        <Card className="border-border/60 p-6 md:p-8">
-          <MoodHistoryCharts
-            distribution={moodStats.distribution}
-            average={moodStats.average}
-            monthlyAverages={moodStats.monthlyAverages}
-          />
-        </Card>
-      </section>
-
-      {/* Word Count Trends & Habits */}
-      <section className="grid gap-6 md:grid-cols-3">
-        <Card className="border-border/60 p-6 md:col-span-2">
-          <WordCountCharts
-            total={wordCountStats.total}
-            average={wordCountStats.average}
-            monthlyTotals={wordCountStats.monthlyTotals}
-          />
-        </Card>
-
-        {/* Activity summaries card: time of day, active day */}
-        <div className="md:col-span-3">
-          <ActivitySummaries
-            mostActiveDayOfWeek={activitySummaries.mostActiveDayOfWeek}
-            mostActiveTimeOfDay={activitySummaries.mostActiveTimeOfDay}
-          />
-        </div>
-      </section>
-
-      {/* Monthly details overview */}
-      <section className="space-y-4 pt-4 border-t border-border/10">
-        <MonthlyOverview monthlyOverview={monthlyOverview} />
-      </section>
+      {/* Below-fold visualizations: heatmap, mood/word charts, activity, monthly.
+          Lazy-loaded as one async chunk so the header + stat cards render first. */}
+      <InsightsCharts data={data} />
     </div>
   );
 }

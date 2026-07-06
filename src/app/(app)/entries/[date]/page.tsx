@@ -1,5 +1,6 @@
 import type { ComponentPropsWithoutRef } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -7,7 +8,19 @@ import { isDateString, addDays, getLocalDateString } from "@/lib/utils/date";
 import { ROUTES } from "@/constants/routes";
 import { auth } from "@/lib/auth";
 import { JournalService } from "@/features/journal/services/journal-service";
-import { JournalEditorShell } from "@/features/journal/components/journal-editor-shell";
+import { EditorSkeleton } from "@/features/journal/components/editor-skeleton";
+
+// The Tiptap editor is the largest client graph on this route. Load it lazily
+// so the route shell streams immediately and the grace-period firewall branch
+// (future/expired dates, which never render the editor) doesn't pull the
+// editor chunk into the route's client bundle.
+const JournalEditorShell = dynamic(
+  () =>
+    import("@/features/journal/components/journal-editor-shell").then(
+      (m) => ({ default: m.JournalEditorShell }),
+    ),
+  { loading: () => <EditorSkeleton />, ssr: true },
+);
 
 interface EntryPageProps {
   params: Promise<{

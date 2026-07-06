@@ -4,6 +4,7 @@
 import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import Image from "next/image";
 import { z } from "zod";
 import { useTheme } from "next-themes";
 import {
@@ -484,8 +485,13 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
               className="group relative flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border border-border bg-secondary/60 shadow-sm transition-transform active:scale-95"
             >
               {user.image ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={user.image} alt={user.name} className="h-full w-full object-cover" />
+                <Image
+                  src={user.image}
+                  alt={user.name}
+                  fill
+                  sizes="80px"
+                  className="h-full w-full object-cover"
+                />
               ) : (
                 <span className="font-serif text-2xl font-semibold text-muted-foreground">
                   {userInitials}
