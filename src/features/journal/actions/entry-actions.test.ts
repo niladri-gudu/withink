@@ -117,7 +117,7 @@ describe("entry-actions", () => {
 
       const res = await saveEntryAction(input, "2026-07-06");
       expect(res.success).toBe(true);
-      expect(res.data?._id).toBe("saved-1");
+      expect(res.data?.id).toBe("saved-1");
       expect(JournalService.saveJournalEntry).toHaveBeenCalledWith(
         mockUserId,
         "2026-07-06",
@@ -149,7 +149,7 @@ describe("entry-actions", () => {
 
     it("should compute streaks correctly in getStreakAndStatsAction when dates list is empty", async () => {
       vi.mocked(JournalService.getEntryDates).mockResolvedValue([]);
-      vi.mocked(JournalService.getEntryStats).mockResolvedValue({ totalWords: 100, averageWords: 50 });
+      vi.mocked(JournalService.getEntryStats).mockResolvedValue({ totalEntries: 0, totalWords: 100, averageWords: 50 });
 
       const res = await getStreakAndStatsAction("2026-07-06");
       expect(res.success).toBe(true);
@@ -163,7 +163,7 @@ describe("entry-actions", () => {
 
     it("should compute streaks correctly in getStreakAndStatsAction when streak is active", async () => {
       vi.mocked(JournalService.getEntryDates).mockResolvedValue(["2026-07-06", "2026-07-05", "2026-07-04"]);
-      vi.mocked(JournalService.getEntryStats).mockResolvedValue({ totalWords: 150, averageWords: 50 });
+      vi.mocked(JournalService.getEntryStats).mockResolvedValue({ totalEntries: 3, totalWords: 150, averageWords: 50 });
 
       const res = await getStreakAndStatsAction("2026-07-06");
       expect(res.success).toBe(true);
@@ -173,7 +173,7 @@ describe("entry-actions", () => {
 
     it("should compute streak of 0 if last entry was before yesterday", async () => {
       vi.mocked(JournalService.getEntryDates).mockResolvedValue(["2026-07-04", "2026-07-03"]);
-      vi.mocked(JournalService.getEntryStats).mockResolvedValue({ totalWords: 100, averageWords: 50 });
+      vi.mocked(JournalService.getEntryStats).mockResolvedValue({ totalEntries: 2, totalWords: 100, averageWords: 50 });
 
       const res = await getStreakAndStatsAction("2026-07-06");
       expect(res.success).toBe(true);

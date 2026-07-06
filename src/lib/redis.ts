@@ -1,6 +1,7 @@
 import "server-only";
 import { Redis } from "@upstash/redis";
 import { env } from "@/config/env";
+import { logger } from "@/server/logger";
 
 const url = env.UPSTASH_REDIS_REST_URL;
 const token = env.UPSTASH_REDIS_REST_TOKEN;
@@ -13,7 +14,7 @@ export async function getCachedValue<T>(key: string): Promise<T | null> {
   try {
     return await redis.get<T>(key);
   } catch (error) {
-    console.error("Redis read failed:", error);
+    logger.error("Redis read failed", error as Error, { key });
     return null;
   }
 }
@@ -28,7 +29,7 @@ export async function setCachedValue(
   try {
     await redis.set(key, value, { ex: ttlSeconds });
   } catch (error) {
-    console.error("Redis write failed:", error);
+    logger.error("Redis write failed", error as Error, { key });
   }
 }
 
@@ -38,6 +39,6 @@ export async function incrementCachedValue(key: string): Promise<void> {
   try {
     await redis.incr(key);
   } catch (error) {
-    console.error("Redis increment failed:", error);
+    logger.error("Redis increment failed", error as Error, { key });
   }
 }

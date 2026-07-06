@@ -4,6 +4,7 @@ import type { DecryptedEntry } from "../../journal/services/journal-service";
 import { CACHE_KEYS } from "@/constants/cache-keys";
 import { getCachedValue, setCachedValue, redis } from "@/lib/redis";
 import { addDays, isDateString } from "@/lib/utils/date";
+import { logger } from "@/server/logger";
 
 export interface FlashbackResponse {
   entry: DecryptedEntry | null;
@@ -38,7 +39,7 @@ export class FlashbackService {
         try {
           await redis.del(cacheKey);
         } catch (e) {
-          console.error("Failed to delete stale flashback cache key", e);
+          logger.error("Failed to delete stale flashback cache key", e as Error, { cacheKey });
         }
       }
     }
@@ -130,7 +131,7 @@ export class FlashbackService {
       try {
         await redis.del(cacheKey);
       } catch (e) {
-        console.error("Failed to delete flashback cache key during refresh", e);
+        logger.error("Failed to delete flashback cache key during refresh", e as Error, { cacheKey });
       }
     }
 

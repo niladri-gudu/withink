@@ -1,7 +1,13 @@
+import type { Metadata } from "next";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { ROUTES } from "@/constants/routes";
+
+export const metadata: Metadata = {
+  title: "Reflections Timeline",
+  description: "Browse and search through your past journal entries.",
+};
 import { JournalService } from "@/features/journal/services/journal-service";
 import { EntriesPageShell } from "@/features/journal/components/entries-page-shell";
 import { isDateString, getLocalDateString, addDays } from "@/lib/utils/date";

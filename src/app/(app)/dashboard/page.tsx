@@ -1,9 +1,15 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import type { ComponentPropsWithoutRef } from "react";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+
+export const metadata: Metadata = {
+  title: "Sanctuary Dashboard",
+  description: "Your daily writing stats, history, and insights at a glance.",
+};
 import { ROUTES } from "@/constants/routes";
 import { auth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
@@ -189,12 +195,12 @@ export default async function DashboardPage() {
           <CardContent className="space-y-4">
             <p className="text-sm font-serif text-muted-foreground leading-relaxed italic">
               {flashbackEntry
-                ? `&ldquo;${
+                ? `${
                     flashbackEntry.contentText.length > 220
                       ? flashbackEntry.contentText.substring(0, 220) + "..."
                       : flashbackEntry.contentText
-                  }&rdquo;`
-                : "&ldquo;You haven&apos;t written any entries yet. Revisit this card tomorrow to see what you wrote in the past.&rdquo;"}
+                  }`
+                : "You haven't written any entries yet. Revisit this card tomorrow to see what you wrote in the past."}
             </p>
             {flashbackEntry && (
               <Button asChild variant="link" className="p-0 text-primary hover:text-primary/80 h-auto cursor-pointer text-xs font-bold font-mono uppercase tracking-widest gap-1">

@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { ExportService } from "@/features/export/services/export-service";
 import { handleError } from "@/server/errors";
+import { logger } from "@/server/logger";
 
 /**
  * Streams a complete ZIP backup of the authenticated user's journal.
@@ -28,7 +29,7 @@ export async function GET() {
     });
   } catch (error) {
     const appError = handleError(error);
-    console.error("[Export API Error]:", appError.message);
+    logger.error("Export generation failed", error as Error, { statusCode: appError.statusCode });
     return NextResponse.json({ error: appError.safeMessage }, { status: appError.statusCode });
   }
 }

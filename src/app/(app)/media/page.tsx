@@ -1,7 +1,13 @@
+import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { ROUTES } from "@/constants/routes";
+
+export const metadata: Metadata = {
+  title: "Memory Gallery",
+  description: "Browse, view, and manage all your journal images and attachments.",
+};
 import { MediaGallery } from "@/features/media/components/media-gallery";
 
 export default async function MediaPage() {

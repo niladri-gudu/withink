@@ -26,13 +26,36 @@ const nextConfig: NextConfig = {
   },
 
   async headers() {
+    const isProd = process.env.IS_PROD === "true";
+    const R2_UPLOAD_HOST = process.env.R2_ACCOUNT_ID
+      ? `${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`
+      : "*.r2.cloudflarestorage.com";
+
+    const cspHeader = `
+      default-src 'self';
+      script-src 'self' 'unsafe-inline' 'unsafe-eval';
+      style-src 'self' 'unsafe-inline';
+      img-src 'self' blob: data: https://lh3.googleusercontent.com https://${R2_PUBLIC_HOST};
+      font-src 'self' data:;
+      connect-src 'self' ${isProd ? "" : "ws: wss:"} https://${R2_UPLOAD_HOST} https://${R2_PUBLIC_HOST};
+      frame-ancestors 'none';
+      form-action 'self' https://accounts.google.com;
+      base-uri 'self';
+    `.replace(/\s{2,}/g, " ").trim();
+
     return [
       {
         source: "/:path*",
         headers: [
+          { key: "Content-Security-Policy", value: cspHeader },
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "X-Frame-Options", value: "DENY" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          { key: "X-XSS-Protection", value: "1; mode=block" },
+          {
+            key: "Strict-Transport-Security",
+            value: "max-age=31536000; includeSubDomains; preload",
+          },
           {
             key: "Permissions-Policy",
             value: "camera=(), microphone=(), geolocation=()",

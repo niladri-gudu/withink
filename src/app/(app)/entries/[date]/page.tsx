@@ -1,9 +1,15 @@
+import type { Metadata } from "next";
 import type { ComponentPropsWithoutRef } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
+
+export const metadata: Metadata = {
+  title: "Journal Entry",
+  description: "Reflect on this day in your private digital sanctuary.",
+};
 import { isDateString, addDays, getLocalDateString } from "@/lib/utils/date";
 import { ROUTES } from "@/constants/routes";
 import { auth } from "@/lib/auth";

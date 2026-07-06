@@ -7,6 +7,7 @@ import { resend } from "./email";
 import { WelcomeEmail } from "@/features/auth/components/emails/welcome-email";
 import { VerifyEmail } from "@/features/auth/components/emails/verify-email";
 import { ResetPassword } from "@/features/auth/components/emails/reset-password";
+import { logger } from "@/server/logger";
 
 const DB_NAME = env.IS_PROD ? "withink_prod" : "withink_dev";
 
@@ -29,7 +30,7 @@ export const auth = betterAuth({
                 }),
               });
             } catch (error) {
-              console.error("[Better Auth Database Hook] Welcome email failed:", error);
+              logger.error("[Better Auth Database Hook] Welcome email failed", error as Error, { email: user.email });
             }
           }
         },
@@ -51,7 +52,7 @@ export const auth = betterAuth({
           react: ResetPassword({ name: user.name, url }),
         });
       } catch (error) {
-        console.error("[Better Auth sendResetPassword] Failed to send reset password email:", error);
+        logger.error("[Better Auth sendResetPassword] Failed to send reset password email", error as Error, { email: user.email });
       }
     },
   },
@@ -74,7 +75,7 @@ export const auth = betterAuth({
           }),
         });
       } catch (error) {
-        console.error("[Better Auth sendVerificationEmail] Failed to send verification email:", error);
+        logger.error("[Better Auth sendVerificationEmail] Failed to send verification email", error as Error, { email: user.email });
       }
     },
     afterEmailVerification: async (user) => {
@@ -88,8 +89,9 @@ export const auth = betterAuth({
             baseUrl: env.BETTER_AUTH_URL,
           }),
         });
+        logger.info("Welcome email sent successfully after email verification", { email: user.email });
       } catch (error) {
-        console.error("[Better Auth afterEmailVerification] Welcome email failed:", error);
+        logger.error("[Better Auth afterEmailVerification] Welcome email failed", error as Error, { email: user.email });
       }
     },
   },

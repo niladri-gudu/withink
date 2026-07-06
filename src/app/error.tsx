@@ -10,8 +10,23 @@ interface ErrorProps {
 
 export default function Error({ error, reset }: ErrorProps) {
   useEffect(() => {
-    // Log the error to our logging system or console
+    // Log the error to console and send to server telemetry
     console.error("Root boundary caught error:", error);
+
+    const payload = {
+      message: error.message || "Unknown error",
+      stack: error.stack,
+      digest: error.digest,
+      url: typeof window !== "undefined" ? window.location.href : undefined,
+    };
+
+    fetch("/api/monitoring/errors", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    }).catch((err) => {
+      console.error("Failed to send error log:", err);
+    });
   }, [error]);
 
   return (

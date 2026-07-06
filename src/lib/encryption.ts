@@ -1,6 +1,7 @@
 import "server-only";
 import { createCipheriv, createDecipheriv, randomBytes } from "crypto";
 import { env } from "@/config/env";
+import { logger } from "@/server/logger";
 
 const ALGORITHM = "aes-256-gcm";
 const KEY = Buffer.from(env.ENCRYPTION_KEY, "hex");
@@ -56,7 +57,7 @@ export function decrypt(encryptedData: string): string {
 
     return decrypted;
   } catch (error) {
-    console.error("Decryption failed. Key might be wrong or data is corrupted.", error);
+    logger.error("Decryption failed. Key might be wrong or data is corrupted.", error as Error);
     return "DECRYPTION_ERROR";
   }
 }

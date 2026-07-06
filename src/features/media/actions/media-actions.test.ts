@@ -10,7 +10,6 @@ import { auth } from "@/lib/auth";
 import { r2 } from "@/lib/r2";
 import { EntryModel } from "@/features/journal/repositories/entry-model";
 import { EntryRepository } from "@/features/journal/repositories/entry-repository";
-import { safeDecrypt, encrypt } from "@/lib/encryption";
 
 // Mock next/headers
 vi.mock("next/headers", () => ({
@@ -177,7 +176,7 @@ describe("media-actions", () => {
         },
       ];
       
-      const leanMock = EntryModel.find({} as any).lean as any;
+      const leanMock = (EntryModel.find as any)().lean;
       leanMock.mockResolvedValue(mockEntries);
 
       const res = await deleteMediaFileAction("dev-journal/user-123/file.jpg");
@@ -205,7 +204,7 @@ describe("media-actions", () => {
           contentHtml: "No photo here.",
         },
       ];
-      const leanMock = EntryModel.find({} as any).lean as any;
+      const leanMock = (EntryModel.find as any)().lean;
       leanMock.mockResolvedValue(mockEntries);
 
       const res = await findEntryForMediaAction("http://localhost:3000/r2/dev-journal/user-123/photo.jpg");

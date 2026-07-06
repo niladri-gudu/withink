@@ -1,7 +1,14 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { ROUTES } from "@/constants/routes";
+
+export const metadata: Metadata = {
+  title: "withink. - Your Digital Sanctuary",
+  description:
+    "A private, encrypted, and minimal space for your digital thoughts. Built to encourage daily reflection and preserve lifelong memories.",
+};
 
 export default function LandingPage() {
   return (

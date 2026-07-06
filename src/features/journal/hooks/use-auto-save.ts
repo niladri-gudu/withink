@@ -25,18 +25,6 @@ export function useAutoSave(
   const isDirty = useRef(false);
   const hasInitialized = useRef(false);
 
-  // Synchronously reset baseline when the date changes
-  if (data.date !== lastDateRef.current) {
-    hasInitialized.current = false;
-    isDirty.current = false;
-    lastDateRef.current = data.date;
-    setStatus("idle");
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-      timerRef.current = null;
-    }
-  }
-  
   // Tracks latest data for async autosave invocation
   const latestData = useRef(data);
   useEffect(() => {
@@ -55,6 +43,18 @@ export function useAutoSave(
   // Initialize once we are enabled and have received initial values
   useEffect(() => {
     if (!enabled) return;
+
+    // Reset baseline when the date changes
+    if (data.date !== lastDateRef.current) {
+      hasInitialized.current = false;
+      isDirty.current = false;
+      lastDateRef.current = data.date;
+      setStatus("idle");
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+    }
 
     if (!hasInitialized.current) {
       initialContent.current = {

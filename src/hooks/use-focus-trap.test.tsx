@@ -9,7 +9,7 @@ function FocusTrapTestComponent({ active }: { active: boolean }) {
   return (
     <div>
       <button data-testid="outside-button">Outside</button>
-      <div ref={containerRef as any} data-testid="trap-container">
+      <div ref={containerRef as React.RefObject<HTMLDivElement | null>} data-testid="trap-container">
         <input data-testid="input-1" placeholder="First focusable" />
         <button data-testid="button-1">Second focusable</button>
         <textarea data-testid="textarea-1" placeholder="Third focusable" />

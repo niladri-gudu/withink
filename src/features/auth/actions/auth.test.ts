@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { checkIdentityExists } from "./auth";
 import { connectDB } from "@/lib/db/mongoose";
-import mongoose from "mongoose";
 
 // Use vi.hoisted to declare mock functions before they are referenced in the hoisted vi.mock
 const { mockFindOne, mockCollection } = vi.hoisted(() => {
@@ -17,7 +16,8 @@ vi.mock("@/lib/db/mongoose", () => ({
 }));
 
 vi.mock("mongoose", async (importOriginal) => {
-  const original = await importOriginal<typeof import("mongoose")>();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const original = (await importOriginal()) as any;
   return {
     ...original,
     default: {

@@ -1,7 +1,13 @@
+import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { ROUTES } from "@/constants/routes";
+
+export const metadata: Metadata = {
+  title: "Feedback",
+  description: "Send feedback, report bugs, or share feature requests directly with the team.",
+};
 import { FeedbackForm } from "@/features/feedback/components/feedback-form";
 
 export default async function FeedbackPage() {

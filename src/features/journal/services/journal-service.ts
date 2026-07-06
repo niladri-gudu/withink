@@ -5,6 +5,7 @@ import { encrypt, safeDecrypt } from "@/lib/encryption";
 import { countWords } from "@/lib/utils/text";
 import { addDays, isDateString } from "@/lib/utils/date";
 import { BusinessRuleError, ValidationError } from "@/server/errors";
+import { logger } from "@/server/logger";
 
 export interface DecryptedEntry {
   id: string;
@@ -34,7 +35,7 @@ export class JournalService {
       try {
         contentJson = JSON.parse(decryptedJsonStr);
       } catch (e) {
-        console.error("[JournalService] Failed to parse contentJson", e);
+        logger.error("Failed to parse contentJson", e as Error);
         contentJson = {};
       }
     }

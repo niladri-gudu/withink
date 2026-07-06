@@ -1,7 +1,13 @@
+import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { ROUTES } from "@/constants/routes";
+
+export const metadata: Metadata = {
+  title: "Settings",
+  description: "Configure your profile, theme preferences, paper feel, and security options.",
+};
 import { SettingsShell } from "@/features/settings/components/settings-shell";
 
 export default async function SettingsPage() {

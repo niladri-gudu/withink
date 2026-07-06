@@ -11,6 +11,7 @@ import { connectDB } from "@/lib/db/mongoose";
 import { EntryModel } from "@/features/journal/repositories/entry-model";
 import { EntryRepository } from "@/features/journal/repositories/entry-repository";
 import { handleError } from "@/server/errors";
+import { logger } from "@/server/logger";
 
 const isProduction = env.IS_PROD;
 const envPrefix = isProduction ? "" : "dev-";
@@ -80,7 +81,7 @@ export async function deleteAccountAction(): Promise<{ success: boolean; error?:
     return { success: true };
   } catch (err) {
     const appError = handleError(err);
-    console.error("[Delete Account Action Error]:", err);
+    logger.error("Failed to delete account", err as Error);
     return { success: false, error: appError.safeMessage };
   }
 }

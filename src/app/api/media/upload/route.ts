@@ -8,6 +8,7 @@ import { randomUUID } from "crypto";
 import { auth } from "@/lib/auth";
 import { r2 } from "@/lib/r2";
 import { env } from "@/config/env";
+import { logger } from "@/server/logger";
 
 const ALLOWED_TYPES = [
   "image/jpeg",
@@ -80,7 +81,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ presignedUrl, publicUrl });
   } catch (error) {
-    console.error("[Media Upload API Error]:", error);
+    logger.error("Failed to generate media upload presigned URL", error as Error);
     return NextResponse.json(
       { error: "An unexpected error occurred during URL signing." },
       { status: 500 },

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Newsreader } from "next/font/google";
 import { AppProviders } from "@/providers/app-providers";
+import { WebVitals } from "@/components/web-vitals";
 import { cn } from "@/lib/utils";
 import "./globals.css";
 
@@ -27,16 +28,59 @@ export const metadata: Metadata = {
   },
   description:
     "A private, encrypted, and minimal space for your digital thoughts. Built for focus.",
+  keywords: [
+    "journal",
+    "digital sanctuary",
+    "encrypted journal",
+    "private writing",
+    "calm writing",
+    "mindfulness journal",
+    "minimalist journal",
+    "reflection",
+  ],
+  authors: [{ name: "withink. team", url: "https://withink.me" }],
+  creator: "withink.",
+  publisher: "withink.",
+  applicationName: "withink.",
   metadataBase: new URL(
     process.env.IS_PROD === "true" ? "https://withink.me" : "http://localhost:3000"
   ),
   icons: {
     icon: "/favicon.ico",
   },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
   openGraph: {
-    title: "withink.",
-    description: "A private, encrypted, and minimal space for your thoughts.",
+    title: "withink. - Your Digital Sanctuary",
+    description: "A private, encrypted, and minimal space for your digital thoughts. Built for focus.",
+    url: "https://withink.me",
+    siteName: "withink.",
+    locale: "en_US",
     type: "website",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "withink. - Your Digital Sanctuary",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "withink. - Your Digital Sanctuary",
+    description: "A private, encrypted, and minimal space for your digital thoughts. Built for focus.",
+    creator: "@withinkme",
+    images: ["/og-image.png"],
   },
 };
 
@@ -73,6 +117,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
         />
       </head>
       <body className="h-full bg-background text-foreground antialiased selection:bg-accent selection:text-accent-foreground">
+        <WebVitals />
         <AppProviders>{children}</AppProviders>
       </body>
     </html>
