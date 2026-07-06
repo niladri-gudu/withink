@@ -220,6 +220,7 @@ export function EntriesTimeline({
             placeholder="Search by title, contents, date..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
+            aria-label="Search entries"
             className="w-full h-10 pl-9 pr-4 rounded-xl bg-card border border-border outline-none text-sm placeholder:text-muted-foreground/50 focus:border-primary/50 transition-colors"
           />
         </div>
@@ -233,6 +234,7 @@ export function EntriesTimeline({
               setTimeFilter(e.target.value as any); // eslint-disable-line @typescript-eslint/no-explicit-any
               setPage(1);
             }}
+            aria-label="Filter by time range"
             className="h-10 px-3 rounded-xl bg-card border border-border text-sm text-foreground outline-none cursor-pointer focus:border-primary/50 transition-colors"
           >
             <option value="all">All time</option>
@@ -247,6 +249,7 @@ export function EntriesTimeline({
               setMoodFilter(e.target.value);
               setPage(1);
             }}
+            aria-label="Filter by mood"
             className="h-10 px-3 rounded-xl bg-card border border-border text-sm text-foreground outline-none cursor-pointer focus:border-primary/50 transition-colors"
           >
             <option value="all">All moods</option>
@@ -340,6 +343,7 @@ export function EntriesTimeline({
                           <Button
                             variant="ghost"
                             size="sm"
+                            aria-label="Confirm delete entry"
                             className="h-7 px-2 text-destructive hover:bg-destructive hover:text-destructive-foreground cursor-pointer rounded-lg text-xs font-bold"
                             onClick={() => handleDelete(entry.date)}
                             disabled={isDeleting}
@@ -349,6 +353,7 @@ export function EntriesTimeline({
                           <Button
                             variant="ghost"
                             size="sm"
+                            aria-label="Cancel delete entry"
                             className="h-7 px-2 text-muted-foreground hover:bg-muted cursor-pointer rounded-lg text-xs font-bold"
                             onClick={() => setDeleteDateConfirm(null)}
                             disabled={isDeleting}
@@ -363,6 +368,7 @@ export function EntriesTimeline({
                           className="h-9 w-9 rounded-lg text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10 transition-colors opacity-100 sm:opacity-0 group-hover:opacity-100 cursor-pointer shrink-0"
                           onClick={() => setDeleteDateConfirm(entry.date)}
                           title="Delete entry"
+                          aria-label="Delete entry"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -386,6 +392,7 @@ export function EntriesTimeline({
             <Button
               variant="outline"
               size="sm"
+              aria-label="Previous page"
               className="h-9 rounded-xl gap-1 text-xs cursor-pointer"
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
@@ -396,6 +403,7 @@ export function EntriesTimeline({
             <Button
               variant="outline"
               size="sm"
+              aria-label="Next page"
               className="h-9 rounded-xl gap-1 text-xs cursor-pointer"
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}

@@ -14,7 +14,7 @@ export default async function FeedbackPage() {
   }
 
   return (
-    <div className="flex-grow max-w-3xl mx-auto p-6 md:p-10 space-y-8 w-full animate-in fade-in duration-300">
+    <div className="flex-grow max-w-5xl mx-auto p-6 md:p-10 space-y-8 w-full animate-in fade-in duration-300">
       <header className="space-y-1">
         <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-muted-foreground/60 block">
           Direct Channel • Feedback Loop

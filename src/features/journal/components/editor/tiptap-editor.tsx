@@ -57,6 +57,7 @@ export default function TiptapEditor({
       attributes: {
         class:
           "tiptap max-w-none focus:outline-none text-[1.125rem] leading-[1.65] font-serif text-foreground min-h-[350px] md:min-h-[450px]",
+        "aria-label": "Journal entry content",
       },
       // Paste handler for images
       handlePaste: (view, event) => {

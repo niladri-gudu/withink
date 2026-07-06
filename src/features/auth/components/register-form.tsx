@@ -133,7 +133,7 @@ export function RegisterForm() {
                   Identity Name
                 </label>
                 {errors.name?.message && (
-                  <span className="text-[10px] font-mono text-destructive uppercase tracking-tight animate-in fade-in">
+                  <span id="name-error" className="text-[10px] font-mono text-destructive uppercase tracking-tight animate-in fade-in">
                     {"// "}{errors.name.message}
                   </span>
                 )}
@@ -141,6 +141,8 @@ export function RegisterForm() {
               <Input
                 id="name"
                 placeholder="How should we address you?"
+                aria-invalid={!!errors.name}
+                aria-describedby={errors.name ? "name-error" : undefined}
                 className={`h-11 px-4 text-base ${
                   errors.name ? "border-destructive/60 focus-visible:ring-destructive/30" : ""
                 }`}
@@ -157,7 +159,7 @@ export function RegisterForm() {
                   Secure Email
                 </label>
                 {errors.email?.message && (
-                  <span className="text-[10px] font-mono text-destructive uppercase tracking-tight animate-in fade-in">
+                  <span id="email-error" className="text-[10px] font-mono text-destructive uppercase tracking-tight animate-in fade-in">
                     {"// "}{errors.email.message}
                   </span>
                 )}
@@ -166,6 +168,8 @@ export function RegisterForm() {
                 id="email"
                 type="email"
                 placeholder="name@example.com"
+                aria-invalid={!!errors.email}
+                aria-describedby={errors.email ? "email-error" : undefined}
                 className={`h-11 px-4 text-base ${
                   errors.email ? "border-destructive/60 focus-visible:ring-destructive/30" : ""
                 }`}
@@ -182,7 +186,7 @@ export function RegisterForm() {
                   Secret Key
                 </label>
                 {errors.password?.message && (
-                  <span className="text-[10px] font-mono text-destructive uppercase tracking-tight animate-in fade-in">
+                  <span id="password-error" className="text-[10px] font-mono text-destructive uppercase tracking-tight animate-in fade-in">
                     {"// "}{errors.password.message}
                   </span>
                 )}
@@ -192,6 +196,8 @@ export function RegisterForm() {
                   id="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
+                  aria-invalid={!!errors.password}
+                  aria-describedby={errors.password ? "password-error" : undefined}
                   className={`h-11 px-4 pr-12 text-base ${
                     errors.password ? "border-destructive/60 focus-visible:ring-destructive/30" : ""
                   }`}
@@ -200,7 +206,9 @@ export function RegisterForm() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute cursor-pointer right-3 top-1/2 -translate-y-1/2 text-xs font-mono uppercase tracking-wider text-muted-foreground/60 hover:text-foreground transition-colors p-1"
+                  aria-label={showPassword ? "Hide secret key" : "Show secret key"}
+                  aria-pressed={showPassword}
+                  className="absolute cursor-pointer right-3 top-1/2 -translate-y-1/2 text-xs font-mono uppercase tracking-wider text-muted-foreground/60 hover:text-foreground transition-colors p-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:rounded"
                 >
                   {showPassword ? "Hide" : "Show"}
                 </button>

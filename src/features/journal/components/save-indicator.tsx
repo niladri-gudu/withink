@@ -8,6 +8,8 @@ export function SaveIndicator({ status }: { status: SaveStatus }) {
 
   return (
     <div
+      role="status"
+      aria-live="polite"
       className={cn(
         "flex items-center gap-2 text-xs px-3.5 py-1.5 rounded-full border shadow-sm transition-all duration-300 backdrop-blur-md animate-fade-in",
         status === "saving" && "bg-background/90 text-muted-foreground border-border",
@@ -24,7 +26,7 @@ export function SaveIndicator({ status }: { status: SaveStatus }) {
       {status === "saved" && (
         <>
           <CheckCheck className="h-3 w-3" />
-          <span>Changes saved</span>
+          <span>Saved</span>
         </>
       )}
       {status === "error" && (

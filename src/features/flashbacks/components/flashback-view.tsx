@@ -183,10 +183,14 @@ export function FlashbackView({ initialEntry, initialLabel, localToday }: Flashb
         </div>
       </header>
 
-      <Card className={cn(
-        "border border-border bg-card/75 backdrop-blur-md shadow-xl transition-all duration-300 w-full rounded-2xl",
-        isPending && "opacity-60 scale-[0.99] blur-[1px]"
-      )}>
+      <Card
+        aria-busy={isPending}
+        aria-live="polite"
+        className={cn(
+          "border border-border bg-card/75 backdrop-blur-md shadow-xl transition-all duration-300 w-full rounded-2xl",
+          isPending && "opacity-60 scale-[0.99] blur-[1px]"
+        )}
+      >
         <CardHeader className="flex flex-row items-center justify-between gap-4 border-b border-border/10 pb-4">
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground/60">Mood</span>

@@ -106,7 +106,7 @@ export function ForgotPasswordForm() {
                   Registered Email
                 </label>
                 {errors.email?.message && (
-                  <span className="text-[10px] font-mono text-destructive uppercase tracking-tight animate-in fade-in">
+                  <span id="email-error" className="text-[10px] font-mono text-destructive uppercase tracking-tight animate-in fade-in">
                     {"// "}{errors.email.message}
                   </span>
                 )}
@@ -115,6 +115,8 @@ export function ForgotPasswordForm() {
                 id="email"
                 type="email"
                 placeholder="name@example.com"
+                aria-invalid={!!errors.email}
+                aria-describedby={errors.email ? "email-error" : undefined}
                 className={`h-11 px-4 text-base ${
                   errors.email ? "border-destructive/60 focus-visible:ring-destructive/30" : ""
                 }`}

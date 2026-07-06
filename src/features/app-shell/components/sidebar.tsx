@@ -23,6 +23,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { ThemeToggle } from "@/components/theme-toggle";
 import { signOut } from "@/lib/auth-client";
 import { toast } from "sonner";
+import { useFocusTrap } from "@/hooks/use-focus-trap";
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -47,6 +48,20 @@ export function Sidebar({
   const router = useRouter();
   const [userMenuOpen, setUserMenuOpen] = React.useState(false);
   const userMenuRef = React.useRef<HTMLDivElement>(null);
+
+  const mobileSidebarRef = useFocusTrap(isMobileOpen);
+
+  // Close mobile sidebar on Escape
+  React.useEffect(() => {
+    if (!isMobileOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onCloseMobile();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isMobileOpen, onCloseMobile]);
 
   // Close user menu on outside click
   React.useEffect(() => {
@@ -234,7 +249,7 @@ export function Sidebar({
             "w-full flex items-center gap-3 p-2 rounded-lg hover:bg-sidebar-accent transition-all text-left cursor-pointer",
             isCollapsed && "justify-center p-1"
           )}
-          aria-haspopup="true"
+          aria-haspopup="menu"
           aria-expanded={userMenuOpen}
         >
           {user?.image ? (
@@ -281,7 +296,13 @@ export function Sidebar({
             onClick={onCloseMobile}
           />
           {/* Sliding menu panel */}
-          <aside className="relative flex flex-col w-64 max-w-xs h-full bg-sidebar text-sidebar-foreground animate-in slide-in-from-left duration-250 z-50">
+          <aside
+            ref={mobileSidebarRef as React.RefObject<HTMLDivElement>}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Navigation menu"
+            className="relative flex flex-col w-64 max-w-xs h-full bg-sidebar text-sidebar-foreground animate-in slide-in-from-left duration-250 z-50"
+          >
             {sidebarContent}
           </aside>
         </div>

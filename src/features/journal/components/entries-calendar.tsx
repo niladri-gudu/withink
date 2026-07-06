@@ -139,6 +139,7 @@ export function EntriesCalendar({
               size="icon"
               className="h-8 w-8 rounded-lg cursor-pointer"
               onClick={handlePrevMonth}
+              aria-label="Previous month"
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
@@ -147,6 +148,7 @@ export function EntriesCalendar({
               size="icon"
               className="h-8 w-8 rounded-lg cursor-pointer"
               onClick={handleNextMonth}
+              aria-label="Next month"
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
@@ -175,13 +177,23 @@ export function EntriesCalendar({
               const isExpired = dateStr < yesterdayStr;
               const isClickable = !isFuture && (!isExpired || hasEntry);
 
+              const dayLabel = isFuture
+                ? `Locked date: ${dateStr}`
+                : isExpired && !hasEntry
+                  ? `Expired date: ${dateStr}`
+                  : hasEntry
+                    ? `Reflection written on ${dateStr}`
+                    : `Write entry for ${dateStr}`;
+
               return (
                 <button
                   key={`day-${day}`}
+                  type="button"
                   onClick={() => isClickable && handleDayClick(day)}
                   disabled={!isClickable}
+                  aria-label={dayLabel}
                   className={cn(
-                    "aspect-square rounded-lg flex flex-col items-center justify-center relative text-xs transition-all duration-200 cursor-default",
+                    "aspect-square rounded-lg flex flex-col items-center justify-center relative text-xs transition-all duration-200 cursor-default focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
                     isClickable && "cursor-pointer",
                     isToday && "border border-primary font-bold text-primary",
                     hasEntry
@@ -201,9 +213,9 @@ export function EntriesCalendar({
                           : `Write entry for ${dateStr}`
                   }
                 >
-                  <span className="relative z-10">{day}</span>
+                  <span className="relative z-10" aria-hidden="true">{day}</span>
                   {hasEntry && (
-                    <span className="absolute bottom-1.5 w-1 h-1 rounded-full bg-primary animate-pulse" />
+                    <span className="absolute bottom-1.5 w-1 h-1 rounded-full bg-primary animate-pulse" aria-hidden="true" />
                   )}
                 </button>
               );

@@ -32,6 +32,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { useFocusTrap } from "@/hooks/use-focus-trap";
 
 const PAPER_SCALE_KEY = "withink-paper-scale";
 const INITIAL_SCALE = 1.0;
@@ -152,6 +153,21 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
   const [showDeleteModal, setShowDeleteModal] = React.useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = React.useState("");
   const [isDeletingAccount, setIsDeletingAccount] = React.useState(false);
+
+  const deleteModalRef = useFocusTrap(showDeleteModal);
+
+  // Close Delete confirmation modal on Escape
+  React.useEffect(() => {
+    if (!showDeleteModal) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !isDeletingAccount) {
+        setShowDeleteModal(false);
+        setDeleteConfirmText("");
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [showDeleteModal, isDeletingAccount]);
 
   // Fetch connected accounts
   React.useEffect(() => {
@@ -482,7 +498,7 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
               onClick={handleAvatarClick}
               disabled={avatarUploading}
               aria-label="Change profile photo"
-              className="group relative flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border border-border bg-secondary/60 shadow-sm transition-transform active:scale-95"
+              className="group relative flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border border-border bg-secondary/60 shadow-sm transition-transform active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               {user.image ? (
                 <Image
@@ -561,7 +577,7 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
                 onClick={() => setTheme(t.id)}
                 aria-pressed={active}
                 className={cn(
-                  "flex items-center gap-4 rounded-xl border p-4 text-left transition-all duration-200",
+                  "flex items-center gap-4 rounded-xl border p-4 text-left transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                   active
                     ? "border-accent bg-accent/5 ring-1 ring-accent/30"
                     : "border-border hover:border-accent/50 hover:bg-secondary/40",
@@ -912,13 +928,20 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
             }}
           />
 
-          <Card className="relative z-10 w-full max-w-md p-6 shadow-lg sm:p-8 animate-in zoom-in-95 duration-200">
+          <Card
+            ref={deleteModalRef as React.RefObject<HTMLDivElement>}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-dialog-title"
+            aria-describedby="delete-dialog-description"
+            className="relative z-10 w-full max-w-md p-6 shadow-lg sm:p-8 animate-in zoom-in-95 duration-200"
+          >
             <div className="space-y-3 text-center">
               <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10 text-destructive">
                 <AlertTriangle className="h-6 w-6" />
               </div>
-              <h2 className="text-h3 text-foreground">Delete your account?</h2>
-              <p className="text-body-small text-muted-foreground">
+              <h2 id="delete-dialog-title" className="text-h3 text-foreground">Delete your account?</h2>
+              <p id="delete-dialog-description" className="text-body-small text-muted-foreground">
                 This permanently erases every entry and memory. To confirm, type{" "}
                 <span className="font-semibold text-foreground">DELETE</span> below.
               </p>
@@ -978,6 +1001,7 @@ function ConnectionBadge({ connected }: { connected: boolean }) {
       )}
     >
       <span
+        aria-hidden="true"
         className={cn(
           "h-1.5 w-1.5 rounded-full",
           connected ? "bg-accent" : "bg-muted-foreground/50",

@@ -28,6 +28,27 @@ export function AppShell({ children, user }: AppShellProps) {
     setMounted(true);
   }, []);
 
+  // Synchronize client local date with a cookie for server components
+  React.useEffect(() => {
+    const getCookie = (name: string) => {
+      const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"));
+      return match ? match[2] : null;
+    };
+
+    const date = new Date();
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const localDateStr = `${year}-${month}-${day}`;
+
+    const existingCookie = getCookie("withink-local-date");
+
+    if (existingCookie !== localDateStr) {
+      document.cookie = `withink-local-date=${localDateStr}; path=/; max-age=31536000; SameSite=Lax`;
+      window.location.reload();
+    }
+  }, []);
+
   const handleToggleCollapse = () => {
     const nextCollapsed = !isCollapsed;
     setIsCollapsed(nextCollapsed);
@@ -36,6 +57,14 @@ export function AppShell({ children, user }: AppShellProps) {
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-background">
+      {/* Skip to main content link for keyboard navigation accessibility */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[9999] focus:px-4 focus:py-2 focus:bg-background focus:text-foreground focus:border focus:border-border focus:rounded-xl focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 text-sm font-medium"
+      >
+        Skip to main content
+      </a>
+
       {/* Sidebar navigation */}
       <Sidebar
         isCollapsed={mounted ? isCollapsed : false}
@@ -51,7 +80,7 @@ export function AppShell({ children, user }: AppShellProps) {
         <Header onOpenMobile={() => setIsMobileOpen(true)} />
 
         {/* Scrollable page area */}
-        <main className="flex-1 overflow-y-auto min-w-0 focus:outline-none no-scrollbar flex flex-col">
+        <main id="main-content" className="flex-1 overflow-y-auto min-w-0 focus:outline-none no-scrollbar flex flex-col">
           {children}
         </main>
       </div>

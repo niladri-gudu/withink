@@ -20,6 +20,7 @@ import {
   type MediaFile,
 } from "../actions/media-actions";
 import { Button } from "@/components/ui/button";
+import { useFocusTrap } from "@/hooks/use-focus-trap";
 
 interface MediaLightboxProps {
   /** The full filtered, sorted list currently in view (for prev/next bounds). */
@@ -47,6 +48,7 @@ export function MediaLightbox({
   onDeleted,
 }: MediaLightboxProps) {
   const file = index !== null ? files[index] : null;
+  const lightboxRef = useFocusTrap(index !== null);
 
   const [deleting, setDeleting] = React.useState<string | null>(null);
   const [copiedKey, setCopiedKey] = React.useState<string | null>(null);
@@ -139,7 +141,13 @@ export function MediaLightbox({
       {/* Close backdrop click */}
       <div className="absolute inset-0 cursor-default" onClick={onClose} />
 
-      <div className="relative max-w-3xl w-full mx-4 bg-card border border-border rounded-3xl overflow-hidden shadow-2xl flex flex-col z-10 animate-in zoom-in-95 duration-200">
+      <div
+        ref={lightboxRef as React.RefObject<HTMLDivElement>}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Image preview"
+        className="relative max-w-3xl w-full mx-4 bg-card border border-border rounded-3xl overflow-hidden shadow-2xl flex flex-col z-10 animate-in zoom-in-95 duration-200"
+      >
         {/* Close Button */}
         <button
           onClick={onClose}

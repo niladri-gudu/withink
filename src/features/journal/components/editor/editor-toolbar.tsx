@@ -55,6 +55,7 @@ function ToolbarButton({
       }}
       disabled={disabled}
       title={title}
+      aria-label={title}
       className={`
         h-9 w-9 p-0 rounded-md transition-all shrink-0 cursor-pointer
         ${
@@ -79,20 +80,37 @@ export function EditorToolbar({ editor }: ToolbarProps) {
     editor,
     selector: (ctx) => {
       const ed = ctx?.editor;
+      if (!ed) {
+        return {
+          isBold: false,
+          isItalic: false,
+          isUnderline: false,
+          isStrike: false,
+          isCode: false,
+          isH1: false,
+          isH2: false,
+          isH3: false,
+          isBulletList: false,
+          isOrderedList: false,
+          isLink: false,
+          canUndo: false,
+          canRedo: false,
+        };
+      }
       return {
-        isBold: ed?.isActive("bold") ?? false,
-        isItalic: ed?.isActive("italic") ?? false,
-        isUnderline: ed?.isActive("underline") ?? false,
-        isStrike: ed?.isActive("strike") ?? false,
-        isCode: ed?.isActive("code") ?? false,
-        isH1: ed?.isActive("heading", { level: 1 }) ?? false,
-        isH2: ed?.isActive("heading", { level: 2 }) ?? false,
-        isH3: ed?.isActive("heading", { level: 3 }) ?? false,
-        isBulletList: ed?.isActive("bulletList") ?? false,
-        isOrderedList: ed?.isActive("orderedList") ?? false,
-        isLink: ed?.isActive("link") ?? false,
-        canUndo: ed?.can()?.undo() ?? false,
-        canRedo: ed?.can()?.redo() ?? false,
+        isBold: ed.isActive("bold"),
+        isItalic: ed.isActive("italic"),
+        isUnderline: ed.isActive("underline"),
+        isStrike: ed.isActive("strike"),
+        isCode: ed.isActive("code"),
+        isH1: ed.isActive("heading", { level: 1 }),
+        isH2: ed.isActive("heading", { level: 2 }),
+        isH3: ed.isActive("heading", { level: 3 }),
+        isBulletList: ed.isActive("bulletList"),
+        isOrderedList: ed.isActive("orderedList"),
+        isLink: ed.isActive("link"),
+        canUndo: ed.can()?.undo() ?? false,
+        canRedo: ed.can()?.redo() ?? false,
       };
     },
   });
@@ -191,7 +209,11 @@ export function EditorToolbar({ editor }: ToolbarProps) {
   }
 
   return (
-    <div className="flex items-center gap-1.5 py-1.5 flex-nowrap overflow-x-auto no-scrollbar">
+    <div
+      role="toolbar"
+      aria-label="Formatting options"
+      className="flex items-center gap-1.5 py-1.5 flex-nowrap overflow-x-auto no-scrollbar"
+    >
       <ToolbarButton
         onClick={() => editor.chain().focus().undo().run()}
         disabled={!editorState.canUndo}

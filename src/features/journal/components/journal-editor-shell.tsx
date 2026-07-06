@@ -115,6 +115,7 @@ export function JournalEditorShell({
                 placeholder="Untitled Log"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
+                aria-label="Journal entry title"
                 className="w-full text-4xl sm:text-5xl font-serif font-black bg-transparent outline-none text-foreground placeholder:text-muted-foreground/30 tracking-tight leading-tight transition-all mb-2 sm:mb-4"
               />
             </div>
@@ -122,6 +123,7 @@ export function JournalEditorShell({
             <Button
               asChild
               variant="ghost"
+              aria-label="Back to dashboard"
               className="rounded-full h-9 w-9 sm:h-12 sm:w-12 p-0 border border-border/40 bg-background/50 group hover:bg-foreground hover:text-background transition-all shrink-0 mt-1"
             >
               <Link href="/dashboard">

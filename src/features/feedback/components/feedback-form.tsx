@@ -210,7 +210,7 @@ export function FeedbackForm() {
               <label
                 key={c.id}
                 className={cn(
-                  "flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition-all duration-200",
+                  "flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition-all duration-200 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-accent has-[:focus-visible]:ring-offset-1",
                   active
                     ? "border-accent bg-accent/5 ring-1 ring-accent/30"
                     : "border-border hover:border-accent/50 hover:bg-secondary/40",
@@ -253,10 +253,11 @@ export function FeedbackForm() {
           id="feedback-subject"
           placeholder={activeCategory.subjectPlaceholder}
           aria-invalid={!!errors.subject}
+          aria-describedby={errors.subject ? "feedback-subject-error" : undefined}
           {...register("subject")}
         />
         {errors.subject && (
-          <p className="text-caption text-destructive">{errors.subject.message}</p>
+          <p id="feedback-subject-error" className="text-caption text-destructive">{errors.subject.message}</p>
         )}
       </div>
 
@@ -270,10 +271,11 @@ export function FeedbackForm() {
           rows={6}
           placeholder={activeCategory.messagePlaceholder}
           aria-invalid={!!errors.message}
+          aria-describedby={errors.message ? "feedback-message-error" : undefined}
           {...register("message")}
         />
         {errors.message && (
-          <p className="text-caption text-destructive">{errors.message.message}</p>
+          <p id="feedback-message-error" className="text-caption text-destructive">{errors.message.message}</p>
         )}
       </div>
 

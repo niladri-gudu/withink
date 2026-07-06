@@ -99,7 +99,7 @@ function ResetPasswordFormContent() {
               New Secret Key
             </label>
             {errors.password?.message && (
-              <span className="text-[10px] font-mono text-destructive uppercase tracking-tight animate-in fade-in">
+              <span id="password-error" className="text-[10px] font-mono text-destructive uppercase tracking-tight animate-in fade-in">
                 {"// "}{errors.password.message}
               </span>
             )}
@@ -109,6 +109,8 @@ function ResetPasswordFormContent() {
               id="password"
               type={showPassword ? "text" : "password"}
               placeholder="••••••••"
+              aria-invalid={!!errors.password}
+              aria-describedby={errors.password ? "password-error" : undefined}
               className={`h-11 px-4 pr-12 text-base ${
                 errors.password ? "border-destructive/60 focus-visible:ring-destructive/30" : ""
               }`}
@@ -117,7 +119,9 @@ function ResetPasswordFormContent() {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute cursor-pointer right-3 top-1/2 -translate-y-1/2 text-xs font-mono uppercase tracking-wider text-muted-foreground/60 hover:text-foreground transition-colors p-1"
+              aria-label={showPassword ? "Hide secret key" : "Show secret key"}
+              aria-pressed={showPassword}
+              className="absolute cursor-pointer right-3 top-1/2 -translate-y-1/2 text-xs font-mono uppercase tracking-wider text-muted-foreground/60 hover:text-foreground transition-colors p-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:rounded"
             >
               {showPassword ? "Hide" : "Show"}
             </button>
@@ -133,7 +137,7 @@ function ResetPasswordFormContent() {
               Confirm Secret Key
             </label>
             {errors.confirmPassword?.message && (
-              <span className="text-[10px] font-mono text-destructive uppercase tracking-tight animate-in fade-in">
+              <span id="confirm-password-error" className="text-[10px] font-mono text-destructive uppercase tracking-tight animate-in fade-in">
                 {"// "}{errors.confirmPassword.message}
               </span>
             )}
@@ -143,6 +147,8 @@ function ResetPasswordFormContent() {
               id="confirmPassword"
               type={showConfirm ? "text" : "password"}
               placeholder="••••••••"
+              aria-invalid={!!errors.confirmPassword}
+              aria-describedby={errors.confirmPassword ? "confirm-password-error" : undefined}
               className={`h-11 px-4 pr-12 text-base ${
                 errors.confirmPassword ? "border-destructive/60 focus-visible:ring-destructive/30" : ""
               }`}
@@ -151,7 +157,9 @@ function ResetPasswordFormContent() {
             <button
               type="button"
               onClick={() => setShowConfirm(!showConfirm)}
-              className="absolute cursor-pointer right-3 top-1/2 -translate-y-1/2 text-xs font-mono uppercase tracking-wider text-muted-foreground/60 hover:text-foreground transition-colors p-1"
+              aria-label={showConfirm ? "Hide confirm secret key" : "Show confirm secret key"}
+              aria-pressed={showConfirm}
+              className="absolute cursor-pointer right-3 top-1/2 -translate-y-1/2 text-xs font-mono uppercase tracking-wider text-muted-foreground/60 hover:text-foreground transition-colors p-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:rounded"
             >
               {showConfirm ? "Hide" : "Show"}
             </button>

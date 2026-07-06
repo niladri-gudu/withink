@@ -20,6 +20,22 @@ export function useAutoSave(
 ) {
   const [status, setStatus] = useState<SaveStatus>("idle");
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastDateRef = useRef(data.date);
+
+  const isDirty = useRef(false);
+  const hasInitialized = useRef(false);
+
+  // Synchronously reset baseline when the date changes
+  if (data.date !== lastDateRef.current) {
+    hasInitialized.current = false;
+    isDirty.current = false;
+    lastDateRef.current = data.date;
+    setStatus("idle");
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  }
   
   // Tracks latest data for async autosave invocation
   const latestData = useRef(data);
@@ -35,9 +51,6 @@ export function useAutoSave(
     json: data.contentJson,
     mood: data.mood,
   });
-
-  const isDirty = useRef(false);
-  const hasInitialized = useRef(false);
 
   // Initialize once we are enabled and have received initial values
   useEffect(() => {
@@ -120,6 +133,7 @@ export function useAutoSave(
       }
     };
   }, [
+    data.date,
     data.title,
     data.contentHtml,
     data.contentText,

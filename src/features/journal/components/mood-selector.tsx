@@ -53,20 +53,28 @@ export function MoodSelector({
       <span className="text-xs uppercase tracking-wider text-muted-foreground/60 font-mono mr-1 hidden sm:inline">
         Mood
       </span>
-      <div className="flex items-center gap-1 bg-muted/20 p-1 rounded-2xl border border-border/5">
+      <div
+        role="radiogroup"
+        aria-label="Select mood"
+        className="flex items-center gap-1 bg-muted/20 p-1 rounded-2xl border border-border/5"
+      >
         {moods.map((m) => (
           <button
             key={m.value}
+            type="button"
+            role="radio"
+            aria-checked={selected === m.value}
+            aria-label={m.label}
             onClick={() => onSelect(m.value)}
             title={m.label}
             className={cn(
-              "p-2 rounded-xl transition-all duration-300 border border-transparent cursor-pointer relative",
+              "p-2 rounded-xl transition-all duration-300 border border-transparent cursor-pointer relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
               selected === m.value
                 ? m.activeClass
                 : cn("text-muted-foreground/45", m.hoverClass),
             )}
           >
-            <m.icon className="h-5 w-5 sm:h-6 sm:w-6" />
+            <m.icon className="h-5 w-5 sm:h-6 sm:w-6" aria-hidden="true" />
           </button>
         ))}
       </div>
