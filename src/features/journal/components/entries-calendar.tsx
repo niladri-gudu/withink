@@ -129,7 +129,7 @@ export function EntriesCalendar({
         <CardHeader className="flex flex-row items-center justify-between pb-4 space-y-0">
           <div className="flex flex-col">
             <span className="text-xs uppercase tracking-wider font-mono text-muted-foreground/60">Sanctuary Calendar</span>
-            <CardTitle className="text-xl font-serif font-black text-foreground">
+            <CardTitle className="text-xl font-serif font-semibold text-foreground">
               {MONTH_NAMES[currentMonth]} {currentYear}
             </CardTitle>
           </div>

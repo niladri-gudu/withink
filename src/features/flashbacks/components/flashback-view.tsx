@@ -96,7 +96,7 @@ export function FlashbackView({ initialEntry, initialLabel, localToday }: Flashb
             <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-muted-foreground/60 block">
               Memory Resurfacing • Flashbacks
             </span>
-            <h1 className="text-3xl sm:text-4xl font-serif font-black tracking-tight leading-none text-foreground">
+            <h1 className="text-3xl sm:text-4xl font-serif font-bold tracking-tight leading-none text-foreground">
               Past{" "}
               <span className="text-primary italic font-light text-4xl sm:text-5xl block sm:inline mt-1 sm:mt-0 pl-1">
                 flashbacks.
@@ -121,7 +121,7 @@ export function FlashbackView({ initialEntry, initialLabel, localToday }: Flashb
               <span className="text-[10px] font-mono font-bold uppercase tracking-[0.2em] text-primary/60 block">
                 Flashback
               </span>
-              <h2 className="text-2xl font-serif font-black tracking-tight text-foreground">
+              <h2 className="text-2xl font-serif font-bold tracking-tight text-foreground">
                 No memories from the past yet
               </h2>
               <p className="text-body-small text-muted-foreground leading-relaxed">
@@ -152,7 +152,7 @@ export function FlashbackView({ initialEntry, initialLabel, localToday }: Flashb
           <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-muted-foreground/60 block">
             Memory Resurfacing • {label || "Flashback"}
           </span>
-          <h1 className="text-3xl sm:text-4xl font-serif font-black tracking-tight leading-none text-foreground">
+          <h1 className="text-3xl sm:text-4xl font-serif font-bold tracking-tight leading-none text-foreground">
             Past{" "}
             <span className="text-primary italic font-light text-4xl sm:text-5xl pl-1">
               flashbacks.
@@ -206,7 +206,7 @@ export function FlashbackView({ initialEntry, initialLabel, localToday }: Flashb
         </CardHeader>
 
         <CardContent className="pt-8 px-6 sm:px-10 pb-8 space-y-6">
-          <h2 className="text-2xl sm:text-3xl font-serif font-black tracking-tight text-foreground uppercase">
+          <h2 className="text-2xl sm:text-3xl font-serif font-bold tracking-tight text-foreground uppercase">
             {entry.title || "Untitled Memory"}
           </h2>
           <p className="text-base sm:text-lg font-serif text-muted-foreground leading-relaxed italic border-l-2 border-primary/20 pl-4 py-1">

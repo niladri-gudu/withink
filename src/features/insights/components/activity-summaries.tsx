@@ -70,7 +70,7 @@ export function ActivitySummaries({ mostActiveDayOfWeek, mostActiveTimeOfDay }: 
                   <Sparkles className="h-5 w-5" />
                 </div>
                 <div>
-                  <h5 className="font-serif font-black text-xl text-foreground">
+                  <h5 className="font-serif font-bold text-xl text-foreground">
                     {mostActiveDayOfWeek.day}s
                   </h5>
                   <p className="text-[10px] font-mono text-muted-foreground/60 uppercase">
@@ -110,7 +110,7 @@ export function ActivitySummaries({ mostActiveDayOfWeek, mostActiveTimeOfDay }: 
                   <timeDetails.icon className="h-5 w-5" />
                 </div>
                 <div>
-                  <h5 className="font-serif font-black text-xl text-foreground">
+                  <h5 className="font-serif font-bold text-xl text-foreground">
                     {timeDetails.title}
                   </h5>
                   <p className="text-[10px] font-mono text-muted-foreground/60 uppercase">

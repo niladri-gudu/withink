@@ -106,7 +106,7 @@ export function MonthlyOverview({ monthlyOverview }: MonthlyOverviewProps) {
             <p className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground/60">
               Reflections
             </p>
-            <p className="text-2xl font-serif font-black text-foreground">
+            <p className="text-2xl font-serif font-bold text-foreground">
               {stat.entryCount}
             </p>
             <p className="text-[10px] text-muted-foreground font-mono mt-0.5">
@@ -124,7 +124,7 @@ export function MonthlyOverview({ monthlyOverview }: MonthlyOverviewProps) {
             <p className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground/60">
               Words
             </p>
-            <p className="text-2xl font-serif font-black text-foreground">
+            <p className="text-2xl font-serif font-bold text-foreground">
               {stat.totalWords.toLocaleString()}
             </p>
             <p className="text-[10px] text-muted-foreground font-mono mt-0.5">
@@ -142,7 +142,7 @@ export function MonthlyOverview({ monthlyOverview }: MonthlyOverviewProps) {
             <p className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground/60">
               Average Mood
             </p>
-            <p className="text-2xl font-serif font-black text-foreground">
+            <p className="text-2xl font-serif font-bold text-foreground">
               {stat.averageMood !== null ? stat.averageMood : "—"}
             </p>
             <p className="text-[10px] text-muted-foreground font-mono mt-0.5">

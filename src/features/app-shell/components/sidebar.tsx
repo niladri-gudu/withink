@@ -20,7 +20,6 @@ import { cn } from "@/lib/utils";
 import { ROUTES } from "@/constants/routes";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { signOut } from "@/lib/auth-client";
 import { toast } from "sonner";
 import { useFocusTrap } from "@/hooks/use-focus-trap";
@@ -159,7 +158,6 @@ export function Sidebar({
           </span>
         )}
         <div className="flex items-center gap-2">
-          {!isCollapsed && <ThemeToggle />}
           {/* Collapse Button - only visible on desktop */}
           <Button
             variant="ghost"

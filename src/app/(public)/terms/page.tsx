@@ -10,23 +10,23 @@ export default function TermsPage() {
   return (
     <div className="flex-1 flex flex-col justify-center max-w-2xl mx-auto px-6 py-16 space-y-8">
       <div className="space-y-4">
-        <h1 className="text-4xl font-serif font-bold text-foreground">
+        <h1 className="text-h1 text-foreground">
           Terms of Service
         </h1>
-        <p className="text-sm text-muted-foreground">Last updated: July 1, 2026</p>
+        <p className="text-caption text-muted-foreground">Last updated: July 1, 2026</p>
       </div>
 
-      <div className="space-y-6 text-sm text-muted-foreground leading-relaxed">
+      <div className="space-y-6 text-body-small text-muted-foreground leading-relaxed">
         <p>
           Welcome to <strong>withink.</strong>. By utilizing our website and services, you agree to comply with the terms defined below.
         </p>
-        <h2 className="text-lg font-serif font-semibold text-foreground pt-4">
+        <h2 className="text-title font-serif text-foreground pt-4">
           1. Acceptable Use
         </h2>
         <p>
           You own your content and are solely responsible for keeping your login credentials secure. You agree to use the service in compliance with all applicable laws.
         </p>
-        <h2 className="text-lg font-serif font-semibold text-foreground pt-4">
+        <h2 className="text-title font-serif text-foreground pt-4">
           2. Lifetime Data Portability
         </h2>
         <p>

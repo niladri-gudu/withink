@@ -103,8 +103,8 @@ export function Header({ onOpenMobile }: HeaderProps) {
         </nav>
       </div>
 
-      {/* Right side: Mobile Theme Toggle stub & settings */}
-      <div className="md:hidden flex items-center">
+      {/* Right side: Theme Toggle */}
+      <div className="flex items-center">
         <ThemeToggle />
       </div>
     </header>

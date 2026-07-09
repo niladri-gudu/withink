@@ -25,7 +25,7 @@ export default function LandingPage() {
               <Link href={ROUTES.AUTH.LOGIN}>Sign In</Link>
             </Button>
             <Button variant="default" asChild>
-              <Link href={ROUTES.AUTH.REGISTER}>Begin Rebuilding</Link>
+              <Link href={ROUTES.AUTH.REGISTER}>Get Started</Link>
             </Button>
           </div>
         </div>
@@ -62,15 +62,15 @@ export default function LandingPage() {
             <div className="flex items-center space-x-2">
               <span className="text-title font-serif">July 1, 2026</span>
               <span className="text-xs bg-accent text-accent-foreground px-2 py-0.5 rounded-full font-medium">
-                Rad 😀
+                Calm 😌
               </span>
             </div>
             <span className="text-caption select-none">Saved to your sanctuary</span>
           </div>
           <div className="flex-1 space-y-3 py-2">
-            <h2 className="text-h2">The beginning of V2 Rebuild</h2>
+            <h2 className="text-h2">A quiet evening of reflection</h2>
             <p className="text-body-small text-muted-foreground">
-              Today we established the foundation. The cream-colored background feels warm, like turning the first page of a premium linen notebook. There are no distracting metrics, no notifications, and no urgency. Just the soft glow of letters on a clean surface...
+              Today has been gentle. I sat by the window watching the rain fall against the glass, holding a warm cup of tea. There is a certain peace in taking five minutes to just sit with my thoughts, without notifications, without noise. Writing here feels like stepping into a quiet library, where the only sound is the ink flowing onto premium paper...
             </p>
           </div>
         </div>

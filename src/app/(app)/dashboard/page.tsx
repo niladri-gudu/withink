@@ -114,7 +114,7 @@ export default async function DashboardPage() {
         <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-muted-foreground/60 block">
           {todayFormatted}
         </span>
-        <h1 className="text-3xl sm:text-4xl font-serif font-black tracking-tight leading-none text-foreground">
+        <h1 className="text-3xl sm:text-4xl font-serif font-bold tracking-tight leading-none text-foreground">
           Good morning,{" "}
           <span className="text-primary italic font-light text-4xl sm:text-5xl pl-1">
             {firstName}.
@@ -135,7 +135,7 @@ export default async function DashboardPage() {
             </div>
           )}
           <CardHeader>
-            <CardTitle className="text-xl font-serif font-black text-foreground">
+            <CardTitle className="text-xl font-serif font-semibold text-foreground">
               Today&apos;s Reflection
             </CardTitle>
             <CardDescription>
@@ -159,7 +159,7 @@ export default async function DashboardPage() {
         {/* Quick stats/streak */}
         <Card className="flex flex-col justify-between border border-border bg-card/60 backdrop-blur-sm" interactive>
           <CardHeader>
-            <CardTitle className="text-xl font-serif font-black text-foreground">Sanctuary Stats</CardTitle>
+            <CardTitle className="text-xl font-serif font-semibold text-foreground">Sanctuary Stats</CardTitle>
             <CardDescription>Consistency tracking</CardDescription>
           </CardHeader>
           <CardContent className="flex-grow flex flex-col justify-center items-center py-6 space-y-2">
@@ -169,7 +169,7 @@ export default async function DashboardPage() {
               )}
               <Flame className={cn("h-16 w-16 text-orange-500 relative z-10", currentStreak > 0 && "animate-bounce")} />
             </div>
-            <span className="text-4xl font-serif font-black text-foreground">{currentStreak}</span>
+            <span className="text-4xl font-serif font-bold text-foreground">{currentStreak}</span>
             <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
               Day Streak
             </span>
@@ -185,7 +185,7 @@ export default async function DashboardPage() {
             <span className="text-[9px] font-mono uppercase tracking-wider text-primary font-semibold">
               {flashbackLabel || "Flashback"}
             </span>
-            <CardTitle className="text-lg font-serif font-black text-foreground">
+            <CardTitle className="text-lg font-serif font-semibold text-foreground">
               {flashbackEntry ? flashbackEntry.title || "Untitled Reflection" : "Anniversary Flashback"}
             </CardTitle>
             <CardDescription>
@@ -216,7 +216,7 @@ export default async function DashboardPage() {
         {/* Insights */}
         <Card className="border border-border bg-card/60 backdrop-blur-sm" interactive>
           <CardHeader>
-            <CardTitle className="text-lg font-serif font-black text-foreground">Recent Reflections</CardTitle>
+            <CardTitle className="text-lg font-serif font-semibold text-foreground">Recent Reflections</CardTitle>
             <CardDescription>Your latest journal entries</CardDescription>
           </CardHeader>
           <CardContent className="pt-2">

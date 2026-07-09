@@ -78,7 +78,7 @@ export default async function EntryPage({ params, searchParams }: EntryPageProps
           <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground/60 block">
             {isFuture ? "Time Lock // Access Denied" : "Grace Period // Expired"}
           </span>
-          <h1 className="text-4xl sm:text-5xl font-serif font-black tracking-tight leading-none text-foreground">
+          <h1 className="text-4xl sm:text-5xl font-serif font-bold tracking-tight leading-none text-foreground">
             {isFuture ? "The Future is" : "The Archive is"} <br />
             <span className="text-primary italic font-light text-5xl sm:text-6xl block mt-2">
               {isFuture ? "unwritten." : "sealed."}

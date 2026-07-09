@@ -116,7 +116,7 @@ export function JournalEditorShell({
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 aria-label="Journal entry title"
-                className="w-full text-4xl sm:text-5xl font-serif font-black bg-transparent outline-none text-foreground placeholder:text-muted-foreground/30 tracking-tight leading-tight transition-all mb-2 sm:mb-4"
+                className="w-full text-4xl sm:text-5xl font-serif font-bold bg-transparent outline-none text-foreground placeholder:text-muted-foreground/30 tracking-tight leading-tight transition-all mb-2 sm:mb-4"
               />
             </div>
 

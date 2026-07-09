@@ -71,7 +71,7 @@ export function InsightsDashboard({ initialData, localToday }: InsightsDashboard
         <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-muted-foreground/60 block">
           System Analysis • Private Stats
         </span>
-        <h1 className="text-3xl sm:text-4xl font-serif font-black tracking-tight leading-none text-foreground">
+        <h1 className="text-3xl sm:text-4xl font-serif font-bold tracking-tight leading-none text-foreground">
           Private{" "}
           <span className="text-primary italic font-light text-4xl sm:text-5xl block sm:inline mt-1 sm:mt-0 pl-1">
             insights.
@@ -93,7 +93,7 @@ export function InsightsDashboard({ initialData, localToday }: InsightsDashboard
             <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground/60">
               Current Streak
             </p>
-            <p className="mt-1 text-3xl font-black tracking-tighter text-foreground">
+            <p className="mt-1 text-3xl font-bold tracking-tighter text-foreground">
               {streaks.currentStreak}
             </p>
           </div>
@@ -111,7 +111,7 @@ export function InsightsDashboard({ initialData, localToday }: InsightsDashboard
             <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground/60">
               Longest Streak
             </p>
-            <p className="mt-1 text-3xl font-black tracking-tighter text-foreground">
+            <p className="mt-1 text-3xl font-bold tracking-tighter text-foreground">
               {streaks.longestStreak}
             </p>
           </div>
@@ -129,7 +129,7 @@ export function InsightsDashboard({ initialData, localToday }: InsightsDashboard
             <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground/60">
               Total Words
             </p>
-            <p className="mt-1 text-3xl font-black tracking-tighter text-foreground">
+            <p className="mt-1 text-3xl font-bold tracking-tighter text-foreground">
               {wordCountStats.total.toLocaleString()}
             </p>
           </div>
@@ -147,7 +147,7 @@ export function InsightsDashboard({ initialData, localToday }: InsightsDashboard
             <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground/60">
               Total Entries
             </p>
-            <p className="mt-1 text-3xl font-black tracking-tighter text-foreground">
+            <p className="mt-1 text-3xl font-bold tracking-tighter text-foreground">
               {heatmap.filter((d) => d.count > 0).length}
             </p>
           </div>

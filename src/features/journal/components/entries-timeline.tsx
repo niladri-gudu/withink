@@ -303,7 +303,7 @@ export function EntriesTimeline({
                         </div>
                         <div className="min-w-0">
                           <Link href={`${ROUTES.APP.ENTRY(entry.date)}?today=${localToday}` as unknown as ComponentPropsWithoutRef<typeof Link>["href"]} className="block">
-                            <h3 className="font-serif font-black text-xl tracking-tight text-foreground hover:text-primary transition-colors truncate">
+                            <h3 className="font-serif font-semibold text-xl tracking-tight text-foreground hover:text-primary transition-colors truncate">
                               {entry.title ? (
                                 <Highlight text={entry.title} query={debouncedSearch} />
                               ) : (

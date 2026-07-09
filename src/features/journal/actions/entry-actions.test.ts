@@ -97,10 +97,10 @@ describe("entry-actions", () => {
     });
 
     it("should call getEntryForDate on getEntryAction", async () => {
-      vi.mocked(JournalService.getEntryForDate).mockResolvedValue({ _id: "entry-1" } as any);
+      vi.mocked(JournalService.getEntryForDate).mockResolvedValue({ id: "entry-1" } as any);
       const res = await getEntryAction("2026-07-06", "2026-07-06");
       expect(res.success).toBe(true);
-      expect(res.data).toEqual({ _id: "entry-1" });
+      expect(res.data).toEqual({ id: "entry-1" });
       expect(JournalService.getEntryForDate).toHaveBeenCalledWith(mockUserId, "2026-07-06", "2026-07-06");
     });
 
@@ -113,7 +113,7 @@ describe("entry-actions", () => {
         contentText: "Hello",
         contentJson: '{"type":"doc"}',
       };
-      vi.mocked(JournalService.saveJournalEntry).mockResolvedValue({ _id: "saved-1", ...input } as any);
+      vi.mocked(JournalService.saveJournalEntry).mockResolvedValue({ id: "saved-1", ...input } as any);
 
       const res = await saveEntryAction(input, "2026-07-06");
       expect(res.success).toBe(true);

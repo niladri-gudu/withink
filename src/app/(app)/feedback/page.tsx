@@ -25,7 +25,7 @@ export default async function FeedbackPage() {
         <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-muted-foreground/60 block">
           Direct Channel • Feedback Loop
         </span>
-        <h1 className="text-3xl sm:text-4xl font-serif font-black tracking-tight leading-none text-foreground">
+        <h1 className="text-3xl sm:text-4xl font-serif font-bold tracking-tight leading-none text-foreground">
           Share your{" "}
           <span className="text-primary italic font-light text-4xl sm:text-5xl block sm:inline mt-1 sm:mt-0 pl-1">
             thoughts.
