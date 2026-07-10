@@ -1,0 +1,241 @@
+"use server";
+
+import { headers } from "next/headers";
+import { z } from "zod";
+import { auth } from "@/lib/auth";
+import { LockRepository } from "../repositories/lock-repository";
+import { LockService } from "../services/lock-service";
+import { passcodeSchema, updateLockSettingsSchema } from "../validation/lock-schema";
+import { handleError } from "@/server/errors";
+import { logger } from "@/server/logger";
+
+/**
+ * Gets the current user's lock settings configuration
+ */
+export async function getLockSettingsAction(): Promise<{
+  success: boolean;
+  data?: {
+    isLockEnabled: boolean;
+    hasPasscode: boolean;
+    autoLockTimeout: number;
+    lockOnTabHide: boolean;
+    isUnlocked: boolean;
+  };
+  error?: string;
+}> {
+  try {
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const settings = await LockRepository.getSettings(session.user.id);
+    const isUnlocked = await LockService.isSessionUnlocked(session.user.id);
+
+    return {
+      success: true,
+      data: {
+        isLockEnabled: settings?.isLockEnabled ?? false,
+        hasPasscode: !!settings?.passcodeHash,
+        autoLockTimeout: settings?.autoLockTimeout ?? 300,
+        lockOnTabHide: settings?.lockOnTabHide ?? true,
+        isUnlocked,
+      },
+    };
+  } catch (err) {
+    const appError = handleError(err);
+    return { success: false, error: appError.safeMessage };
+  }
+}
+
+/**
+ * Validates the passcode and unlocks the session
+ */
+export async function unlockAction(
+  passcode: string,
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    // Validate input PIN format
+    passcodeSchema.parse(passcode);
+
+    const settings = await LockRepository.getSettings(session.user.id);
+    if (!settings || !settings.isLockEnabled) {
+      return { success: true }; // already unlocked or disabled
+    }
+
+    const verified = LockService.verifyPasscode(passcode, settings.passcodeHash);
+    if (!verified) {
+      return { success: false, error: "Incorrect passcode" };
+    }
+
+    // Set cookie token
+    const timeout = settings.autoLockTimeout > 0 ? settings.autoLockTimeout : 28800; // 8 hrs if timeout is 0
+    await LockService.setUnlockCookie(session.user.id, timeout);
+
+    return { success: true };
+  } catch (err) {
+    if (err instanceof z.ZodError) {
+      return { success: false, error: err.errors[0]?.message || "Validation failed" };
+    }
+    const appError = handleError(err);
+    return { success: false, error: appError.safeMessage };
+  }
+}
+
+/**
+ * Clears the unlock cookie, locking the user session
+ */
+export async function lockAction(): Promise<{ success: boolean; error?: string }> {
+  try {
+    await LockService.clearUnlockCookie();
+    return { success: true };
+  } catch (err) {
+    const appError = handleError(err);
+    return { success: false, error: appError.safeMessage };
+  }
+}
+
+/**
+ * Saves or updates user lock settings
+ */
+export async function saveLockSettingsAction(
+  inputData: unknown,
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const validated = updateLockSettingsSchema.parse(inputData);
+    const existing = await LockRepository.getSettings(session.user.id);
+
+    const updatePayload: any = {
+      isLockEnabled: validated.isLockEnabled,
+      autoLockTimeout: validated.autoLockTimeout,
+      lockOnTabHide: validated.lockOnTabHide,
+    };
+
+    if (validated.isLockEnabled) {
+      if (validated.passcode) {
+        // Hashing new passcode
+        passcodeSchema.parse(validated.passcode);
+        updatePayload.passcodeHash = LockService.hashPasscode(validated.passcode);
+      } else if (!existing || !existing.passcodeHash) {
+        return { success: false, error: "A passcode is required to enable diary lock" };
+      }
+    } else {
+      // Disabling lock, clean up passcode hash
+      updatePayload.passcodeHash = "";
+    }
+
+    await LockRepository.saveSettings(session.user.id, updatePayload);
+
+    if (validated.isLockEnabled) {
+      // Auto-unlock current action setter session
+      const timeout = validated.autoLockTimeout > 0 ? validated.autoLockTimeout : 28800;
+      await LockService.setUnlockCookie(session.user.id, timeout);
+    } else {
+      await LockService.clearUnlockCookie();
+    }
+
+    return { success: true };
+  } catch (err) {
+    if (err instanceof z.ZodError) {
+      return { success: false, error: err.errors[0]?.message || "Validation failed" };
+    }
+    const appError = handleError(err);
+    return { success: false, error: appError.safeMessage };
+  }
+}
+
+/**
+ * Sends a recovery email with a 6-digit verification code to reset the lock
+ */
+export async function requestPasscodeResetEmailAction(): Promise<{
+  success: boolean;
+  error?: string;
+}> {
+  try {
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const sent = await LockService.sendResetEmail(
+      session.user.id,
+      session.user.email,
+      session.user.name,
+    );
+
+    if (!sent) {
+      return { success: false, error: "Failed to send reset email. Please try again later." };
+    }
+
+    return { success: true };
+  } catch (err) {
+    const appError = handleError(err);
+    return { success: false, error: appError.safeMessage };
+  }
+}
+
+/**
+ * Verifies the 6-digit recovery code and disables the lock settings
+ */
+export async function verifyPasscodeResetCodeAction(
+  code: string,
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const disabled = await LockService.verifyResetCodeAndDisable(session.user.id, code);
+    if (!disabled) {
+      return { success: false, error: "Invalid or expired recovery code" };
+    }
+
+    return { success: true };
+  } catch (err) {
+    const appError = handleError(err);
+    return { success: false, error: appError.safeMessage };
+  }
+}
+
+/**
+ * Resets the lock using the user's login password (for credentials users)
+ */
+export async function verifyPasswordAndResetLockAction(
+  password: string,
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const verified = await LockService.verifyLoginPassword(session.user.email, password);
+    if (!verified) {
+      return { success: false, error: "Incorrect password" };
+    }
+
+    // Disable lock
+    await LockRepository.saveSettings(session.user.id, {
+      isLockEnabled: false,
+      passcodeHash: "",
+    });
+
+    await LockService.clearUnlockCookie();
+
+    return { success: true };
+  } catch (err) {
+    const appError = handleError(err);
+    return { success: false, error: appError.safeMessage };
+  }
+}

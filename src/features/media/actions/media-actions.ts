@@ -10,6 +10,7 @@ import { EntryModel } from "@/features/journal/repositories/entry-model";
 import { EntryRepository } from "@/features/journal/repositories/entry-repository";
 import { safeDecrypt, encrypt } from "@/lib/encryption";
 import { handleError } from "@/server/errors";
+import { LockService } from "@/features/lock/services/lock-service";
 
 const isProduction = env.IS_PROD;
 const envPrefix = isProduction ? "" : "dev-";
@@ -41,6 +42,11 @@ export async function getStorageStatsAction(): Promise<{
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session) {
       return { success: false, error: "Unauthorized" };
+    }
+
+    const unlocked = await LockService.isSessionUnlocked(session.user.id);
+    if (!unlocked) {
+      return { success: false, error: "Locked" };
     }
 
     const prefix = `${envPrefix}journal/${session.user.id}/`;
@@ -87,6 +93,11 @@ export async function getFullMediaLibraryAction(): Promise<{
       return { success: false, error: "Unauthorized" };
     }
 
+    const unlocked = await LockService.isSessionUnlocked(session.user.id);
+    if (!unlocked) {
+      return { success: false, error: "Locked" };
+    }
+
     const prefix = `${envPrefix}journal/${session.user.id}/`;
     const response = await r2.send(
       new ListObjectsV2Command({
@@ -127,6 +138,11 @@ export async function deleteMediaFileAction(
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session) {
       return { success: false, error: "Unauthorized" };
+    }
+
+    const unlocked = await LockService.isSessionUnlocked(session.user.id);
+    if (!unlocked) {
+      return { success: false, error: "Locked" };
     }
 
     // Safety check - make sure user is only deleting their own files
@@ -227,6 +243,11 @@ export async function findEntryForMediaAction(
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session) {
       return { success: false, error: "Unauthorized" };
+    }
+
+    const unlocked = await LockService.isSessionUnlocked(session.user.id);
+    if (!unlocked) {
+      return { success: false, error: "Locked" };
     }
 
     await connectDB();

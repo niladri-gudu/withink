@@ -89,6 +89,9 @@ importers:
       resend:
         specifier: ^4.0.0
         version: 4.8.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      save-dev:
+        specifier: 0.0.1-security
+        version: 0.0.1-security
       sonner:
         specifier: ^2.0.7
         version: 2.0.7(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -4014,6 +4017,9 @@ packages:
 
   safer-buffer@2.1.2:
     resolution: {integrity: sha512-YZo3K82SD7Riyi0E1EQPojLz7kpepnSQI9IyPbHHg1XXXevb5dJI7tpyN2ADxGcQbHG7vcyRHk0cbwqcQriUtg==}
+
+  save-dev@0.0.1-security:
+    resolution: {integrity: sha512-k6knZTDNK8PKKbIqnvxiOveJinuw2LcQjqDoaorZWP9M5AR2EPsnpDeSbeoZZ0pHr5ze1uoaKdK8NBGQrJ34Uw==}
 
   saxes@6.0.0:
     resolution: {integrity: sha512-xAg7SOnEhrm5zI3puOOKyy1OMcMlIJZYNJY7xLBwSze0UjhPLnWfj2GF2EpT0jmzaJKIWKHLsaSSajf35bcYnA==}
@@ -8496,6 +8502,8 @@ snapshots:
       is-regex: 1.2.1
 
   safer-buffer@2.1.2: {}
+
+  save-dev@0.0.1-security: {}
 
   saxes@6.0.0:
     dependencies:

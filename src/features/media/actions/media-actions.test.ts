@@ -16,6 +16,13 @@ vi.mock("next/headers", () => ({
   headers: vi.fn().mockResolvedValue(new Map()),
 }));
 
+// Mock LockService
+vi.mock("@/features/lock/services/lock-service", () => ({
+  LockService: {
+    isSessionUnlocked: vi.fn().mockResolvedValue(true),
+  },
+}));
+
 // Mock auth
 vi.mock("@/lib/auth", () => ({
   auth: {

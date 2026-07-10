@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth";
 import { FlashbackService } from "../services/flashback-service";
 import type { FlashbackResponse } from "../services/flashback-service";
 import { handleError } from "@/server/errors";
+import { LockService } from "@/features/lock/services/lock-service";
 
 export async function getFlashbackAction(
   localToday: string,
@@ -15,6 +16,11 @@ export async function getFlashbackAction(
     });
     if (!session) {
       return { success: false, error: "Unauthorized" };
+    }
+
+    const unlocked = await LockService.isSessionUnlocked(session.user.id);
+    if (!unlocked) {
+      return { success: false, error: "Locked" };
     }
 
     const data = await FlashbackService.getFlashbackForToday(session.user.id, localToday);
@@ -34,6 +40,11 @@ export async function refreshFlashbackAction(
     });
     if (!session) {
       return { success: false, error: "Unauthorized" };
+    }
+
+    const unlocked = await LockService.isSessionUnlocked(session.user.id);
+    if (!unlocked) {
+      return { success: false, error: "Locked" };
     }
 
     const data = await FlashbackService.refreshFlashback(session.user.id, localToday);

@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth";
 import { InsightsService } from "../services/insights-service";
 import type { InsightsPayload } from "../services/insights-service";
 import { handleError } from "@/server/errors";
+import { LockService } from "@/features/lock/services/lock-service";
 
 export async function getInsightsAction(
   todayStr: string,
@@ -20,6 +21,11 @@ export async function getInsightsAction(
     });
     if (!session) {
       return { success: false, error: "Unauthorized" };
+    }
+
+    const unlocked = await LockService.isSessionUnlocked(session.user.id);
+    if (!unlocked) {
+      return { success: false, error: "Locked" };
     }
 
     const payload = await InsightsService.getInsights(

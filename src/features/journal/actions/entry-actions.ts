@@ -7,6 +7,7 @@ import type { DecryptedEntry } from "../services/journal-service";
 import { saveEntrySchema } from "../validation/entry-schema";
 import { handleError } from "@/server/errors";
 import { getLocalDateString, addDays, isDateString } from "@/lib/utils/date";
+import { LockService } from "@/features/lock/services/lock-service";
 
 export async function getEntryAction(
   date: string,
@@ -18,6 +19,11 @@ export async function getEntryAction(
     });
     if (!session) {
       return { success: false, error: "Unauthorized" };
+    }
+
+    const unlocked = await LockService.isSessionUnlocked(session.user.id);
+    if (!unlocked) {
+      return { success: false, error: "Locked" };
     }
 
     const entry = await JournalService.getEntryForDate(session.user.id, date, today);
@@ -38,6 +44,11 @@ export async function saveEntryAction(
     });
     if (!session) {
       return { success: false, error: "Unauthorized" };
+    }
+
+    const unlocked = await LockService.isSessionUnlocked(session.user.id);
+    if (!unlocked) {
+      return { success: false, error: "Locked" };
     }
 
     // 1. Validate fields using Zod
@@ -82,6 +93,11 @@ export async function getEntriesListAction(
       return { success: false, error: "Unauthorized" };
     }
 
+    const unlocked = await LockService.isSessionUnlocked(session.user.id);
+    if (!unlocked) {
+      return { success: false, error: "Locked" };
+    }
+
     const result = await JournalService.getEntriesPage(session.user.id, page, limit, filters);
     return { success: true, data: result };
   } catch (err) {
@@ -108,6 +124,11 @@ export async function getStreakAndStatsAction(
     });
     if (!session) {
       return { success: false, error: "Unauthorized" };
+    }
+
+    const unlocked = await LockService.isSessionUnlocked(session.user.id);
+    if (!unlocked) {
+      return { success: false, error: "Locked" };
     }
 
     const [dates, stats] = await Promise.all([
@@ -170,6 +191,11 @@ export async function getEntryDatesAction(): Promise<{ success: boolean; data?: 
       return { success: false, error: "Unauthorized" };
     }
 
+    const unlocked = await LockService.isSessionUnlocked(session.user.id);
+    if (!unlocked) {
+      return { success: false, error: "Locked" };
+    }
+
     const dates = await JournalService.getEntryDates(session.user.id);
     return { success: true, data: dates };
   } catch (err) {
@@ -187,6 +213,11 @@ export async function deleteEntryAction(
     });
     if (!session) {
       return { success: false, error: "Unauthorized" };
+    }
+
+    const unlocked = await LockService.isSessionUnlocked(session.user.id);
+    if (!unlocked) {
+      return { success: false, error: "Locked" };
     }
 
     const deleted = await JournalService.deleteEntry(session.user.id, date);

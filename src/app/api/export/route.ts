@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { ExportService } from "@/features/export/services/export-service";
 import { handleError } from "@/server/errors";
 import { logger } from "@/server/logger";
+import { LockService } from "@/features/lock/services/lock-service";
 
 /**
  * Streams a complete ZIP backup of the authenticated user's journal.
@@ -13,6 +14,11 @@ export async function GET() {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const unlocked = await LockService.isSessionUnlocked(session.user.id);
+  if (!unlocked) {
+    return NextResponse.json({ error: "Locked" }, { status: 403 });
   }
 
   try {

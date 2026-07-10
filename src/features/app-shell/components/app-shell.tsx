@@ -3,6 +3,10 @@
 import * as React from "react";
 import { Sidebar } from "./sidebar";
 import { Header } from "./header";
+import { useLockTimer } from "../../lock/hooks/use-lock-timer";
+import { LockScreen } from "../../lock/components/lock-screen";
+import { LockSetupOnboarding } from "../../lock/components/lock-setup-onboarding";
+import { getLockSettingsAction, lockAction } from "../../lock/actions/lock-actions";
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -17,6 +21,89 @@ export function AppShell({ children, user }: AppShellProps) {
   const [isCollapsed, setIsCollapsed] = React.useState(false);
   const [isMobileOpen, setIsMobileOpen] = React.useState(false);
   const [mounted, setMounted] = React.useState(false);
+
+  // Lock feature states - initialized safely to avoid flashes
+  const [isLockEnabled, setIsLockEnabled] = React.useState(false);
+  const [hasPasscode, setHasPasscode] = React.useState(true);
+  const [autoLockTimeout, setAutoLockTimeout] = React.useState(300); // 5m default
+  const [lockOnTabHide, setLockOnTabHide] = React.useState(true);
+  const [showSetupPrompt, setShowSetupPrompt] = React.useState(false);
+
+  const [isUnlocked, setIsUnlocked] = React.useState(() => {
+    if (typeof window === "undefined") return true;
+    const lockEnabled = localStorage.getItem("withink_lock_enabled") === "true";
+    const tabUnlocked = sessionStorage.getItem("withink_tab_unlocked") === "true";
+    if (lockEnabled && !tabUnlocked) return false;
+    return true;
+  });
+
+  // Fetch lock configurations on mount/auth change
+  React.useEffect(() => {
+    if (!user) return;
+
+    const checkLockStatus = async () => {
+      const res = await getLockSettingsAction();
+      if (res.success && res.data) {
+        setIsLockEnabled(res.data.isLockEnabled);
+        setHasPasscode(res.data.hasPasscode);
+        setAutoLockTimeout(res.data.autoLockTimeout);
+        setLockOnTabHide(res.data.lockOnTabHide);
+        setIsUnlocked(res.data.isUnlocked);
+
+        // Update local storage configurations for zero-flash page loads
+        localStorage.setItem("withink_lock_enabled", String(res.data.isLockEnabled));
+        if (res.data.isUnlocked) {
+          sessionStorage.setItem("withink_tab_unlocked", "true");
+        } else {
+          sessionStorage.removeItem("withink_tab_unlocked");
+        }
+
+        // Onboarding prompt if user has no passcode set
+        if (!res.data.hasPasscode) {
+          const dismissed = sessionStorage.getItem("withink_lock_setup_dismissed");
+          if (!dismissed) {
+            setShowSetupPrompt(true);
+          }
+        }
+      }
+    };
+
+    checkLockStatus();
+  }, [user]);
+
+  const handleLock = React.useCallback(async () => {
+    setIsUnlocked(false);
+    sessionStorage.removeItem("withink_tab_unlocked");
+    await lockAction();
+  }, []);
+
+  const handleUnlockSuccess = () => {
+    setIsUnlocked(true);
+    sessionStorage.setItem("withink_tab_unlocked", "true");
+  };
+
+  const handleSetupSuccess = () => {
+    setShowSetupPrompt(false);
+    setIsLockEnabled(true);
+    setHasPasscode(true);
+    setIsUnlocked(true);
+    localStorage.setItem("withink_lock_enabled", "true");
+    sessionStorage.setItem("withink_tab_unlocked", "true");
+  };
+
+  const handleSetupDismiss = () => {
+    setShowSetupPrompt(false);
+    sessionStorage.setItem("withink_lock_setup_dismissed", "true");
+  };
+
+  // Bind the inactivity & visibility auto-lock timer hook
+  useLockTimer({
+    isLockEnabled: isLockEnabled && hasPasscode,
+    timeoutMs: autoLockTimeout * 1000,
+    lockOnTabHide,
+    isLocked: !isUnlocked,
+    onLock: handleLock,
+  });
 
   // Synchronize collapse state with localStorage on mount to prevent hydration flash
   React.useEffect(() => {
@@ -56,7 +143,22 @@ export function AppShell({ children, user }: AppShellProps) {
   };
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-background">
+    <>
+      {user && !isUnlocked && (
+        <LockScreen
+          onUnlockSuccess={handleUnlockSuccess}
+          userEmail={user.email}
+        />
+      )}
+
+      {user && showSetupPrompt && (
+        <LockSetupOnboarding
+          onSetupSuccess={handleSetupSuccess}
+          onDismiss={handleSetupDismiss}
+        />
+      )}
+
+      <div className="flex h-screen w-full overflow-hidden bg-background">
       {/* Skip to main content link for keyboard navigation accessibility */}
       <a
         href="#main-content"
@@ -85,5 +187,6 @@ export function AppShell({ children, user }: AppShellProps) {
         </main>
       </div>
     </div>
+    </>
   );
 }
