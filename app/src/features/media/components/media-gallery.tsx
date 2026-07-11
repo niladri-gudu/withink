@@ -134,7 +134,7 @@ export function MediaGallery() {
               </p>
               <div className="flex items-baseline gap-2">
                 <span className="text-2xl font-semibold tracking-tight">
-                  {statsLoading ? "..." : `${stats?.usedMB || 0} MB`}
+                  {statsLoading ? "…" : `${stats?.usedMB || 0} MB`}
                 </span>
                 <span className="text-sm text-muted-foreground">
                   of {stats?.limitMB || 50} MB used
@@ -197,7 +197,8 @@ export function MediaGallery() {
           <select
             value={sortBy}
             onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSortBy(e.target.value as "date-desc" | "date-asc" | "size-desc" | "size-asc")}
-            className="h-10 px-3 rounded-xl border border-border/60 bg-card/60 text-sm focus:outline-none focus:border-border-hover text-foreground/80 cursor-pointer"
+            aria-label="Sort files"
+            className="h-10 px-3 rounded-xl border border-border/60 bg-card/60 text-sm text-foreground/80 cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             <option value="date-desc">Newest First</option>
             <option value="date-asc">Oldest First</option>
@@ -210,7 +211,9 @@ export function MediaGallery() {
               variant="ghost"
               size="icon"
               onClick={() => setViewMode("grid")}
-              className={`h-8 w-8 rounded-lg p-0 ${
+              aria-label="Grid view"
+              aria-pressed={viewMode === "grid"}
+              className={`h-8 w-8 rounded-lg p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
                 viewMode === "grid"
                   ? "bg-background text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
@@ -222,7 +225,9 @@ export function MediaGallery() {
               variant="ghost"
               size="icon"
               onClick={() => setViewMode("list")}
-              className={`h-8 w-8 rounded-lg p-0 ${
+              aria-label="List view"
+              aria-pressed={viewMode === "list"}
+              className={`h-8 w-8 rounded-lg p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
                 viewMode === "list"
                   ? "bg-background text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
@@ -238,7 +243,7 @@ export function MediaGallery() {
       {loading ? (
         <div className="py-24 flex flex-col items-center justify-center space-y-3">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          <p className="text-body-small text-muted-foreground">Reading archives...</p>
+          <p className="text-body-small text-muted-foreground">Reading archives…</p>
         </div>
       ) : filteredFiles.length === 0 ? (
         <Card className="border border-dashed border-border/60 bg-card/20 py-20 rounded-2xl">
@@ -267,10 +272,12 @@ export function MediaGallery() {
           {filteredFiles.map((file, index) => {
             const filename = file.key.split("/").pop() || "";
             return (
-              <div
+              <button
                 key={file.key}
+                type="button"
                 onClick={() => setLightboxIndex(index)}
-                className="group relative aspect-square rounded-2xl overflow-hidden border border-border/60 bg-card shadow-sm cursor-pointer"
+                aria-label={`View memory: ${filename}`}
+                className="group relative aspect-square rounded-2xl overflow-hidden border border-border/60 bg-card shadow-sm cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 text-left"
               >
                 <Image
                   src={file.url}
@@ -284,7 +291,7 @@ export function MediaGallery() {
                     View Memory <ChevronRight className="h-3 w-3" />
                   </span>
                 </div>
-              </div>
+              </button>
             );
           })}
         </div>
@@ -303,10 +310,12 @@ export function MediaGallery() {
               : "Unknown date";
 
             return (
-              <div
+              <button
                 key={file.key}
+                type="button"
                 onClick={() => setLightboxIndex(index)}
-                className="flex items-center justify-between p-3.5 rounded-xl border border-border/50 bg-card/40 hover:bg-card hover:border-border transition-all cursor-pointer group shadow-sm select-none"
+                aria-label={`View memory: ${filename}`}
+                className="w-full flex items-center justify-between p-3.5 rounded-xl border border-border/50 bg-card/40 hover:bg-card hover:border-border transition-all cursor-pointer group shadow-sm select-none text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
                 <div className="flex items-center gap-4 min-w-0">
                   <div className="relative h-12 w-12 rounded-lg overflow-hidden border border-border/40 shrink-0 bg-secondary">
@@ -335,7 +344,7 @@ export function MediaGallery() {
                   </span>
                   <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-0.5 transition-transform" />
                 </div>
-              </div>
+              </button>
             );
           })}
         </div>

@@ -28,11 +28,11 @@ const moodConfig: Record<
     barColor: string;
   }
 > = {
-  1: { label: "Angry", icon: Angry, color: "text-red-500", bgColor: "bg-red-500/10 border-red-500/20", barColor: "bg-red-500" },
-  2: { label: "Sad", icon: Frown, color: "text-orange-500", bgColor: "bg-orange-500/10 border-orange-500/20", barColor: "bg-orange-500" },
-  3: { label: "Neutral", icon: Meh, color: "text-yellow-500", bgColor: "bg-yellow-500/10 border-yellow-500/20", barColor: "bg-yellow-500" },
-  4: { label: "Happy", icon: Smile, color: "text-emerald-500", bgColor: "bg-emerald-500/10 border-emerald-500/20", barColor: "bg-emerald-500" },
-  5: { label: "Radiant", icon: SmilePlus, color: "text-teal-500", bgColor: "bg-teal-500/10 border-teal-500/20", barColor: "bg-teal-500" },
+  1: { label: "Angry", icon: Angry, color: "text-mood-1", bgColor: "bg-mood-1-bg border-mood-1-border", barColor: "bg-mood-1" },
+  2: { label: "Sad", icon: Frown, color: "text-mood-2", bgColor: "bg-mood-2-bg border-mood-2-border", barColor: "bg-mood-2" },
+  3: { label: "Neutral", icon: Meh, color: "text-mood-3", bgColor: "bg-mood-3-bg border-mood-3-border", barColor: "bg-mood-3" },
+  4: { label: "Happy", icon: Smile, color: "text-mood-4", bgColor: "bg-mood-4-bg border-mood-4-border", barColor: "bg-mood-4" },
+  5: { label: "Radiant", icon: SmilePlus, color: "text-mood-5", bgColor: "bg-mood-5-bg border-mood-5-border", barColor: "bg-mood-5" },
 };
 
 export function MonthlyOverview({ monthlyOverview }: MonthlyOverviewProps) {
@@ -85,7 +85,7 @@ export function MonthlyOverview({ monthlyOverview }: MonthlyOverviewProps) {
         <select
           value={selectedMonth}
           onChange={(e) => setSelectedMonth(e.target.value)}
-          className="h-10 px-3 rounded-xl bg-card border border-border text-sm text-foreground outline-none cursor-pointer focus:border-primary/50 transition-colors sm:w-[200px]"
+          className="h-10 px-3 rounded-xl bg-card border border-border text-sm text-foreground cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:w-[200px]"
         >
           {months.map((m) => (
             <option key={m} value={m}>

@@ -20,11 +20,11 @@ const moodConfig: Record<
     barColor: string;
   }
 > = {
-  1: { label: "Angry", icon: Angry, color: "text-red-500", barColor: "bg-red-500" },
-  2: { label: "Sad", icon: Frown, color: "text-orange-500", barColor: "bg-orange-500" },
-  3: { label: "Neutral", icon: Meh, color: "text-yellow-500", barColor: "bg-yellow-500" },
-  4: { label: "Happy", icon: Smile, color: "text-emerald-500", barColor: "bg-emerald-500" },
-  5: { label: "Radiant", icon: SmilePlus, color: "text-teal-500", barColor: "bg-teal-500" },
+  1: { label: "Angry", icon: Angry, color: "text-mood-1", barColor: "bg-mood-1" },
+  2: { label: "Sad", icon: Frown, color: "text-mood-2", barColor: "bg-mood-2" },
+  3: { label: "Neutral", icon: Meh, color: "text-mood-3", barColor: "bg-mood-3" },
+  4: { label: "Happy", icon: Smile, color: "text-mood-4", barColor: "bg-mood-4" },
+  5: { label: "Radiant", icon: SmilePlus, color: "text-mood-5", barColor: "bg-mood-5" },
 };
 
 export function MoodHistoryCharts({ distribution, average, monthlyAverages }: MoodHistoryChartsProps) {

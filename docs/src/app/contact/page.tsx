@@ -33,7 +33,7 @@ export default function ContactPage() {
   return (
     <div className="flex-1 flex flex-col justify-center max-w-2xl mx-auto px-6 py-16 space-y-8 min-h-screen">
       <div className="space-y-4">
-        <Link href="/" className="inline-flex items-center text-xs font-mono uppercase tracking-widest text-muted-foreground/80 hover:text-foreground transition-colors gap-1.5 pb-2">
+        <Link href="/" className="inline-flex items-center text-xs font-mono uppercase tracking-widest text-muted-foreground/80 hover:text-foreground transition-colors gap-1.5 pb-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded">
           <ArrowLeft className="h-3 w-3" /> Back to Sanctuary
         </Link>
         <h1 className="text-h1 text-foreground">
@@ -77,7 +77,8 @@ export default function ContactPage() {
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full h-10 px-3 rounded-lg border border-border bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-ring text-sm transition-all"
+                  autoComplete="name"
+                  className="w-full h-10 px-3 rounded-lg border border-border bg-card text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 text-sm transition-all"
                   placeholder="John Doe"
                 />
               </div>
@@ -92,7 +93,9 @@ export default function ContactPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full h-10 px-3 rounded-lg border border-border bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-ring text-sm transition-all"
+                  autoComplete="email"
+                  spellCheck="false"
+                  className="w-full h-10 px-3 rounded-lg border border-border bg-card text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 text-sm transition-all"
                   placeholder="john@example.com"
                 />
               </div>
@@ -107,12 +110,13 @@ export default function ContactPage() {
                   rows={4}
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
-                  className="w-full p-3 rounded-lg border border-border bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-ring text-sm transition-all resize-none"
+                  autoComplete="off"
+                  className="w-full p-3 rounded-lg border border-border bg-card text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 text-sm transition-all resize-none"
                   placeholder="How can we help you?"
                 />
               </div>
 
-              <Button type="submit" className="w-full h-10 flex items-center justify-center gap-2">
+              <Button type="submit" className="w-full h-10 flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
                 <Send className="h-4 w-4" /> Send Message
               </Button>
             </form>
@@ -134,8 +138,9 @@ export default function ContactPage() {
                 <button
                   type="button"
                   onClick={handleCopyEmail}
-                  className="text-muted-foreground hover:text-foreground transition-colors p-1"
+                  className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   title="Copy email"
+                  aria-label="Copy support email address"
                 >
                   {copied ? <Check className="h-3.5 w-3.5 text-accent" /> : <Copy className="h-3.5 w-3.5" />}
                 </button>

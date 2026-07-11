@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { useFocusTrap } from "@/hooks/use-focus-trap";
 
 interface LockScreenProps {
   onUnlockSuccess: () => void;
@@ -27,6 +28,9 @@ export function LockScreen({ onUnlockSuccess, userEmail }: LockScreenProps) {
   const [shake, setShake] = React.useState(false);
   const [view, setView] = React.useState<ScreenView>("pin");
   
+  // Trap focus inside the entire lock screen dialog when active
+  const lockContainerRef = useFocusTrap(true);
+
   // Password Recovery States
   const [loginPassword, setLoginPassword] = React.useState("");
   const [isSubmittingPassword, setIsSubmittingPassword] = React.useState(false);
@@ -99,7 +103,7 @@ export function LockScreen({ onUnlockSuccess, userEmail }: LockScreenProps) {
     if (!loginPassword) return;
 
     setIsSubmittingPassword(true);
-    const toastId = toast.loading("Verifying your password...");
+    const toastId = toast.loading("Verifying your password…");
     const res = await verifyPasswordAndResetLockAction(loginPassword);
 
     if (res.success) {
@@ -113,7 +117,7 @@ export function LockScreen({ onUnlockSuccess, userEmail }: LockScreenProps) {
 
   const startEmailRecovery = async () => {
     setIsSendingEmail(true);
-    const toastId = toast.loading("Sending recovery code to your email...");
+    const toastId = toast.loading("Sending recovery code to your email…");
     const res = await requestPasscodeResetEmailAction();
 
     if (res.success) {
@@ -133,7 +137,7 @@ export function LockScreen({ onUnlockSuccess, userEmail }: LockScreenProps) {
     }
 
     setIsSubmittingEmailCode(true);
-    const toastId = toast.loading("Verifying recovery code...");
+    const toastId = toast.loading("Verifying recovery code…");
     const res = await verifyPasscodeResetCodeAction(emailCode);
 
     if (res.success) {
@@ -148,7 +152,10 @@ export function LockScreen({ onUnlockSuccess, userEmail }: LockScreenProps) {
   const isGoogleUser = userEmail?.includes("gmail.com") || !userEmail; // Check if Google user or fallback
 
   return (
-    <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-background/95 backdrop-blur-md select-none">
+    <div
+      ref={lockContainerRef as React.RefObject<HTMLDivElement>}
+      className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-background/95 backdrop-blur-md select-none"
+    >
       <div className="w-full max-w-sm px-6 text-center">
         <AnimatePresence mode="wait">
           {view === "pin" && (
@@ -173,6 +180,9 @@ export function LockScreen({ onUnlockSuccess, userEmail }: LockScreenProps) {
 
               {/* Display Indicators */}
               <motion.div
+                role="status"
+                aria-live="polite"
+                aria-label={`Passcode: ${pin.length} of 4 digits entered`}
                 animate={shake ? { x: [0, -10, 10, -10, 10, -5, 5, -2, 2, 0] } : {}}
                 transition={{ duration: 0.4 }}
                 className="flex items-center justify-center gap-3.5 h-16 mb-8"
@@ -198,7 +208,7 @@ export function LockScreen({ onUnlockSuccess, userEmail }: LockScreenProps) {
                     onClick={() => handleKeyPress(num)}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className="flex h-16 w-16 items-center justify-center rounded-full border border-border bg-card text-xl font-medium text-foreground hover:bg-secondary/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors shadow-sm"
+                    className="flex h-16 w-16 items-center justify-center rounded-full border border-border bg-card text-xl font-medium text-foreground hover:bg-secondary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-colors shadow-sm"
                   >
                     {num}
                   </motion.button>
@@ -208,7 +218,7 @@ export function LockScreen({ onUnlockSuccess, userEmail }: LockScreenProps) {
                   onClick={handleClear}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="flex h-16 w-16 items-center justify-center rounded-full border border-transparent text-sm font-medium text-muted-foreground hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="flex h-16 w-16 items-center justify-center rounded-full border border-transparent text-sm font-medium text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 >
                   Clear
                 </motion.button>
@@ -217,7 +227,7 @@ export function LockScreen({ onUnlockSuccess, userEmail }: LockScreenProps) {
                   onClick={() => handleKeyPress("0")}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="flex h-16 w-16 items-center justify-center rounded-full border border-border bg-card text-xl font-medium text-foreground hover:bg-secondary/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors shadow-sm"
+                  className="flex h-16 w-16 items-center justify-center rounded-full border border-border bg-card text-xl font-medium text-foreground hover:bg-secondary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-colors shadow-sm"
                 >
                   0
                 </motion.button>
@@ -227,7 +237,7 @@ export function LockScreen({ onUnlockSuccess, userEmail }: LockScreenProps) {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   aria-label="Backspace"
-                  className="flex h-16 w-16 items-center justify-center rounded-full border border-transparent text-muted-foreground hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="flex h-16 w-16 items-center justify-center rounded-full border border-transparent text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 >
                   <Delete className="h-5 w-5" />
                 </motion.button>
@@ -313,11 +323,13 @@ export function LockScreen({ onUnlockSuccess, userEmail }: LockScreenProps) {
 
               <form onSubmit={submitPasswordRecovery} className="w-full space-y-4">
                 <Input
+                  id="login-password"
                   type="password"
                   placeholder="Enter login password"
                   value={loginPassword}
                   onChange={(e) => setLoginPassword(e.target.value)}
                   className="rounded-xl h-12"
+                  autoComplete="current-password"
                   autoFocus
                   required
                 />
@@ -381,6 +393,7 @@ export function LockScreen({ onUnlockSuccess, userEmail }: LockScreenProps) {
                     );
                   })}
                   <input
+                    id="email-code"
                     ref={emailCodeRef}
                     type="text"
                     pattern="[0-9]*"
@@ -391,6 +404,7 @@ export function LockScreen({ onUnlockSuccess, userEmail }: LockScreenProps) {
                     onFocus={() => setEmailCodeFocused(true)}
                     onBlur={() => setEmailCodeFocused(false)}
                     className="absolute inset-0 h-full w-full opacity-0 cursor-text select-none"
+                    autoComplete="one-time-code"
                     autoFocus
                     required
                   />
