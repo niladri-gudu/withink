@@ -470,6 +470,9 @@ Active project skills include:
 - **gsap-master**: Interactive Web/Timeline animations with GreenSock.
 - **motion-framer**: Modern spring physics gestures, exit animations, and transitions with Motion.
 - **convex-create-component**: Building reusable Convex components.
+- **web-design-guidelines**: UI checklist covering typography scales, accessibility safeguards, and consistency audits.
+- **tailwind-design-system**: Scalable design tokens, spacing systems, and responsive patterns in Tailwind CSS v4.
+
 
 Reuse these skills whenever appropriate.
 
