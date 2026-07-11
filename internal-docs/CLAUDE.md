@@ -33,50 +33,28 @@ Always prioritize:
 
 ```
 /
-├── old/      ← Version 1 (Reference Only)
-├── withink.me/      ← Version 2 (Development)
-└── docs/
+├── app/              ← Version 2 Dashboard App Layer (app.withink.me)
+├── docs/              ← Public Landing & Policy Pages (withink.me)
+└── internal-docs/     ← Markdown engineering docs (Architecture, PRD, design system, logs)
 ```
 
 ---
 
-## withink.me
+## app
 
-This directory contains the original implementation.
-
-Use it only to understand:
-
-- Features
-- User flows
-- Business rules
-- Edge cases
-- Existing behavior
-
-Never:
-
-- Copy files
-- Copy components
-- Copy utilities
-- Copy styling
-- Copy architecture
-
-Every feature should be reimplemented from scratch.
-
-The old implementation is documentation.
-
-Not source code.
+This directory contains the main development repository representing the sanctuary dashboard application running on `app.withink.me`. All dashboard UI components, database operations, auth routes, and services are implemented here.
 
 ---
 
-## withink.me
+## docs
 
-Every new file belongs here.
+This directory contains the public marketing landing page, legal philosophy pages, and an animated Contact Us page running on `withink.me`.
 
-Every implementation belongs here.
+---
 
-Every improvement belongs here.
+## internal-docs
 
-Never modify Version 1.
+This directory contains engineering documentation, PRD guides, and session logs.
 
 ---
 
@@ -484,19 +462,14 @@ The goal is to build the best possible version of Withink.
 
 # Available Skills
 
-The repository contains reusable Claude Code Skills.
+The repository contains reusable Claude Code Skills under `.agents/skills/`. Before implementing any feature, inspect the available skills and determine whether one applies to the current task.
 
-Before implementing any feature, inspect the available skills and determine whether one applies to the current task.
-
-Examples include:
-
-- Frontend Design
-- UX Design
-- Next.js Best Practices
-- Next.js Cache Components
-- Tailwind CSS Patterns
-- Tailwind v4
-- Web Design Guidelines
+Active project skills include:
+- **design-taste-frontend**: Visual excellence guidelines for premium landing pages and animations.
+- **vercel-react-best-practices**: Vercel guidelines for React and Next.js performance.
+- **gsap-master**: Interactive Web/Timeline animations with GreenSock.
+- **motion-framer**: Modern spring physics gestures, exit animations, and transitions with Motion.
+- **convex-create-component**: Building reusable Convex components.
 
 Reuse these skills whenever appropriate.
 
