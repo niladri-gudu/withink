@@ -4,7 +4,7 @@ import { PageLoadingShell, PageLoadingHeader } from "@/features/app-shell/compon
 /** One settings section card: icon tile + serif title + description, then body rows. */
 function SectionSkeleton({ rows = 3 }: { rows?: number }) {
   return (
-    <div className="rounded-xl border border-border bg-card p-6 sm:p-8">
+    <div className="border border-border/60 bg-card/40 backdrop-blur-md rounded-2xl p-6 sm:p-8 shadow-sm relative overflow-hidden">
       <div className="flex items-start gap-4">
         <Skeleton className="h-10 w-10 shrink-0 rounded-xl" />
         <div className="space-y-2 pt-1">

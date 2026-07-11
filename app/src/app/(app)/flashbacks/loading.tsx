@@ -1,10 +1,10 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { PageLoadingHeader } from "@/features/app-shell/components/page-loading";
+import { PageLoadingShell, PageLoadingHeader } from "@/features/app-shell/components/page-loading";
 
 export default function FlashbacksLoading() {
   return (
-    <div className="flex-grow max-w-5xl mx-auto p-6 md:p-10 space-y-8 w-full animate-in fade-in duration-300">
+    <PageLoadingShell>
       <PageLoadingHeader
         eyebrow="Memory Resurfacing • Flashbacks"
         title="Past"
@@ -13,7 +13,7 @@ export default function FlashbacksLoading() {
         action={<Skeleton className="h-9 w-28 rounded-full" />}
       />
 
-      <Card className="bg-card/60">
+      <Card className="border border-border/60 bg-card/40 backdrop-blur-sm rounded-2xl shadow-sm relative overflow-hidden">
         <CardHeader className="space-y-3 pb-2">
           <Skeleton className="h-3 w-28" />
           <Skeleton className="h-8 w-2/3 max-w-sm" />
@@ -33,6 +33,6 @@ export default function FlashbacksLoading() {
           </div>
         </CardContent>
       </Card>
-    </div>
+    </PageLoadingShell>
   );
 }

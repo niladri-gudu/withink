@@ -14,16 +14,23 @@ export default function MediaLoading() {
 
       <div className="space-y-6">
         {/* Storage stats card */}
-        <Card className="border-border/60 bg-card/40 rounded-2xl overflow-hidden">
+        <Card className="border border-border/60 bg-card/40 backdrop-blur-md rounded-2xl overflow-hidden shadow-sm">
           <CardContent className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-5">
             <div className="flex items-start gap-4">
-              <Skeleton className="h-11 w-11 rounded-xl" />
+              <Skeleton className="h-11 w-11 rounded-xl shrink-0" />
               <div className="space-y-2">
                 <Skeleton className="h-3 w-32" />
                 <Skeleton className="h-7 w-24" />
               </div>
             </div>
-            <Skeleton className="h-2.5 w-full md:w-64 rounded-full" />
+            <div className="flex-1 md:max-w-md space-y-2">
+              <div className="flex items-center justify-between">
+                <Skeleton className="h-3 w-20" />
+                <Skeleton className="h-3 w-10" />
+              </div>
+              <Skeleton className="h-1.5 w-full rounded-full" />
+            </div>
+            <Skeleton className="h-9 w-9 rounded-xl shrink-0 hidden md:block" />
           </CardContent>
         </Card>
 
@@ -39,7 +46,7 @@ export default function MediaLoading() {
         {/* Image grid */}
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
           {Array.from({ length: 8 }).map((_, i) => (
-            <Skeleton key={i} className="aspect-square w-full rounded-xl" />
+            <Skeleton key={i} className="aspect-square w-full rounded-2xl border border-border/60" />
           ))}
         </div>
       </div>

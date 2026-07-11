@@ -1,10 +1,10 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
-import { PageLoadingHeader } from "@/features/app-shell/components/page-loading";
+import { PageLoadingShell, PageLoadingHeader } from "@/features/app-shell/components/page-loading";
 
 export default function EntriesLoading() {
   return (
-    <div className="flex-1 max-w-5xl mx-auto p-6 md:p-10 space-y-8 w-full animate-in fade-in duration-300">
+    <PageLoadingShell>
       <PageLoadingHeader
         eyebrow="Archives Index • History"
         title="All"
@@ -16,7 +16,7 @@ export default function EntriesLoading() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         {/* Calendar + stats (1/3) */}
         <div className="lg:col-span-1 space-y-6">
-          <Card className="p-6 space-y-4">
+          <Card className="border border-border/60 bg-card/40 backdrop-blur-sm rounded-2xl p-6 space-y-4 shadow-sm relative overflow-hidden">
             {/* Calendar month header */}
             <div className="flex items-center justify-between">
               <Skeleton className="h-5 w-28" />
@@ -46,7 +46,7 @@ export default function EntriesLoading() {
         {/* Timeline (2/3) */}
         <div className="lg:col-span-2 space-y-4">
           {Array.from({ length: 5 }).map((_, i) => (
-            <Card key={i} className="p-5">
+            <Card key={i} className="border border-border/60 bg-card/40 backdrop-blur-sm rounded-2xl p-5 shadow-sm relative overflow-hidden">
               <div className="flex items-start gap-4">
                 <Skeleton className="h-10 w-10 shrink-0 rounded-full" />
                 <div className="flex-1 space-y-2">
@@ -60,6 +60,6 @@ export default function EntriesLoading() {
           ))}
         </div>
       </div>
-    </div>
+    </PageLoadingShell>
   );
 }
