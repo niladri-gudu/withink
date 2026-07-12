@@ -21,6 +21,7 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "lh3.googleusercontent.com" },
+      { protocol: "https", hostname: "images.unsplash.com" },
       { protocol: "https", hostname: R2_PUBLIC_HOST },
     ],
   },
@@ -35,7 +36,7 @@ const nextConfig: NextConfig = {
       default-src 'self';
       script-src 'self' 'unsafe-inline' 'unsafe-eval';
       style-src 'self' 'unsafe-inline';
-      img-src 'self' blob: data: https://lh3.googleusercontent.com https://${R2_PUBLIC_HOST};
+      img-src 'self' blob: data: https://images.unsplash.com https://lh3.googleusercontent.com https://${R2_PUBLIC_HOST};
       font-src 'self' data:;
       connect-src 'self' ${isProd ? "" : "ws: wss:"} https://${R2_UPLOAD_HOST} https://${R2_PUBLIC_HOST};
       frame-ancestors 'none';

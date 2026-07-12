@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { saveLockSettingsAction } from "../actions/lock-actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useFocusTrap } from "@/hooks/use-focus-trap";
 
 interface LockSetupOnboardingProps {
   onSetupSuccess: () => void;
@@ -19,6 +20,8 @@ export function LockSetupOnboarding({ onSetupSuccess, onDismiss }: LockSetupOnbo
   const [confirmPin, setConfirmPin] = React.useState("");
   const [step, setStep] = React.useState<1 | 2>(1);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+
+  const onboardingContainerRef = useFocusTrap(true);
 
   const inputRef1 = React.useRef<HTMLInputElement>(null);
   const inputRef2 = React.useRef<HTMLInputElement>(null);
@@ -63,7 +66,7 @@ export function LockSetupOnboarding({ onSetupSuccess, onDismiss }: LockSetupOnbo
     }
 
     setIsSubmitting(true);
-    const toastId = toast.loading("Securing your sanctuary...");
+    const toastId = toast.loading("Securing your sanctuary…");
 
     const res = await saveLockSettingsAction({
       isLockEnabled: true,
@@ -84,14 +87,16 @@ export function LockSetupOnboarding({ onSetupSuccess, onDismiss }: LockSetupOnbo
   return (
     <div className="fixed inset-0 z-[9990] flex items-center justify-center bg-background/80 backdrop-blur-sm animate-in fade-in duration-200">
       <motion.div
+        ref={onboardingContainerRef as React.RefObject<HTMLDivElement>}
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
+        transition={{ type: "spring", stiffness: 200, damping: 22 }}
         className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-xl sm:p-8 relative"
       >
         <button
           onClick={onDismiss}
-          className="absolute right-4 top-4 text-muted-foreground hover:text-foreground rounded-full p-1 transition-colors"
+          className="absolute right-4 top-4 text-muted-foreground hover:text-foreground rounded-full p-1 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           aria-label="Skip setup"
         >
           <X className="h-5 w-5" />
@@ -152,6 +157,7 @@ export function LockSetupOnboarding({ onSetupSuccess, onDismiss }: LockSetupOnbo
                       onFocus={() => setIsFocused1(true)}
                       onBlur={() => setIsFocused1(false)}
                       className="absolute inset-0 h-full w-full opacity-0 cursor-text select-none"
+                      autoComplete="one-time-code"
                       autoFocus
                       required
                     />
@@ -211,6 +217,7 @@ export function LockSetupOnboarding({ onSetupSuccess, onDismiss }: LockSetupOnbo
                       onFocus={() => setIsFocused2(true)}
                       onBlur={() => setIsFocused2(false)}
                       className="absolute inset-0 h-full w-full opacity-0 cursor-text select-none"
+                      autoComplete="one-time-code"
                       autoFocus
                       required
                     />

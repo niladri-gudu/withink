@@ -21,6 +21,7 @@ import {
 } from "../actions/media-actions";
 import { Button } from "@/components/ui/button";
 import { useFocusTrap } from "@/hooks/use-focus-trap";
+import { motion, AnimatePresence } from "motion/react";
 
 interface MediaLightboxProps {
   /** The full filtered, sorted list currently in view (for prev/next bounds). */
@@ -103,11 +104,10 @@ export function MediaLightbox({
     return () => window.removeEventListener("keydown", onKey);
   }, [index, files.length, onClose, onPrev, onNext]);
 
-  if (index === null || !file) return null;
-
-  const filename = file.key.split("/").pop() || "";
+  const filename = file ? file.key.split("/").pop() || "" : "";
 
   const handleCopyLink = async () => {
+    if (!file) return;
     try {
       await navigator.clipboard.writeText(file.url);
       setCopiedKey(file.url);
@@ -119,6 +119,7 @@ export function MediaLightbox({
   };
 
   const handleDelete = async () => {
+    if (!file) return;
     setDeleting(file.key);
     try {
       const res = await deleteMediaFileAction(file.key);
@@ -137,21 +138,32 @@ export function MediaLightbox({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm animate-in fade-in duration-200">
-      {/* Close backdrop click */}
-      <div className="absolute inset-0 cursor-default" onClick={onClose} />
+    <AnimatePresence>
+      {index !== null && file && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm"
+        >
+          {/* Close backdrop click */}
+          <div className="absolute inset-0 cursor-default" onClick={onClose} />
 
-      <div
-        ref={lightboxRef as React.RefObject<HTMLDivElement>}
-        role="dialog"
-        aria-modal="true"
-        aria-label="Image preview"
-        className="relative max-w-3xl w-full mx-4 bg-card border border-border rounded-3xl overflow-hidden shadow-2xl flex flex-col z-10 animate-in zoom-in-95 duration-200"
-      >
+          <motion.div
+            ref={lightboxRef as React.RefObject<HTMLDivElement>}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Image preview"
+            initial={{ opacity: 0, scale: 0.95, y: 15 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 10 }}
+            transition={{ type: "spring", stiffness: 350, damping: 26 }}
+            className="relative max-w-3xl w-full mx-4 bg-card border border-border rounded-3xl overflow-hidden shadow-2xl flex flex-col z-10"
+          >
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 z-50 p-2 rounded-full bg-background/60 hover:bg-background text-foreground transition-all cursor-pointer backdrop-blur-sm shadow-sm border border-border/20"
+          className="absolute top-4 right-4 z-50 p-2 rounded-full bg-background/60 hover:bg-background text-foreground transition-all cursor-pointer backdrop-blur-sm shadow-sm border border-border/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           aria-label="Close preview"
         >
           <X size={16} />
@@ -175,7 +187,7 @@ export function MediaLightbox({
                 e.stopPropagation();
                 onPrev();
               }}
-              className="absolute left-4 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-background/50 hover:bg-background/80 text-foreground transition-all shadow-md border border-border/20"
+              className="absolute left-4 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-background/50 hover:bg-background/80 text-foreground transition-all shadow-md border border-border/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               aria-label="Previous image"
             >
               <ArrowLeft size={16} />
@@ -189,7 +201,7 @@ export function MediaLightbox({
                 e.stopPropagation();
                 onNext();
               }}
-              className="absolute right-4 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-background/50 hover:bg-background/80 text-foreground transition-all shadow-md border border-border/20"
+              className="absolute right-4 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-background/50 hover:bg-background/80 text-foreground transition-all shadow-md border border-border/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               aria-label="Next image"
             >
               <ArrowRight size={16} />
@@ -215,7 +227,7 @@ export function MediaLightbox({
               {entrySearchLoading ? (
                 <span className="flex items-center gap-1.5 text-accent font-medium">
                   <Loader2 className="h-3 w-3 animate-spin" />
-                  Checking entries...
+                  Checking entries…
                 </span>
               ) : entryDate ? (
                 <span className="flex items-center gap-1 text-primary font-medium">
@@ -240,7 +252,7 @@ export function MediaLightbox({
               variant="outline"
               size="sm"
               onClick={handleCopyLink}
-              className="h-9 px-3 gap-1.5 rounded-xl text-xs font-medium border-border/60 hover:bg-secondary"
+              className="h-9 px-3 gap-1.5 rounded-xl text-xs font-medium border-border/60 hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               {copiedKey === file.url ? (
                 <>
@@ -288,7 +300,7 @@ export function MediaLightbox({
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowDeleteConfirm(true)}
-                className="h-9 w-9 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                className="h-9 w-9 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 title="Delete memory"
               >
                 <Trash2 className="h-4 w-4" />
@@ -296,7 +308,9 @@ export function MediaLightbox({
             )}
           </div>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
+  )}
+</AnimatePresence>
   );
 }

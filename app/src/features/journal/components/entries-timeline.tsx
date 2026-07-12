@@ -14,6 +14,7 @@ import {
   Angry, Frown, Meh, Smile, SmilePlus
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { motion } from "motion/react";
 import { ROUTES } from "@/constants/routes";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -37,11 +38,11 @@ const moodIcons: Record<number, React.ComponentType<{ className?: string }>> = {
 };
 
 const moodColors: Record<number, string> = {
-  1: "text-red-500 bg-red-500/10 border-red-500/20",
-  2: "text-orange-500 bg-orange-500/10 border-orange-500/20",
-  3: "text-yellow-500 bg-yellow-500/10 border-yellow-500/20",
-  4: "text-emerald-500 bg-emerald-500/10 border-emerald-500/20",
-  5: "text-teal-500 bg-teal-500/10 border-teal-500/20",
+  1: "text-mood-1 bg-mood-1-bg border-mood-1-border",
+  2: "text-mood-2 bg-mood-2-bg border-mood-2-border",
+  3: "text-mood-3 bg-mood-3-bg border-mood-3-border",
+  4: "text-mood-4 bg-mood-4-bg border-mood-4-border",
+  5: "text-mood-5 bg-mood-5-bg border-mood-5-border",
 };
 
 const LIMIT = 5;
@@ -58,23 +59,23 @@ function formatDate(dateStr: string) {
 
 function getSnippet(text: string, query: string, maxLength: number = 180): string {
   if (!query || !query.trim()) {
-    return text.length > maxLength ? text.substring(0, maxLength) + "..." : text;
+    return text.length > maxLength ? text.substring(0, maxLength) + "…" : text;
   }
   const index = text.toLowerCase().indexOf(query.toLowerCase());
   if (index === -1) {
-    return text.length > maxLength ? text.substring(0, maxLength) + "..." : text;
+    return text.length > maxLength ? text.substring(0, maxLength) + "…" : text;
   }
 
   if (index < maxLength / 3) {
-    return text.length > maxLength ? text.substring(0, maxLength) + "..." : text;
+    return text.length > maxLength ? text.substring(0, maxLength) + "…" : text;
   }
 
   const start = Math.max(0, index - Math.floor(maxLength / 3));
   const end = Math.min(text.length, start + maxLength);
 
   let snippet = text.substring(start, end);
-  if (start > 0) snippet = "..." + snippet;
-  if (end < text.length) snippet = snippet + "...";
+  if (start > 0) snippet = "…" + snippet;
+  if (end < text.length) snippet = snippet + "…";
 
   return snippet;
 }
@@ -217,11 +218,12 @@ export function EntriesTimeline({
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60" />
           <input
             type="text"
-            placeholder="Search by title, contents, date..."
+            placeholder="Search by title, contents, date…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             aria-label="Search entries"
-            className="w-full h-10 pl-9 pr-4 rounded-xl bg-card border border-border outline-none text-sm placeholder:text-muted-foreground/50 focus:border-primary/50 transition-colors"
+            autoComplete="off"
+            className="w-full h-10 pl-9 pr-4 rounded-xl bg-card border border-border text-sm placeholder:text-muted-foreground/50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           />
         </div>
 
@@ -235,7 +237,7 @@ export function EntriesTimeline({
               setPage(1);
             }}
             aria-label="Filter by time range"
-            className="h-10 px-3 rounded-xl bg-card border border-border text-sm text-foreground outline-none cursor-pointer focus:border-primary/50 transition-colors"
+            className="h-10 px-3 rounded-xl bg-card border border-border text-sm text-foreground cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             <option value="all">All time</option>
             <option value="week">This week</option>
@@ -250,7 +252,7 @@ export function EntriesTimeline({
               setPage(1);
             }}
             aria-label="Filter by mood"
-            className="h-10 px-3 rounded-xl bg-card border border-border text-sm text-foreground outline-none cursor-pointer focus:border-primary/50 transition-colors"
+            className="h-10 px-3 rounded-xl bg-card border border-border text-sm text-foreground cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             <option value="all">All moods</option>
             <option value="1">Angry</option>
@@ -287,7 +289,13 @@ export function EntriesTimeline({
             const confirmOpen = deleteDateConfirm === entry.date;
 
             return (
-              <div key={entry.date} className="group relative">
+              <motion.div
+                key={entry.date}
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ type: "spring", stiffness: 350, damping: 25 }}
+                className="group relative"
+              >
                 {/* Visual side timeline node */}
                 <div className="absolute left-[-16px] top-7 w-[2px] h-full bg-border/20 group-last:h-0 hidden lg:block" />
                 <div className="absolute left-[-22px] top-6 w-3.5 h-3.5 rounded-full border-2 border-background bg-border/40 group-hover:bg-primary transition-all duration-300 hidden lg:block" />
@@ -376,7 +384,7 @@ export function EntriesTimeline({
                     </div>
                   </CardContent>
                 </Card>
-              </div>
+              </motion.div>
             );
           })
         )}

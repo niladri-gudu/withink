@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { ThemeToggle } from "@/components/theme-toggle";
-import { Button } from "@/components/ui/button";
+import { cookies } from "next/headers";
+import { Suspense } from "react";
+import { LandingPageContent } from "@/components/landing-page-content";
 
 export const metadata: Metadata = {
   title: "withink. - Your Digital Sanctuary",
@@ -9,92 +9,22 @@ export const metadata: Metadata = {
     "A private, encrypted, and minimal space for your digital thoughts. Built to encourage daily reflection and preserve lifelong memories.",
 };
 
-export default function LandingPage() {
+async function LandingPageContentWithSession({ APP_URL }: { APP_URL: string }) {
+  const cookieStore = await cookies();
+  const hasSession =
+    cookieStore.has("better-auth.session_token") ||
+    cookieStore.has("__Secure-better-auth.session_token");
+
+  return <LandingPageContent APP_URL={APP_URL} hasSession={hasSession} />;
+}
+
+export default async function LandingPage() {
   const isProd = process.env.IS_PROD === "true";
   const APP_URL = process.env.NEXT_PUBLIC_APP_URL || (isProd ? "https://app.withink.me" : "http://localhost:3000");
 
   return (
-    <div className="flex-1 flex flex-col min-h-screen">
-      {/* Navbar */}
-      <header className="border-b border-border bg-background/80 backdrop-blur-md sticky top-0 z-40">
-        <div className="max-w-4xl mx-auto px-6 h-16 flex items-center justify-between">
-          <span className="font-serif text-xl font-bold tracking-tight text-foreground select-none">
-            withink.
-          </span>
-          <div className="flex items-center space-x-4">
-            <ThemeToggle />
-            <Button variant="ghost" asChild>
-              <a href={`${APP_URL}/login`}>Sign In</a>
-            </Button>
-            <Button variant="default" asChild>
-              <a href={`${APP_URL}/register`}>Get Started</a>
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="flex-1 max-w-4xl mx-auto px-6 py-16 md:py-24 flex flex-col items-center justify-center text-center space-y-12">
-        {/* Intro */}
-        <div className="space-y-6 max-w-2xl">
-          <span className="text-label text-muted-foreground block">
-            A Digital Sanctuary
-          </span>
-          <h1 className="text-hero md:text-display text-foreground">
-            Quiet space for your thoughts.
-          </h1>
-          <p className="text-subtitle max-w-lg mx-auto">
-            A beautiful, encrypted, private journal constructed to encourage daily reflection and preserve your lifelong memories.
-          </p>
-        </div>
-
-        {/* CTA Buttons */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full sm:w-auto">
-          <Button size="lg" asChild className="w-full sm:w-auto">
-            <a href={`${APP_URL}/register`}>Create Your Journal</a>
-          </Button>
-          <Button size="lg" variant="outline" asChild className="w-full sm:w-auto">
-            <Link href="/privacy">Read Privacy Philosophy</Link>
-          </Button>
-        </div>
-
-        {/* Tactile Mockup preview */}
-        <div className="w-full aspect-[1.8/1] rounded-xl border border-border p-6 bg-card shadow-sm flex flex-col space-y-4 text-left max-w-3xl mx-auto">
-          <div className="flex items-center justify-between border-b border-border pb-4">
-            <div className="flex items-center space-x-2">
-              <span className="text-title font-serif">July 1, 2026</span>
-              <span className="text-xs bg-accent text-accent-foreground px-2 py-0.5 rounded-full font-medium">
-                Calm 😌
-              </span>
-            </div>
-            <span className="text-caption select-none">Saved to your sanctuary</span>
-          </div>
-          <div className="flex-1 space-y-3 py-2">
-            <h2 className="text-h2">A quiet evening of reflection</h2>
-            <p className="text-body-small text-muted-foreground">
-              Today has been gentle. I sat by the window watching the rain fall against the glass, holding a warm cup of tea. There is a certain peace in taking five minutes to just sit with my thoughts, without notifications, without noise. Writing here feels like stepping into a quiet library, where the only sound is the ink flowing onto premium paper...
-            </p>
-          </div>
-        </div>
-      </main>
-
-      {/* Footer */}
-      <footer className="border-t border-border bg-background py-8">
-        <div className="max-w-4xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between text-xs text-muted-foreground space-y-4 md:space-y-0">
-          <p>© 2026 withink. All rights reserved.</p>
-          <div className="flex space-x-6">
-            <Link href="/contact" className="hover:text-foreground">
-              Contact Us
-            </Link>
-            <Link href="/terms" className="hover:text-foreground">
-              Terms of Service
-            </Link>
-            <Link href="/privacy" className="hover:text-foreground">
-              Privacy Policy
-            </Link>
-          </div>
-        </div>
-      </footer>
-    </div>
+    <Suspense fallback={<LandingPageContent APP_URL={APP_URL} hasSession={false} />}>
+      <LandingPageContentWithSession APP_URL={APP_URL} />
+    </Suspense>
   );
 }

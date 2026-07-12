@@ -51,6 +51,22 @@
   --transition-duration-fast: 150ms;
   --transition-duration-standard: 200ms;
   --transition-duration-slow: 250ms;
+
+  --color-mood-1: var(--mood-angry);
+  --color-mood-1-bg: var(--mood-angry-bg);
+  --color-mood-1-border: var(--mood-angry-border);
+  --color-mood-2: var(--mood-sad);
+  --color-mood-2-bg: var(--mood-sad-bg);
+  --color-mood-2-border: var(--mood-sad-border);
+  --color-mood-3: var(--mood-neutral);
+  --color-mood-3-bg: var(--mood-neutral-bg);
+  --color-mood-3-border: var(--mood-neutral-border);
+  --color-mood-4: var(--mood-happy);
+  --color-mood-4-bg: var(--mood-happy-bg);
+  --color-mood-4-border: var(--mood-happy-border);
+  --color-mood-5: var(--mood-radiant);
+  --color-mood-5-bg: var(--mood-radiant-bg);
+  --color-mood-5-border: var(--mood-radiant-border);
 }
 
 @layer base {
@@ -95,6 +111,23 @@
     --sidebar-ring: oklch(0.24 0.03 55);
 
     --withink-paper-scale: 1.0;
+
+    /* Mood rating custom variables */
+    --mood-angry: oklch(0.60 0.14 25);
+    --mood-angry-bg: oklch(0.60 0.14 25 / 0.1);
+    --mood-angry-border: oklch(0.60 0.14 25 / 0.2);
+    --mood-sad: oklch(0.65 0.12 50);
+    --mood-sad-bg: oklch(0.65 0.12 50 / 0.1);
+    --mood-sad-border: oklch(0.65 0.12 50 / 0.2);
+    --mood-neutral: oklch(0.45 0.02 60);
+    --mood-neutral-bg: oklch(0.94 0.015 76);
+    --mood-neutral-border: oklch(0.90 0.015 76);
+    --mood-happy: oklch(0.60 0.12 145);
+    --mood-happy-bg: oklch(0.60 0.12 145 / 0.1);
+    --mood-happy-border: oklch(0.60 0.12 145 / 0.2);
+    --mood-radiant: oklch(0.78 0.12 75);
+    --mood-radiant-bg: oklch(0.78 0.12 75 / 0.2);
+    --mood-radiant-border: oklch(0.78 0.12 75 / 0.3);
   }
 
   .dark {
@@ -135,6 +168,23 @@
     --sidebar-accent-foreground: oklch(0.92 0.01 75);
     --sidebar-border: oklch(0.20 0.01 70);
     --sidebar-ring: oklch(0.92 0.01 75);
+
+    /* Mood rating custom variables */
+    --mood-angry: oklch(0.55 0.10 25);
+    --mood-angry-bg: oklch(0.55 0.10 25 / 0.1);
+    --mood-angry-border: oklch(0.55 0.10 25 / 0.2);
+    --mood-sad: oklch(0.60 0.08 50);
+    --mood-sad-bg: oklch(0.60 0.08 50 / 0.2);
+    --mood-sad-border: oklch(0.60 0.08 50 / 0.2);
+    --mood-neutral: oklch(0.65 0.01 75);
+    --mood-neutral-bg: oklch(0.25 0.01 70);
+    --mood-neutral-border: oklch(0.28 0.01 70);
+    --mood-happy: oklch(0.55 0.10 145);
+    --mood-happy-bg: oklch(0.55 0.10 145 / 0.2);
+    --mood-happy-border: oklch(0.55 0.10 145 / 0.2);
+    --mood-radiant: oklch(0.70 0.10 75);
+    --mood-radiant-bg: oklch(0.70 0.10 75 / 0.3);
+    --mood-radiant-border: oklch(0.70 0.10 75 / 0.3);
   }
 }
 
@@ -162,11 +212,28 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Smooth theme transitions for colors and borders, preserving layout/transform animations */
-  body, header, aside, main, div, button, input, textarea, a, span, p, h1, h2, h3, h4, h5, h6, nav, svg {
+  /* Targeted smooth theme transitions for layout containers and copy, preventing global performance jank */
+  body, header, footer, aside, main, section, article, div, button, input, textarea, a, span, p, h1, h2, h3, h4, h5, h6, nav, svg {
     transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, box-shadow;
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-    transition-duration: 200ms;
+    transition-duration: 250ms;
+  }
+
+  /* View Transition API styles for smooth cross-fade theme transitions */
+  ::view-transition-old(root) {
+    animation: 200ms cubic-bezier(0.4, 0, 0.2, 1) both fade-out;
+  }
+  ::view-transition-new(root) {
+    animation: 200ms cubic-bezier(0.4, 0, 0.2, 1) both fade-in;
+  }
+
+  @keyframes fade-out {
+    from { opacity: 1; }
+    to { opacity: 0; }
+  }
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
   }
 
   :focus-visible {

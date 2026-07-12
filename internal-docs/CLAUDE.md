@@ -465,13 +465,19 @@ The goal is to build the best possible version of Withink.
 The repository contains reusable Claude Code Skills under `.agents/skills/`. Before implementing any feature, inspect the available skills and determine whether one applies to the current task.
 
 Active project skills include:
-- **design-taste-frontend**: Visual excellence guidelines for premium landing pages and animations.
-- **vercel-react-best-practices**: Vercel guidelines for React and Next.js performance.
-- **gsap-master**: Interactive Web/Timeline animations with GreenSock.
-- **motion-framer**: Modern spring physics gestures, exit animations, and transitions with Motion.
 - **convex-create-component**: Building reusable Convex components.
-- **web-design-guidelines**: UI checklist covering typography scales, accessibility safeguards, and consistency audits.
+- **design-taste-frontend**: Visual excellence guidelines for premium landing pages and animations.
+- **frontend-design**: Guidance for distinctive, intentional visual design when building new UI or reshaping an existing one. Helps with aesthetic direction, typography, and making choices that don't read as templated defaults.
+- **gsap-master**: Interactive Web/Timeline animations with GreenSock.
+- **material-3**: Implement Google's Material Design 3 (Material You) UI system (components, tokens, adaptive layout, and accessibility).
+- **mobile-app-ui-design**: Design high-quality mobile app UI/UX screens, flows, and components.
+- **motion-framer**: Modern spring physics gestures, exit animations, and transitions with Motion.
+- **shadcn**: Manages shadcn components and projects — adding, searching, fixing, debugging, styling, and composing UI, including chat interfaces.
 - **tailwind-design-system**: Scalable design tokens, spacing systems, and responsive patterns in Tailwind CSS v4.
+- **ui-ux-pro-max**: UI/UX design intelligence for web and mobile. Searchable local database with 50+ styles, 161 color palettes, 57 font pairings, 161 product types, 99 UX guidelines, and 25 chart types across 10 stacks.
+- **vercel-react-best-practices**: Vercel guidelines for React and Next.js performance.
+- **web-design-guidelines**: UI checklist covering typography scales, accessibility safeguards, and consistency audits.
+
 
 
 Reuse these skills whenever appropriate.

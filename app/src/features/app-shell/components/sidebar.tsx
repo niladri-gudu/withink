@@ -4,6 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import NextImage from "next/image";
 import { usePathname, useRouter } from "next/navigation";
+import { motion } from "motion/react";
 import { 
   Sun, 
   History, 
@@ -173,7 +174,7 @@ export function Sidebar({
 
       {/* Navigation Area */}
       <TooltipProvider delayDuration={0}>
-        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto no-scrollbar">
+        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto no-scrollbar" aria-label="Sidebar navigation">
           {navItems.map((item) => {
             const Icon = item.icon;
             const content = (
@@ -184,7 +185,7 @@ export function Sidebar({
                   if (isMobileOpen) onCloseMobile();
                 }}
                 className={cn(
-                  "flex items-center space-x-3 px-3 h-10 rounded-lg text-sm transition-all duration-200 cursor-pointer",
+                  "flex items-center space-x-3 px-3 h-10 rounded-lg text-sm transition-all duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                   item.active
                     ? "bg-sidebar-accent text-sidebar-accent-foreground font-semibold shadow-sm border border-sidebar-border"
                     : "text-muted-foreground hover:bg-sidebar-accent/50 hover:text-foreground"
@@ -224,7 +225,7 @@ export function Sidebar({
           <div className={cn(
             "absolute bottom-16 left-4 right-4 bg-popover text-popover-foreground rounded-lg border border-border shadow-lg p-2 z-50 animate-in slide-in-from-bottom-2 duration-150",
             isCollapsed && "left-2 w-48 bottom-16"
-          )}>
+          )} role="menu">
             <div className="px-3 py-2 border-b border-border/50">
               <p className="text-xs font-semibold text-foreground truncate">{user?.name || "Writer"}</p>
               <p className="text-[10px] text-muted-foreground truncate">{user?.email || "sanctuary@withink.me"}</p>
@@ -232,7 +233,8 @@ export function Sidebar({
             <div className="pt-1.5">
               <button
                 onClick={handleLogout}
-                className="w-full flex items-center space-x-2 px-3 py-2 rounded-md text-xs text-destructive hover:bg-destructive/10 transition-colors text-left cursor-pointer"
+                role="menuitem"
+                className="w-full flex items-center space-x-2 px-3 py-2 rounded-md text-xs text-destructive hover:bg-destructive/10 transition-colors text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive"
               >
                 <LogOut className="h-3.5 w-3.5" />
                 <span>Log Out</span>
@@ -244,11 +246,12 @@ export function Sidebar({
         <button
           onClick={() => setUserMenuOpen(!userMenuOpen)}
           className={cn(
-            "w-full flex items-center gap-3 p-2 rounded-lg hover:bg-sidebar-accent transition-all text-left cursor-pointer",
+            "w-full flex items-center gap-3 p-2 rounded-lg hover:bg-sidebar-accent transition-all text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
             isCollapsed && "justify-center p-1"
           )}
           aria-haspopup="menu"
           aria-expanded={userMenuOpen}
+          aria-label="User menu"
         >
           {user?.image ? (
             <NextImage
@@ -278,12 +281,15 @@ export function Sidebar({
   return (
     <>
       {/* Desktop Sidebar (visible on md screens and up) */}
-      <aside className={cn(
-        "hidden md:flex flex-col h-screen shrink-0 transition-all duration-300 ease-in-out z-30",
-        isCollapsed ? "w-16" : "w-64"
-      )}>
-        {sidebarContent}
-      </aside>
+      <motion.aside
+        animate={{ width: isCollapsed ? 64 : 256 }}
+        transition={{ type: "spring", stiffness: 200, damping: 25 }}
+        className="hidden md:flex flex-col h-screen shrink-0 z-30 overflow-hidden"
+      >
+        <div className="w-64 h-full flex flex-col shrink-0">
+          {sidebarContent}
+        </div>
+      </motion.aside>
 
       {/* Mobile Sidebar overlay / drawer (visible only on mobile) */}
       {isMobileOpen && (

@@ -75,7 +75,7 @@ export function LockChangeModal({ onClose, onSuccess }: LockChangeModalProps) {
     }
 
     setIsSubmitting(true);
-    const toastId = toast.loading("Updating your passcode...");
+    const toastId = toast.loading("Updating your passcode…");
 
     const res = await saveLockSettingsAction({
       isLockEnabled: true,
@@ -169,6 +169,7 @@ export function LockChangeModal({ onClose, onSuccess }: LockChangeModalProps) {
                       onFocus={() => setCurrentFocused(true)}
                       onBlur={() => setCurrentFocused(false)}
                       className="absolute inset-0 h-full w-full opacity-0 cursor-text select-none"
+                      autoComplete="one-time-code"
                       autoFocus
                       required
                       disabled={isSubmitting}
@@ -223,6 +224,7 @@ export function LockChangeModal({ onClose, onSuccess }: LockChangeModalProps) {
                       onFocus={() => setNewFocused(true)}
                       onBlur={() => setNewFocused(false)}
                       className="absolute inset-0 h-full w-full opacity-0 cursor-text select-none"
+                      autoComplete="one-time-code"
                       autoFocus
                       required
                     />
@@ -285,6 +287,7 @@ export function LockChangeModal({ onClose, onSuccess }: LockChangeModalProps) {
                       onFocus={() => setConfirmFocused(true)}
                       onBlur={() => setConfirmFocused(false)}
                       className="absolute inset-0 h-full w-full opacity-0 cursor-text select-none"
+                      autoComplete="one-time-code"
                       autoFocus
                       required
                       disabled={isSubmitting}

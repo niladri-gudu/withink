@@ -72,7 +72,7 @@ export function Header({ onOpenMobile }: HeaderProps) {
         <Button
           variant="ghost"
           size="icon"
-          className="md:hidden h-9 w-9 text-muted-foreground hover:bg-muted"
+          className="md:hidden h-9 w-9 text-muted-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           onClick={onOpenMobile}
           aria-label="Open navigation menu"
         >

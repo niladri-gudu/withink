@@ -39,11 +39,11 @@ const moodLabels: Record<number, string> = {
 };
 
 const moodColors: Record<number, string> = {
-  1: "text-red-600 dark:text-red-400 bg-red-500/10 dark:bg-red-500/20 border-red-500/20",
-  2: "text-orange-600 dark:text-orange-400 bg-orange-500/10 dark:bg-orange-500/20 border-orange-500/20",
-  3: "text-yellow-600 dark:text-yellow-400 bg-yellow-500/10 dark:bg-yellow-500/20 border-yellow-500/20",
-  4: "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 dark:bg-emerald-500/20 border-emerald-500/20",
-  5: "text-teal-600 dark:text-teal-400 bg-teal-500/10 dark:bg-teal-500/20 border-teal-500/20",
+  1: "text-mood-1 bg-mood-1-bg border-mood-1-border",
+  2: "text-mood-2 bg-mood-2-bg border-mood-2-border",
+  3: "text-mood-3 bg-mood-3-bg border-mood-3-border",
+  4: "text-mood-4 bg-mood-4-bg border-mood-4-border",
+  5: "text-mood-5 bg-mood-5-bg border-mood-5-border",
 };
 
 function formatDate(dateString: string) {

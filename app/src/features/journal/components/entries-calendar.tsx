@@ -125,6 +125,9 @@ export function EntriesCalendar({
       </Card>
 
       {/* Calendar Card */}
+      <span className="sr-only" aria-live="polite" aria-atomic="true">
+        Showing {MONTH_NAMES[currentMonth]} {currentYear}
+      </span>
       <Card className="border border-border bg-card/60 backdrop-blur-md">
         <CardHeader className="flex flex-row items-center justify-between pb-4 space-y-0">
           <div className="flex flex-col">
@@ -137,7 +140,7 @@ export function EntriesCalendar({
             <Button
               variant="outline"
               size="icon"
-              className="h-8 w-8 rounded-lg cursor-pointer"
+              className="h-8 w-8 rounded-lg cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               onClick={handlePrevMonth}
               aria-label="Previous month"
             >
@@ -146,7 +149,7 @@ export function EntriesCalendar({
             <Button
               variant="outline"
               size="icon"
-              className="h-8 w-8 rounded-lg cursor-pointer"
+              className="h-8 w-8 rounded-lg cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               onClick={handleNextMonth}
               aria-label="Next month"
             >
@@ -193,7 +196,7 @@ export function EntriesCalendar({
                   disabled={!isClickable}
                   aria-label={dayLabel}
                   className={cn(
-                    "aspect-square rounded-lg flex flex-col items-center justify-center relative text-xs transition-all duration-200 cursor-default focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
+                    "aspect-square rounded-lg flex flex-col items-center justify-center relative text-xs transition-all duration-200 cursor-default focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                     isClickable && "cursor-pointer",
                     isToday && "border border-primary font-bold text-primary",
                     hasEntry

@@ -62,7 +62,7 @@ export function InsightsDashboard({ initialData, localToday }: InsightsDashboard
       {isLoading && (
         <div className="absolute top-6 right-10 flex items-center gap-2 text-xs font-mono text-muted-foreground/60 uppercase">
           <Loader2 className="h-3 w-3 animate-spin text-primary" />
-          <span>Adjusting timezone...</span>
+          <span>Adjusting timezone…</span>
         </div>
       )}
 
