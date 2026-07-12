@@ -149,16 +149,16 @@ export function Sidebar({
   const sidebarContent = (
     <div className="flex flex-col h-full bg-sidebar text-sidebar-foreground border-r border-sidebar-border select-none">
       {/* Header / Brand Logo */}
-      <div className={cn(
-        "flex items-center justify-between p-6 border-b border-sidebar-border h-16 shrink-0",
-        isCollapsed && "justify-center px-4"
-      )}>
+      <div className="flex items-center justify-between p-6 border-b border-sidebar-border h-16 shrink-0 relative">
         {!isCollapsed && (
           <span className="font-serif text-xl font-bold tracking-tight text-foreground animate-in fade-in duration-200">
             withink.
           </span>
         )}
-        <div className="flex items-center gap-2">
+        <div className={cn(
+          "flex items-center gap-2",
+          isCollapsed && "absolute left-[16px] top-4"
+        )}>
           {/* Collapse Button - only visible on desktop */}
           <Button
             variant="ghost"
@@ -245,10 +245,7 @@ export function Sidebar({
 
         <button
           onClick={() => setUserMenuOpen(!userMenuOpen)}
-          className={cn(
-            "w-full flex items-center gap-3 p-2 rounded-lg hover:bg-sidebar-accent transition-all text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-            isCollapsed && "justify-center p-1"
-          )}
+          className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-sidebar-accent transition-all text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           aria-haspopup="menu"
           aria-expanded={userMenuOpen}
           aria-label="User menu"
