@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import { useTheme } from "next-themes";
 import { Sun, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -19,11 +20,28 @@ export function ThemeToggle() {
 
   const isDark = theme === "dark";
 
+  const toggleTheme = () => {
+    const nextTheme = isDark ? "light" : "dark";
+
+    // Trigger View Transition API if supported and reduced motion is disabled
+    if (
+      typeof window !== "undefined" &&
+      (document as any).startViewTransition &&
+      !window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
+      (document as any).startViewTransition(() => {
+        setTheme(nextTheme);
+      });
+    } else {
+      setTheme(nextTheme);
+    }
+  };
+
   return (
     <Button
       variant="ghost"
       size="icon"
-      onClick={() => setTheme(isDark ? "light" : "dark")}
+      onClick={toggleTheme}
       className="w-9 h-9 relative hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
       aria-label="Toggle theme"
     >
