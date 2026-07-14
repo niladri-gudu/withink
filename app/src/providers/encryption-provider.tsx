@@ -45,17 +45,18 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
     return masterKey !== null;
   }, [isClientEncrypted, masterKey]);
 
-  // Attempt to restore master key from sessionStorage on load
+  // Attempt to restore master key from sessionStorage or localStorage on load
   React.useEffect(() => {
     const restoreKey = async () => {
-      const storedKeyHex = sessionStorage.getItem("withink_master_key");
+      const storedKeyHex = localStorage.getItem("withink_master_key") || sessionStorage.getItem("withink_master_key");
       if (storedKeyHex && isClientEncrypted) {
         try {
           const key = await importKeyFromHex(storedKeyHex);
           setMasterKey(key);
         } catch (e) {
-          console.error("Failed to restore master key from sessionStorage", e);
+          console.error("Failed to restore master key", e);
           sessionStorage.removeItem("withink_master_key");
+          localStorage.removeItem("withink_master_key");
         }
       }
     };
@@ -90,6 +91,15 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
 
         // 4. Cache it in sessionStorage for persistence across page refreshes
         sessionStorage.setItem("withink_master_key", decryptedMasterKeyHex);
+
+        // 5. Cache in localStorage if PIN lock is not enabled
+        const isLockEnabled = localStorage.getItem("withink_lock_enabled") === "true";
+        if (!isLockEnabled) {
+          localStorage.setItem("withink_master_key", decryptedMasterKeyHex);
+        } else {
+          localStorage.removeItem("withink_master_key");
+        }
+
         setPromptOpen(false);
         return true;
       } catch (err) {
@@ -121,6 +131,10 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
 
         // 4. Cache in sessionStorage
         sessionStorage.setItem("withink_master_key", decryptedMasterKeyHex);
+
+        // 5. Clean up raw key in localStorage if lock is enabled
+        localStorage.removeItem("withink_master_key");
+
         setPromptOpen(false);
         return true;
       } catch (err) {
@@ -134,6 +148,7 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
   const lock = React.useCallback(() => {
     setMasterKey(null);
     sessionStorage.removeItem("withink_master_key");
+    localStorage.removeItem("withink_master_key");
   }, []);
 
   return (

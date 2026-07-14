@@ -136,6 +136,10 @@ export function MandatorySanctuarySetup({
         const pinKey = await deriveKeyFromPassword(pinConfirm, salt, 50000);
         const encryptedMasterKey = await encryptText(masterKeyHex, pinKey);
         localStorage.setItem("withink_encrypted_master_key", encryptedMasterKey);
+        localStorage.removeItem("withink_master_key");
+      } else {
+        localStorage.setItem("withink_master_key", masterKeyHex);
+        localStorage.removeItem("withink_encrypted_master_key");
       }
 
       // 8. Update client context & sessionStorage
