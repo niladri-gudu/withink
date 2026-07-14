@@ -168,12 +168,16 @@ export function AppShell({ children, user }: AppShellProps) {
     localStorage.setItem("withink_sidebar_collapsed", String(nextCollapsed));
   };
 
-  const showPasswordUnlockPrompt = isClientEncrypted && !masterKey && (!isLockEnabled || !hasPasscode);
+  const showPasswordUnlockPrompt = React.useMemo(() => {
+    if (typeof window === "undefined") return false;
+    const hasLocalEncryptedKey = !!localStorage.getItem("withink_encrypted_master_key");
+    return isClientEncrypted && !masterKey && (!isLockEnabled || !hasPasscode || !hasLocalEncryptedKey);
+  }, [isClientEncrypted, masterKey, isLockEnabled, hasPasscode]);
 
 
   return (
     <>
-      {user && !isUnlocked && (
+      {user && !isUnlocked && !showPasswordUnlockPrompt && (
         <LockScreen
           onUnlockSuccess={handleUnlockSuccess}
           userEmail={user.email}
