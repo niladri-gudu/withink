@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { saveEntryAction } from "../actions/entry-actions";
 import { getLocalDateString } from "@/lib/utils/date";
+import { useQueryClient } from "@tanstack/react-query";
 
 export type SaveStatus = "idle" | "saving" | "saved" | "error";
 
@@ -18,6 +19,7 @@ export function useAutoSave(
   debounceMs = 1500,
   enabled = true,
 ) {
+  const queryClient = useQueryClient();
   const [status, setStatus] = useState<SaveStatus>("idle");
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastDateRef = useRef(data.date);
@@ -119,6 +121,9 @@ export function useAutoSave(
         isDirty.current = false;
         setStatus("saved");
 
+        // Invalidate queries starting with ["entries"]
+        queryClient.invalidateQueries({ queryKey: ["entries"] });
+
         // Return to idle status after 2 seconds
         setTimeout(() => setStatus("idle"), 2000);
       } else {
@@ -141,6 +146,7 @@ export function useAutoSave(
     data.mood,
     debounceMs,
     enabled,
+    queryClient,
   ]);
 
   return status;

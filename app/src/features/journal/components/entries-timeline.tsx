@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { getEntriesListAction, deleteEntryAction } from "../actions/entry-actions";
 import type { DecryptedEntry } from "../services/journal-service";
 import { toast } from "sonner";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 interface EntriesTimelineProps {
   initialEntries: DecryptedEntry[];
@@ -110,18 +111,15 @@ export function EntriesTimeline({
   localToday,
   onEntryDeleted,
 }: EntriesTimelineProps) {
-  const [entries, setEntries] = useState<DecryptedEntry[]>(initialEntries);
-  const [total, setTotal] = useState(initialTotal);
+  const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [moodFilter, setMoodFilter] = useState<string>("all");
   const [timeFilter, setTimeFilter] = useState<"all" | "week" | "month">("all");
-  const [isLoading, setIsLoading] = useState(false);
   
   const [deleteDateConfirm, setDeleteDateConfirm] = useState<string | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
 
   // Search debounce effect
   useEffect(() => {
@@ -135,46 +133,40 @@ export function EntriesTimeline({
     };
   }, [search]);
 
-  // Fetch updated page list on filter change
-  useEffect(() => {
-    // Skip the first initial render load if no filters are active
-    const isFirstRun = page === 1 && !debouncedSearch && moodFilter === "all" && timeFilter === "all";
-    if (isFirstRun) return;
-
-    let active = true;
-
-    async function loadData() {
-      setIsLoading(true);
-      try {
-        const res = await getEntriesListAction(page, LIMIT, {
-          search: debouncedSearch || undefined,
-          mood: moodFilter === "all" ? null : Number(moodFilter),
-          timeFilter,
-          today: localToday,
-        });
-
-        if (active && res.success && res.data) {
-          setEntries(res.data.entries);
-          setTotal(res.data.total);
-        }
-      } catch (err) {
-        console.error("Failed to load entries:", err);
-      } finally {
-        if (active) setIsLoading(false);
+  // Fetch updated page list using react-query
+  const { data, isLoading } = useQuery({
+    queryKey: ["entries", { page, search: debouncedSearch, moodFilter, timeFilter, localToday }],
+    queryFn: async () => {
+      const res = await getEntriesListAction(page, LIMIT, {
+        search: debouncedSearch || undefined,
+        mood: moodFilter === "all" ? null : Number(moodFilter),
+        timeFilter,
+        today: localToday,
+      });
+      if (!res.success || !res.data) {
+        console.error("Failed to load entries:", res.error);
+        throw new Error(res.error || "Failed to fetch entries");
       }
-    }
+      return res.data;
+    },
+    initialData: () => {
+      const isDefaultState = page === 1 && !debouncedSearch && moodFilter === "all" && timeFilter === "all";
+      if (isDefaultState) {
+        return {
+          entries: initialEntries,
+          total: initialTotal,
+        };
+      }
+      return undefined;
+    },
+  });
 
-    loadData();
+  const entries = data?.entries ?? [];
+  const total = data?.total ?? 0;
 
-    return () => {
-      active = false;
-    };
-  }, [page, debouncedSearch, moodFilter, timeFilter, localToday]);
-
-  const handleDelete = async (date: string) => {
-    setIsDeleting(true);
-    try {
-      const res = await deleteEntryAction(date);
+  const deleteMutation = useMutation({
+    mutationFn: (date: string) => deleteEntryAction(date),
+    onSuccess: (res, date) => {
       if (res.success) {
         toast.success(`Entry for ${formatDate(date)} deleted.`);
         setDeleteDateConfirm(null);
@@ -183,29 +175,24 @@ export function EntriesTimeline({
         // Adjust page if we deleted the last item on this page
         if (entries.length === 1 && page > 1) {
           setPage((p) => p - 1);
-        } else {
-          // Trigger refresh
-          const resUpdated = await getEntriesListAction(page, LIMIT, {
-            search: debouncedSearch || undefined,
-            mood: moodFilter === "all" ? null : Number(moodFilter),
-            timeFilter,
-            today: localToday,
-          });
-          if (resUpdated.success && resUpdated.data) {
-            setEntries(resUpdated.data.entries);
-            setTotal(resUpdated.data.total);
-          }
         }
+        
+        queryClient.invalidateQueries({ queryKey: ["entries"] });
       } else {
         toast.error(res.error || "Failed to delete entry.");
       }
-    } catch (err: unknown) {
+    },
+    onError: (err) => {
       const message = err instanceof Error ? err.message : "An unexpected error occurred.";
       toast.error(message);
-    } finally {
-      setIsDeleting(false);
-    }
+    },
+  });
+
+  const handleDelete = async (date: string) => {
+    deleteMutation.mutate(date);
   };
+
+  const isDeleting = deleteMutation.isPending;
 
   const totalPages = Math.ceil(total / LIMIT);
 
