@@ -7,6 +7,9 @@ import { useLockTimer } from "../../lock/hooks/use-lock-timer";
 import { LockScreen } from "../../lock/components/lock-screen";
 import { LockSetupOnboarding } from "../../lock/components/lock-setup-onboarding";
 import { getLockSettingsAction, lockAction } from "../../lock/actions/lock-actions";
+import { useEncryption } from "@/providers/encryption-provider";
+import { getEncryptionSettingsAction } from "../../encryption/actions/encryption-actions";
+import { SanctuaryPasswordUnlockScreen } from "../../encryption/components/sanctuary-password-unlock-screen";
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -21,6 +24,12 @@ export function AppShell({ children, user }: AppShellProps) {
   const [isCollapsed, setIsCollapsed] = React.useState(false);
   const [isMobileOpen, setIsMobileOpen] = React.useState(false);
   const [mounted, setMounted] = React.useState(false);
+
+  const {
+    isClientEncrypted,
+    masterKey,
+    setEncryptionSettings,
+  } = useEncryption();
 
   // Lock feature states - initialized safely to avoid flashes
   const [isLockEnabled, setIsLockEnabled] = React.useState(false);
@@ -68,14 +77,31 @@ export function AppShell({ children, user }: AppShellProps) {
       }
     };
 
+    const checkEncryptionStatus = async () => {
+      const res = await getEncryptionSettingsAction();
+      if (res.success && res.data) {
+        setEncryptionSettings(res.data);
+      }
+    };
+
     checkLockStatus();
-  }, [user]);
+    checkEncryptionStatus();
+  }, [user, setEncryptionSettings]);
 
   const handleLock = React.useCallback(async () => {
     setIsUnlocked(false);
     sessionStorage.removeItem("withink_tab_unlocked");
     await lockAction();
   }, []);
+
+  // Force PIN-lock screen to show if client encryption is active but master key is missing
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    const hasLocalEncryptedKey = !!localStorage.getItem("withink_encrypted_master_key");
+    if (isClientEncrypted && !masterKey && isUnlocked && isLockEnabled && hasPasscode && hasLocalEncryptedKey) {
+      handleLock();
+    }
+  }, [isClientEncrypted, masterKey, isUnlocked, isLockEnabled, hasPasscode, handleLock]);
 
   const handleUnlockSuccess = () => {
     setIsUnlocked(true);
@@ -142,11 +168,20 @@ export function AppShell({ children, user }: AppShellProps) {
     localStorage.setItem("withink_sidebar_collapsed", String(nextCollapsed));
   };
 
+  const showPasswordUnlockPrompt = isClientEncrypted && !masterKey && (!isLockEnabled || !hasPasscode);
+
+
   return (
     <>
       {user && !isUnlocked && (
         <LockScreen
           onUnlockSuccess={handleUnlockSuccess}
+          userEmail={user.email}
+        />
+      )}
+
+      {user && showPasswordUnlockPrompt && (
+        <SanctuaryPasswordUnlockScreen
           userEmail={user.email}
         />
       )}

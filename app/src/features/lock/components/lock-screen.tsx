@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useFocusTrap } from "@/hooks/use-focus-trap";
+import { useEncryption } from "@/providers/encryption-provider";
 
 interface LockScreenProps {
   onUnlockSuccess: () => void;
@@ -28,6 +29,8 @@ export function LockScreen({ onUnlockSuccess, userEmail }: LockScreenProps) {
   const [shake, setShake] = React.useState(false);
   const [view, setView] = React.useState<ScreenView>("pin");
   
+  const { isClientEncrypted, unlockWithPin } = useEncryption();
+
   // Trap focus inside the entire lock screen dialog when active
   const lockContainerRef = useFocusTrap(true);
 
@@ -84,6 +87,20 @@ export function LockScreen({ onUnlockSuccess, userEmail }: LockScreenProps) {
         setIsVerifying(true);
         const res = await unlockAction(pin);
         if (res.success) {
+          if (isClientEncrypted) {
+            const encryptedMasterKey = localStorage.getItem("withink_encrypted_master_key");
+            if (encryptedMasterKey) {
+              const decrypted = await unlockWithPin(pin, encryptedMasterKey);
+              if (!decrypted) {
+                setShake(true);
+                setPin("");
+                toast.error("Decryption failed. Your passcode key might be out of sync.");
+                setIsVerifying(false);
+                setTimeout(() => setShake(false), 500);
+                return;
+              }
+            }
+          }
           toast.success("Welcome back to your sanctuary.");
           onUnlockSuccess();
         } else {
@@ -96,7 +113,7 @@ export function LockScreen({ onUnlockSuccess, userEmail }: LockScreenProps) {
       };
       verify();
     }
-  }, [pin, view, isVerifying, onUnlockSuccess]);
+  }, [pin, view, isVerifying, onUnlockSuccess, isClientEncrypted, unlockWithPin]);
 
   const submitPasswordRecovery = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -107,6 +124,7 @@ export function LockScreen({ onUnlockSuccess, userEmail }: LockScreenProps) {
     const res = await verifyPasswordAndResetLockAction(loginPassword);
 
     if (res.success) {
+      localStorage.removeItem("withink_encrypted_master_key");
       toast.success("Sanctuary Lock disabled successfully", { id: toastId });
       onUnlockSuccess();
     } else {
@@ -141,6 +159,7 @@ export function LockScreen({ onUnlockSuccess, userEmail }: LockScreenProps) {
     const res = await verifyPasscodeResetCodeAction(emailCode);
 
     if (res.success) {
+      localStorage.removeItem("withink_encrypted_master_key");
       toast.success("Sanctuary Lock disabled successfully", { id: toastId });
       onUnlockSuccess();
     } else {

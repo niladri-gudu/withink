@@ -6,6 +6,7 @@ import { countWords } from "@/lib/utils/text";
 import { addDays, isDateString } from "@/lib/utils/date";
 import { BusinessRuleError, ValidationError } from "@/server/errors";
 import { logger } from "@/server/logger";
+import { ClientEncryptionSettingsModel } from "@/features/encryption/repositories/encryption-settings-model";
 
 export interface DecryptedEntry {
   id: string;
@@ -35,8 +36,12 @@ export class JournalService {
       try {
         contentJson = JSON.parse(decryptedJsonStr);
       } catch (e) {
-        logger.error("Failed to parse contentJson", e as Error);
-        contentJson = {};
+        if (decryptedJsonStr.includes(":")) {
+          contentJson = decryptedJsonStr;
+        } else {
+          logger.error("Failed to parse contentJson", e as Error);
+          contentJson = {};
+        }
       }
     }
 
@@ -85,6 +90,7 @@ export class JournalService {
       contentHtml?: string;
       contentText?: string;
       contentJson?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+      wordCount?: number;
     },
     userLocalToday: string,
   ): Promise<DecryptedEntry> {
@@ -114,6 +120,10 @@ export class JournalService {
       }
     }
 
+    // Check ZK settings
+    const settings = await (ClientEncryptionSettingsModel as any).findOne({ userId }).lean();
+    const isClientEncrypted = settings?.isClientEncrypted ?? false;
+
     // 3. Construct update payload and encrypt content fields
     const updatePayload: Partial<Omit<IEntry, "userId" | "date">> = {};
 
@@ -125,17 +135,32 @@ export class JournalService {
       updatePayload.mood = data.mood;
     }
 
-    if (data.contentHtml !== undefined) {
-      updatePayload.contentHtml = encrypt(data.contentHtml);
-    }
-
-    if (data.contentText !== undefined) {
-      updatePayload.contentText = encrypt(data.contentText);
-      updatePayload.wordCount = countWords(data.contentText);
-    }
-
-    if (data.contentJson !== undefined) {
-      updatePayload.contentJson = encrypt(JSON.stringify(data.contentJson));
+    if (isClientEncrypted) {
+      // Zero-knowledge: data fields are already encrypted by the client
+      if (data.contentHtml !== undefined) {
+        updatePayload.contentHtml = data.contentHtml;
+      }
+      if (data.contentText !== undefined) {
+        updatePayload.contentText = data.contentText;
+        updatePayload.wordCount = data.wordCount ?? 0;
+      }
+      if (data.contentJson !== undefined) {
+        updatePayload.contentJson = typeof data.contentJson === "string" 
+          ? data.contentJson 
+          : JSON.stringify(data.contentJson);
+      }
+    } else {
+      // Server-side encryption
+      if (data.contentHtml !== undefined) {
+        updatePayload.contentHtml = encrypt(data.contentHtml);
+      }
+      if (data.contentText !== undefined) {
+        updatePayload.contentText = encrypt(data.contentText);
+        updatePayload.wordCount = countWords(data.contentText);
+      }
+      if (data.contentJson !== undefined) {
+        updatePayload.contentJson = encrypt(JSON.stringify(data.contentJson));
+      }
     }
 
     // 4. Save through the repository

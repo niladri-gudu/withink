@@ -11,6 +11,7 @@ export const saveEntrySchema = z.object({
   contentHtml: z.string().default(""),
   contentText: z.string().default(""),
   contentJson: z.any().optional(),
+  wordCount: z.number().int().optional(),
 });
 
 export type SaveEntryInput = z.infer<typeof saveEntrySchema>;

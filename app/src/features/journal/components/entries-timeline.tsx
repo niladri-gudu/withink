@@ -22,6 +22,8 @@ import { getEntriesListAction, deleteEntryAction } from "../actions/entry-action
 import type { DecryptedEntry } from "../services/journal-service";
 import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useEncryption } from "@/providers/encryption-provider";
+import { safeDecryptText } from "@/lib/crypto-client";
 
 interface EntriesTimelineProps {
   initialEntries: DecryptedEntry[];
@@ -113,6 +115,7 @@ export function EntriesTimeline({
 }: EntriesTimelineProps) {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
+  const { isClientEncrypted, masterKey } = useEncryption();
   
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -135,10 +138,11 @@ export function EntriesTimeline({
 
   // Fetch updated page list using react-query
   const { data, isLoading } = useQuery({
-    queryKey: ["entries", { page, search: debouncedSearch, moodFilter, timeFilter, localToday }],
+    queryKey: ["entries", { page, search: debouncedSearch, moodFilter, timeFilter, localToday, isClientEncrypted, isUnlocked: !!masterKey }],
     queryFn: async () => {
-      const res = await getEntriesListAction(page, LIMIT, {
-        search: debouncedSearch || undefined,
+      const limit = (isClientEncrypted && debouncedSearch) ? 5000 : LIMIT;
+      const res = await getEntriesListAction((isClientEncrypted && debouncedSearch) ? 1 : page, limit, {
+        search: isClientEncrypted ? undefined : (debouncedSearch || undefined),
         mood: moodFilter === "all" ? null : Number(moodFilter),
         timeFilter,
         today: localToday,
@@ -147,11 +151,58 @@ export function EntriesTimeline({
         console.error("Failed to load entries:", res.error);
         throw new Error(res.error || "Failed to fetch entries");
       }
-      return res.data;
+
+      let rawEntries = res.data.entries;
+      let total = res.data.total;
+
+      // Decrypt client-side if encrypted
+      if (isClientEncrypted && masterKey) {
+        const decrypted = [];
+        for (const entry of rawEntries) {
+          const contentHtml = await safeDecryptText(entry.contentHtml, masterKey);
+          const contentText = await safeDecryptText(entry.contentText, masterKey);
+          
+          let contentJson = entry.contentJson;
+          if (typeof entry.contentJson === "string") {
+            const decJson = await safeDecryptText(entry.contentJson, masterKey);
+            try {
+              contentJson = JSON.parse(decJson);
+            } catch {
+              contentJson = {};
+            }
+          }
+          decrypted.push({ ...entry, contentHtml, contentText, contentJson });
+        }
+        rawEntries = decrypted;
+      }
+
+      // If client-encrypted and search query is present, filter locally!
+      if (isClientEncrypted && debouncedSearch) {
+        const queryLower = debouncedSearch.trim().toLowerCase();
+        const filtered = rawEntries.filter((entry) => {
+          if (entry.title?.toLowerCase().includes(queryLower)) return true;
+          if (entry.contentText?.toLowerCase().includes(queryLower)) return true;
+          if (entry.date?.includes(queryLower)) return true;
+          return false;
+        });
+        
+        // Paginate local results
+        const startIndex = (page - 1) * LIMIT;
+        const paginated = filtered.slice(startIndex, startIndex + LIMIT);
+        return {
+          entries: paginated,
+          total: filtered.length,
+        };
+      }
+
+      return {
+        entries: rawEntries,
+        total,
+      };
     },
     initialData: () => {
       const isDefaultState = page === 1 && !debouncedSearch && moodFilter === "all" && timeFilter === "all";
-      if (isDefaultState) {
+      if (isDefaultState && !isClientEncrypted) {
         return {
           entries: initialEntries,
           total: initialTotal,

@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Loader2 } from "lucide-react";
 import TiptapEditor from "./editor/tiptap-editor";
 import { EditorToolbar } from "./editor/editor-toolbar";
 import { MoodSelector } from "./mood-selector";
@@ -11,6 +11,8 @@ import { SaveIndicator } from "./save-indicator";
 import { useAutoSave } from "../hooks/use-auto-save";
 import { Button } from "@/components/ui/button";
 import { ROUTES } from "@/constants/routes";
+import { useEncryption } from "@/providers/encryption-provider";
+import { decryptText } from "@/lib/crypto-client";
 
 interface Props {
   date: string;
@@ -41,11 +43,36 @@ export function JournalEditorShell({
   const [editorContent, setEditorContent] = useState({
     html: "",
     text: "",
-    json: initialContent,
+    json: {},
   });
   const [editorInstance, setEditorInstance] = useState<any>(null);
   const [editorReady, setEditorReady] = useState(false);
   const [toolbarBottom, setToolbarBottom] = useState(32);
+
+  const { isClientEncrypted, masterKey } = useEncryption();
+  const [decryptedContent, setDecryptedContent] = useState<any>(null);
+
+  // Decrypt content on mount if zero-knowledge is active
+  useEffect(() => {
+    const loadContent = async () => {
+      if (isClientEncrypted && masterKey && typeof initialContent === "string" && initialContent.includes(":")) {
+        try {
+          const decrypted = await decryptText(initialContent, masterKey);
+          const parsed = JSON.parse(decrypted);
+          setDecryptedContent(parsed);
+          setEditorContent((prev) => ({ ...prev, json: parsed }));
+        } catch (err) {
+          console.error("Failed to decrypt initial content:", err);
+          setDecryptedContent({});
+        }
+      } else {
+        const fallback = initialContent || {};
+        setDecryptedContent(fallback);
+        setEditorContent((prev) => ({ ...prev, json: fallback }));
+      }
+    };
+    loadContent();
+  }, [initialContent, isClientEncrypted, masterKey]);
 
   // Setup scroll-padding for visual viewport (keyboard avoidance on mobile/Safari)
   useEffect(() => {
@@ -146,14 +173,20 @@ export function JournalEditorShell({
 
           {/* Editor Container */}
           <div className="prose-container mt-6">
-            <TiptapEditor
-              content={initialContent}
-              onChange={setEditorContent}
-              onEditorReady={(editor) => {
-                setEditorInstance(editor);
-                setEditorReady(true);
-              }}
-            />
+            {decryptedContent !== null ? (
+              <TiptapEditor
+                content={decryptedContent}
+                onChange={setEditorContent}
+                onEditorReady={(editor) => {
+                  setEditorInstance(editor);
+                  setEditorReady(true);
+                }}
+              />
+            ) : (
+              <div className="flex items-center justify-center py-20">
+                <Loader2 className="h-6 w-6 text-primary animate-spin" />
+              </div>
+            )}
           </div>
         </div>
       </main>

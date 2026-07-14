@@ -37,6 +37,20 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useFocusTrap } from "@/hooks/use-focus-trap";
+import { useEncryption } from "@/providers/encryption-provider";
+import {
+  generateRandomSalt,
+  generateMasterKey,
+  exportKeyToHex,
+  deriveKeyFromPassword,
+  encryptText,
+  decryptText,
+} from "@/lib/crypto-client";
+import {
+  getPlaintextEntriesForMigrationAction,
+  enableClientEncryptionAction,
+  updateSanctuaryPasswordAction,
+} from "@/features/encryption/actions/encryption-actions";
 
 const PAPER_SCALE_KEY = "withink-paper-scale";
 const INITIAL_SCALE = 1.0;
@@ -169,6 +183,27 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
   const [lockSettingsLoading, setLockSettingsLoading] = React.useState(true);
   const [showSetupModal, setShowSetupModal] = React.useState(false);
   const [showChangeModal, setShowChangeModal] = React.useState(false);
+
+  // Zero-Knowledge Encryption States
+  const {
+    isClientEncrypted,
+    setEncryptionSettings,
+    encryptionSalt,
+    verificationCiphertext,
+  } = useEncryption();
+
+  const [zkPassword, setZkPassword] = React.useState("");
+  const [zkPasswordConfirm, setZkPasswordConfirm] = React.useState("");
+  const [zkPINConfirm, setZkPINConfirm] = React.useState("");
+  const [zkWarningChecked, setZkWarningChecked] = React.useState(false);
+  const [isMigrating, setIsMigrating] = React.useState(false);
+  const [showZKSetupModal, setShowZKSetupModal] = React.useState(false);
+
+  const [zkOldPassword, setZkOldPassword] = React.useState("");
+  const [zkNewPassword, setZkNewPassword] = React.useState("");
+  const [zkNewPasswordConfirm, setZkNewPasswordConfirm] = React.useState("");
+  const [isChangingZKPassword, setIsChangingZKPassword] = React.useState(false);
+  const [showZKChangeModal, setShowZKChangeModal] = React.useState(false);
 
   React.useEffect(() => {
     getLockSettingsAction()
@@ -448,6 +483,156 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
     const calibratedPaperScale = Math.max(0.8, Math.min(1.2, (1 / cardScale) * 0.95));
     setPaperScale(Number(calibratedPaperScale.toFixed(2)));
     toast.success(`Card calibration applied: ${calibratedPaperScale.toFixed(2)}x`);
+  };
+
+  // Zero-Knowledge Encryption Actions
+  const handleMigrate = async () => {
+    if (zkPassword !== zkPasswordConfirm) {
+      toast.error("Passwords do not match");
+      return;
+    }
+    if (!zkWarningChecked) {
+      toast.error("Please confirm the data recovery warning");
+      return;
+    }
+    if (diaryLockEnabled && diaryHasPasscode && !zkPINConfirm) {
+      toast.error("Please enter your current 4-digit PIN");
+      return;
+    }
+
+    setIsMigrating(true);
+    const toastId = toast.loading("Starting zero-knowledge migration...");
+
+    try {
+      // 1. Fetch plaintext entries from the server
+      toast.loading("Fetching journal entries...", { id: toastId });
+      const fetchRes = await getPlaintextEntriesForMigrationAction();
+      if (!fetchRes.success || !fetchRes.entries) {
+        throw new Error(fetchRes.error || "Failed to fetch entries");
+      }
+
+      const entries = fetchRes.entries;
+
+      // 2. Generate random 16-byte salt and derive password key client-side
+      toast.loading("Deriving encryption keys...", { id: toastId });
+      const salt = generateRandomSalt();
+      const passwordKey = await deriveKeyFromPassword(zkPassword, salt);
+
+      // 3. Generate a secure random master key client-side
+      const newMasterKey = await generateMasterKey();
+      const masterKeyHex = await exportKeyToHex(newMasterKey);
+
+      // 4. Encrypt the master key with the password key
+      const verificationCiphertext = await encryptText(masterKeyHex, passwordKey);
+
+      // 5. Encrypt all entry texts client-side
+      toast.loading(`Encrypting ${entries.length} entries...`, { id: toastId });
+      const encryptedEntries = [];
+      for (let i = 0; i < entries.length; i++) {
+        const entry = entries[i]!;
+        
+        // Encrypt fields using the master key
+        const contentHtmlEnc = await encryptText(entry.contentHtml, newMasterKey);
+        const contentTextEnc = await encryptText(entry.contentText, newMasterKey);
+        const contentJsonEnc = await encryptText(JSON.stringify(entry.contentJson), newMasterKey);
+
+        // Count words
+        const wordCount = entry.contentText.split(/\s+/).filter(Boolean).length;
+
+        encryptedEntries.push({
+          id: entry.id,
+          contentHtml: contentHtmlEnc,
+          contentText: contentTextEnc,
+          contentJson: contentJsonEnc,
+          wordCount,
+        });
+      }
+
+      // 6. Submit to the server
+      toast.loading("Saving secure database records...", { id: toastId });
+      const enableRes = await enableClientEncryptionAction(salt, verificationCiphertext, encryptedEntries);
+      if (!enableRes.success) {
+        throw new Error(enableRes.error || "Failed to enable client encryption");
+      }
+
+      // 7. If PIN lock is enabled, encrypt the master key with the PIN key
+      if (diaryLockEnabled && diaryHasPasscode && zkPINConfirm) {
+        const pinKey = await deriveKeyFromPassword(zkPINConfirm, salt, 50000);
+        const encryptedMasterKey = await encryptText(masterKeyHex, pinKey);
+        localStorage.setItem("withink_encrypted_master_key", encryptedMasterKey);
+      }
+
+      // 8. Update client context & sessionStorage
+      sessionStorage.setItem("withink_master_key", masterKeyHex);
+      setEncryptionSettings({
+        isClientEncrypted: true,
+        encryptionSalt: salt,
+        verificationCiphertext,
+      });
+
+      toast.success("Sanctuary Zero-Knowledge Encryption activated!", { id: toastId });
+      setShowZKSetupModal(false);
+      setZkPassword("");
+      setZkPasswordConfirm("");
+      setZkPINConfirm("");
+      setZkWarningChecked(false);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to migrate to zero-knowledge", { id: toastId });
+    } finally {
+      setIsMigrating(false);
+    }
+  };
+
+  const handleChangeZKPassword = async () => {
+    if (zkNewPassword !== zkNewPasswordConfirm) {
+      toast.error("New passwords do not match");
+      return;
+    }
+
+    setIsChangingZKPassword(true);
+    const toastId = toast.loading("Updating Sanctuary Password...");
+
+    try {
+      // 1. Derive key from old password
+      const oldPasswordKey = await deriveKeyFromPassword(zkOldPassword, encryptionSalt);
+
+      // 2. Decrypt verificationCiphertext to get master key hex
+      let masterKeyHex;
+      try {
+        masterKeyHex = await decryptText(verificationCiphertext, oldPasswordKey);
+      } catch {
+        throw new Error("Incorrect current Sanctuary Password");
+      }
+
+      // 3. Derive key from new password using the same salt
+      const newPasswordKey = await deriveKeyFromPassword(zkNewPassword, encryptionSalt);
+
+      // 4. Encrypt master key hex with new password key
+      const newVerificationCiphertext = await encryptText(masterKeyHex, newPasswordKey);
+
+      // 5. Update server
+      const res = await updateSanctuaryPasswordAction(newVerificationCiphertext);
+      if (!res.success) {
+        throw new Error(res.error || "Failed to update settings on server");
+      }
+
+      // 6. Update local context
+      setEncryptionSettings({
+        isClientEncrypted: true,
+        encryptionSalt,
+        verificationCiphertext: newVerificationCiphertext,
+      });
+
+      toast.success("Sanctuary Password updated successfully!", { id: toastId });
+      setShowZKChangeModal(false);
+      setZkOldPassword("");
+      setZkNewPassword("");
+      setZkNewPasswordConfirm("");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to change password", { id: toastId });
+    } finally {
+      setIsChangingZKPassword(false);
+    }
   };
 
   // Security Form Submission
@@ -892,6 +1077,55 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
         )}
       </SettingsSection>
 
+      {/* ==================== Sanctuary Encryption ==================== */}
+      <SettingsSection
+        icon={Shield}
+        title="Sanctuary encryption (Zero-knowledge)"
+        description="Secure your diary entries with client-side zero-knowledge encryption. Your data is encrypted before it leaves your device."
+      >
+        {isClientEncrypted ? (
+          <div className="space-y-4">
+            <div className="flex items-start gap-3 rounded-xl border border-border bg-secondary/40 p-5">
+              <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent/15 text-accent-foreground">
+                <Check className="h-4 w-4" />
+              </span>
+              <div className="space-y-1">
+                <p className="text-body-small font-medium text-foreground">Zero-knowledge active</p>
+                <p className="text-caption">
+                  Your journal entries are encrypted directly on your device. The server only sees encrypted blobs and has no access to your logs.
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowZKChangeModal(true)}
+                className="rounded-full px-6"
+              >
+                Change Sanctuary Password
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <p className="text-body-small text-muted-foreground">
+              By default, entries are encrypted on our servers. Enable Sanctuary Encryption to derive a unique decryption key in your browser. This will migrate all your existing entries to zero-knowledge.
+            </p>
+            <div className="flex justify-end">
+              <Button
+                type="button"
+                onClick={() => setShowZKSetupModal(true)}
+                className="rounded-full px-6"
+              >
+                Enable zero-knowledge encryption
+              </Button>
+            </div>
+          </div>
+        )}
+      </SettingsSection>
+
       {/* ==================== Diary Lock ==================== */}
       <SettingsSection
         icon={Shield}
@@ -1197,6 +1431,162 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
             setShowChangeModal(false);
           }}
         />
+      )}
+
+      {/* ==================== Sanctuary Zero-Knowledge Setup Modal ==================== */}
+      {showZKSetupModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/50 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="absolute inset-0 cursor-default" onClick={() => !isMigrating && setShowZKSetupModal(false)} />
+          <Card className="relative z-10 w-full max-w-md p-6 shadow-lg sm:p-8 animate-in zoom-in-95 duration-200">
+            <h2 className="text-h3 font-serif text-foreground mb-4">Set up Sanctuary Password</h2>
+            <p className="text-caption text-muted-foreground mb-6">
+              Establish a client-side decryption password. Your entries will be decrypted/encrypted locally.
+            </p>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-body-small font-medium text-foreground">Sanctuary Password</label>
+                <Input
+                  type="password"
+                  placeholder="At least 8 characters"
+                  value={zkPassword}
+                  onChange={(e) => setZkPassword(e.target.value)}
+                  disabled={isMigrating}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-body-small font-medium text-foreground">Confirm Password</label>
+                <Input
+                  type="password"
+                  placeholder="Confirm password"
+                  value={zkPasswordConfirm}
+                  onChange={(e) => setZkPasswordConfirm(e.target.value)}
+                  disabled={isMigrating}
+                />
+              </div>
+
+              {diaryLockEnabled && diaryHasPasscode && (
+                <div className="space-y-2">
+                  <label className="text-body-small font-medium text-foreground">Confirm 4-digit PIN</label>
+                  <Input
+                    type="password"
+                    maxLength={4}
+                    placeholder="Enter PIN passcode"
+                    value={zkPINConfirm}
+                    onChange={(e) => setZkPINConfirm(e.target.value.replace(/\D/g, ""))}
+                    disabled={isMigrating}
+                  />
+                  <p className="text-[10px] text-muted-foreground">Required to secure your local browser key with your passcode lock.</p>
+                </div>
+              )}
+
+              <div className="flex items-start gap-2.5 rounded-xl border border-warning/20 bg-warning/5 p-4 mt-2">
+                <input
+                  type="checkbox"
+                  id="zk-warning"
+                  checked={zkWarningChecked}
+                  onChange={(e) => setZkWarningChecked(e.target.checked)}
+                  disabled={isMigrating}
+                  className="mt-0.5 h-4 w-4 rounded border-border text-accent focus:ring-accent"
+                />
+                <label htmlFor="zk-warning" className="text-[11px] leading-relaxed text-muted-foreground cursor-pointer select-none">
+                  I understand my journal is 100% zero-knowledge. If I lose my Sanctuary Password, my data cannot be recovered by anyone.
+                </label>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowZKSetupModal(false)}
+                  disabled={isMigrating}
+                  className="flex-1 rounded-full"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleMigrate}
+                  disabled={isMigrating || !zkPassword || !zkPasswordConfirm || !zkWarningChecked || (diaryLockEnabled && diaryHasPasscode && !zkPINConfirm)}
+                  className="flex-1 rounded-full gap-2"
+                >
+                  {isMigrating ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Migrating
+                    </>
+                  ) : (
+                    "Migrate Journal"
+                  )}
+                </Button>
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* ==================== Sanctuary Zero-Knowledge Password Change Modal ==================== */}
+      {showZKChangeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/50 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="absolute inset-0 cursor-default" onClick={() => !isChangingZKPassword && setShowZKChangeModal(false)} />
+          <Card className="relative z-10 w-full max-w-md p-6 shadow-lg sm:p-8 animate-in zoom-in-95 duration-200">
+            <h2 className="text-h3 font-serif text-foreground mb-4">Change Sanctuary Password</h2>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-body-small font-medium text-foreground">Current Sanctuary Password</label>
+                <Input
+                  type="password"
+                  placeholder="Enter current password"
+                  value={zkOldPassword}
+                  onChange={(e) => setZkOldPassword(e.target.value)}
+                  disabled={isChangingZKPassword}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-body-small font-medium text-foreground">New Sanctuary Password</label>
+                <Input
+                  type="password"
+                  placeholder="At least 8 characters"
+                  value={zkNewPassword}
+                  onChange={(e) => setZkNewPassword(e.target.value)}
+                  disabled={isChangingZKPassword}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-body-small font-medium text-foreground">Confirm New Password</label>
+                <Input
+                  type="password"
+                  placeholder="Confirm new password"
+                  value={zkNewPasswordConfirm}
+                  onChange={(e) => setZkNewPasswordConfirm(e.target.value)}
+                  disabled={isChangingZKPassword}
+                />
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowZKChangeModal(false)}
+                  disabled={isChangingZKPassword}
+                  className="flex-1 rounded-full"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleChangeZKPassword}
+                  disabled={isChangingZKPassword || !zkOldPassword || !zkNewPassword || !zkNewPasswordConfirm}
+                  className="flex-1 rounded-full gap-2"
+                >
+                  {isChangingZKPassword ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Saving
+                    </>
+                  ) : (
+                    "Change Password"
+                  )}
+                </Button>
+              </div>
+            </div>
+          </Card>
+        </div>
       )}
     </div>
   );

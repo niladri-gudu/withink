@@ -64,6 +64,7 @@ export async function saveEntryAction(
         contentHtml: validated.contentHtml,
         contentText: validated.contentText,
         contentJson: validated.contentJson,
+        wordCount: (validated as any).wordCount,
       },
       userLocalToday,
     );
@@ -227,3 +228,25 @@ export async function deleteEntryAction(
     return { success: false, error: appError.safeMessage };
   }
 }
+
+export async function getAllEntriesAction(): Promise<{
+  success: boolean;
+  data?: DecryptedEntry[];
+  error?: string;
+}> {
+  try {
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+    if (!session) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const entries = await JournalService.getAllEntriesForExport(session.user.id);
+    return { success: true, data: entries };
+  } catch (err) {
+    const appError = handleError(err);
+    return { success: false, error: appError.safeMessage };
+  }
+}
+

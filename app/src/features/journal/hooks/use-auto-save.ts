@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { saveEntryAction } from "../actions/entry-actions";
 import { getLocalDateString } from "@/lib/utils/date";
 import { useQueryClient } from "@tanstack/react-query";
+import { useEncryption } from "@/providers/encryption-provider";
+import { encryptText } from "@/lib/crypto-client";
 
 export type SaveStatus = "idle" | "saving" | "saved" | "error";
 
@@ -20,6 +22,7 @@ export function useAutoSave(
   enabled = true,
 ) {
   const queryClient = useQueryClient();
+  const { isClientEncrypted, masterKey } = useEncryption();
   const [status, setStatus] = useState<SaveStatus>("idle");
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastDateRef = useRef(data.date);
@@ -97,15 +100,34 @@ export function useAutoSave(
       const userLocalToday = getLocalDateString();
       const currentPayload = latestData.current;
 
+      let htmlPayload = currentPayload.contentHtml;
+      let textPayload = currentPayload.contentText;
+      let jsonPayload = currentPayload.contentJson;
+
+      const wordCount = currentPayload.contentText.split(/\s+/).filter(Boolean).length;
+
+      if (isClientEncrypted && masterKey) {
+        try {
+          htmlPayload = await encryptText(currentPayload.contentHtml, masterKey);
+          textPayload = await encryptText(currentPayload.contentText, masterKey);
+          jsonPayload = await encryptText(JSON.stringify(currentPayload.contentJson), masterKey);
+        } catch (err) {
+          console.error("Auto-save encryption failed:", err);
+          setStatus("error");
+          return;
+        }
+      }
+
       const result = await saveEntryAction(
         {
           date: currentPayload.date,
           title: currentPayload.title,
           mood: currentPayload.mood,
-          contentHtml: currentPayload.contentHtml,
-          contentText: currentPayload.contentText,
-          contentJson: currentPayload.contentJson,
-        },
+          contentHtml: htmlPayload,
+          contentText: textPayload,
+          contentJson: jsonPayload,
+          wordCount,
+        } as any,
         userLocalToday,
       );
 
@@ -147,6 +169,8 @@ export function useAutoSave(
     debounceMs,
     enabled,
     queryClient,
+    isClientEncrypted,
+    masterKey,
   ]);
 
   return status;
