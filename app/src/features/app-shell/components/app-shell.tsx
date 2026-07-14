@@ -10,6 +10,8 @@ import { getLockSettingsAction, lockAction } from "../../lock/actions/lock-actio
 import { useEncryption } from "@/providers/encryption-provider";
 import { getEncryptionSettingsAction } from "../../encryption/actions/encryption-actions";
 import { SanctuaryPasswordUnlockScreen } from "../../encryption/components/sanctuary-password-unlock-screen";
+import { MandatorySanctuarySetup } from "../../encryption/components/mandatory-sanctuary-setup";
+import { Loader2 } from "lucide-react";
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -37,6 +39,7 @@ export function AppShell({ children, user }: AppShellProps) {
   const [autoLockTimeout, setAutoLockTimeout] = React.useState(300); // 5m default
   const [lockOnTabHide, setLockOnTabHide] = React.useState(true);
   const [showSetupPrompt, setShowSetupPrompt] = React.useState(false);
+  const [loadingEncryption, setLoadingEncryption] = React.useState(true);
 
   const [isUnlocked, setIsUnlocked] = React.useState(() => {
     if (typeof window === "undefined") return true;
@@ -78,9 +81,16 @@ export function AppShell({ children, user }: AppShellProps) {
     };
 
     const checkEncryptionStatus = async () => {
-      const res = await getEncryptionSettingsAction();
-      if (res.success && res.data) {
-        setEncryptionSettings(res.data);
+      try {
+        setLoadingEncryption(true);
+        const res = await getEncryptionSettingsAction();
+        if (res.success && res.data) {
+          setEncryptionSettings(res.data);
+        }
+      } catch (err) {
+        console.error("Failed to load encryption settings:", err);
+      } finally {
+        setLoadingEncryption(false);
       }
     };
 
@@ -174,6 +184,29 @@ export function AppShell({ children, user }: AppShellProps) {
     return isClientEncrypted && !masterKey && (!isLockEnabled || !hasPasscode || !hasLocalEncryptedKey);
   }, [isClientEncrypted, masterKey, isLockEnabled, hasPasscode]);
 
+
+  if (user && loadingEncryption) {
+    return (
+      <div className="fixed inset-0 z-[9995] flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-sm font-mono text-muted-foreground uppercase tracking-widest">
+            Preparing your private sanctuary...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (user && !loadingEncryption && !isClientEncrypted) {
+    return (
+      <MandatorySanctuarySetup
+        diaryLockEnabled={isLockEnabled}
+        diaryHasPasscode={hasPasscode}
+        onSetupSuccess={() => {}}
+      />
+    );
+  }
 
   return (
     <>
