@@ -9,6 +9,8 @@ import { saveLockSettingsAction } from "../actions/lock-actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useFocusTrap } from "@/hooks/use-focus-trap";
+import { useEncryption } from "@/providers/encryption-provider";
+import { deriveKeyFromPassword, encryptText, exportKeyToHex } from "@/lib/crypto-client";
 
 interface LockSetupOnboardingProps {
   onSetupSuccess: () => void;
@@ -20,6 +22,7 @@ export function LockSetupOnboarding({ onSetupSuccess, onDismiss }: LockSetupOnbo
   const [confirmPin, setConfirmPin] = React.useState("");
   const [step, setStep] = React.useState<1 | 2>(1);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const { isClientEncrypted, masterKey, encryptionSalt } = useEncryption();
 
   const onboardingContainerRef = useFocusTrap(true);
 
@@ -76,6 +79,17 @@ export function LockSetupOnboarding({ onSetupSuccess, onDismiss }: LockSetupOnbo
     });
 
     if (res.success) {
+      if (isClientEncrypted && masterKey && encryptionSalt) {
+        try {
+          const masterKeyHex = await exportKeyToHex(masterKey);
+          const pinKey = await deriveKeyFromPassword(pin, encryptionSalt, 50000);
+          const encryptedMasterKey = await encryptText(masterKeyHex, pinKey);
+          localStorage.setItem("withink_encrypted_master_key", encryptedMasterKey);
+          localStorage.removeItem("withink_master_key");
+        } catch (err) {
+          console.error("Failed to secure master key with passcode PIN:", err);
+        }
+      }
       toast.success("Sanctuary passcode configured successfully!", { id: toastId });
       onSetupSuccess();
     } else {

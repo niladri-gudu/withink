@@ -7,6 +7,11 @@ import { useLockTimer } from "../../lock/hooks/use-lock-timer";
 import { LockScreen } from "../../lock/components/lock-screen";
 import { LockSetupOnboarding } from "../../lock/components/lock-setup-onboarding";
 import { getLockSettingsAction, lockAction } from "../../lock/actions/lock-actions";
+import { useEncryption } from "@/providers/encryption-provider";
+import { getEncryptionSettingsAction } from "../../encryption/actions/encryption-actions";
+import { SanctuaryPasswordUnlockScreen } from "../../encryption/components/sanctuary-password-unlock-screen";
+import { MandatorySanctuarySetup } from "../../encryption/components/mandatory-sanctuary-setup";
+import { Loader2 } from "lucide-react";
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -22,12 +27,19 @@ export function AppShell({ children, user }: AppShellProps) {
   const [isMobileOpen, setIsMobileOpen] = React.useState(false);
   const [mounted, setMounted] = React.useState(false);
 
+  const {
+    isClientEncrypted,
+    masterKey,
+    setEncryptionSettings,
+  } = useEncryption();
+
   // Lock feature states - initialized safely to avoid flashes
   const [isLockEnabled, setIsLockEnabled] = React.useState(false);
   const [hasPasscode, setHasPasscode] = React.useState(true);
   const [autoLockTimeout, setAutoLockTimeout] = React.useState(300); // 5m default
   const [lockOnTabHide, setLockOnTabHide] = React.useState(true);
   const [showSetupPrompt, setShowSetupPrompt] = React.useState(false);
+  const [loadingEncryption, setLoadingEncryption] = React.useState(true);
 
   const [isUnlocked, setIsUnlocked] = React.useState(() => {
     if (typeof window === "undefined") return true;
@@ -68,14 +80,38 @@ export function AppShell({ children, user }: AppShellProps) {
       }
     };
 
+    const checkEncryptionStatus = async () => {
+      try {
+        setLoadingEncryption(true);
+        const res = await getEncryptionSettingsAction();
+        if (res.success && res.data) {
+          setEncryptionSettings(res.data);
+        }
+      } catch (err) {
+        console.error("Failed to load encryption settings:", err);
+      } finally {
+        setLoadingEncryption(false);
+      }
+    };
+
     checkLockStatus();
-  }, [user]);
+    checkEncryptionStatus();
+  }, [user, setEncryptionSettings]);
 
   const handleLock = React.useCallback(async () => {
     setIsUnlocked(false);
     sessionStorage.removeItem("withink_tab_unlocked");
     await lockAction();
   }, []);
+
+  // Force PIN-lock screen to show if client encryption is active but master key is missing
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    const hasLocalEncryptedKey = !!localStorage.getItem("withink_encrypted_master_key");
+    if (isClientEncrypted && !masterKey && isUnlocked && isLockEnabled && hasPasscode && hasLocalEncryptedKey) {
+      handleLock();
+    }
+  }, [isClientEncrypted, masterKey, isUnlocked, isLockEnabled, hasPasscode, handleLock]);
 
   const handleUnlockSuccess = () => {
     setIsUnlocked(true);
@@ -142,11 +178,47 @@ export function AppShell({ children, user }: AppShellProps) {
     localStorage.setItem("withink_sidebar_collapsed", String(nextCollapsed));
   };
 
+  const showPasswordUnlockPrompt = React.useMemo(() => {
+    if (typeof window === "undefined") return false;
+    const hasLocalEncryptedKey = !!localStorage.getItem("withink_encrypted_master_key");
+    return isClientEncrypted && !masterKey && (!isLockEnabled || !hasPasscode || !hasLocalEncryptedKey);
+  }, [isClientEncrypted, masterKey, isLockEnabled, hasPasscode]);
+
+
+  if (user && loadingEncryption) {
+    return (
+      <div className="fixed inset-0 z-[9995] flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-sm font-mono text-muted-foreground uppercase tracking-widest">
+            Preparing your private sanctuary...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (user && !loadingEncryption && !isClientEncrypted) {
+    return (
+      <MandatorySanctuarySetup
+        diaryLockEnabled={isLockEnabled}
+        diaryHasPasscode={hasPasscode}
+        onSetupSuccess={() => {}}
+      />
+    );
+  }
+
   return (
     <>
-      {user && !isUnlocked && (
+      {user && !isUnlocked && !showPasswordUnlockPrompt && (
         <LockScreen
           onUnlockSuccess={handleUnlockSuccess}
+          userEmail={user.email}
+        />
+      )}
+
+      {user && showPasswordUnlockPrompt && (
+        <SanctuaryPasswordUnlockScreen
           userEmail={user.email}
         />
       )}

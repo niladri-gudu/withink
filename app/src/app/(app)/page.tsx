@@ -15,6 +15,7 @@ import { auth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { JournalService } from "@/features/journal/services/journal-service";
 import { FlashbackService } from "@/features/flashbacks/services/flashback-service";
+import { FlashbackCardContent } from "@/features/flashbacks/components/flashback-card-content";
 import { isDateString, getLocalDateString, addDays } from "@/lib/utils/date";
 import { 
   Flame, 
@@ -192,23 +193,17 @@ export default async function DashboardPage() {
               {flashbackEntry ? formatDateShort(flashbackEntry.date) : "Revisit a moment in time"}
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-sm font-serif text-muted-foreground leading-relaxed italic">
-              {flashbackEntry
-                ? `${
-                    flashbackEntry.contentText.length > 220
-                      ? flashbackEntry.contentText.substring(0, 220) + "..."
-                      : flashbackEntry.contentText
-                  }`
-                : "You haven't written any entries yet. Revisit this card tomorrow to see what you wrote in the past."}
-            </p>
-            {flashbackEntry && (
-              <Button asChild variant="link" className="p-0 text-primary hover:text-primary/80 h-auto cursor-pointer text-xs font-bold font-mono uppercase tracking-widest gap-1">
-                <Link href={`${ROUTES.APP.ENTRY(flashbackEntry.date)}?today=${today}` as unknown as ComponentPropsWithoutRef<typeof Link>["href"]}>
-                  Re-read Entry
-                  <ArrowRight className="h-3 w-3" />
-                </Link>
-              </Button>
+          <CardContent>
+            {flashbackEntry ? (
+              <FlashbackCardContent
+                initialContentText={flashbackEntry.contentText}
+                entryDate={flashbackEntry.date}
+                today={today}
+              />
+            ) : (
+              <p className="text-sm font-serif text-muted-foreground leading-relaxed italic">
+                You haven't written any entries yet. Revisit this card tomorrow to see what you wrote in the past.
+              </p>
             )}
           </CardContent>
         </Card>
