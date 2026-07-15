@@ -21,7 +21,7 @@ import { Button } from "@/components/ui/button";
 import { getEntriesListAction, deleteEntryAction } from "../actions/entry-actions";
 import type { DecryptedEntry } from "../services/journal-service";
 import { toast } from "sonner";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { useEncryption } from "@/providers/encryption-provider";
 import { safeDecryptText } from "@/lib/crypto-client";
 
@@ -210,6 +210,7 @@ export function EntriesTimeline({
       }
       return undefined;
     },
+    placeholderData: keepPreviousData,
   });
 
   const entries = data?.entries ?? [];
