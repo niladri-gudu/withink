@@ -182,7 +182,7 @@ export function MandatorySanctuarySetup({
 
   return (
     <div className="fixed inset-0 z-[9995] flex items-center justify-center bg-background/95 p-4 backdrop-blur-md animate-in fade-in duration-300">
-      <Card className="w-full max-w-lg p-6 shadow-2xl sm:p-10 border border-border/80 bg-card select-none">
+      <div className="w-full max-w-md px-6 text-center select-none animate-in zoom-in-95 duration-200">
         <div className="flex flex-col items-center text-center mb-6">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-primary/20 bg-primary/5 text-primary mb-4 animate-pulse">
             <KeyRound className="h-6 w-6" />
@@ -197,7 +197,7 @@ export function MandatorySanctuarySetup({
           </p>
         </div>
 
-        <form onSubmit={handleSetupAndMigrate} className="space-y-5">
+        <form onSubmit={handleSetupAndMigrate} className="space-y-5 text-left">
           <div className="space-y-4">
             <div className="space-y-2">
               <label htmlFor="zk-setup-pwd" className="text-body-small font-semibold text-foreground">
@@ -287,7 +287,7 @@ export function MandatorySanctuarySetup({
             )}
           </Button>
         </form>
-      </Card>
+      </div>
     </div>
   );
 }

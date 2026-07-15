@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, type ComponentPropsWithoutRef } from "react";
+import { useState, useTransition, useEffect, type ComponentPropsWithoutRef } from "react";
 import Link from "next/link";
 import { 
   MailOpen, 
@@ -21,6 +21,8 @@ import { ROUTES } from "@/constants/routes";
 import { refreshFlashbackAction } from "../actions/flashback-actions";
 import type { DecryptedEntry } from "../../journal/services/journal-service";
 import { cn } from "@/lib/utils";
+import { useEncryption } from "@/providers/encryption-provider";
+import { safeDecryptText } from "@/lib/crypto-client";
 
 const moodIcons: Record<number, React.ComponentType<{ className?: string }>> = {
   1: Angry,
@@ -73,6 +75,26 @@ export function FlashbackView({ initialEntry, initialLabel, localToday }: Flashb
   const [entry, setEntry] = useState<DecryptedEntry | null>(initialEntry);
   const [label, setLabel] = useState<string>(initialLabel);
   const [isPending, startTransition] = useTransition();
+
+  const { isClientEncrypted, masterKey } = useEncryption();
+  const [decryptedTitle, setDecryptedTitle] = useState("");
+  const [decryptedText, setDecryptedText] = useState("");
+
+  useEffect(() => {
+    const decryptFields = async () => {
+      if (!entry) return;
+      if (isClientEncrypted && masterKey) {
+        const decTitle = await safeDecryptText(entry.title || "", masterKey);
+        const decText = await safeDecryptText(entry.contentText || "", masterKey);
+        setDecryptedTitle(decTitle || "Untitled Memory");
+        setDecryptedText(decText);
+      } else {
+        setDecryptedTitle(entry.title || "Untitled Memory");
+        setDecryptedText(entry.contentText || "");
+      }
+    };
+    decryptFields();
+  }, [entry, isClientEncrypted, masterKey]);
 
   const handleRefresh = () => {
     startTransition(async () => {
@@ -207,10 +229,10 @@ export function FlashbackView({ initialEntry, initialLabel, localToday }: Flashb
 
         <CardContent className="pt-8 px-6 sm:px-10 pb-8 space-y-6">
           <h2 className="text-2xl sm:text-3xl font-serif font-bold tracking-tight text-foreground uppercase">
-            {entry.title || "Untitled Memory"}
+            {decryptedTitle || "Untitled Memory"}
           </h2>
           <p className="text-base sm:text-lg font-serif text-muted-foreground leading-relaxed italic border-l-2 border-primary/20 pl-4 py-1">
-            &ldquo;{getPreview(entry.contentText)}&rdquo;
+            &ldquo;{getPreview(decryptedText)}&rdquo;
           </p>
 
           <div className="pt-6 flex flex-col sm:flex-row gap-3 border-t border-border/10">

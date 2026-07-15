@@ -49,9 +49,11 @@ export function AppShell({ children, user }: AppShellProps) {
     return true;
   });
 
+  const userEmail = user?.email;
+
   // Fetch lock configurations on mount/auth change
   React.useEffect(() => {
-    if (!user) return;
+    if (!userEmail) return;
 
     const checkLockStatus = async () => {
       const res = await getLockSettingsAction();
@@ -96,7 +98,7 @@ export function AppShell({ children, user }: AppShellProps) {
 
     checkLockStatus();
     checkEncryptionStatus();
-  }, [user, setEncryptionSettings]);
+  }, [userEmail, setEncryptionSettings]);
 
   const handleLock = React.useCallback(async () => {
     setIsUnlocked(false);
