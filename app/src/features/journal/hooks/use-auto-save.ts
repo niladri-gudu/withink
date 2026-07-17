@@ -29,6 +29,7 @@ export function useAutoSave(
 
   const isDirty = useRef(false);
   const hasInitialized = useRef(false);
+  const isSaving = useRef(false);
 
   // Tracks latest data for async autosave invocation
   const latestData = useRef(data);
@@ -94,65 +95,82 @@ export function useAutoSave(
       clearTimeout(timerRef.current);
     }
 
-    timerRef.current = setTimeout(async () => {
+    const runSave = async () => {
+      if (isSaving.current) {
+        // If already saving, check back in 500ms
+        timerRef.current = setTimeout(runSave, 500);
+        return;
+      }
+
       setStatus("saving");
-      
-      const userLocalToday = getLocalDateString();
-      const currentPayload = latestData.current;
+      isSaving.current = true;
 
-      let htmlPayload = currentPayload.contentHtml;
-      let textPayload = currentPayload.contentText;
-      let jsonPayload = currentPayload.contentJson;
+      try {
+        const userLocalToday = getLocalDateString();
+        const currentPayload = latestData.current;
 
-      const wordCount = currentPayload.contentText.split(/\s+/).filter(Boolean).length;
+        let htmlPayload = currentPayload.contentHtml;
+        let textPayload = currentPayload.contentText;
+        let jsonPayload = currentPayload.contentJson;
 
-      if (isClientEncrypted && masterKey) {
-        try {
-          htmlPayload = await encryptText(currentPayload.contentHtml, masterKey);
-          textPayload = await encryptText(currentPayload.contentText, masterKey);
-          jsonPayload = await encryptText(JSON.stringify(currentPayload.contentJson), masterKey);
-        } catch (err) {
-          console.error("Auto-save encryption failed:", err);
-          setStatus("error");
-          return;
+        const wordCount = currentPayload.contentText.split(/\s+/).filter(Boolean).length;
+
+        if (isClientEncrypted && masterKey) {
+          try {
+            htmlPayload = await encryptText(currentPayload.contentHtml, masterKey);
+            textPayload = await encryptText(currentPayload.contentText, masterKey);
+            jsonPayload = await encryptText(JSON.stringify(currentPayload.contentJson), masterKey);
+          } catch (err) {
+            console.error("Auto-save encryption failed:", err);
+            setStatus("error");
+            isSaving.current = false;
+            return;
+          }
         }
-      }
 
-      const result = await saveEntryAction(
-        {
-          date: currentPayload.date,
-          title: currentPayload.title,
-          mood: currentPayload.mood,
-          contentHtml: htmlPayload,
-          contentText: textPayload,
-          contentJson: jsonPayload,
-          wordCount,
-        } as any,
-        userLocalToday,
-      );
+        const result = await saveEntryAction(
+          {
+            date: currentPayload.date,
+            title: currentPayload.title,
+            mood: currentPayload.mood,
+            contentHtml: htmlPayload,
+            contentText: textPayload,
+            contentJson: jsonPayload,
+            wordCount,
+          } as any,
+          userLocalToday,
+        );
 
-      if (result.success && result.data) {
-        // Reset baseline to the values we just saved
-        initialContent.current = {
-          title: currentPayload.title,
-          html: currentPayload.contentHtml,
-          text: currentPayload.contentText,
-          json: currentPayload.contentJson,
-          mood: currentPayload.mood,
-        };
-        isDirty.current = false;
-        setStatus("saved");
+        if (result.success && result.data) {
+          // Reset baseline to the values we just saved
+          initialContent.current = {
+            title: currentPayload.title,
+            html: currentPayload.contentHtml,
+            text: currentPayload.contentText,
+            json: currentPayload.contentJson,
+            mood: currentPayload.mood,
+          };
+          isDirty.current = false;
+          setStatus("saved");
 
-        // Invalidate queries starting with ["entries"]
-        queryClient.invalidateQueries({ queryKey: ["entries"] });
+          // Invalidate queries starting with ["entries"]
+          queryClient.invalidateQueries({ queryKey: ["entries"] });
 
-        // Return to idle status after 2 seconds
-        setTimeout(() => setStatus("idle"), 2000);
-      } else {
-        console.error("[useAutoSave] failed:", result.error);
+          // Return to idle status after 2 seconds
+          setTimeout(() => setStatus("idle"), 2000);
+        } else {
+          console.error("[useAutoSave] failed:", result.error);
+          setStatus("error");
+        }
+      } catch (err) {
+        console.error("[useAutoSave] exception:", err);
         setStatus("error");
+      } finally {
+        isSaving.current = false;
       }
-    }, debounceMs);
+    };
+
+    timerRef.current = setTimeout(runSave, debounceMs);
 
     return () => {
       if (timerRef.current) {
