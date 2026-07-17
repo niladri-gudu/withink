@@ -137,7 +137,7 @@ export function EntriesTimeline({
   }, [search]);
 
   // Fetch updated page list using react-query
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isFetching } = useQuery({
     queryKey: ["entries", { page, search: debouncedSearch, moodFilter, timeFilter, localToday, isClientEncrypted, isUnlocked: !!masterKey }],
     queryFn: async () => {
       const limit = (isClientEncrypted && debouncedSearch) ? 5000 : LIMIT;
@@ -254,7 +254,11 @@ export function EntriesTimeline({
       <div className="flex flex-col sm:flex-row gap-4">
         {/* Search */}
         <div className="relative flex-grow">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60" />
+          {isFetching ? (
+            <Loader2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary animate-spin" />
+          ) : (
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60" />
+          )}
           <input
             type="text"
             placeholder="Search by title, contents, date…"
@@ -305,11 +309,21 @@ export function EntriesTimeline({
 
       {/* Timeline entries list */}
       <div className="relative space-y-4">
-        {isLoading && (
-          <div className="absolute inset-0 bg-background/40 backdrop-blur-[1px] z-10 flex items-center justify-center rounded-2xl">
-            <Loader2 className="h-6 w-6 text-primary animate-spin" />
-          </div>
-        )}
+        {/* Subtle top progress bar for background fetching */}
+        <div className="h-0.5 w-full bg-secondary/20 rounded-full overflow-hidden relative">
+          {isFetching && (
+            <motion.div
+              className="h-full bg-primary/80 rounded-full"
+              initial={{ x: "-100%", width: "40%" }}
+              animate={{ x: "250%" }}
+              transition={{
+                repeat: Infinity,
+                duration: 1.4,
+                ease: "easeInOut",
+              }}
+            />
+          )}
+        </div>
 
         {entries.length === 0 ? (
           <Card className="border border-border/80 bg-card/40 py-16 flex flex-col items-center justify-center text-center">
