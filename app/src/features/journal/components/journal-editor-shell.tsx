@@ -55,15 +55,26 @@ export function JournalEditorShell({
   // Decrypt content on mount if zero-knowledge is active
   useEffect(() => {
     const loadContent = async () => {
-      if (isClientEncrypted && masterKey && typeof initialContent === "string" && initialContent.includes(":")) {
-        try {
-          const decrypted = await decryptText(initialContent, masterKey);
-          const parsed = JSON.parse(decrypted);
-          setDecryptedContent(parsed);
-          setEditorContent((prev) => ({ ...prev, json: parsed }));
-        } catch (err) {
-          console.error("Failed to decrypt initial content:", err);
-          setDecryptedContent({});
+      if (isClientEncrypted) {
+        // Wait until the master key is restored in memory
+        if (!masterKey) {
+          return;
+        }
+
+        if (typeof initialContent === "string" && initialContent.includes(":")) {
+          try {
+            const decrypted = await decryptText(initialContent, masterKey);
+            const parsed = JSON.parse(decrypted);
+            setDecryptedContent(parsed);
+            setEditorContent((prev) => ({ ...prev, json: parsed }));
+          } catch (err) {
+            console.error("Failed to decrypt initial content:", err);
+            setDecryptedContent({});
+          }
+        } else {
+          const fallback = initialContent || {};
+          setDecryptedContent(fallback);
+          setEditorContent((prev) => ({ ...prev, json: fallback }));
         }
       } else {
         const fallback = initialContent || {};
@@ -175,6 +186,7 @@ export function JournalEditorShell({
           <div className="prose-container mt-6">
             {decryptedContent !== null ? (
               <TiptapEditor
+                key={date}
                 content={decryptedContent}
                 onChange={setEditorContent}
                 onEditorReady={(editor) => {
