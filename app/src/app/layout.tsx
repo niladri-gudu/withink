@@ -110,6 +110,11 @@ export default function RootLayout({ children }: RootLayoutProps) {
                   if (scale) {
                     document.documentElement.style.setProperty('--withink-paper-scale', scale);
                   }
+                  var match = document.cookie.match(/(^|;)\\s*theme\\s*=\\s*([^;]+)/);
+                  var theme = match ? match[2] : null;
+                  if (theme) {
+                    localStorage.setItem('theme', theme);
+                  }
                 } catch (e) {}
               })();
             `,

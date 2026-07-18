@@ -79,8 +79,42 @@ export function EditorToolbar({ editor }: ToolbarProps) {
   const editorState = useEditorState({
     editor,
     selector: (ctx) => {
-      const ed = ctx?.editor;
-      if (!ed) {
+      try {
+        const ed = ctx?.editor;
+        if (!ed || ed.isDestroyed) {
+          return {
+            isBold: false,
+            isItalic: false,
+            isUnderline: false,
+            isStrike: false,
+            isCode: false,
+            isH1: false,
+            isH2: false,
+            isH3: false,
+            isBulletList: false,
+            isOrderedList: false,
+            isLink: false,
+            canUndo: false,
+            canRedo: false,
+          };
+        }
+        return {
+          isBold: ed.isActive("bold"),
+          isItalic: ed.isActive("italic"),
+          isUnderline: ed.isActive("underline"),
+          isStrike: ed.isActive("strike"),
+          isCode: ed.isActive("code"),
+          isH1: ed.isActive("heading", { level: 1 }),
+          isH2: ed.isActive("heading", { level: 2 }),
+          isH3: ed.isActive("heading", { level: 3 }),
+          isBulletList: ed.isActive("bulletList"),
+          isOrderedList: ed.isActive("orderedList"),
+          isLink: ed.isActive("link"),
+          canUndo: typeof ed.can === "function" && ed.can()?.undo() ? true : false,
+          canRedo: typeof ed.can === "function" && ed.can()?.redo() ? true : false,
+        };
+      } catch (err) {
+        console.error("Tiptap selector error:", err);
         return {
           isBold: false,
           isItalic: false,
@@ -97,21 +131,6 @@ export function EditorToolbar({ editor }: ToolbarProps) {
           canRedo: false,
         };
       }
-      return {
-        isBold: ed.isActive("bold"),
-        isItalic: ed.isActive("italic"),
-        isUnderline: ed.isActive("underline"),
-        isStrike: ed.isActive("strike"),
-        isCode: ed.isActive("code"),
-        isH1: ed.isActive("heading", { level: 1 }),
-        isH2: ed.isActive("heading", { level: 2 }),
-        isH3: ed.isActive("heading", { level: 3 }),
-        isBulletList: ed.isActive("bulletList"),
-        isOrderedList: ed.isActive("orderedList"),
-        isLink: ed.isActive("link"),
-        canUndo: ed.can()?.undo() ?? false,
-        canRedo: ed.can()?.redo() ?? false,
-      };
     },
   });
 

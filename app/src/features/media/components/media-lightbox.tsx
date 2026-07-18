@@ -19,6 +19,9 @@ import {
   findEntryForMediaAction,
   type MediaFile,
 } from "../actions/media-actions";
+import { getAllEntriesAction } from "@/features/journal/actions/entry-actions";
+import { safeDecryptText } from "@/lib/crypto-client";
+import { useEncryption } from "@/providers/encryption-provider";
 import { Button } from "@/components/ui/button";
 import { useFocusTrap } from "@/hooks/use-focus-trap";
 import { motion, AnimatePresence } from "motion/react";
@@ -57,6 +60,30 @@ export function MediaLightbox({
   const [entrySearchLoading, setEntrySearchLoading] = React.useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
 
+  const { isClientEncrypted, masterKey } = useEncryption();
+  const [cachedEntries, setCachedEntries] = React.useState<any[] | null>(null);
+
+  // Load entries once when lightbox is opened
+  React.useEffect(() => {
+    if (index === null) {
+      setCachedEntries(null);
+      return;
+    }
+
+    const loadEntries = async () => {
+      try {
+        const res = await getAllEntriesAction();
+        if (res.success && res.data) {
+          setCachedEntries(res.data);
+        }
+      } catch (err) {
+        console.error("Failed to load entries for media search:", err);
+      }
+    };
+
+    loadEntries();
+  }, [index !== null]);
+
   // When the shown image changes, look up which entry it belongs to.
   React.useEffect(() => {
     if (index === null || !file) {
@@ -74,23 +101,52 @@ export function MediaLightbox({
     });
 
     let cancelled = false;
-    findEntryForMediaAction(file.url)
-      .then((res) => {
-        if (cancelled) return;
-        queueMicrotask(() => {
-          setEntrySearchLoading(false);
-          setEntryDate(res.success && res.date ? res.date : null);
-        });
-      })
-      .catch(() => {
-        if (cancelled) return;
-        queueMicrotask(() => setEntrySearchLoading(false));
-      });
+
+    const searchForMedia = async () => {
+      try {
+        if (isClientEncrypted && masterKey) {
+          if (!cachedEntries) {
+            // Wait for cached entries to load
+            return;
+          }
+          let foundDate: string | null = null;
+          for (const entry of cachedEntries) {
+            const decryptedHtml = await safeDecryptText(entry.contentHtml || "", masterKey);
+            if (decryptedHtml.includes(file.url)) {
+              foundDate = entry.date;
+              break;
+            }
+          }
+          if (!cancelled) {
+            queueMicrotask(() => {
+              setEntrySearchLoading(false);
+              setEntryDate(foundDate);
+            });
+          }
+        } else {
+          // Fallback to server-side search if client-side encryption is disabled
+          const res = await findEntryForMediaAction(file.url);
+          if (!cancelled) {
+            queueMicrotask(() => {
+              setEntrySearchLoading(false);
+              setEntryDate(res.success && res.date ? res.date : null);
+            });
+          }
+        }
+      } catch (err) {
+        console.error("Failed to search entry for media:", err);
+        if (!cancelled) {
+          queueMicrotask(() => setEntrySearchLoading(false));
+        }
+      }
+    };
+
+    searchForMedia();
 
     return () => {
       cancelled = true;
     };
-  }, [index, file]);
+  }, [index, file, cachedEntries, isClientEncrypted, masterKey]);
 
   // Close on Escape.
   React.useEffect(() => {

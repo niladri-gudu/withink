@@ -29,8 +29,8 @@ const nextConfig: NextConfig = {
   async headers() {
     const isProd = process.env.IS_PROD === "true";
     const R2_UPLOAD_HOST = process.env.R2_ACCOUNT_ID
-      ? `${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`
-      : "*.r2.cloudflarestorage.com";
+      ? `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com https://*.${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`
+      : "https://*.r2.cloudflarestorage.com";
 
     const cspHeader = `
       default-src 'self';
@@ -38,7 +38,7 @@ const nextConfig: NextConfig = {
       style-src 'self' 'unsafe-inline';
       img-src 'self' blob: data: https://images.unsplash.com https://lh3.googleusercontent.com https://${R2_PUBLIC_HOST};
       font-src 'self' data:;
-      connect-src 'self' ${isProd ? "" : "ws: wss:"} https://${R2_UPLOAD_HOST} https://${R2_PUBLIC_HOST};
+      connect-src 'self' ${isProd ? "" : "ws: wss:"} ${R2_UPLOAD_HOST} https://${R2_PUBLIC_HOST};
       frame-ancestors 'none';
       form-action 'self' https://accounts.google.com;
       base-uri 'self';

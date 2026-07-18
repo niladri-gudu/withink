@@ -10,24 +10,35 @@ import { Input } from "@/components/ui/input";
 
 interface SanctuaryPasswordUnlockScreenProps {
   userEmail?: string | null;
+  onUnlockSuccess?: () => void;
 }
 
-export function SanctuaryPasswordUnlockScreen({ userEmail: _userEmail }: SanctuaryPasswordUnlockScreenProps) {
+export function SanctuaryPasswordUnlockScreen({
+  userEmail: _userEmail,
+  onUnlockSuccess,
+}: SanctuaryPasswordUnlockScreenProps) {
   const [password, setPassword] = React.useState("");
   const [isVerifying, setIsVerifying] = React.useState(false);
+  const [shake, setShake] = React.useState(false);
   const { unlockWithPassword } = useEncryption();
+  const inputRef = React.useRef<HTMLInputElement>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!password) return;
+    if (isVerifying || !password) return;
 
     setIsVerifying(true);
     const success = await unlockWithPassword(password);
     if (success) {
-      toast.success("Welcome back to your sanctuary.");
+      onUnlockSuccess?.();
     } else {
       toast.error("Incorrect Sanctuary Password. Please try again.");
       setPassword("");
+      setShake(true);
+      setTimeout(() => setShake(false), 500);
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 50);
     }
     setIsVerifying(false);
   };
@@ -57,8 +68,13 @@ export function SanctuaryPasswordUnlockScreen({ userEmail: _userEmail }: Sanctua
           </p>
 
           <form onSubmit={handleSubmit} className="w-full space-y-4">
-            <div className="space-y-2">
+            <motion.div
+              className="space-y-2"
+              animate={shake ? { x: [0, -10, 10, -10, 10, -5, 5, -2, 2, 0] } : {}}
+              transition={{ duration: 0.5 }}
+            >
               <Input
+                ref={inputRef}
                 id="sanctuary-password"
                 type="password"
                 placeholder="Enter Sanctuary Password"
@@ -70,7 +86,7 @@ export function SanctuaryPasswordUnlockScreen({ userEmail: _userEmail }: Sanctua
                 disabled={isVerifying}
                 required
               />
-            </div>
+            </motion.div>
 
             <Button
               type="submit"

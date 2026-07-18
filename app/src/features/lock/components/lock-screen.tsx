@@ -101,7 +101,6 @@ export function LockScreen({ onUnlockSuccess, userEmail }: LockScreenProps) {
               }
             }
           }
-          toast.success("Welcome back to your sanctuary.");
           onUnlockSuccess();
         } else {
           setShake(true);

@@ -154,6 +154,10 @@ export function MandatorySanctuarySetup({
       });
       setMasterKey(newMasterKey);
 
+      // Set server-side unlock cookie!
+      const { unlockSessionAction } = await import("@/features/lock/actions/lock-actions");
+      await unlockSessionAction();
+
       toast.success(
         entries.length > 0
           ? `Migration complete! ${entries.length} entries secured.`

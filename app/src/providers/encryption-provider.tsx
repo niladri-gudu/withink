@@ -77,7 +77,9 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
         const key = await importKeyFromHex(decryptedMasterKeyHex);
         setMasterKey(key);
 
-        // Plaintext key caching is removed for security compliance.
+        // Set server-side unlock cookie!
+        const { unlockSessionAction } = await import("@/features/lock/actions/lock-actions");
+        await unlockSessionAction();
 
         setPromptOpen(false);
         return true;
