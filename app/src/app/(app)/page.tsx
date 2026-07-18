@@ -15,29 +15,13 @@ import { auth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { JournalService } from "@/features/journal/services/journal-service";
 import { FlashbackService } from "@/features/flashbacks/services/flashback-service";
-import { FlashbackCardContent } from "@/features/flashbacks/components/flashback-card-content";
+import { DashboardFlashbackCard } from "@/features/flashbacks/components/flashback-card-content";
+import { RecentReflectionsList } from "@/features/journal/components/recent-reflections-list";
 import { isDateString, getLocalDateString, addDays } from "@/lib/utils/date";
 import { 
   Flame, 
-  ArrowRight,
-  Angry, Frown, Meh, Smile, SmilePlus, FileText, CheckCircle2
+  CheckCircle2
 } from "lucide-react";
-
-const moodIcons: Record<number, React.ComponentType<{ className?: string }>> = {
-  1: Angry,
-  2: Frown,
-  3: Meh,
-  4: Smile,
-  5: SmilePlus,
-};
-
-const moodColors: Record<number, string> = {
-  1: "text-red-500 bg-red-500/10 border-red-500/20",
-  2: "text-orange-500 bg-orange-500/10 border-orange-500/20",
-  3: "text-yellow-500 bg-yellow-500/10 border-yellow-500/20",
-  4: "text-emerald-500 bg-emerald-500/10 border-emerald-500/20",
-  5: "text-teal-500 bg-teal-500/10 border-teal-500/20",
-};
 
 function formatDate(dateStr: string) {
   const [year, month, day] = dateStr.split("-").map(Number);
@@ -45,16 +29,6 @@ function formatDate(dateStr: string) {
   return new Date(year, month - 1, day).toLocaleDateString("en-US", {
     weekday: "long",
     month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
-function formatDateShort(dateStr: string) {
-  const [year, month, day] = dateStr.split("-").map(Number);
-  if (year === undefined || month === undefined || day === undefined) return dateStr;
-  return new Date(year, month - 1, day).toLocaleDateString("en-US", {
-    month: "short",
     day: "numeric",
     year: "numeric",
   });
@@ -181,32 +155,11 @@ export default async function DashboardPage() {
       {/* Bottom sections */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Flashback */}
-        <Card className="border border-border bg-card/60 backdrop-blur-sm" interactive>
-          <CardHeader>
-            <span className="text-[9px] font-mono uppercase tracking-wider text-primary font-semibold">
-              {flashbackLabel || "Flashback"}
-            </span>
-            <CardTitle className="text-lg font-serif font-semibold text-foreground">
-              {flashbackEntry ? flashbackEntry.title || "Untitled Reflection" : "Anniversary Flashback"}
-            </CardTitle>
-            <CardDescription>
-              {flashbackEntry ? formatDateShort(flashbackEntry.date) : "Revisit a moment in time"}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {flashbackEntry ? (
-              <FlashbackCardContent
-                initialContentText={flashbackEntry.contentText}
-                entryDate={flashbackEntry.date}
-                today={today}
-              />
-            ) : (
-              <p className="text-sm font-serif text-muted-foreground leading-relaxed italic">
-                You haven&apos;t written any entries yet. Revisit this card tomorrow to see what you wrote in the past.
-              </p>
-            )}
-          </CardContent>
-        </Card>
+        <DashboardFlashbackCard
+          entry={flashbackEntry}
+          label={flashbackLabel}
+          today={today}
+        />
 
         {/* Insights */}
         <Card className="border border-border bg-card/60 backdrop-blur-sm" interactive>
@@ -215,47 +168,10 @@ export default async function DashboardPage() {
             <CardDescription>Your latest journal entries</CardDescription>
           </CardHeader>
           <CardContent className="pt-2">
-            {recentData.entries.length === 0 ? (
-              <div className="text-sm font-serif text-muted-foreground text-center py-10">
-                No entries found.
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {recentData.entries.map((entry) => {
-                  const MoodIcon = (entry.mood && moodIcons[entry.mood]) || FileText;
-                  const moodColor = entry.mood ? moodColors[entry.mood] : "text-muted-foreground/60 bg-muted/10 border-border/10";
-                  
-                  return (
-                    <Link key={entry.date} href={`${ROUTES.APP.ENTRY(entry.date)}?today=${today}` as unknown as ComponentPropsWithoutRef<typeof Link>["href"]} className="block">
-                      <div className="flex items-center justify-between p-3 rounded-xl hover:bg-muted/30 transition-colors border border-transparent hover:border-border/5">
-                        <div className="flex items-center gap-3 min-w-0">
-                          <div className={`h-8 w-8 rounded-full flex items-center justify-center border shrink-0 ${moodColor}`}>
-                            <MoodIcon className="h-4.5 w-4.5" />
-                          </div>
-                          <div className="min-w-0">
-                            <h4 className="font-serif font-bold text-sm text-foreground truncate">
-                              {entry.title || "Untitled Entry"}
-                            </h4>
-                            <span className="text-[10px] font-mono text-muted-foreground/60 uppercase">
-                              {formatDateShort(entry.date)}
-                            </span>
-                          </div>
-                        </div>
-                        <ArrowRight className="h-4 w-4 text-muted-foreground/40 shrink-0" />
-                      </div>
-                    </Link>
-                  );
-                })}
-                <div className="pt-2 flex justify-end">
-                  <Button asChild variant="ghost" size="sm" className="text-xs font-mono uppercase tracking-widest text-muted-foreground hover:text-foreground cursor-pointer gap-1.5 p-0 hover:bg-transparent">
-                    <Link href={ROUTES.APP.ENTRIES}>
-                      View Archive
-                      <ArrowRight className="h-3 w-3" />
-                    </Link>
-                  </Button>
-                </div>
-              </div>
-            )}
+            <RecentReflectionsList
+              initialEntries={recentData.entries}
+              today={today}
+            />
           </CardContent>
         </Card>
       </div>
