@@ -205,6 +205,34 @@ export async function getEntryDatesAction(): Promise<{ success: boolean; data?: 
   }
 }
 
+export interface CalendarEntry {
+  date: string;
+  mood: number | null;
+  wordCount: number;
+}
+
+export async function getCalendarEntriesAction(): Promise<{ success: boolean; data?: CalendarEntry[]; error?: string }> {
+  try {
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+    if (!session) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const unlocked = await LockService.isSessionUnlocked(session.user.id);
+    if (!unlocked) {
+      return { success: false, error: "Locked" };
+    }
+
+    const entries = await JournalService.getCalendarEntries(session.user.id);
+    return { success: true, data: entries };
+  } catch (err) {
+    const appError = handleError(err);
+    return { success: false, error: appError.safeMessage };
+  }
+}
+
 export async function deleteEntryAction(
   date: string,
 ): Promise<{ success: boolean; data?: boolean; error?: string }> {

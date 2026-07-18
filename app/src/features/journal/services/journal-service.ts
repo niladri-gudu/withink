@@ -252,6 +252,15 @@ export class JournalService {
   }
 
   /**
+   * Retrieves calendar entry data (date, mood, and wordCount) for all entries written by a user.
+   */
+  static async getCalendarEntries(
+    userId: string,
+  ): Promise<{ date: string; mood: number | null; wordCount: number }[]> {
+    return await EntryRepository.getEntryDates(userId);
+  }
+
+  /**
    * Returns every entry for a user, decrypted and chronologically ordered.
    * Intended for full-account exports (data ownership); callers must already
    * have verified that `userId` belongs to the requester.

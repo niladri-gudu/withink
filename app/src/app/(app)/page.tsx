@@ -17,10 +17,12 @@ import { JournalService } from "@/features/journal/services/journal-service";
 import { FlashbackService } from "@/features/flashbacks/services/flashback-service";
 import { DashboardFlashbackCard } from "@/features/flashbacks/components/flashback-card-content";
 import { RecentReflectionsList } from "@/features/journal/components/recent-reflections-list";
+import { TodayReflectionCard } from "@/features/journal/components/today-reflection-card";
 import { isDateString, getLocalDateString, addDays } from "@/lib/utils/date";
 import { 
   Flame, 
-  CheckCircle2
+  CheckCircle2,
+  Calendar
 } from "lucide-react";
 
 function formatDate(dateStr: string) {
@@ -46,10 +48,12 @@ export default async function DashboardPage() {
   const cookieStore = await cookies();
   const cookieToday = cookieStore.get("withink-local-date")?.value;
   const today = isDateString(cookieToday) ? cookieToday : getLocalDateString();
+  const yesterday = addDays(today, -1);
 
   // 2. Fetch data in parallel on the server
-  const [todayEntry, recentData, , dates] = await Promise.all([
+  const [todayEntry, yesterdayEntry, recentData, , dates] = await Promise.all([
     JournalService.getEntryForDate(session.user.id, today, today),
+    JournalService.getEntryForDate(session.user.id, yesterday, today),
     JournalService.getEntriesPage(session.user.id, 1, 3, { today }),
     JournalService.getEntryStats(session.user.id),
     JournalService.getEntryDates(session.user.id),
@@ -59,7 +63,6 @@ export default async function DashboardPage() {
   let currentStreak = 0;
   const totalEntries = dates.length;
   if (totalEntries > 0) {
-    const yesterday = addDays(today, -1);
     const lastEntryDate = dates[0];
     if (lastEntryDate === today || lastEntryDate === yesterday) {
       let expectedDate = lastEntryDate;
@@ -81,7 +84,7 @@ export default async function DashboardPage() {
 
   const firstName = session.user.name ? session.user.name.split(" ")[0] : "Writer";
   const todayFormatted = formatDate(today);
-  const todayWritten = !!todayEntry;
+  const yesterdayWritten = !!yesterdayEntry;
 
   return (
     <div className="flex-grow max-w-5xl mx-auto p-6 md:p-10 space-y-8 w-full animate-in fade-in duration-300">
@@ -100,36 +103,35 @@ export default async function DashboardPage() {
         </p>
       </header>
 
+      {/* Yesterday's Missed Reflection Alert Banner */}
+      {!yesterdayWritten && (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl border border-primary/10 bg-primary/5 backdrop-blur-sm animate-in slide-in-from-top-2 duration-300">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0">
+              <Calendar className="h-5 w-5" />
+            </div>
+            <div>
+              <h4 className="text-sm font-bold text-foreground">Write Yesterday&apos;s Reflection</h4>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                It looks like you missed writing yesterday. You still have time to capture your thoughts before the archive seals.
+              </p>
+            </div>
+          </div>
+          <Button asChild size="sm" className="rounded-full shadow-sm cursor-pointer px-5 shrink-0 self-end sm:self-center">
+            <Link href={`${ROUTES.APP.ENTRY(yesterday)}?today=${today}` as unknown as ComponentPropsWithoutRef<typeof Link>["href"]}>
+              Write Yesterday
+            </Link>
+          </Button>
+        </div>
+      )}
+
       {/* Dashboard Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Today's Entry card */}
-        <Card className="md:col-span-2 flex flex-col border border-border bg-card/60 backdrop-blur-sm relative overflow-hidden">
-          {todayWritten && (
-            <div className="absolute top-0 right-0 p-4 animate-in fade-in zoom-in duration-300">
-              <CheckCircle2 className="h-6 w-6 text-primary" />
-            </div>
-          )}
-          <CardHeader>
-            <CardTitle className="text-xl font-serif font-semibold text-foreground">
-              Today&apos;s Reflection
-            </CardTitle>
-            <CardDescription>
-              {todayWritten ? "Your entry for today is secure" : "Begin writing your reflection for today"}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex-1 flex flex-col justify-between pt-2 space-y-6">
-            <p className="text-sm font-serif text-muted-foreground leading-relaxed">
-              {todayWritten
-                ? `You have written your reflection for today. It contains ${todayEntry.wordCount} words and represents your sanctuary log for this calendar slot. Feel free to revise or review it.`
-                : "Take a brief moment to sit back, breathe, and write about how your day is going. Reflections keep your mind clear and your memories alive."}
-            </p>
-            <Button asChild className="w-fit cursor-pointer rounded-full shadow-sm">
-              <Link href={`${ROUTES.APP.ENTRY(today)}?today=${today}` as unknown as ComponentPropsWithoutRef<typeof Link>["href"]}>
-                {todayWritten ? "Edit Entry" : "Write Reflection"}
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
+        <TodayReflectionCard
+          entry={todayEntry}
+          today={today}
+        />
 
         {/* Quick stats/streak */}
         <Card className="flex flex-col justify-between border border-border bg-card/60 backdrop-blur-sm" interactive>
