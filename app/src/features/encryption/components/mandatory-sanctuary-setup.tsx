@@ -1,12 +1,12 @@
 "use client";
 
 import * as React from "react";
-import { ShieldAlert, Loader2, KeyRound, CheckCircle2 } from "lucide-react";
+import { Loader2, KeyRound, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useEncryption } from "@/providers/encryption-provider";
+import { BrandLoader } from "@/components/ui/brand-loader";
 import {
   generateRandomSalt,
   deriveKeyFromPassword,
@@ -30,7 +30,7 @@ export function MandatorySanctuarySetup({
   diaryHasPasscode,
   onSetupSuccess,
 }: MandatorySanctuarySetupProps) {
-  const { setEncryptionSettings } = useEncryption();
+  const { setEncryptionSettings, setMasterKey } = useEncryption();
   const [password, setPassword] = React.useState("");
   const [confirmPassword, setConfirmPassword] = React.useState("");
   const [pinConfirm, setPinConfirm] = React.useState("");
@@ -109,6 +109,7 @@ export function MandatorySanctuarySetup({
       }
       const encryptedEntries = [];
       for (const entry of entries) {
+        const titleEnc = await encryptText(entry.title || "", newMasterKey);
         const contentHtmlEnc = await encryptText(entry.contentHtml, newMasterKey);
         const contentTextEnc = await encryptText(entry.contentText, newMasterKey);
         const contentJsonEnc = await encryptText(JSON.stringify(entry.contentJson), newMasterKey);
@@ -117,6 +118,7 @@ export function MandatorySanctuarySetup({
 
         encryptedEntries.push({
           id: entry.id,
+          title: titleEnc,
           contentHtml: contentHtmlEnc,
           contentText: contentTextEnc,
           contentJson: contentJsonEnc,
@@ -131,24 +133,26 @@ export function MandatorySanctuarySetup({
         throw new Error(enableRes.error || "Failed to enable client encryption");
       }
 
-      // 7. If PIN passcode is enabled, encrypt the master key with the PIN key
+      // 7. If PIN lock is enabled, encrypt the master key with the PIN key
       if (diaryLockEnabled && diaryHasPasscode && pinConfirm) {
         const pinKey = await deriveKeyFromPassword(pinConfirm, salt, 50000);
         const encryptedMasterKey = await encryptText(masterKeyHex, pinKey);
         localStorage.setItem("withink_encrypted_master_key", encryptedMasterKey);
-        localStorage.removeItem("withink_master_key");
       } else {
-        localStorage.setItem("withink_master_key", masterKeyHex);
         localStorage.removeItem("withink_encrypted_master_key");
       }
 
-      // 8. Update client context & sessionStorage
-      sessionStorage.setItem("withink_master_key", masterKeyHex);
+      // Plaintext raw key caching is removed for security compliance.
+      localStorage.removeItem("withink_master_key");
+      sessionStorage.removeItem("withink_master_key");
+
+      // 8. Update client context
       setEncryptionSettings({
         isClientEncrypted: true,
         encryptionSalt: salt,
         verificationCiphertext,
       });
+      setMasterKey(newMasterKey);
 
       toast.success(
         entries.length > 0
@@ -158,24 +162,16 @@ export function MandatorySanctuarySetup({
       );
 
       onSetupSuccess(masterKeyHex, salt, verificationCiphertext);
-    } catch (err: any) {
-      toast.error(err.message || "Encryption setup failed", { id: toastId });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Encryption setup failed";
+      toast.error(message, { id: toastId });
     } finally {
       setIsMigrating(false);
     }
   };
 
   if (loadingInitial) {
-    return (
-      <div className="fixed inset-0 z-[9995] flex items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-sm font-mono text-muted-foreground uppercase tracking-widest">
-            Preparing your private sanctuary...
-          </p>
-        </div>
-      </div>
-    );
+    return <BrandLoader message="preparing your private sanctuary..." />;
   }
 
   const isMigratingOldData = entryCount !== null && entryCount > 0;
@@ -184,10 +180,17 @@ export function MandatorySanctuarySetup({
     <div className="fixed inset-0 z-[9995] flex items-center justify-center bg-background/95 p-4 backdrop-blur-md animate-in fade-in duration-300">
       <div className="w-full max-w-md px-6 text-center select-none animate-in zoom-in-95 duration-200">
         <div className="flex flex-col items-center text-center mb-6">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-primary/20 bg-primary/5 text-primary mb-4 animate-pulse">
-            <KeyRound className="h-6 w-6" />
+          {/* Logo / Header */}
+          <div className="mb-6 flex flex-col items-center">
+            <span className="font-serif text-3xl font-bold tracking-tight text-foreground mb-2">
+              withink.
+            </span>
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-secondary/80 px-3 py-1 rounded-full border border-border">
+              <KeyRound className="h-3.5 w-3.5 text-primary" />
+              <span>Sanctuary Setup</span>
+            </div>
           </div>
-          <h1 className="font-serif text-3xl font-bold tracking-tight text-foreground">
+          <h1 className="font-serif text-3xl font-bold tracking-tight text-foreground mt-2">
             {isMigratingOldData ? "Secure & Migrate Your Journal" : "Create Sanctuary Password"}
           </h1>
           <p className="text-body-small text-muted-foreground max-w-md mt-2 leading-relaxed">

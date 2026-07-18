@@ -24,9 +24,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid error payload parameters" }, { status: 400 });
     }
 
-    const { message, stack, digest, url } = parsed.data;
+    const { message: rawMessage, stack: rawStack, digest, url } = parsed.data;
     const reqHeaders = await headers();
     const userAgent = reqHeaders.get("user-agent") || "unknown";
+
+    // Scrub client-reported message and stack trace to prevent plaintext log injection
+    const message = scrubContent(rawMessage);
+    const stack = rawStack ? scrubContent(rawStack) : undefined;
 
     // Formulate a structured error report
     const clientError = new Error(message);
@@ -47,4 +51,18 @@ export async function POST(req: NextRequest) {
     logger.error("Failed to process client error report", error as Error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
+}
+
+function scrubContent(text: string): string {
+  if (!text) return text;
+  return text
+    // Redact quoted strings (single quotes, double quotes, backticks)
+    .replace(/(["'`])(?:\\.|[^\\])*?\1/g, "$1[REDACTED]$1")
+    // Redact email addresses
+    .replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, "[REDACTED_EMAIL]")
+    // Redact potential session keys/UUIDs
+    .replace(/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/g, "[REDACTED_UUID]")
+    // Redact potential hex keys (like 32-byte master key which is 64 hex characters)
+    .replace(/\b[0-9a-fA-F]{64}\b/g, "[REDACTED_HEX_64]")
+    .replace(/\b[0-9a-fA-F]{32}\b/g, "[REDACTED_HEX_32]");
 }

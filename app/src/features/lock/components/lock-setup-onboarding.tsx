@@ -7,7 +7,6 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { saveLockSettingsAction } from "../actions/lock-actions";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useFocusTrap } from "@/hooks/use-focus-trap";
 import { useEncryption } from "@/providers/encryption-provider";
 import { deriveKeyFromPassword, encryptText, exportKeyToHex } from "@/lib/crypto-client";
@@ -117,11 +116,18 @@ export function LockSetupOnboarding({ onSetupSuccess, onDismiss }: LockSetupOnbo
         </button>
 
         <div className="flex flex-col items-center text-center">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl border border-accent/20 bg-accent/10 text-accent mb-5">
-            <ShieldAlert className="h-6 w-6" />
+          {/* Logo / Header */}
+          <div className="mb-6 flex flex-col items-center">
+            <span className="font-serif text-3xl font-bold tracking-tight text-foreground mb-2">
+              withink.
+            </span>
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-secondary/80 px-3 py-1 rounded-full border border-border">
+              <ShieldAlert className="h-3.5 w-3.5 text-accent" />
+              <span>Sanctuary Security</span>
+            </div>
           </div>
 
-          <h2 className="font-serif text-2xl font-semibold text-foreground mb-2">
+          <h2 className="font-serif text-2xl font-semibold text-foreground mb-2 mt-2">
             Secure Your Sanctuary
           </h2>
           <p className="text-body-small text-muted-foreground mb-6 max-w-sm">

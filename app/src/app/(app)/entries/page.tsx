@@ -26,10 +26,11 @@ export default async function EntriesPage() {
   const today = isDateString(cookieToday) ? cookieToday : getLocalDateString();
 
   // 2. Fetch data in parallel on the server
-  const [entriesData, stats, dates] = await Promise.all([
+  const [entriesData, stats, dates, calendarEntries] = await Promise.all([
     JournalService.getEntriesPage(session.user.id, 1, 5, { today }),
     JournalService.getEntryStats(session.user.id),
     JournalService.getEntryDates(session.user.id),
+    JournalService.getCalendarEntries(session.user.id),
   ]);
 
   // 3. Compute current streak
@@ -62,7 +63,7 @@ export default async function EntriesPage() {
     <EntriesPageShell
       initialEntries={entriesData.entries}
       initialTotal={entriesData.total}
-      initialWrittenDates={dates}
+      initialCalendarEntries={calendarEntries}
       initialStreakData={streakData}
       localToday={today}
     />

@@ -8,7 +8,6 @@ import {
   ArrowLeft, 
   Type, 
   RefreshCw, 
-  BookOpen,
   Angry,
   Frown,
   Meh,
@@ -59,12 +58,6 @@ function formatDate(dateString: string) {
   });
 }
 
-function getPreview(text: string) {
-  const clean = text.replace(/\s+/g, " ").trim();
-  if (!clean) return "This memory is quiet, but it is still yours to revisit.";
-  return clean.length > 420 ? `${clean.slice(0, 420)}…` : clean;
-}
-
 interface FlashbackViewProps {
   initialEntry: DecryptedEntry | null;
   initialLabel: string;
@@ -79,6 +72,7 @@ export function FlashbackView({ initialEntry, initialLabel, localToday }: Flashb
   const { isClientEncrypted, masterKey } = useEncryption();
   const [decryptedTitle, setDecryptedTitle] = useState("");
   const [decryptedText, setDecryptedText] = useState("");
+  const [decryptedHtml, setDecryptedHtml] = useState("");
 
   useEffect(() => {
     const decryptFields = async () => {
@@ -86,11 +80,14 @@ export function FlashbackView({ initialEntry, initialLabel, localToday }: Flashb
       if (isClientEncrypted && masterKey) {
         const decTitle = await safeDecryptText(entry.title || "", masterKey);
         const decText = await safeDecryptText(entry.contentText || "", masterKey);
+        const decHtml = await safeDecryptText(entry.contentHtml || "", masterKey);
         setDecryptedTitle(decTitle || "Untitled Memory");
         setDecryptedText(decText);
+        setDecryptedHtml(decHtml || "");
       } else {
         setDecryptedTitle(entry.title || "Untitled Memory");
         setDecryptedText(entry.contentText || "");
+        setDecryptedHtml(entry.contentHtml || "");
       }
     };
     decryptFields();
@@ -227,27 +224,26 @@ export function FlashbackView({ initialEntry, initialLabel, localToday }: Flashb
           </div>
         </CardHeader>
 
-        <CardContent className="pt-8 px-6 sm:px-10 pb-8 space-y-6">
-          <h2 className="text-2xl sm:text-3xl font-serif font-bold tracking-tight text-foreground uppercase">
+        <CardContent className="pt-8 px-6 sm:px-10 pb-10 space-y-6">
+          <h2 className="text-2xl sm:text-3xl font-serif font-bold tracking-tight text-foreground uppercase border-b border-border/10 pb-3">
             {decryptedTitle || "Untitled Memory"}
           </h2>
-          <p className="text-base sm:text-lg font-serif text-muted-foreground leading-relaxed italic border-l-2 border-primary/20 pl-4 py-1">
-            &ldquo;{getPreview(decryptedText)}&rdquo;
-          </p>
-
-          <div className="pt-6 flex flex-col sm:flex-row gap-3 border-t border-border/10">
-            <Button asChild className="h-12 flex-1 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer font-bold gap-2">
-              <Link href={`${ROUTES.APP.ENTRY(localToday)}?today=${localToday}` as unknown as ComponentPropsWithoutRef<typeof Link>["href"]}>
-                <Reply className="h-4 w-4" />
-                <span>Reflect & Respond</span>
-              </Link>
-            </Button>
-            <Button asChild variant="outline" className="h-12 flex-1 rounded-full border-border bg-transparent hover:bg-muted/10 cursor-pointer font-bold gap-2 text-foreground">
-              <Link href={`${ROUTES.APP.ENTRY(entry.date)}?today=${localToday}` as unknown as ComponentPropsWithoutRef<typeof Link>["href"]}>
-                <BookOpen className="h-4 w-4" />
-                <span>Re-read Full Entry</span>
-              </Link>
-            </Button>
+          
+          <div className="relative pt-2">
+            {decryptedHtml ? (
+              <div 
+                className="prose prose-stone dark:prose-invert max-w-none text-foreground/90 font-serif leading-relaxed"
+                dangerouslySetInnerHTML={{ __html: decryptedHtml }}
+              />
+            ) : decryptedText ? (
+              <div className="text-base sm:text-lg font-serif text-foreground/90 leading-relaxed whitespace-pre-wrap">
+                {decryptedText}
+              </div>
+            ) : (
+              <p className="text-base sm:text-lg font-serif text-muted-foreground/60 leading-relaxed italic">
+                This memory is quiet, but it is still yours to revisit.
+              </p>
+            )}
           </div>
         </CardContent>
       </Card>

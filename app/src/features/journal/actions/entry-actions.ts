@@ -64,7 +64,7 @@ export async function saveEntryAction(
         contentHtml: validated.contentHtml,
         contentText: validated.contentText,
         contentJson: validated.contentJson,
-        wordCount: (validated as any).wordCount,
+        wordCount: validated.wordCount,
       },
       userLocalToday,
     );
@@ -199,6 +199,34 @@ export async function getEntryDatesAction(): Promise<{ success: boolean; data?: 
 
     const dates = await JournalService.getEntryDates(session.user.id);
     return { success: true, data: dates };
+  } catch (err) {
+    const appError = handleError(err);
+    return { success: false, error: appError.safeMessage };
+  }
+}
+
+export interface CalendarEntry {
+  date: string;
+  mood: number | null;
+  wordCount: number;
+}
+
+export async function getCalendarEntriesAction(): Promise<{ success: boolean; data?: CalendarEntry[]; error?: string }> {
+  try {
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+    if (!session) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const unlocked = await LockService.isSessionUnlocked(session.user.id);
+    if (!unlocked) {
+      return { success: false, error: "Locked" };
+    }
+
+    const entries = await JournalService.getCalendarEntries(session.user.id);
+    return { success: true, data: entries };
   } catch (err) {
     const appError = handleError(err);
     return { success: false, error: appError.safeMessage };

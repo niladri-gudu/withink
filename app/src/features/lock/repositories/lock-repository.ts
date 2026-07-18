@@ -1,3 +1,4 @@
+import type { Model } from "mongoose";
 import { LockSettingsModel } from "./lock-model";
 import type { ILockSettings } from "./lock-model";
 import { connectDB } from "@/lib/db/mongoose";
@@ -26,7 +27,7 @@ export class LockRepository {
 
     // 2. Fallback to MongoDB
     await connectDB();
-    const settings = await (LockSettingsModel as any).findOne({ userId }).lean();
+    const settings = await (LockSettingsModel as Model<ILockSettings>).findOne({ userId }).lean();
     const serializedSettings = serialize(settings);
 
     // 3. Cache the result if found
@@ -44,7 +45,7 @@ export class LockRepository {
     await connectDB();
 
     // 1. Update or create settings in DB
-    const settings = await (LockSettingsModel as any).findOneAndUpdate(
+    const settings = await (LockSettingsModel as Model<ILockSettings>).findOneAndUpdate(
       { userId },
       {
         $set: data,
@@ -62,7 +63,7 @@ export class LockRepository {
     const cacheKey = this.getCacheKey(userId);
     await setCachedValue(cacheKey, serializedSettings, LOCK_SETTINGS_CACHE_TTL_SECONDS);
 
-    return serializedSettings as ILockSettings;
+    return serializedSettings as unknown as ILockSettings;
   }
 
   static async invalidateCache(userId: string): Promise<void> {

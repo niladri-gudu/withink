@@ -55,24 +55,48 @@ export function JournalEditorShell({
   // Decrypt content on mount if zero-knowledge is active
   useEffect(() => {
     const loadContent = async () => {
-      if (isClientEncrypted && masterKey && typeof initialContent === "string" && initialContent.includes(":")) {
-        try {
-          const decrypted = await decryptText(initialContent, masterKey);
-          const parsed = JSON.parse(decrypted);
-          setDecryptedContent(parsed);
-          setEditorContent((prev) => ({ ...prev, json: parsed }));
-        } catch (err) {
-          console.error("Failed to decrypt initial content:", err);
-          setDecryptedContent({});
+      if (isClientEncrypted) {
+        // Wait until the master key is restored in memory
+        if (!masterKey) {
+          return;
+        }
+
+        // Decrypt title if encrypted
+        if (initialTitle && initialTitle.includes(":")) {
+          try {
+            const decTitle = await decryptText(initialTitle, masterKey);
+            setTitle(decTitle);
+          } catch (err) {
+            console.error("Failed to decrypt initial title:", err);
+          }
+        } else {
+          setTitle(initialTitle);
+        }
+
+        if (typeof initialContent === "string" && initialContent.includes(":")) {
+          try {
+            const decrypted = await decryptText(initialContent, masterKey);
+            const parsed = JSON.parse(decrypted);
+            setDecryptedContent(parsed);
+            setEditorContent((prev) => ({ ...prev, json: parsed }));
+          } catch (err) {
+            console.error("Failed to decrypt initial content:", err);
+            setDecryptedContent({});
+          }
+        } else {
+          const fallback = initialContent || {};
+          setDecryptedContent(fallback);
+          setEditorContent((prev) => ({ ...prev, json: fallback }));
         }
       } else {
+        setTitle(initialTitle);
         const fallback = initialContent || {};
         setDecryptedContent(fallback);
         setEditorContent((prev) => ({ ...prev, json: fallback }));
       }
     };
     loadContent();
-  }, [initialContent, isClientEncrypted, masterKey]);
+  }, [initialTitle, initialContent, isClientEncrypted, masterKey]);
 
   // Setup scroll-padding for visual viewport (keyboard avoidance on mobile/Safari)
   useEffect(() => {
@@ -175,6 +199,7 @@ export function JournalEditorShell({
           <div className="prose-container mt-6">
             {decryptedContent !== null ? (
               <TiptapEditor
+                key={date}
                 content={decryptedContent}
                 onChange={setEditorContent}
                 onEditorReady={(editor) => {

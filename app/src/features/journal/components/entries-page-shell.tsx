@@ -7,13 +7,14 @@ import { ROUTES } from "@/constants/routes";
 import { Button } from "@/components/ui/button";
 import { EntriesCalendar } from "./entries-calendar";
 import { EntriesTimeline } from "./entries-timeline";
-import { getEntryDatesAction, getStreakAndStatsAction } from "../actions/entry-actions";
+import { getCalendarEntriesAction, getStreakAndStatsAction } from "../actions/entry-actions";
+import type { CalendarEntry } from "../actions/entry-actions";
 import type { DecryptedEntry } from "../services/journal-service";
 
 interface EntriesPageShellProps {
   initialEntries: DecryptedEntry[];
   initialTotal: number;
-  initialWrittenDates: string[];
+  initialCalendarEntries: CalendarEntry[];
   initialStreakData: {
     currentStreak: number;
     totalEntries: number;
@@ -26,22 +27,22 @@ interface EntriesPageShellProps {
 export function EntriesPageShell({
   initialEntries,
   initialTotal,
-  initialWrittenDates,
+  initialCalendarEntries,
   initialStreakData,
   localToday,
 }: EntriesPageShellProps) {
-  const [writtenDates, setWrittenDates] = useState<string[]>(initialWrittenDates);
+  const [calendarEntries, setCalendarEntries] = useState<CalendarEntry[]>(initialCalendarEntries);
   const [streakData, setStreakData] = useState(initialStreakData);
 
   const handleEntryDeleted = async () => {
     // Re-fetch calendar dates and streak stats asynchronously
     const [resDates, resStats] = await Promise.all([
-      getEntryDatesAction(),
+      getCalendarEntriesAction(),
       getStreakAndStatsAction(localToday),
     ]);
 
     if (resDates.success && resDates.data) {
-      setWrittenDates(resDates.data);
+      setCalendarEntries(resDates.data);
     }
     if (resStats.success && resStats.data) {
       setStreakData(resStats.data);
@@ -80,7 +81,7 @@ export function EntriesPageShell({
         {/* Left Column: Calendar & Stats (1/3 width) */}
         <div className="lg:col-span-1 space-y-6 lg:sticky lg:top-24">
           <EntriesCalendar
-            writtenDates={writtenDates}
+            calendarEntries={calendarEntries}
             streakData={streakData}
             localToday={localToday}
           />

@@ -1,10 +1,13 @@
 "use server";
 
 import { headers } from "next/headers";
+import type { Model } from "mongoose";
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/db/mongoose";
 import { ClientEncryptionSettingsModel } from "../repositories/encryption-settings-model";
+import type { IClientEncryptionSettings } from "../repositories/encryption-settings-model";
 import { EntryModel } from "@/features/journal/repositories/entry-model";
+import type { IEntry } from "@/features/journal/repositories/entry-model";
 import { EntryRepository } from "@/features/journal/repositories/entry-repository";
 import { safeDecrypt } from "@/lib/encryption";
 import { handleError } from "@/server/errors";
@@ -27,7 +30,7 @@ export async function getEncryptionSettingsAction(): Promise<{
     }
 
     await connectDB();
-    const settings = await (ClientEncryptionSettingsModel as any).findOne({
+    const settings = await (ClientEncryptionSettingsModel as Model<IClientEncryptionSettings>).findOne({
       userId: session.user.id,
     }).lean();
 
@@ -64,7 +67,7 @@ export async function getPlaintextEntriesForMigrationAction(): Promise<{
     title: string;
     contentHtml: string;
     contentText: string;
-    contentJson: any;
+    contentJson: unknown;
     mood: number | null;
   }>;
   error?: string;
@@ -80,7 +83,7 @@ export async function getPlaintextEntriesForMigrationAction(): Promise<{
     await connectDB();
     
     // Safety check: Do not export plaintext if zero-knowledge is already enabled
-    const settings = await (ClientEncryptionSettingsModel as any).findOne({
+    const settings = await (ClientEncryptionSettingsModel as Model<IClientEncryptionSettings>).findOne({
       userId: session.user.id,
     }).lean();
     if (settings?.isClientEncrypted) {
@@ -91,11 +94,11 @@ export async function getPlaintextEntriesForMigrationAction(): Promise<{
     const entries = await EntryRepository.getAllEntries(session.user.id);
     
     // Decrypt on the server using the static server key
-    const decryptedEntries = entries.map((entry: any) => {
+    const decryptedEntries = entries.map((entry) => {
       const contentHtml = (safeDecrypt(entry.contentHtml) as string) || "";
       const contentText = (safeDecrypt(entry.contentText) as string) || "";
       const decryptedJsonStr = (safeDecrypt(entry.contentJson) as string) || "";
-      let contentJson: any = {};
+      let contentJson: unknown = {};
       if (decryptedJsonStr) {
         try {
           contentJson = JSON.parse(decryptedJsonStr);
@@ -122,16 +125,19 @@ export async function getPlaintextEntriesForMigrationAction(): Promise<{
   }
 }
 
+interface EncryptedEntryInput {
+  id: string;
+  title: string;
+  contentHtml: string;
+  contentText: string;
+  contentJson: string;
+  wordCount: number;
+}
+
 export async function enableClientEncryptionAction(
   salt: string,
   verificationCiphertext: string,
-  encryptedEntries: Array<{
-    id: string;
-    contentHtml: string;
-    contentText: string;
-    contentJson: string;
-    wordCount: number;
-  }>
+  encryptedEntries: EncryptedEntryInput[]
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const session = await auth.api.getSession({
@@ -143,8 +149,8 @@ export async function enableClientEncryptionAction(
 
     await connectDB();
 
-    // Check if ZK is already active
-    const settings = await (ClientEncryptionSettingsModel as any).findOne({
+    // Check ZK is already active
+    const settings = await (ClientEncryptionSettingsModel as Model<IClientEncryptionSettings>).findOne({
       userId: session.user.id,
     }).lean();
     if (settings?.isClientEncrypted) {
@@ -152,7 +158,7 @@ export async function enableClientEncryptionAction(
     }
 
     // Update settings to enable ZK
-    await (ClientEncryptionSettingsModel as any).findOneAndUpdate(
+    await (ClientEncryptionSettingsModel as Model<IClientEncryptionSettings>).findOneAndUpdate(
       { userId: session.user.id },
       {
         $set: {
@@ -166,10 +172,11 @@ export async function enableClientEncryptionAction(
 
     // Save newly encrypted entry blobs in database
     for (const entry of encryptedEntries) {
-      await (EntryModel as any).updateOne(
+      await (EntryModel as Model<IEntry>).updateOne(
         { _id: entry.id, userId: session.user.id },
         {
           $set: {
+            title: entry.title,
             contentHtml: entry.contentHtml,
             contentText: entry.contentText,
             contentJson: entry.contentJson,
@@ -202,7 +209,7 @@ export async function updateSanctuaryPasswordAction(
 
     await connectDB();
 
-    const result = await (ClientEncryptionSettingsModel as any).updateOne(
+    const result = await (ClientEncryptionSettingsModel as Model<IClientEncryptionSettings>).updateOne(
       { userId: session.user.id, isClientEncrypted: true },
       { $set: { verificationCiphertext } }
     );

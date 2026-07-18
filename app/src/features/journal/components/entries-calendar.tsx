@@ -9,8 +9,10 @@ import { addDays } from "@/lib/utils/date";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
+import type { CalendarEntry } from "../actions/entry-actions";
+
 interface EntriesCalendarProps {
-  writtenDates: string[];
+  calendarEntries: CalendarEntry[];
   streakData: {
     currentStreak: number;
     totalEntries: number;
@@ -27,13 +29,26 @@ const MONTH_NAMES = [
 
 const WEEKDAY_NAMES = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
+const moodCellClasses: Record<number, string> = {
+  1: "bg-mood-1-bg border-mood-1-border hover:bg-mood-1/30 text-mood-1",
+  2: "bg-mood-2-bg border-mood-2-border hover:bg-mood-2/30 text-mood-2",
+  3: "bg-mood-3-bg border-mood-3-border hover:bg-mood-3/20 text-mood-3",
+  4: "bg-mood-4-bg border-mood-4-border hover:bg-mood-4/30 text-mood-4",
+  5: "bg-mood-5-bg border-mood-5-border hover:bg-mood-5/30 text-mood-5",
+};
+
 export function EntriesCalendar({
-  writtenDates,
+  calendarEntries,
   streakData,
   localToday,
 }: EntriesCalendarProps) {
   const router = useRouter();
-  const dateSet = new Set(writtenDates);
+
+  const entryMap = new Map<string, CalendarEntry>();
+  calendarEntries.forEach((entry) => {
+    entryMap.set(entry.date, entry);
+  });
+  const dateSet = new Set(calendarEntries.map((e) => e.date));
 
   const [todayYear, todayMonth] = localToday.split("-").map(Number);
   const [currentYear, setCurrentYear] = useState(todayYear || new Date().getFullYear());
@@ -173,19 +188,35 @@ export function EntriesCalendar({
               }
 
               const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-              const hasEntry = dateSet.has(dateStr);
+              const dayEntry = entryMap.get(dateStr);
+              const hasEntry = !!dayEntry;
               const isToday = dateStr === localToday;
               const yesterdayStr = addDays(localToday, -1);
               const isFuture = dateStr > localToday;
               const isExpired = dateStr < yesterdayStr;
               const isClickable = !isFuture && (!isExpired || hasEntry);
 
+              let cellColorClass = "";
+              if (hasEntry) {
+                const mood = dayEntry?.mood;
+                cellColorClass = cn(
+                  mood && moodCellClasses[mood] 
+                    ? moodCellClasses[mood] 
+                    : "bg-primary/10 border-primary/20 text-primary hover:bg-primary/20",
+                  "hover:scale-105 border"
+                );
+              } else if (isClickable) {
+                cellColorClass = "bg-secondary/15 hover:bg-secondary/40 border border-border/10 text-muted-foreground/60 hover:scale-105";
+              } else {
+                cellColorClass = "text-muted-foreground/20 cursor-not-allowed select-none border border-transparent";
+              }
+
               const dayLabel = isFuture
                 ? `Locked date: ${dateStr}`
                 : isExpired && !hasEntry
                   ? `Expired date: ${dateStr}`
                   : hasEntry
-                    ? `Reflection written on ${dateStr}`
+                    ? `Reflection written on ${dateStr}${dayEntry?.mood ? ` • Mood: ${dayEntry.mood}` : ""}`
                     : `Write entry for ${dateStr}`;
 
               return (
@@ -196,15 +227,10 @@ export function EntriesCalendar({
                   disabled={!isClickable}
                   aria-label={dayLabel}
                   className={cn(
-                    "aspect-square rounded-lg flex flex-col items-center justify-center relative text-xs transition-all duration-200 cursor-default focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                    "aspect-square rounded-lg flex flex-col items-center justify-center relative text-xs transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                     isClickable && "cursor-pointer",
-                    isToday && "border border-primary font-bold text-primary",
-                    hasEntry
-                      ? "bg-primary/10 text-primary hover:bg-primary/20 hover:scale-105"
-                      : isClickable
-                        ? "text-foreground hover:bg-muted/80 hover:scale-105"
-                        : "text-muted-foreground/25 cursor-not-allowed select-none",
-                    isToday && !hasEntry && "hover:bg-primary/5"
+                    isToday && "ring-2 ring-primary ring-offset-2 font-bold",
+                    cellColorClass
                   )}
                   title={
                     isFuture
@@ -212,17 +238,25 @@ export function EntriesCalendar({
                       : isExpired && !hasEntry
                         ? "Grace period expired"
                         : hasEntry
-                          ? `Reflection written on ${dateStr}`
+                          ? `Reflection written on ${dateStr}${dayEntry?.mood ? ` (${dayEntry.mood}/5)` : ""}`
                           : `Write entry for ${dateStr}`
                   }
                 >
                   <span className="relative z-10" aria-hidden="true">{day}</span>
-                  {hasEntry && (
-                    <span className="absolute bottom-1.5 w-1 h-1 rounded-full bg-primary animate-pulse" aria-hidden="true" />
-                  )}
                 </button>
               );
             })}
+          </div>
+
+          {/* Heatmap Legend */}
+          <div className="flex items-center justify-end gap-1.5 mt-4 text-[9px] font-mono text-muted-foreground/60 uppercase">
+            <span>Less</span>
+            <div className="w-2.5 h-2.5 rounded-[3px] bg-secondary/15 border border-border/10" title="No Entry" />
+            <div className="w-2.5 h-2.5 rounded-[3px] bg-mood-2-bg border-mood-2-border" title="Sad Mood" />
+            <div className="w-2.5 h-2.5 rounded-[3px] bg-mood-3-bg border-mood-3-border" title="Neutral Mood" />
+            <div className="w-2.5 h-2.5 rounded-[3px] bg-mood-4-bg border-mood-4-border" title="Happy Mood" />
+            <div className="w-2.5 h-2.5 rounded-[3px] bg-mood-5-bg border-mood-5-border" title="Radiant Mood" />
+            <span>More</span>
           </div>
         </CardContent>
       </Card>

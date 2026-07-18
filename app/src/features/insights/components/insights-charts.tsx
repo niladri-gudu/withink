@@ -50,8 +50,8 @@ export function InsightsCharts({ data }: { data: InsightsPayload }) {
       </section>
 
       {/* Word Count Trends & Habits */}
-      <section className="grid gap-6 md:grid-cols-3">
-        <Card className="border-border/60 p-6 md:col-span-2">
+      <section className="space-y-6">
+        <Card className="border-border/60 p-6">
           <WordCountCharts
             total={wordCountStats.total}
             average={wordCountStats.average}
@@ -59,12 +59,10 @@ export function InsightsCharts({ data }: { data: InsightsPayload }) {
           />
         </Card>
 
-        <div className="md:col-span-3">
-          <ActivitySummaries
-            mostActiveDayOfWeek={activitySummaries.mostActiveDayOfWeek}
-            mostActiveTimeOfDay={activitySummaries.mostActiveTimeOfDay}
-          />
-        </div>
+        <ActivitySummaries
+          mostActiveDayOfWeek={activitySummaries.mostActiveDayOfWeek}
+          mostActiveTimeOfDay={activitySummaries.mostActiveTimeOfDay}
+        />
       </section>
 
       {/* Monthly details overview */}
@@ -100,11 +98,14 @@ export function InsightsChartsSkeleton() {
         </Card>
       </section>
 
-      <section className="grid gap-6 md:grid-cols-3">
-        <Card className="border-border/60 p-6 md:col-span-2">
+      <section className="space-y-6">
+        <Card className="border-border/60 p-6">
           <div className="h-40 w-full rounded bg-muted/20" />
         </Card>
-        <div className="md:col-span-3">
+        <div className="grid gap-6 sm:grid-cols-2">
+          <Card className="border-border/60 p-6">
+            <div className="h-28 w-full rounded bg-muted/20" />
+          </Card>
           <Card className="border-border/60 p-6">
             <div className="h-28 w-full rounded bg-muted/20" />
           </Card>

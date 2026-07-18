@@ -219,16 +219,16 @@ export class EntryRepository {
     return serializedResult;
   }
 
-  static async getEntryDates(userId: string): Promise<{ date: string }[]> {
+  static async getEntryDates(userId: string): Promise<{ date: string; mood: number | null; wordCount: number }[]> {
     const version = await this.getUserEntryVersion(userId);
     const cacheKey = `entries:${userId}:v${version}:dates`;
-    const cached = await getCachedValue<{ date: string }[]>(cacheKey);
+    const cached = await getCachedValue<{ date: string; mood: number | null; wordCount: number }[]>(cacheKey);
     if (cached !== null) {
       return cached;
     }
 
     await connectDB();
-    const dates = await (EntryModel as any).find({ userId }, { date: 1 }).sort({ date: -1 }).lean(); // eslint-disable-line @typescript-eslint/no-explicit-any
+    const dates = await (EntryModel as any).find({ userId }, { date: 1, mood: 1, wordCount: 1 }).sort({ date: -1 }).lean(); // eslint-disable-line @typescript-eslint/no-explicit-any
     const serializedResult = serialize(dates);
     await setCachedValue(cacheKey, serializedResult, LIST_CACHE_TTL_SECONDS);
     return serializedResult;

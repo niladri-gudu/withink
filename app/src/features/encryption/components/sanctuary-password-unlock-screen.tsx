@@ -12,7 +12,7 @@ interface SanctuaryPasswordUnlockScreenProps {
   userEmail?: string | null;
 }
 
-export function SanctuaryPasswordUnlockScreen({ userEmail }: SanctuaryPasswordUnlockScreenProps) {
+export function SanctuaryPasswordUnlockScreen({ userEmail: _userEmail }: SanctuaryPasswordUnlockScreenProps) {
   const [password, setPassword] = React.useState("");
   const [isVerifying, setIsVerifying] = React.useState(false);
   const { unlockWithPassword } = useEncryption();

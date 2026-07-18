@@ -6,7 +6,7 @@ export const dateStringSchema = z
 
 export const saveEntrySchema = z.object({
   date: dateStringSchema,
-  title: z.string().max(200, "Title cannot exceed 200 characters.").default(""),
+  title: z.string().max(1000, "Title cannot exceed 1000 characters.").default(""),
   mood: z.number().int().min(1).max(5).nullable().optional().default(null),
   contentHtml: z.string().default(""),
   contentText: z.string().default(""),

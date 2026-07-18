@@ -188,6 +188,7 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
   const {
     isClientEncrypted,
     setEncryptionSettings,
+    setMasterKey,
     encryptionSalt,
     verificationCiphertext,
   } = useEncryption();
@@ -245,14 +246,10 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
       localStorage.setItem("withink_lock_enabled", String(diaryLockEnabled));
 
       if (!diaryLockEnabled) {
-        const keyHex = sessionStorage.getItem("withink_master_key");
-        if (keyHex) {
-          localStorage.setItem("withink_master_key", keyHex);
-        }
         localStorage.removeItem("withink_encrypted_master_key");
-      } else {
-        localStorage.removeItem("withink_master_key");
       }
+      localStorage.removeItem("withink_master_key");
+      sessionStorage.removeItem("withink_master_key");
     } else {
       toast.error(res.error || "Failed to update lock settings", { id: toastId });
     }
@@ -542,6 +539,7 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
         const entry = entries[i]!;
         
         // Encrypt fields using the master key
+        const titleEnc = await encryptText(entry.title || "", newMasterKey);
         const contentHtmlEnc = await encryptText(entry.contentHtml, newMasterKey);
         const contentTextEnc = await encryptText(entry.contentText, newMasterKey);
         const contentJsonEnc = await encryptText(JSON.stringify(entry.contentJson), newMasterKey);
@@ -551,6 +549,7 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
 
         encryptedEntries.push({
           id: entry.id,
+          title: titleEnc,
           contentHtml: contentHtmlEnc,
           contentText: contentTextEnc,
           contentJson: contentJsonEnc,
@@ -570,19 +569,21 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
         const pinKey = await deriveKeyFromPassword(zkPINConfirm, salt, 50000);
         const encryptedMasterKey = await encryptText(masterKeyHex, pinKey);
         localStorage.setItem("withink_encrypted_master_key", encryptedMasterKey);
-        localStorage.removeItem("withink_master_key");
       } else {
-        localStorage.setItem("withink_master_key", masterKeyHex);
         localStorage.removeItem("withink_encrypted_master_key");
       }
 
-      // 8. Update client context & sessionStorage
-      sessionStorage.setItem("withink_master_key", masterKeyHex);
+      // Plaintext key caching is removed.
+      localStorage.removeItem("withink_master_key");
+      sessionStorage.removeItem("withink_master_key");
+
+      // 8. Update local context
       setEncryptionSettings({
         isClientEncrypted: true,
         encryptionSalt: salt,
         verificationCiphertext,
       });
+      setMasterKey(newMasterKey);
 
       toast.success("Sanctuary Zero-Knowledge Encryption activated!", { id: toastId });
       setShowZKSetupModal(false);

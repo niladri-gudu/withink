@@ -37,14 +37,18 @@ export function DataExportCard() {
         zip.file("README.txt", buildReadme(entries.length));
 
         // Clean metadata manifest
-        const metadata = entries.map((entry) => ({
-          date: entry.date,
-          title: entry.title,
-          mood: entry.mood,
-          wordCount: entry.wordCount,
-          createdAt: entry.createdAt,
-          updatedAt: entry.updatedAt,
-        }));
+        const metadata = [];
+        for (const entry of entries) {
+          const decTitle = await safeDecryptText(entry.title, masterKey);
+          metadata.push({
+            date: entry.date,
+            title: decTitle,
+            mood: entry.mood,
+            wordCount: entry.wordCount,
+            createdAt: entry.createdAt,
+            updatedAt: entry.updatedAt,
+          });
+        }
         zip.file("metadata.json", JSON.stringify(metadata, null, 2));
 
         const entriesFolder = zip.folder("entries");
@@ -52,11 +56,12 @@ export function DataExportCard() {
         for (const entry of entries) {
           const contentHtml = await safeDecryptText(entry.contentHtml, masterKey);
           const contentText = await safeDecryptText(entry.contentText, masterKey);
+          const decTitle = await safeDecryptText(entry.title, masterKey);
 
           const { year, monthName } = splitDate(entry.date);
           const monthFolder = entriesFolder?.folder(year)?.folder(monthName);
 
-          const title = entry.title || "Untitled";
+          const title = decTitle || "Untitled";
           monthFolder?.file(`${entry.date}.txt`, `TITLE: ${title}\n\n${contentText}`);
           monthFolder?.file(`${entry.date}.html`, buildEntryHtml(title, entry.date, contentHtml));
         }

@@ -6,8 +6,6 @@ import {
   unlockAction,
   lockAction,
   saveLockSettingsAction,
-  requestPasscodeResetEmailAction,
-  verifyPasscodeResetCodeAction,
   verifyPasswordAndResetLockAction,
 } from "./lock-actions";
 import { auth } from "@/lib/auth";
@@ -38,13 +36,22 @@ vi.mock("@/lib/auth", () => ({
 }));
 
 // Mock Redis
-vi.mock("@/lib/redis", () => ({
-  getCachedValue: vi.fn(),
-  setCachedValue: vi.fn(),
-  redis: {
-    del: vi.fn(),
-  },
-}));
+vi.mock("@/lib/redis", () => {
+  const chain = {
+    incr: () => chain,
+    expire: () => chain,
+    ttl: () => chain,
+    exec: async () => [1, 1, 60],
+  };
+  return {
+    getCachedValue: vi.fn(),
+    setCachedValue: vi.fn(),
+    redis: {
+      del: vi.fn(),
+      pipeline: vi.fn(() => chain),
+    },
+  };
+});
 
 // Mock Resend
 vi.mock("@/lib/email", () => ({
