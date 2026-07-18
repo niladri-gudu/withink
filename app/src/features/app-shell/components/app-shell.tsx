@@ -11,7 +11,7 @@ import { useEncryption } from "@/providers/encryption-provider";
 import { getEncryptionSettingsAction } from "../../encryption/actions/encryption-actions";
 import { SanctuaryPasswordUnlockScreen } from "../../encryption/components/sanctuary-password-unlock-screen";
 import { MandatorySanctuarySetup } from "../../encryption/components/mandatory-sanctuary-setup";
-import { Loader2 } from "lucide-react";
+import { BrandLoader } from "@/components/ui/brand-loader";
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -111,7 +111,9 @@ export function AppShell({ children, user }: AppShellProps) {
     if (typeof window === "undefined") return;
     const hasLocalEncryptedKey = !!localStorage.getItem("withink_encrypted_master_key");
     if (isClientEncrypted && !masterKey && isUnlocked && isLockEnabled && hasPasscode && hasLocalEncryptedKey) {
-      handleLock();
+      setTimeout(() => {
+        handleLock();
+      }, 0);
     }
   }, [isClientEncrypted, masterKey, isUnlocked, isLockEnabled, hasPasscode, handleLock]);
 
@@ -188,16 +190,7 @@ export function AppShell({ children, user }: AppShellProps) {
 
 
   if (user && loadingEncryption) {
-    return (
-      <div className="fixed inset-0 z-[9995] flex items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-sm font-mono text-muted-foreground uppercase tracking-widest">
-            Preparing your private sanctuary...
-          </p>
-        </div>
-      </div>
-    );
+    return <BrandLoader message="preparing your private sanctuary..." />;
   }
 
   if (user && !loadingEncryption && !isClientEncrypted) {

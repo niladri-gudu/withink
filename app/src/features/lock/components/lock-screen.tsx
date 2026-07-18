@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Lock, Delete, ArrowLeft, Loader2, KeyRound, Mail, CheckCircle } from "lucide-react";
+import { Lock, Delete, ArrowLeft, Loader2, KeyRound, Mail } from "lucide-react";
 import { toast } from "sonner";
 import {
   unlockAction,
@@ -168,7 +168,7 @@ export function LockScreen({ onUnlockSuccess, userEmail }: LockScreenProps) {
     setIsSubmittingEmailCode(false);
   };
 
-  const isGoogleUser = userEmail?.includes("gmail.com") || !userEmail; // Check if Google user or fallback
+
 
   return (
     <div
@@ -390,7 +390,7 @@ export function LockScreen({ onUnlockSuccess, userEmail }: LockScreenProps) {
                 Enter Recovery Code
               </h2>
               <p className="text-body-small text-muted-foreground mb-6 max-w-xs">
-                We've sent a 6-digit recovery code to your registered email address.
+                We&apos;ve sent a 6-digit recovery code to your registered email address.
               </p>
 
               <form onSubmit={submitEmailCodeRecovery} className="w-full space-y-5">

@@ -51,7 +51,7 @@ export async function importKeyFromHex(hex: string): Promise<CryptoKey> {
   const bytes = hexToBytes(hex);
   return await globalThis.crypto.subtle.importKey(
     "raw",
-    bytes as any,
+    bytes as unknown as BufferSource,
     { name: "AES-GCM" },
     true, // extractable
     ["encrypt", "decrypt"]
@@ -70,7 +70,7 @@ export async function deriveKeyFromPassword(
   // Import the password as a raw key for PBKDF2 derivation
   const baseKey = await globalThis.crypto.subtle.importKey(
     "raw",
-    passwordBytes as any,
+    passwordBytes as unknown as BufferSource,
     { name: "PBKDF2" },
     false, // not extractable
     ["deriveKey", "deriveBits"]
@@ -80,7 +80,7 @@ export async function deriveKeyFromPassword(
   return await globalThis.crypto.subtle.deriveKey(
     {
       name: "PBKDF2",
-      salt: saltBytes as any,
+      salt: saltBytes as unknown as BufferSource,
       iterations,
       hash: "SHA-256",
     },
@@ -104,10 +104,10 @@ export async function encryptText(plaintext: string, key: CryptoKey): Promise<st
   const encryptedBuffer = await globalThis.crypto.subtle.encrypt(
     {
       name: "AES-GCM",
-      iv: iv as any,
+      iv: iv as unknown as BufferSource,
     },
     key,
-    plaintextBytes as any
+    plaintextBytes as unknown as BufferSource
   );
 
   const ciphertextHex = bytesToHex(new Uint8Array(encryptedBuffer));
@@ -136,10 +136,10 @@ export async function decryptText(encryptedData: string, key: CryptoKey): Promis
   const decryptedBuffer = await globalThis.crypto.subtle.decrypt(
     {
       name: "AES-GCM",
-      iv: iv as any,
+      iv: iv as unknown as BufferSource,
     },
     key,
-    ciphertext as any
+    ciphertext as unknown as BufferSource
   );
 
   return decoder.decode(decryptedBuffer);

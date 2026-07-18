@@ -5,9 +5,6 @@ import {
   deriveKeyFromPassword,
   decryptText,
   importKeyFromHex,
-  exportKeyToHex,
-  hexToBytes,
-  bytesToHex,
   deriveKeyFromPassword as derivePasscodeKey
 } from "@/lib/crypto-client";
 
@@ -19,6 +16,7 @@ interface EncryptionSettings {
 
 interface EncryptionContextType {
   masterKey: CryptoKey | null;
+  setMasterKey: (key: CryptoKey | null) => void;
   isClientEncrypted: boolean;
   encryptionSalt: string;
   verificationCiphertext: string;
@@ -45,25 +43,15 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
     return masterKey !== null;
   }, [isClientEncrypted, masterKey]);
 
-  // Attempt to restore master key from sessionStorage or localStorage on load
+  // Attempt to restore master key from sessionStorage or localStorage on load is removed
+  // to avoid exposing plaintext master key in browser storage.
   React.useEffect(() => {
-    const restoreKey = async () => {
-      const storedKeyHex = localStorage.getItem("withink_master_key") || sessionStorage.getItem("withink_master_key");
-      if (storedKeyHex && isClientEncrypted) {
-        try {
-          const key = await importKeyFromHex(storedKeyHex);
-          setMasterKey(key);
-        } catch (e) {
-          console.error("Failed to restore master key", e);
-          sessionStorage.removeItem("withink_master_key");
-          localStorage.removeItem("withink_master_key");
-        }
-      }
-    };
-    if (isClientEncrypted) {
-      restoreKey();
+    // Clear any legacy plaintext keys from storage
+    if (typeof window !== "undefined") {
+      sessionStorage.removeItem("withink_master_key");
+      localStorage.removeItem("withink_master_key");
     }
-  }, [isClientEncrypted]);
+  }, []);
 
   const setEncryptionSettings = React.useCallback((settings: EncryptionSettings) => {
     setIsClientEncrypted(settings.isClientEncrypted);
@@ -89,16 +77,7 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
         const key = await importKeyFromHex(decryptedMasterKeyHex);
         setMasterKey(key);
 
-        // 4. Cache it in sessionStorage for persistence across page refreshes
-        sessionStorage.setItem("withink_master_key", decryptedMasterKeyHex);
-
-        // 5. Cache in localStorage if PIN lock is not enabled
-        const isLockEnabled = localStorage.getItem("withink_lock_enabled") === "true";
-        if (!isLockEnabled) {
-          localStorage.setItem("withink_master_key", decryptedMasterKeyHex);
-        } else {
-          localStorage.removeItem("withink_master_key");
-        }
+        // Plaintext key caching is removed for security compliance.
 
         setPromptOpen(false);
         return true;
@@ -119,7 +98,7 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
 
       try {
         // 1. Derive the Passcode Key from the 4-digit PIN + Salt
-        // Using iterations = 50000 for faster pin verification
+        // Using iterations = 50000 for faster PIN verification
         const pinKey = await derivePasscodeKey(pin, encryptionSalt, 50000);
 
         // 2. Decrypt the Master Key hex from localStorage
@@ -129,11 +108,7 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
         const key = await importKeyFromHex(decryptedMasterKeyHex);
         setMasterKey(key);
 
-        // 4. Cache in sessionStorage
-        sessionStorage.setItem("withink_master_key", decryptedMasterKeyHex);
-
-        // 5. Clean up raw key in localStorage if lock is enabled
-        localStorage.removeItem("withink_master_key");
+        // Plaintext key caching is removed.
 
         setPromptOpen(false);
         return true;
@@ -147,14 +122,17 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
 
   const lock = React.useCallback(() => {
     setMasterKey(null);
-    sessionStorage.removeItem("withink_master_key");
-    localStorage.removeItem("withink_master_key");
+    if (typeof window !== "undefined") {
+      sessionStorage.removeItem("withink_master_key");
+      localStorage.removeItem("withink_master_key");
+    }
   }, []);
 
   return (
     <EncryptionContext.Provider
       value={{
         masterKey,
+        setMasterKey,
         isClientEncrypted,
         encryptionSalt,
         verificationCiphertext,

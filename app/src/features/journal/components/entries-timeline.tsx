@@ -137,7 +137,7 @@ export function EntriesTimeline({
   }, [search]);
 
   // Fetch updated page list using react-query
-  const { data, isLoading, isFetching } = useQuery({
+  const { data, isFetching } = useQuery({
     queryKey: ["entries", { page, search: debouncedSearch, moodFilter, timeFilter, localToday, isClientEncrypted, isUnlocked: !!masterKey }],
     queryFn: async () => {
       const limit = (isClientEncrypted && debouncedSearch) ? 5000 : LIMIT;
@@ -153,12 +153,13 @@ export function EntriesTimeline({
       }
 
       let rawEntries = res.data.entries;
-      let total = res.data.total;
+      const total = res.data.total;
 
       // Decrypt client-side if encrypted
       if (isClientEncrypted && masterKey) {
         const decrypted = [];
         for (const entry of rawEntries) {
+          const title = await safeDecryptText(entry.title, masterKey);
           const contentHtml = await safeDecryptText(entry.contentHtml, masterKey);
           const contentText = await safeDecryptText(entry.contentText, masterKey);
           
@@ -171,7 +172,7 @@ export function EntriesTimeline({
               contentJson = {};
             }
           }
-          decrypted.push({ ...entry, contentHtml, contentText, contentJson });
+          decrypted.push({ ...entry, title, contentHtml, contentText, contentJson });
         }
         rawEntries = decrypted;
       }

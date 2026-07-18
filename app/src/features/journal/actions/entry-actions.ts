@@ -64,7 +64,7 @@ export async function saveEntryAction(
         contentHtml: validated.contentHtml,
         contentText: validated.contentText,
         contentJson: validated.contentJson,
-        wordCount: (validated as any).wordCount,
+        wordCount: validated.wordCount,
       },
       userLocalToday,
     );

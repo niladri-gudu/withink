@@ -1,4 +1,5 @@
 import "server-only";
+import type { Model } from "mongoose";
 import { EntryRepository } from "../repositories/entry-repository";
 import type { IEntry } from "../repositories/entry-model";
 import { encrypt, safeDecrypt } from "@/lib/encryption";
@@ -7,6 +8,7 @@ import { addDays, isDateString } from "@/lib/utils/date";
 import { BusinessRuleError, ValidationError } from "@/server/errors";
 import { logger } from "@/server/logger";
 import { ClientEncryptionSettingsModel } from "@/features/encryption/repositories/encryption-settings-model";
+import type { IClientEncryptionSettings } from "@/features/encryption/repositories/encryption-settings-model";
 
 export interface DecryptedEntry {
   id: string;
@@ -121,7 +123,7 @@ export class JournalService {
     }
 
     // Check ZK settings
-    const settings = await (ClientEncryptionSettingsModel as any).findOne({ userId }).lean();
+    const settings = await (ClientEncryptionSettingsModel as Model<IClientEncryptionSettings>).findOne({ userId }).lean();
     const isClientEncrypted = settings?.isClientEncrypted ?? false;
 
     // 3. Construct update payload and encrypt content fields

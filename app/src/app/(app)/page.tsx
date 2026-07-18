@@ -202,7 +202,7 @@ export default async function DashboardPage() {
               />
             ) : (
               <p className="text-sm font-serif text-muted-foreground leading-relaxed italic">
-                You haven't written any entries yet. Revisit this card tomorrow to see what you wrote in the past.
+                You haven&apos;t written any entries yet. Revisit this card tomorrow to see what you wrote in the past.
               </p>
             )}
           </CardContent>

@@ -8,6 +8,8 @@ import { ROUTES } from "@/constants/routes";
 import { useEncryption } from "@/providers/encryption-provider";
 import { safeDecryptText } from "@/lib/crypto-client";
 
+import type { ComponentPropsWithoutRef } from "react";
+
 interface FlashbackCardContentProps {
   initialContentText: string;
   entryDate: string;
@@ -48,7 +50,7 @@ export function FlashbackCardContent({ initialContentText, entryDate, today }: F
         {snippet}
       </p>
       <Button asChild variant="link" className="p-0 text-primary hover:text-primary/80 h-auto cursor-pointer text-xs font-bold font-mono uppercase tracking-widest gap-1">
-        <Link href={`${ROUTES.APP.ENTRY(entryDate)}?today=${today}` as any}>
+        <Link href={`${ROUTES.APP.ENTRY(entryDate)}?today=${today}` as unknown as ComponentPropsWithoutRef<typeof Link>["href"]}>
           Re-read Entry
           <ArrowRight className="h-3 w-3" />
         </Link>

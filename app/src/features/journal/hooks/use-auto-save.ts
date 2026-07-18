@@ -109,6 +109,7 @@ export function useAutoSave(
         const userLocalToday = getLocalDateString();
         const currentPayload = latestData.current;
 
+        let titlePayload = currentPayload.title;
         let htmlPayload = currentPayload.contentHtml;
         let textPayload = currentPayload.contentText;
         let jsonPayload = currentPayload.contentJson;
@@ -117,6 +118,7 @@ export function useAutoSave(
 
         if (isClientEncrypted && masterKey) {
           try {
+            titlePayload = await encryptText(currentPayload.title, masterKey);
             htmlPayload = await encryptText(currentPayload.contentHtml, masterKey);
             textPayload = await encryptText(currentPayload.contentText, masterKey);
             jsonPayload = await encryptText(JSON.stringify(currentPayload.contentJson), masterKey);
@@ -131,13 +133,13 @@ export function useAutoSave(
         const result = await saveEntryAction(
           {
             date: currentPayload.date,
-            title: currentPayload.title,
+            title: titlePayload,
             mood: currentPayload.mood,
             contentHtml: htmlPayload,
             contentText: textPayload,
             contentJson: jsonPayload,
             wordCount,
-          } as any,
+          },
           userLocalToday,
         );
 

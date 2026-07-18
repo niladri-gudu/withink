@@ -61,6 +61,18 @@ export function JournalEditorShell({
           return;
         }
 
+        // Decrypt title if encrypted
+        if (initialTitle && initialTitle.includes(":")) {
+          try {
+            const decTitle = await decryptText(initialTitle, masterKey);
+            setTitle(decTitle);
+          } catch (err) {
+            console.error("Failed to decrypt initial title:", err);
+          }
+        } else {
+          setTitle(initialTitle);
+        }
+
         if (typeof initialContent === "string" && initialContent.includes(":")) {
           try {
             const decrypted = await decryptText(initialContent, masterKey);
@@ -77,13 +89,14 @@ export function JournalEditorShell({
           setEditorContent((prev) => ({ ...prev, json: fallback }));
         }
       } else {
+        setTitle(initialTitle);
         const fallback = initialContent || {};
         setDecryptedContent(fallback);
         setEditorContent((prev) => ({ ...prev, json: fallback }));
       }
     };
     loadContent();
-  }, [initialContent, isClientEncrypted, masterKey]);
+  }, [initialTitle, initialContent, isClientEncrypted, masterKey]);
 
   // Setup scroll-padding for visual viewport (keyboard avoidance on mobile/Safari)
   useEffect(() => {

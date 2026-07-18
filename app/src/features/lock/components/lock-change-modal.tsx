@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Lock, Check, Loader2, X, AlertTriangle } from "lucide-react";
+import { Lock, Check, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
 import { unlockAction, saveLockSettingsAction } from "../actions/lock-actions";
 import { Button } from "@/components/ui/button";

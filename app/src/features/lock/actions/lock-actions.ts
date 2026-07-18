@@ -7,7 +7,7 @@ import { LockRepository } from "../repositories/lock-repository";
 import { LockService } from "../services/lock-service";
 import { passcodeSchema, updateLockSettingsSchema } from "../validation/lock-schema";
 import { handleError } from "@/server/errors";
-import { logger } from "@/server/logger";
+import { rateLimit } from "@/server/rate-limit";
 
 /**
  * Gets the current user's lock settings configuration
@@ -63,6 +63,15 @@ export async function unlockAction(
     // Validate input PIN format
     passcodeSchema.parse(passcode);
 
+    // Apply rate limiting (10 attempts per 5 minutes per user)
+    const limit = await rateLimit(`lock:unlock:${session.user.id}`, {
+      limit: 10,
+      windowSeconds: 300,
+    });
+    if (!limit.success) {
+      return { success: false, error: "Too many failed attempts. Please try again in 5 minutes." };
+    }
+
     const settings = await LockRepository.getSettings(session.user.id);
     if (!settings || !settings.isLockEnabled) {
       return { success: true }; // already unlocked or disabled
@@ -115,7 +124,7 @@ export async function saveLockSettingsAction(
     const validated = updateLockSettingsSchema.parse(inputData);
     const existing = await LockRepository.getSettings(session.user.id);
 
-    const updatePayload: any = {
+    const updatePayload: Record<string, unknown> = {
       isLockEnabled: validated.isLockEnabled,
       autoLockTimeout: validated.autoLockTimeout,
       lockOnTabHide: validated.lockOnTabHide,
@@ -196,6 +205,15 @@ export async function verifyPasscodeResetCodeAction(
       return { success: false, error: "Unauthorized" };
     }
 
+    // Apply rate limiting (5 attempts per 15 minutes per user)
+    const limit = await rateLimit(`lock:verify-reset-code:${session.user.id}`, {
+      limit: 5,
+      windowSeconds: 900,
+    });
+    if (!limit.success) {
+      return { success: false, error: "Too many verification attempts. Please try again in 15 minutes." };
+    }
+
     const disabled = await LockService.verifyResetCodeAndDisable(session.user.id, code);
     if (!disabled) {
       return { success: false, error: "Invalid or expired recovery code" };
@@ -218,6 +236,15 @@ export async function verifyPasswordAndResetLockAction(
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session) {
       return { success: false, error: "Unauthorized" };
+    }
+
+    // Apply rate limiting (5 attempts per 5 minutes per user)
+    const limit = await rateLimit(`lock:verify-password:${session.user.id}`, {
+      limit: 5,
+      windowSeconds: 300,
+    });
+    if (!limit.success) {
+      return { success: false, error: "Too many password verification attempts. Please try again in 5 minutes." };
     }
 
     const verified = await LockService.verifyLoginPassword(session.user.email, password);
