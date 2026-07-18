@@ -266,3 +266,28 @@ export async function verifyPasswordAndResetLockAction(
     return { success: false, error: appError.safeMessage };
   }
 }
+
+/**
+ * Unlocks the session on the server side (sets the unlock cookie).
+ * Used when the client successfully decrypts the master key using the master password.
+ */
+export async function unlockSessionAction(): Promise<{ success: boolean; error?: string }> {
+  try {
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const settings = await LockRepository.getSettings(session.user.id);
+    const timeout = settings?.autoLockTimeout && settings.autoLockTimeout > 0
+      ? settings.autoLockTimeout
+      : 28800;
+
+    await LockService.setUnlockCookie(session.user.id, timeout);
+
+    return { success: true };
+  } catch (err) {
+    const appError = handleError(err);
+    return { success: false, error: appError.safeMessage };
+  }
+}

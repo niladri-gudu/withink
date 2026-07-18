@@ -96,15 +96,15 @@ export function TodayReflectionCard({ entry, today }: TodayReflectionCardProps) 
         ) : (
           <>
             <div className="relative">
-              {decryptedHtml ? (
-                <div 
-                  className="prose prose-stone dark:prose-invert max-w-none text-sm text-foreground/90 font-serif leading-relaxed"
-                  dangerouslySetInnerHTML={{ __html: decryptedHtml }}
-                />
-              ) : decryptedText ? (
-                <div className="text-sm font-serif text-foreground/90 leading-relaxed whitespace-pre-wrap">
-                  {decryptedText}
-                </div>
+              {decryptedText ? (
+                <p className="text-sm font-serif text-foreground/90 leading-relaxed">
+                  {(() => {
+                    const cleaned = decryptedText.replace(/\s+/g, " ").trim();
+                    return cleaned.length > 180
+                      ? cleaned.substring(0, 180) + "..."
+                      : cleaned;
+                  })()}
+                </p>
               ) : (
                 <p className="text-sm font-serif text-muted-foreground/60 leading-relaxed italic">
                   This entry is empty. Click edit to write your thoughts.

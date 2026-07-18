@@ -99,6 +99,23 @@ export default function RootLayout({ children }: RootLayoutProps) {
       )}
       suppressHydrationWarning
     >
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var match = document.cookie.match(/(^|;)\\s*theme\\s*=\\s*([^;]+)/);
+                  var theme = match ? match[2] : null;
+                  if (theme) {
+                    localStorage.setItem('theme', theme);
+                  }
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
+      </head>
       <body className="h-full bg-background text-foreground antialiased selection:bg-accent selection:text-accent-foreground">
         <AppProviders>{children}</AppProviders>
       </body>

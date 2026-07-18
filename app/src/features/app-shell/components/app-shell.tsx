@@ -188,6 +188,13 @@ export function AppShell({ children, user }: AppShellProps) {
     return isClientEncrypted && !masterKey && (!isLockEnabled || !hasPasscode || !hasLocalEncryptedKey);
   }, [isClientEncrypted, masterKey, isLockEnabled, hasPasscode]);
 
+  const wasPasswordPromptActiveRef = React.useRef(false);
+  if (showPasswordUnlockPrompt) {
+    wasPasswordPromptActiveRef.current = true;
+  }
+  if (isUnlocked) {
+    wasPasswordPromptActiveRef.current = false;
+  }
 
   if (user && loadingEncryption) {
     return <BrandLoader message="preparing your private sanctuary..." />;
@@ -205,7 +212,7 @@ export function AppShell({ children, user }: AppShellProps) {
 
   return (
     <>
-      {user && !isUnlocked && !showPasswordUnlockPrompt && (
+      {user && !isUnlocked && !showPasswordUnlockPrompt && !wasPasswordPromptActiveRef.current && (
         <LockScreen
           onUnlockSuccess={handleUnlockSuccess}
           userEmail={user.email}
@@ -215,6 +222,7 @@ export function AppShell({ children, user }: AppShellProps) {
       {user && showPasswordUnlockPrompt && (
         <SanctuaryPasswordUnlockScreen
           userEmail={user.email}
+          onUnlockSuccess={handleUnlockSuccess}
         />
       )}
 

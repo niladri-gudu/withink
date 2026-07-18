@@ -55,7 +55,6 @@ export function LoginForm() {
         return;
       }
 
-      toast.success("Welcome back to your sanctuary.");
       router.refresh();
       router.push(ROUTES.APP.DASHBOARD);
     } catch (err: unknown) {

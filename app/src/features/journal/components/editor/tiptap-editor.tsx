@@ -15,21 +15,6 @@ function generateTempId(): string {
   return `upload-${uploadCounter}`;
 }
 
-const TIPTAP_EXTENSIONS = [
-  StarterKit.configure({
-    heading: { levels: [1, 2, 3] },
-  }),
-  UnderlineExt,
-  ImageExt.configure({ inline: false, allowBase64: true }),
-  Link.configure({
-    openOnClick: false,
-    HTMLAttributes: { rel: "noopener noreferrer", class: "text-primary underline cursor-pointer" },
-  }),
-  Placeholder.configure({
-    placeholder: "Start writing your thoughts...",
-  }),
-];
-
 interface EditorProps {
   content?: any;
   onChange?: (data: { html: string; text: string; json: any }) => void;
@@ -51,7 +36,20 @@ export default function TiptapEditor({
   }
 
   const editor = useEditor({
-    extensions: TIPTAP_EXTENSIONS,
+    extensions: [
+      StarterKit.configure({
+        heading: { levels: [1, 2, 3] },
+      }),
+      UnderlineExt,
+      ImageExt.configure({ inline: false, allowBase64: true }),
+      Link.configure({
+        openOnClick: false,
+        HTMLAttributes: { rel: "noopener noreferrer", class: "text-primary underline cursor-pointer" },
+      }),
+      Placeholder.configure({
+        placeholder: "Start writing your thoughts...",
+      }),
+    ],
     content,
     editorProps: {
       attributes: {
