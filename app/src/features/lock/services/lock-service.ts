@@ -63,6 +63,16 @@ export class LockService {
       const token = JSON.parse(decrypted) as UnlockToken;
       if (token.userId !== userId) return false;
       if (Date.now() > token.expiresAt) return false;
+
+      // Sliding session window: renew the cookie expiration on active verify check
+      try {
+        const timeout = settings.autoLockTimeout > 0 ? settings.autoLockTimeout : 28800;
+        await this.setUnlockCookie(userId, timeout);
+      } catch (cookieErr) {
+        // Safe fallback if called in a read-only request context (e.g. Server Component renders)
+        logger.warn("Failed to slide lock session cookie", undefined, cookieErr as Error);
+      }
+
       return true;
     } catch {
       return false;
