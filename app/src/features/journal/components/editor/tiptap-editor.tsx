@@ -7,6 +7,10 @@ import Placeholder from "@tiptap/extension-placeholder";
 import UnderlineExt from "@tiptap/extension-underline";
 import ImageExt from "@tiptap/extension-image";
 import Link from "@tiptap/extension-link";
+import TaskList from "@tiptap/extension-task-list";
+import TaskItem from "@tiptap/extension-task-item";
+import Highlight from "@tiptap/extension-highlight";
+import CharacterCount from "@tiptap/extension-character-count";
 import { toast } from "sonner";
 
 let uploadCounter = 0;
@@ -49,6 +53,10 @@ export default function TiptapEditor({
       Placeholder.configure({
         placeholder: "Start writing your thoughts...",
       }),
+      TaskList,
+      TaskItem.configure({ nested: true }),
+      Highlight.configure({ multicolor: true }),
+      CharacterCount,
     ],
     content,
     editorProps: {
@@ -180,8 +188,16 @@ export default function TiptapEditor({
   if (!editor) return null;
 
   return (
-    <div className="bg-transparent prose prose-stone dark:prose-invert max-w-none">
+    <div
+      className="bg-transparent max-w-none cursor-text min-h-[350px] md:min-h-[450px]"
+      onClick={(e) => {
+        if (e.target === e.currentTarget && editor) {
+          editor.chain().focus("end").run();
+        }
+      }}
+    >
       <EditorContent editor={editor} />
     </div>
   );
 }
+
