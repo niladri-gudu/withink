@@ -1,6 +1,6 @@
 import { sanctuaryCacheDB } from "@/lib/sanctuary-cache-db";
 import { encryptText, decryptText } from "@/lib/crypto-client";
-import { getEntrySyncListAction, getEntryAction } from "../actions/entry-actions";
+import { getEntrySyncListAction, getEntryAction, saveEntryAction } from "../actions/entry-actions";
 
 export interface CachedMetadata {
   date: string;
@@ -159,6 +159,26 @@ export const sanctuaryCacheService = {
                 // Decrypt fields locally
                 const title = await decryptText(entry.title, masterKey);
                 const contentText = await decryptText(entry.contentText, masterKey);
+                
+                let contentHtml = "";
+                let contentJson = {};
+                try {
+                  contentHtml = await decryptText(entry.contentHtml, masterKey);
+                  const contentJsonRaw = await decryptText(entry.contentJson, masterKey);
+                  contentJson = JSON.parse(contentJsonRaw);
+                } catch (err) {
+                  console.error("Failed to decrypt full document content fields:", err);
+                }
+
+                await this.saveLocalDocument(
+                  entry.date,
+                  title,
+                  entry.mood,
+                  contentHtml,
+                  contentText,
+                  contentJson,
+                  masterKey
+                );
 
                 await this.saveLocalMetadata(
                   entry.date,
@@ -184,6 +204,141 @@ export const sanctuaryCacheService = {
     } catch (err) {
       console.error("Cache synchronization failed:", err);
       return false;
+    }
+  },
+
+  /**
+   * Encrypts and saves a full document locally in IndexedDB
+   */
+  async saveLocalDocument(
+    date: string,
+    title: string,
+    mood: number | null,
+    contentHtml: string,
+    contentText: string,
+    contentJson: any,
+    masterKey: CryptoKey
+  ): Promise<void> {
+    try {
+      const payload = {
+        date,
+        title,
+        mood,
+        contentHtml,
+        contentText,
+        contentJson,
+      };
+      const encrypted = await encryptText(JSON.stringify(payload), masterKey);
+      await sanctuaryCacheDB.setDocument(date, encrypted);
+    } catch (err) {
+      console.error(`Failed to save local document cache for ${date}:`, err);
+    }
+  },
+
+  /**
+   * Reads and decrypts a cached full document
+   */
+  async getLocalDocument(
+    date: string,
+    masterKey: CryptoKey
+  ): Promise<{
+    date: string;
+    title: string;
+    mood: number | null;
+    contentHtml: string;
+    contentText: string;
+    contentJson: any;
+  } | null> {
+    try {
+      const encrypted = await sanctuaryCacheDB.getDocument(date);
+      if (!encrypted) return null;
+      const decryptedStr = await decryptText(encrypted, masterKey);
+      return JSON.parse(decryptedStr);
+    } catch (err) {
+      console.error(`Failed to read/decrypt local document cache for ${date}:`, err);
+      return null;
+    }
+  },
+
+  /**
+   * Enqueues an entry update in the offline sync queue
+   */
+  async enqueueOfflineSync(
+    date: string,
+    payload: {
+      date: string;
+      title: string;
+      mood: number | null;
+      contentHtml: string;
+      contentText: string;
+      contentJson: any;
+      wordCount: number;
+    },
+    masterKey: CryptoKey
+  ): Promise<void> {
+    try {
+      const encrypted = await encryptText(JSON.stringify(payload), masterKey);
+      await sanctuaryCacheDB.setSyncItem(date, encrypted);
+    } catch (err) {
+      console.error(`Failed to queue offline sync for ${date}:`, err);
+    }
+  },
+
+  /**
+   * Flushes all queued offline sync items to the server
+   */
+  async flushOfflineSyncQueue(
+    masterKey: CryptoKey,
+    localToday: string
+  ): Promise<void> {
+    try {
+      const queuedItems = await sanctuaryCacheDB.getAllSyncItems();
+      if (queuedItems.length === 0) return;
+
+      console.info(`Flushing ${queuedItems.length} offline sync items...`);
+      for (const item of queuedItems) {
+        try {
+          const decryptedStr = await decryptText(item.value, masterKey);
+          const payload = JSON.parse(decryptedStr);
+
+          // Re-encrypt fields using the server master key representation
+          const serverTitle = await encryptText(payload.title, masterKey);
+          const serverHtml = await encryptText(payload.contentHtml, masterKey);
+          const serverText = await encryptText(payload.contentText, masterKey);
+          const serverJson = await encryptText(JSON.stringify(payload.contentJson), masterKey);
+
+          const result = await saveEntryAction(
+            {
+              date: payload.date,
+              title: serverTitle,
+              mood: payload.mood,
+              contentHtml: serverHtml,
+              contentText: serverText,
+              contentJson: serverJson,
+              wordCount: payload.wordCount,
+            },
+            localToday
+          );
+
+          if (result.success && result.data) {
+            // Delete from queue and update local metadata/document timestamps
+            await sanctuaryCacheDB.deleteSyncItem(payload.date);
+            await this.saveLocalMetadata(
+              payload.date,
+              payload.title,
+              payload.contentText,
+              payload.wordCount,
+              payload.mood,
+              result.data.updatedAt,
+              masterKey
+            );
+          }
+        } catch (e) {
+          console.error(`Failed to flush offline sync item for ${item.key}:`, e);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to flush offline sync queue:", err);
     }
   },
 };

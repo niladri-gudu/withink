@@ -6,6 +6,7 @@ import {
   importKeyFromHex,
 } from "@/lib/crypto-client";
 import { deriveKeyFromPasswordAsync } from "@/lib/crypto-worker-client";
+import { sanctuaryCacheService } from "@/features/journal/services/sanctuary-cache-service";
 
 interface EncryptionSettings {
   isClientEncrypted: boolean;
@@ -51,6 +52,31 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
       localStorage.removeItem("withink_master_key");
     }
   }, []);
+
+  // Background flush offline sync queue when network is restored
+  React.useEffect(() => {
+    if (!masterKey) return;
+
+    const flushQueue = async () => {
+      try {
+        const { getLocalDateString } = await import("@/lib/utils/date");
+        const localToday = getLocalDateString();
+        await sanctuaryCacheService.flushOfflineSyncQueue(masterKey, localToday);
+      } catch (err) {
+        console.error("Failed to run background sync queue flush:", err);
+      }
+    };
+
+    // Run once on unlock
+    flushQueue();
+
+    const handleOnline = () => {
+      flushQueue();
+    };
+
+    window.addEventListener("online", handleOnline);
+    return () => window.removeEventListener("online", handleOnline);
+  }, [masterKey]);
 
   const setEncryptionSettings = React.useCallback((settings: EncryptionSettings) => {
     setIsClientEncrypted(settings.isClientEncrypted);

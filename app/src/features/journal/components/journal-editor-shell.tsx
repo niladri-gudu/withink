@@ -27,6 +27,7 @@ import { ROUTES } from "@/constants/routes";
 import { useEncryption } from "@/providers/encryption-provider";
 import { decryptText } from "@/lib/crypto-client";
 import { zenAudioService } from "@/lib/zen-audio";
+import { sanctuaryCacheService } from "../services/sanctuary-cache-service";
 
 interface Props {
   date: string;
@@ -146,6 +147,20 @@ export function JournalEditorShell({
       if (isClientEncrypted) {
         // Wait until the master key is restored in memory
         if (!masterKey) {
+          return;
+        }
+
+        // Try to load from local document cache first if available (works offline)
+        const cachedDoc = await sanctuaryCacheService.getLocalDocument(date, masterKey);
+        if (cachedDoc) {
+          setTitle(cachedDoc.title);
+          setMood(cachedDoc.mood);
+          setDecryptedContent(cachedDoc.contentJson);
+          setEditorContent({
+            html: cachedDoc.contentHtml,
+            text: cachedDoc.contentText,
+            json: cachedDoc.contentJson,
+          });
           return;
         }
 
