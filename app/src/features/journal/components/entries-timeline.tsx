@@ -14,7 +14,7 @@ import {
   Angry, Frown, Meh, Smile, SmilePlus
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import { ROUTES } from "@/constants/routes";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -383,19 +383,22 @@ export function EntriesTimeline({
             </p>
           </Card>
         ) : (
-          entries.map((entry) => {
-            const MoodIcon = (entry.mood && moodIcons[entry.mood]) || FileText;
-            const moodColor = entry.mood ? moodColors[entry.mood] : "text-muted-foreground/60 bg-muted/10 border-border/10";
-            const confirmOpen = deleteDateConfirm === entry.date;
+          <AnimatePresence mode="popLayout">
+            {entries.map((entry) => {
+              const MoodIcon = (entry.mood && moodIcons[entry.mood]) || FileText;
+              const moodColor = entry.mood ? moodColors[entry.mood] : "text-muted-foreground/60 bg-muted/10 border-border/10";
+              const confirmOpen = deleteDateConfirm === entry.date;
 
-            return (
-              <motion.div
-                key={entry.date}
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ type: "spring", stiffness: 350, damping: 25 }}
-                className="group relative"
-              >
+              return (
+                <motion.div
+                  key={entry.date}
+                  layout
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: -8 }}
+                  transition={{ type: "spring", stiffness: 350, damping: 25 }}
+                  className="group relative"
+                >
                 {/* Visual side timeline node */}
                 <div className="absolute left-[-16px] top-7 w-[2px] h-full bg-border/20 group-last:h-0 hidden lg:block" />
                 <div className="absolute left-[-22px] top-6 w-3.5 h-3.5 rounded-full border-2 border-background bg-border/40 group-hover:bg-primary transition-all duration-300 hidden lg:block" />
@@ -486,7 +489,8 @@ export function EntriesTimeline({
                 </Card>
               </motion.div>
             );
-          })
+          })}
+          </AnimatePresence>
         )}
       </div>
 

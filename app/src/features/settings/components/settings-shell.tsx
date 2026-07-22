@@ -42,10 +42,10 @@ import {
   generateRandomSalt,
   generateMasterKey,
   exportKeyToHex,
-  deriveKeyFromPassword,
   encryptText,
   decryptText,
 } from "@/lib/crypto-client";
+import { deriveKeyFromPasswordAsync } from "@/lib/crypto-worker-client";
 import {
   getPlaintextEntriesForMigrationAction,
   enableClientEncryptionAction,
@@ -523,7 +523,7 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
       // 2. Generate random 16-byte salt and derive password key client-side
       toast.loading("Deriving encryption keys...", { id: toastId });
       const salt = generateRandomSalt();
-      const passwordKey = await deriveKeyFromPassword(zkPassword, salt);
+      const passwordKey = await deriveKeyFromPasswordAsync(zkPassword, salt);
 
       // 3. Generate a secure random master key client-side
       const newMasterKey = await generateMasterKey();
@@ -566,7 +566,7 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
 
       // 7. If PIN lock is enabled, encrypt the master key with the PIN key
       if (diaryLockEnabled && diaryHasPasscode && zkPINConfirm) {
-        const pinKey = await deriveKeyFromPassword(zkPINConfirm, salt, 50000);
+        const pinKey = await deriveKeyFromPasswordAsync(zkPINConfirm, salt, 50000);
         const encryptedMasterKey = await encryptText(masterKeyHex, pinKey);
         localStorage.setItem("withink_encrypted_master_key", encryptedMasterKey);
       } else {
@@ -609,7 +609,7 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
 
     try {
       // 1. Derive key from old password
-      const oldPasswordKey = await deriveKeyFromPassword(zkOldPassword, encryptionSalt);
+      const oldPasswordKey = await deriveKeyFromPasswordAsync(zkOldPassword, encryptionSalt);
 
       // 2. Decrypt verificationCiphertext to get master key hex
       let masterKeyHex;
@@ -620,7 +620,7 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
       }
 
       // 3. Derive key from new password using the same salt
-      const newPasswordKey = await deriveKeyFromPassword(zkNewPassword, encryptionSalt);
+      const newPasswordKey = await deriveKeyFromPasswordAsync(zkNewPassword, encryptionSalt);
 
       // 4. Encrypt master key hex with new password key
       const newVerificationCiphertext = await encryptText(masterKeyHex, newPasswordKey);

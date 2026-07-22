@@ -24,6 +24,8 @@ import {
   Image as ImageIcon,
   Maximize2,
   Minimize2,
+  Keyboard,
+  Headphones,
 } from "lucide-react";
 import { useRef } from "react";
 import { toast } from "sonner";
@@ -33,6 +35,10 @@ interface ToolbarProps {
   editor: Editor;
   isFocusMode?: boolean;
   onToggleFocusMode?: () => void;
+  typewriterEnabled?: boolean;
+  onToggleTypewriter?: () => void;
+  ambientSound?: "none" | "rain" | "library" | "forest";
+  onChangeAmbientSound?: (sound: "none" | "rain" | "library" | "forest") => void;
 }
 
 // Module scope counter for unique tempIds to avoid calling Date.now() inside the component
@@ -61,6 +67,9 @@ function ToolbarButton({
       size="icon"
       onMouseDown={(e) => {
         e.preventDefault();
+        if (typeof navigator !== "undefined" && navigator.vibrate) {
+          navigator.vibrate(10);
+        }
         onClick();
       }}
       disabled={disabled}
@@ -85,7 +94,15 @@ function Divider() {
   return <div className="w-px h-5 bg-border/40 mx-1 shrink-0" />;
 }
 
-export function EditorToolbar({ editor, isFocusMode, onToggleFocusMode }: ToolbarProps) {
+export function EditorToolbar({
+  editor,
+  isFocusMode,
+  onToggleFocusMode,
+  typewriterEnabled = false,
+  onToggleTypewriter,
+  ambientSound = "none",
+  onChangeAmbientSound,
+}: ToolbarProps) {
   const editorState = useEditorState({
     editor,
     selector: (ctx) => {
@@ -173,6 +190,23 @@ export function EditorToolbar({ editor, isFocusMode, onToggleFocusMode }: Toolba
       return;
     }
     editor.chain().focus().setLink({ href: url }).run();
+  };
+
+  const cycleAmbient = () => {
+    if (!onChangeAmbientSound) return;
+    const sequence: ("none" | "rain" | "library" | "forest")[] = ["none", "rain", "library", "forest"];
+    const currentIndex = sequence.indexOf(ambientSound);
+    const nextIndex = (currentIndex + 1) % sequence.length;
+    const nextSound = sequence[nextIndex]!;
+    onChangeAmbientSound(nextSound);
+
+    const labels = {
+      none: "Ambient Sound: Off 🤫",
+      rain: "Ambient Sound: Soft Rain 🌧️",
+      library: "Ambient Sound: Library Whir 📚",
+      forest: "Ambient Sound: Forest Wind 🌲",
+    };
+    toast.success(labels[nextSound]);
   };
 
   const addImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -424,6 +458,27 @@ export function EditorToolbar({ editor, isFocusMode, onToggleFocusMode }: Toolba
       {onToggleFocusMode && (
         <>
           <Divider />
+          
+          {isFocusMode && onToggleTypewriter && (
+            <ToolbarButton
+              onClick={onToggleTypewriter}
+              active={typewriterEnabled}
+              title={typewriterEnabled ? "Mute Typewriter Clicks" : "Enable Typewriter Clicks"}
+            >
+              <Keyboard className={`h-4 w-4 ${typewriterEnabled ? "text-accent" : ""}`} />
+            </ToolbarButton>
+          )}
+
+          {isFocusMode && onChangeAmbientSound && (
+            <ToolbarButton
+              onClick={cycleAmbient}
+              active={ambientSound !== "none"}
+              title="Change Ambience (Rain/Library/Forest)"
+            >
+              <Headphones className={`h-4 w-4 ${ambientSound !== "none" ? "text-accent" : ""}`} />
+            </ToolbarButton>
+          )}
+
           <ToolbarButton
             onClick={onToggleFocusMode}
             active={isFocusMode}

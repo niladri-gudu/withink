@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-serif: var(--font-serif), Georgia, Cambria, "Times New Roman", Times, serif;
+  --font-sans: "Outfit", var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "EB Garamond", var(--font-serif), Georgia, Cambria, "Times New Roman", Times, serif;
   --font-mono: var(--font-mono), ui-monospace, SFMono-Regular, monospace;
 
   --color-background: var(--background);
@@ -366,6 +366,7 @@
 /* Tiptap Rich Text Editor Styling System */
 .tiptap {
   outline: none;
+  caret-color: var(--accent);
 }
 
 .tiptap p {
@@ -563,14 +564,20 @@
 }
 
 /* Placeholder */
+@keyframes placeholderFadeIn {
+  from { opacity: 0; }
+  to { opacity: 0.45; }
+}
+
 .tiptap p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
   float: left;
   color: var(--muted-foreground);
-  opacity: 0.45;
+  opacity: 0;
   pointer-events: none;
   height: 0;
   font-style: italic;
+  animation: placeholderFadeIn 0.8s ease-out forwards;
 }
 
 /* Images */

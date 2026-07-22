@@ -4,7 +4,20 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ChevronLeft, Loader2 } from "lucide-react";
-import TiptapEditor from "./editor/tiptap-editor";
+import dynamic from "next/dynamic";
+
+const TiptapEditor = dynamic(() => import("./editor/tiptap-editor"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex flex-col space-y-4 animate-pulse py-10 w-full">
+      <div className="h-4 bg-muted/60 rounded-md w-[85%]" />
+      <div className="h-4 bg-muted/60 rounded-md w-[95%]" />
+      <div className="h-4 bg-muted/60 rounded-md w-[70%]" />
+      <div className="h-4 bg-muted/60 rounded-md w-[80%]" />
+      <div className="h-4 bg-muted/60 rounded-md w-[60%]" />
+    </div>
+  ),
+});
 import { EditorToolbar } from "./editor/editor-toolbar";
 import { MoodSelector } from "./mood-selector";
 import { SaveIndicator } from "./save-indicator";
@@ -13,6 +26,7 @@ import { Button } from "@/components/ui/button";
 import { ROUTES } from "@/constants/routes";
 import { useEncryption } from "@/providers/encryption-provider";
 import { decryptText } from "@/lib/crypto-client";
+import { zenAudioService } from "@/lib/zen-audio";
 
 interface Props {
   date: string;
@@ -49,6 +63,79 @@ export function JournalEditorShell({
   const [editorReady, setEditorReady] = useState(false);
   const [toolbarBottom, setToolbarBottom] = useState(24);
   const [isFocusMode, setIsFocusMode] = useState(false);
+
+  const [typewriterEnabled, setTypewriterEnabled] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("withink-typewriter-enabled") === "true";
+    }
+    return false;
+  });
+
+  const [ambientSound, setAmbientSound] = useState<"none" | "rain" | "library" | "forest">(() => {
+    if (typeof window !== "undefined") {
+      return (localStorage.getItem("withink-ambient-sound") as any) || "none";
+    }
+    return "none";
+  });
+
+  const [scrollProgress, setScrollProgress] = useState(0);
+
+  // Sync settings to local storage
+  useEffect(() => {
+    localStorage.setItem("withink-typewriter-enabled", String(typewriterEnabled));
+  }, [typewriterEnabled]);
+
+  useEffect(() => {
+    localStorage.setItem("withink-ambient-sound", ambientSound);
+  }, [ambientSound]);
+
+  // Track window scroll progress
+  useEffect(() => {
+    const handleScroll = () => {
+      const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
+      if (totalHeight <= 0) {
+        setScrollProgress(0);
+        return;
+      }
+      const progress = (window.scrollY / totalHeight) * 100;
+      setScrollProgress(Math.min(progress, 100));
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    handleScroll();
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Ambient sound management
+  useEffect(() => {
+    if (isFocusMode && ambientSound !== "none") {
+      zenAudioService.startAmbientLandscape(ambientSound);
+    } else {
+      zenAudioService.stopAmbientLandscape();
+    }
+    return () => {
+      zenAudioService.stopAmbientLandscape();
+    };
+  }, [isFocusMode, ambientSound]);
+
+  // Mechanical typing sounds keydown listener
+  useEffect(() => {
+    if (!isFocusMode || !typewriterEnabled) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      const ignoreKeys = [
+        "Shift", "Control", "Alt", "Meta", "CapsLock",
+        "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"
+      ];
+      if (ignoreKeys.includes(e.key)) return;
+
+      zenAudioService.playTypewriterClick();
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isFocusMode, typewriterEnabled]);
 
   const { isClientEncrypted, masterKey } = useEncryption();
   const [decryptedContent, setDecryptedContent] = useState<any>(null);
@@ -156,6 +243,14 @@ export function JournalEditorShell({
 
   return (
     <div className="min-h-screen bg-background text-foreground transition-colors duration-500 relative flex flex-col w-full">
+      {/* Scroll Progress Indicator Bar */}
+      <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-secondary/30 pointer-events-none">
+        <div
+          className="h-full bg-accent transition-all duration-100 ease-out"
+          style={{ width: `${scrollProgress}%` }}
+        />
+      </div>
+
       {/* Top fading gradient header spacer (hidden in focus mode) */}
       {!isFocusMode && (
         <div className="fixed top-0 left-0 right-0 z-20 h-20 sm:h-28 bg-gradient-to-b from-background via-background/80 to-transparent pointer-events-none transition-opacity duration-300" />
@@ -242,6 +337,10 @@ export function JournalEditorShell({
               editor={editorInstance}
               isFocusMode={isFocusMode}
               onToggleFocusMode={() => setIsFocusMode(!isFocusMode)}
+              typewriterEnabled={typewriterEnabled}
+              onToggleTypewriter={() => setTypewriterEnabled(!typewriterEnabled)}
+              ambientSound={ambientSound}
+              onChangeAmbientSound={setAmbientSound}
             />
           </div>
         )}

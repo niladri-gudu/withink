@@ -2,11 +2,10 @@
 
 import * as React from "react";
 import {
-  deriveKeyFromPassword,
   decryptText,
   importKeyFromHex,
-  deriveKeyFromPassword as derivePasscodeKey
 } from "@/lib/crypto-client";
+import { deriveKeyFromPasswordAsync } from "@/lib/crypto-worker-client";
 
 interface EncryptionSettings {
   isClientEncrypted: boolean;
@@ -68,7 +67,7 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
 
       try {
         // 1. Derive the temporary key from the Sanctuary Password + Salt
-        const passwordKey = await deriveKeyFromPassword(password, encryptionSalt);
+        const passwordKey = await deriveKeyFromPasswordAsync(password, encryptionSalt);
 
         // 2. Try to decrypt the verification ciphertext (which yields the Master Key hex)
         const decryptedMasterKeyHex = await decryptText(verificationCiphertext, passwordKey);
@@ -101,7 +100,7 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
       try {
         // 1. Derive the Passcode Key from the 4-digit PIN + Salt
         // Using iterations = 50000 for faster PIN verification
-        const pinKey = await derivePasscodeKey(pin, encryptionSalt, 50000);
+        const pinKey = await deriveKeyFromPasswordAsync(pin, encryptionSalt, 50000);
 
         // 2. Decrypt the Master Key hex from localStorage
         const decryptedMasterKeyHex = await decryptText(encryptedMasterKeyHex, pinKey);
