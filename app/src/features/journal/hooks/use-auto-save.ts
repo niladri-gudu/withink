@@ -4,6 +4,7 @@ import { getLocalDateString } from "@/lib/utils/date";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEncryption } from "@/providers/encryption-provider";
 import { encryptText } from "@/lib/crypto-client";
+import { sanctuaryCacheService } from "../services/sanctuary-cache-service";
 
 export type SaveStatus = "idle" | "saving" | "saved" | "error";
 
@@ -144,6 +145,19 @@ export function useAutoSave(
         );
 
         if (result.success && result.data) {
+          // Update the local cache metadata in IndexedDB so timeline / search is instantly up to date
+          if (isClientEncrypted && masterKey) {
+            await sanctuaryCacheService.saveLocalMetadata(
+              currentPayload.date,
+              currentPayload.title,
+              currentPayload.contentText,
+              wordCount,
+              currentPayload.mood,
+              result.data.updatedAt,
+              masterKey,
+            );
+          }
+
           // Reset baseline to the values we just saved
           initialContent.current = {
             title: currentPayload.title,

@@ -24,6 +24,8 @@ import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { useEncryption } from "@/providers/encryption-provider";
 import { safeDecryptText } from "@/lib/crypto-client";
+import { sanctuaryCacheService } from "../services/sanctuary-cache-service";
+import { addDays } from "@/lib/utils/date";
 
 interface EntriesTimelineProps {
   initialEntries: DecryptedEntry[];
@@ -124,6 +126,9 @@ export function EntriesTimeline({
   
   const [deleteDateConfirm, setDeleteDateConfirm] = useState<string | null>(null);
 
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncProgress, setSyncProgress] = useState({ current: 0, total: 0 });
+
   // Search debounce effect
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -136,70 +141,100 @@ export function EntriesTimeline({
     };
   }, [search]);
 
-  // Fetch updated page list using react-query
+  // Background Cache Sync Hook
+  useEffect(() => {
+    if (!isClientEncrypted || !masterKey) return;
+
+    const runSync = async () => {
+      setIsSyncing(true);
+      try {
+        await sanctuaryCacheService.syncSanctuaryCache(masterKey, localToday, (curr, tot) => {
+          setSyncProgress({ current: curr, total: tot });
+        });
+        // Invalidate query to trigger visual updates
+        queryClient.invalidateQueries({ queryKey: ["entries"] });
+      } catch (err) {
+        console.error("Local cache sync error:", err);
+      } finally {
+        setIsSyncing(false);
+      }
+    };
+
+    runSync();
+  }, [isClientEncrypted, masterKey, localToday, queryClient]);
+
+  // Fetch updated page list using react-query (supporting fast local search for ZK mode)
   const { data, isFetching } = useQuery({
     queryKey: ["entries", { page, search: debouncedSearch, moodFilter, timeFilter, localToday, isClientEncrypted, isUnlocked: !!masterKey }],
     queryFn: async () => {
-      const limit = (isClientEncrypted && debouncedSearch) ? 5000 : LIMIT;
-      const res = await getEntriesListAction((isClientEncrypted && debouncedSearch) ? 1 : page, limit, {
-        search: isClientEncrypted ? undefined : (debouncedSearch || undefined),
-        mood: moodFilter === "all" ? null : Number(moodFilter),
-        timeFilter,
-        today: localToday,
-      });
-      if (!res.success || !res.data) {
-        console.error("Failed to load entries:", res.error);
-        throw new Error(res.error || "Failed to fetch entries");
-      }
-
-      let rawEntries = res.data.entries;
-      const total = res.data.total;
-
-      // Decrypt client-side if encrypted
       if (isClientEncrypted && masterKey) {
-        const decrypted = [];
-        for (const entry of rawEntries) {
-          const title = await safeDecryptText(entry.title, masterKey);
-          const contentHtml = await safeDecryptText(entry.contentHtml, masterKey);
-          const contentText = await safeDecryptText(entry.contentText, masterKey);
-          
-          let contentJson = entry.contentJson;
-          if (typeof entry.contentJson === "string") {
-            const decJson = await safeDecryptText(entry.contentJson, masterKey);
-            try {
-              contentJson = JSON.parse(decJson);
-            } catch {
-              contentJson = {};
-            }
-          }
-          decrypted.push({ ...entry, title, contentHtml, contentText, contentJson });
-        }
-        rawEntries = decrypted;
-      }
-
-      // If client-encrypted and search query is present, filter locally!
-      if (isClientEncrypted && debouncedSearch) {
-        const queryLower = debouncedSearch.trim().toLowerCase();
-        const filtered = rawEntries.filter((entry) => {
-          if (entry.title?.toLowerCase().includes(queryLower)) return true;
-          if (entry.contentText?.toLowerCase().includes(queryLower)) return true;
-          if (entry.date?.includes(queryLower)) return true;
-          return false;
-        });
+        // Fetch and decrypt metadata directly from browser cache (no network overhead!)
+        const cached = await sanctuaryCacheService.getLocalCacheTimeline(masterKey);
         
-        // Paginate local results
+        let filtered = cached.map(item => ({
+          ...item,
+          id: item.date,
+          userId: "",
+          contentHtml: "",
+          contentText: item.snippet,
+          contentJson: {},
+          createdAt: new Date(item.updatedAt),
+          updatedAt: new Date(item.updatedAt)
+        }));
+
+        // Filter by mood
+        if (moodFilter !== "all") {
+          const m = Number(moodFilter);
+          filtered = filtered.filter(item => item.mood === m);
+        }
+
+        // Filter by time range
+        if (timeFilter !== "all") {
+          filtered = filtered.filter(item => {
+            if (timeFilter === "week") {
+              return item.date >= addDays(localToday, -7) && item.date <= localToday;
+            } else if (timeFilter === "month") {
+              return item.date >= addDays(localToday, -30) && item.date <= localToday;
+            }
+            return true;
+          });
+        }
+
+        // Filter by search query
+        if (debouncedSearch) {
+          const queryLower = debouncedSearch.trim().toLowerCase();
+          filtered = filtered.filter(item => {
+            return (
+              item.title.toLowerCase().includes(queryLower) ||
+              item.contentText.toLowerCase().includes(queryLower) ||
+              item.date.includes(queryLower)
+            );
+          });
+        }
+
+        // Paginate locally
         const startIndex = (page - 1) * LIMIT;
         const paginated = filtered.slice(startIndex, startIndex + LIMIT);
+
         return {
-          entries: paginated,
+          entries: paginated as unknown as DecryptedEntry[],
           total: filtered.length,
         };
       }
 
-      return {
-        entries: rawEntries,
-        total,
-      };
+      // Default behavior for unencrypted users: remote search API call
+      const res = await getEntriesListAction(page, LIMIT, {
+        search: debouncedSearch || undefined,
+        mood: moodFilter === "all" ? null : Number(moodFilter),
+        timeFilter,
+        today: localToday,
+      });
+
+      if (!res.success || !res.data) {
+        throw new Error(res.error || "Failed to fetch entries");
+      }
+
+      return res.data;
     },
     initialData: () => {
       const isDefaultState = page === 1 && !debouncedSearch && moodFilter === "all" && timeFilter === "all";
@@ -219,8 +254,11 @@ export function EntriesTimeline({
 
   const deleteMutation = useMutation({
     mutationFn: (date: string) => deleteEntryAction(date),
-    onSuccess: (res, date) => {
+    onSuccess: async (res, date) => {
       if (res.success) {
+        if (isClientEncrypted) {
+          await sanctuaryCacheService.deleteLocalMetadata(date);
+        }
         toast.success(`Entry for ${formatDate(date)} deleted.`);
         setDeleteDateConfirm(null);
         onEntryDeleted?.();
@@ -307,6 +345,14 @@ export function EntriesTimeline({
           </select>
         </div>
       </div>
+
+      {/* Background Syncing Progress Indicator */}
+      {isSyncing && syncProgress.total > 0 && (
+        <div className="text-xs font-mono text-primary/70 animate-pulse flex items-center gap-2 px-3 py-1.5 rounded-xl bg-primary/5 border border-primary/10 select-none">
+          <Loader2 className="h-3.5 w-3.5 animate-spin text-primary shrink-0" />
+          <span>Syncing journal cache: {syncProgress.current} of {syncProgress.total} reflections...</span>
+        </div>
+      )}
 
       {/* Timeline entries list */}
       <div className="relative space-y-4">

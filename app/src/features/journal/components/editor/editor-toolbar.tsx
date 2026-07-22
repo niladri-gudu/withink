@@ -190,13 +190,17 @@ export function EditorToolbar({ editor, isFocusMode, onToggleFocusMode }: Toolba
       .run();
 
     try {
+      // Compress the image before uploading (resizes to 1600px WebP at 80% quality)
+      const { compressImage } = await import("@/lib/image-compressor");
+      const compressedFile = await compressImage(file);
+
       const res = await fetch("/api/media/upload", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          filename: file.name,
-          contentType: file.type,
-          size: file.size,
+          filename: compressedFile.name,
+          contentType: compressedFile.type,
+          size: compressedFile.size,
         }),
       });
 
@@ -206,8 +210,8 @@ export function EditorToolbar({ editor, isFocusMode, onToggleFocusMode }: Toolba
 
       await fetch(presignedUrl, {
         method: "PUT",
-        body: file,
-        headers: { "Content-Type": file.type },
+        body: compressedFile,
+        headers: { "Content-Type": compressedFile.type },
       });
 
       replacePlaceholder(tempId, publicUrl);
