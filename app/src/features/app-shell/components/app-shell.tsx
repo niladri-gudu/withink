@@ -233,7 +233,10 @@ export function AppShell({ children, user }: AppShellProps) {
         />
       )}
 
-      <div className="flex h-screen w-full overflow-hidden bg-background">
+      <div 
+        className="flex h-screen w-full overflow-hidden bg-background"
+        style={{ "--sidebar-width": isCollapsed ? "64px" : "256px" } as React.CSSProperties}
+      >
       {/* Skip to main content link for keyboard navigation accessibility */}
       <a
         href="#main-content"

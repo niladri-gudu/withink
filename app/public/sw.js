@@ -1,8 +1,6 @@
 // Withink PWA Service Worker for offline-first journal access
 const CACHE_NAME = "withink-shell-v1";
 const ASSETS_TO_CACHE = [
-  "/",
-  "/entries",
   "/manifest.json",
   "/icon.svg",
 ];
@@ -52,24 +50,37 @@ self.addEventListener("fetch", (event) => {
 
       return fetch(req)
         .then((networkResponse) => {
-          // Cache Next.js built chunks and fonts dynamically on navigation
+          // Cache successful GET requests for resources we want to cache offline
           if (
             networkResponse &&
             networkResponse.status === 200 &&
-            (req.url.includes("/_next/static/") || req.url.includes("/fonts/"))
+            !networkResponse.redirected
           ) {
-            const cacheCopy = networkResponse.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(req, cacheCopy);
-            });
+            const isAsset = req.url.includes("/_next/static/") || req.url.includes("/fonts/");
+            const isNav = req.headers.get("accept")?.includes("text/html");
+
+            if (isAsset || isNav) {
+              const cacheCopy = networkResponse.clone();
+              caches.open(CACHE_NAME).then((cache) => {
+                cache.put(req, cacheCopy);
+              });
+            }
           }
           return networkResponse;
         })
-        .catch(() => {
+        .catch(async (err) => {
           // If offline and navigating to a page, serve the cached entries/root shell
           if (req.headers.get("accept")?.includes("text/html")) {
-            return caches.match("/entries") || caches.match("/");
+            const cachedEntries = await caches.match("/entries");
+            if (cachedEntries) {
+              return cachedEntries;
+            }
+            const cachedRoot = await caches.match("/");
+            if (cachedRoot) {
+              return cachedRoot;
+            }
           }
+          throw err;
         });
     })
   );

@@ -343,7 +343,7 @@ export function JournalEditorShell({
 
       {/* Floating Formatting Toolbar */}
       <div
-        className="fixed left-0 right-0 z-40 flex justify-center pointer-events-none transition-[bottom] duration-300 ease-out px-3 sm:px-4"
+        className="fixed left-0 md:left-[var(--sidebar-width)] right-0 z-40 flex justify-center pointer-events-none transition-[bottom,left] duration-300 ease-out px-3 sm:px-4"
         style={{ bottom: toolbarBottom }}
       >
         {editorInstance && (
