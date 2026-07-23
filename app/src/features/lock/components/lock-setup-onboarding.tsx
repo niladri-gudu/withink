@@ -9,7 +9,8 @@ import { saveLockSettingsAction } from "../actions/lock-actions";
 import { Button } from "@/components/ui/button";
 import { useFocusTrap } from "@/hooks/use-focus-trap";
 import { useEncryption } from "@/providers/encryption-provider";
-import { deriveKeyFromPassword, encryptText, exportKeyToHex } from "@/lib/crypto-client";
+import { encryptText, exportKeyToHex } from "@/lib/crypto-client";
+import { deriveKeyFromPasswordAsync } from "@/lib/crypto-worker-client";
 
 interface LockSetupOnboardingProps {
   onSetupSuccess: () => void;
@@ -81,7 +82,7 @@ export function LockSetupOnboarding({ onSetupSuccess, onDismiss }: LockSetupOnbo
       if (isClientEncrypted && masterKey && encryptionSalt) {
         try {
           const masterKeyHex = await exportKeyToHex(masterKey);
-          const pinKey = await deriveKeyFromPassword(pin, encryptionSalt, 50000);
+          const pinKey = await deriveKeyFromPasswordAsync(pin, encryptionSalt, 50000);
           const encryptedMasterKey = await encryptText(masterKeyHex, pinKey);
           localStorage.setItem("withink_encrypted_master_key", encryptedMasterKey);
           localStorage.removeItem("withink_master_key");

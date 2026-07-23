@@ -6,16 +6,26 @@ import {
   Bold,
   Italic,
   Underline,
+  Strikethrough,
+  Highlighter,
   Heading1,
   Heading2,
   Heading3,
   List,
   ListOrdered,
+  SquareCheck,
+  Quote,
+  Code,
+  RemoveFormatting,
   Link as LinkIcon,
   Unlink,
   Undo,
   Redo,
   Image as ImageIcon,
+  Maximize2,
+  Minimize2,
+  Keyboard,
+  Headphones,
 } from "lucide-react";
 import { useRef } from "react";
 import { toast } from "sonner";
@@ -23,6 +33,12 @@ import { Button } from "@/components/ui/button";
 
 interface ToolbarProps {
   editor: Editor;
+  isFocusMode?: boolean;
+  onToggleFocusMode?: () => void;
+  typewriterEnabled?: boolean;
+  onToggleTypewriter?: () => void;
+  ambientSound?: "none" | "rain" | "library" | "forest";
+  onChangeAmbientSound?: (sound: "none" | "rain" | "library" | "forest") => void;
 }
 
 // Module scope counter for unique tempIds to avoid calling Date.now() inside the component
@@ -51,17 +67,20 @@ function ToolbarButton({
       size="icon"
       onMouseDown={(e) => {
         e.preventDefault();
+        if (typeof navigator !== "undefined" && navigator.vibrate) {
+          navigator.vibrate(10);
+        }
         onClick();
       }}
       disabled={disabled}
       title={title}
       aria-label={title}
       className={`
-        h-9 w-9 p-0 rounded-md transition-all shrink-0 cursor-pointer
+        h-10 w-10 sm:h-9 sm:w-9 p-0 rounded-lg sm:rounded-md transition-all shrink-0 cursor-pointer touch-manipulation
         ${
           active
-            ? "bg-muted text-foreground border border-border/40 font-semibold"
-            : "text-muted-foreground hover:text-foreground hover:bg-muted/70"
+            ? "bg-accent/20 text-foreground border border-accent/40 font-semibold shadow-xs"
+            : "text-muted-foreground hover:text-foreground hover:bg-muted/70 active:bg-muted"
         }
         ${disabled ? "opacity-30 cursor-not-allowed" : ""}
       `}
@@ -75,7 +94,15 @@ function Divider() {
   return <div className="w-px h-5 bg-border/40 mx-1 shrink-0" />;
 }
 
-export function EditorToolbar({ editor }: ToolbarProps) {
+export function EditorToolbar({
+  editor,
+  isFocusMode,
+  onToggleFocusMode,
+  typewriterEnabled = false,
+  onToggleTypewriter,
+  ambientSound = "none",
+  onChangeAmbientSound,
+}: ToolbarProps) {
   const editorState = useEditorState({
     editor,
     selector: (ctx) => {
@@ -87,15 +114,21 @@ export function EditorToolbar({ editor }: ToolbarProps) {
             isItalic: false,
             isUnderline: false,
             isStrike: false,
+            isHighlight: false,
             isCode: false,
+            isCodeBlock: false,
+            isBlockquote: false,
             isH1: false,
             isH2: false,
             isH3: false,
             isBulletList: false,
             isOrderedList: false,
+            isTaskList: false,
             isLink: false,
             canUndo: false,
             canRedo: false,
+            words: 0,
+            chars: 0,
           };
         }
         return {
@@ -103,15 +136,21 @@ export function EditorToolbar({ editor }: ToolbarProps) {
           isItalic: ed.isActive("italic"),
           isUnderline: ed.isActive("underline"),
           isStrike: ed.isActive("strike"),
+          isHighlight: ed.isActive("highlight"),
           isCode: ed.isActive("code"),
+          isCodeBlock: ed.isActive("codeBlock"),
+          isBlockquote: ed.isActive("blockquote"),
           isH1: ed.isActive("heading", { level: 1 }),
           isH2: ed.isActive("heading", { level: 2 }),
           isH3: ed.isActive("heading", { level: 3 }),
           isBulletList: ed.isActive("bulletList"),
           isOrderedList: ed.isActive("orderedList"),
+          isTaskList: ed.isActive("taskList"),
           isLink: ed.isActive("link"),
           canUndo: typeof ed.can === "function" && ed.can()?.undo() ? true : false,
           canRedo: typeof ed.can === "function" && ed.can()?.redo() ? true : false,
+          words: ed.storage.characterCount?.words() ?? 0,
+          chars: ed.storage.characterCount?.characters() ?? 0,
         };
       } catch (err) {
         console.error("Tiptap selector error:", err);
@@ -120,15 +159,21 @@ export function EditorToolbar({ editor }: ToolbarProps) {
           isItalic: false,
           isUnderline: false,
           isStrike: false,
+          isHighlight: false,
           isCode: false,
+          isCodeBlock: false,
+          isBlockquote: false,
           isH1: false,
           isH2: false,
           isH3: false,
           isBulletList: false,
           isOrderedList: false,
+          isTaskList: false,
           isLink: false,
           canUndo: false,
           canRedo: false,
+          words: 0,
+          chars: 0,
         };
       }
     },
@@ -147,6 +192,23 @@ export function EditorToolbar({ editor }: ToolbarProps) {
     editor.chain().focus().setLink({ href: url }).run();
   };
 
+  const cycleAmbient = () => {
+    if (!onChangeAmbientSound) return;
+    const sequence: ("none" | "rain" | "library" | "forest")[] = ["none", "rain", "library", "forest"];
+    const currentIndex = sequence.indexOf(ambientSound);
+    const nextIndex = (currentIndex + 1) % sequence.length;
+    const nextSound = sequence[nextIndex]!;
+    onChangeAmbientSound(nextSound);
+
+    const labels = {
+      none: "Ambient Sound: Off 🤫",
+      rain: "Ambient Sound: Soft Rain 🌧️",
+      library: "Ambient Sound: Library Whir 📚",
+      forest: "Ambient Sound: Forest Wind 🌲",
+    };
+    toast.success(labels[nextSound]);
+  };
+
   const addImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -162,13 +224,17 @@ export function EditorToolbar({ editor }: ToolbarProps) {
       .run();
 
     try {
+      // Compress the image before uploading (resizes to 1600px WebP at 80% quality)
+      const { compressImage } = await import("@/lib/image-compressor");
+      const compressedFile = await compressImage(file);
+
       const res = await fetch("/api/media/upload", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          filename: file.name,
-          contentType: file.type,
-          size: file.size,
+          filename: compressedFile.name,
+          contentType: compressedFile.type,
+          size: compressedFile.size,
         }),
       });
 
@@ -178,8 +244,8 @@ export function EditorToolbar({ editor }: ToolbarProps) {
 
       await fetch(presignedUrl, {
         method: "PUT",
-        body: file,
-        headers: { "Content-Type": file.type },
+        body: compressedFile,
+        headers: { "Content-Type": compressedFile.type },
       });
 
       replacePlaceholder(tempId, publicUrl);
@@ -227,11 +293,13 @@ export function EditorToolbar({ editor }: ToolbarProps) {
     });
   }
 
+  const readingTime = Math.max(1, Math.ceil(editorState.words / 200));
+
   return (
     <div
       role="toolbar"
       aria-label="Formatting options"
-      className="flex items-center gap-1.5 py-1.5 flex-nowrap overflow-x-auto no-scrollbar"
+      className="flex items-center gap-1 sm:gap-1.5 py-1 px-1 flex-nowrap overflow-x-auto no-scrollbar w-full"
     >
       <ToolbarButton
         onClick={() => editor.chain().focus().undo().run()}
@@ -247,9 +315,9 @@ export function EditorToolbar({ editor }: ToolbarProps) {
       >
         <Redo className="h-4 w-4" />
       </ToolbarButton>
-      
+
       <Divider />
-      
+
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
         active={editorState.isH1}
@@ -271,9 +339,9 @@ export function EditorToolbar({ editor }: ToolbarProps) {
       >
         <Heading3 className="h-4 w-4" />
       </ToolbarButton>
-      
+
       <Divider />
-      
+
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleBold().run()}
         active={editorState.isBold}
@@ -295,9 +363,23 @@ export function EditorToolbar({ editor }: ToolbarProps) {
       >
         <Underline className="h-4 w-4" />
       </ToolbarButton>
-      
+      <ToolbarButton
+        onClick={() => editor.chain().focus().toggleStrike().run()}
+        active={editorState.isStrike}
+        title="Strikethrough"
+      >
+        <Strikethrough className="h-4 w-4" />
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={() => editor.chain().focus().toggleHighlight().run()}
+        active={editorState.isHighlight}
+        title="Highlight text"
+      >
+        <Highlighter className="h-4 w-4" />
+      </ToolbarButton>
+
       <Divider />
-      
+
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleBulletList().run()}
         active={editorState.isBulletList}
@@ -312,9 +394,30 @@ export function EditorToolbar({ editor }: ToolbarProps) {
       >
         <ListOrdered className="h-4 w-4" />
       </ToolbarButton>
-      
+      <ToolbarButton
+        onClick={() => editor.chain().focus().toggleTaskList().run()}
+        active={editorState.isTaskList}
+        title="Checklist / Task list"
+      >
+        <SquareCheck className="h-4 w-4" />
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={() => editor.chain().focus().toggleBlockquote().run()}
+        active={editorState.isBlockquote}
+        title="Blockquote"
+      >
+        <Quote className="h-4 w-4" />
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+        active={editorState.isCodeBlock || editorState.isCode}
+        title="Code block"
+      >
+        <Code className="h-4 w-4" />
+      </ToolbarButton>
+
       <Divider />
-      
+
       <ToolbarButton
         onClick={addLink}
         active={editorState.isLink}
@@ -330,9 +433,7 @@ export function EditorToolbar({ editor }: ToolbarProps) {
           <Unlink className="h-4 w-4" />
         </ToolbarButton>
       )}
-      
-      <Divider />
-      
+
       <ToolbarButton
         onClick={() => imageInputRef.current?.click()}
         title="Add image"
@@ -346,6 +447,61 @@ export function EditorToolbar({ editor }: ToolbarProps) {
         className="hidden"
         onChange={addImage}
       />
+
+      <ToolbarButton
+        onClick={() => editor.chain().focus().unsetAllMarks().clearNodes().run()}
+        title="Clear formatting"
+      >
+        <RemoveFormatting className="h-4 w-4" />
+      </ToolbarButton>
+
+      {onToggleFocusMode && (
+        <>
+          <Divider />
+          
+          {isFocusMode && onToggleTypewriter && (
+            <ToolbarButton
+              onClick={onToggleTypewriter}
+              active={typewriterEnabled}
+              title={typewriterEnabled ? "Mute Typewriter Clicks" : "Enable Typewriter Clicks"}
+            >
+              <Keyboard className={`h-4 w-4 ${typewriterEnabled ? "text-accent" : ""}`} />
+            </ToolbarButton>
+          )}
+
+          {isFocusMode && onChangeAmbientSound && (
+            <ToolbarButton
+              onClick={cycleAmbient}
+              active={ambientSound !== "none"}
+              title="Change Ambience (Rain/Library/Forest)"
+            >
+              <Headphones className={`h-4 w-4 ${ambientSound !== "none" ? "text-accent" : ""}`} />
+            </ToolbarButton>
+          )}
+
+          <ToolbarButton
+            onClick={onToggleFocusMode}
+            active={isFocusMode}
+            title={isFocusMode ? "Exit Focus Mode" : "Zen Focus Mode"}
+          >
+            {isFocusMode ? (
+              <Minimize2 className="h-4 w-4 text-accent" />
+            ) : (
+              <Maximize2 className="h-4 w-4" />
+            )}
+          </ToolbarButton>
+        </>
+      )}
+
+      <Divider />
+
+      {/* Live Word Count & Reading Time Badge */}
+      <div className="flex items-center gap-1.5 px-2 py-1 text-xs font-mono text-muted-foreground/80 shrink-0 select-none bg-muted/40 rounded-md">
+        <span>{editorState.words} {editorState.words === 1 ? "word" : "words"}</span>
+        <span className="opacity-40">•</span>
+        <span>{readingTime}m read</span>
+      </div>
     </div>
   );
 }
+

@@ -270,6 +270,12 @@ export class JournalService {
     return entries.map((entry) => this.decryptEntry(entry));
   }
 
+  static async getEntrySyncList(
+    userId: string,
+  ): Promise<{ date: string; updatedAt: Date }[]> {
+    return await EntryRepository.getSyncList(userId);
+  }
+
   /**
    * Deletes a journal entry for a user on a given date.
    */

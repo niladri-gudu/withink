@@ -278,3 +278,35 @@ export async function getAllEntriesAction(): Promise<{
   }
 }
 
+export async function getEntrySyncListAction(): Promise<{
+  success: boolean;
+  data?: { date: string; updatedAt: string }[];
+  error?: string;
+}> {
+  try {
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+    if (!session) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const unlocked = await LockService.isSessionUnlocked(session.user.id);
+    if (!unlocked) {
+      return { success: false, error: "Locked" };
+    }
+
+    const list = await JournalService.getEntrySyncList(session.user.id);
+    const data = list.map((item) => ({
+      date: item.date,
+      updatedAt: item.updatedAt instanceof Date ? item.updatedAt.toISOString() : new Date(item.updatedAt).toISOString(),
+    }));
+
+    return { success: true, data };
+  } catch (err) {
+    const appError = handleError(err);
+    return { success: false, error: appError.safeMessage };
+  }
+}
+
+

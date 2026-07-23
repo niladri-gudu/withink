@@ -4,6 +4,7 @@ import { getLocalDateString } from "@/lib/utils/date";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEncryption } from "@/providers/encryption-provider";
 import { encryptText } from "@/lib/crypto-client";
+import { sanctuaryCacheService } from "../services/sanctuary-cache-service";
 
 export type SaveStatus = "idle" | "saving" | "saved" | "error";
 
@@ -130,20 +131,53 @@ export function useAutoSave(
           }
         }
 
-        const result = await saveEntryAction(
-          {
-            date: currentPayload.date,
-            title: titlePayload,
-            mood: currentPayload.mood,
-            contentHtml: htmlPayload,
-            contentText: textPayload,
-            contentJson: jsonPayload,
-            wordCount,
-          },
-          userLocalToday,
-        );
+        let result = null;
+        let isOnline = typeof navigator !== "undefined" && navigator.onLine;
 
-        if (result.success && result.data) {
+        if (isOnline) {
+          try {
+            result = await saveEntryAction(
+              {
+                date: currentPayload.date,
+                title: titlePayload,
+                mood: currentPayload.mood,
+                contentHtml: htmlPayload,
+                contentText: textPayload,
+                contentJson: jsonPayload,
+                wordCount,
+              },
+              userLocalToday,
+            );
+          } catch (err) {
+            console.warn("Failed to reach server, falling back to offline queue:", err);
+            isOnline = false;
+          }
+        }
+
+        if (isOnline && result && result.success && result.data) {
+          // Update the local cache metadata and full document in IndexedDB
+          if (isClientEncrypted && masterKey) {
+            await sanctuaryCacheService.saveLocalDocument(
+              currentPayload.date,
+              currentPayload.title,
+              currentPayload.mood,
+              currentPayload.contentHtml,
+              currentPayload.contentText,
+              currentPayload.contentJson,
+              masterKey
+            );
+
+            await sanctuaryCacheService.saveLocalMetadata(
+              currentPayload.date,
+              currentPayload.title,
+              currentPayload.contentText,
+              wordCount,
+              currentPayload.mood,
+              result.data.updatedAt,
+              masterKey,
+            );
+          }
+
           // Reset baseline to the values we just saved
           initialContent.current = {
             title: currentPayload.title,
@@ -161,8 +195,65 @@ export function useAutoSave(
           // Return to idle status after 2 seconds
           setTimeout(() => setStatus("idle"), 2000);
         } else {
-          console.error("[useAutoSave] failed:", result.error);
-          setStatus("error");
+          // Offline mode flow: queue changes locally
+          if (!isOnline) {
+            if (isClientEncrypted && masterKey) {
+              // 1. Save full document to local cache
+              await sanctuaryCacheService.saveLocalDocument(
+                currentPayload.date,
+                currentPayload.title,
+                currentPayload.mood,
+                currentPayload.contentHtml,
+                currentPayload.contentText,
+                currentPayload.contentJson,
+                masterKey
+              );
+
+              // 2. Save metadata snippet for local timeline/search searchability
+              await sanctuaryCacheService.saveLocalMetadata(
+                currentPayload.date,
+                currentPayload.title,
+                currentPayload.contentText,
+                wordCount,
+                currentPayload.mood,
+                new Date(),
+                masterKey,
+              );
+
+              // 3. Queue update payload for offline sync
+              await sanctuaryCacheService.enqueueOfflineSync(
+                currentPayload.date,
+                {
+                  date: currentPayload.date,
+                  title: currentPayload.title,
+                  mood: currentPayload.mood,
+                  contentHtml: currentPayload.contentHtml,
+                  contentText: currentPayload.contentText,
+                  contentJson: currentPayload.contentJson,
+                  wordCount,
+                },
+                masterKey
+              );
+
+              initialContent.current = {
+                title: currentPayload.title,
+                html: currentPayload.contentHtml,
+                text: currentPayload.contentText,
+                json: currentPayload.contentJson,
+                mood: currentPayload.mood,
+              };
+              isDirty.current = false;
+              setStatus("saved");
+
+              queryClient.invalidateQueries({ queryKey: ["entries"] });
+              setTimeout(() => setStatus("idle"), 2000);
+            } else {
+              setStatus("error");
+            }
+          } else {
+            console.error("[useAutoSave] failed:", result?.error);
+            setStatus("error");
+          }
         }
       } catch (err) {
         console.error("[useAutoSave] exception:", err);

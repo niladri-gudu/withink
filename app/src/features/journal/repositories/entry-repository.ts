@@ -248,6 +248,17 @@ export class EntryRepository {
     return serialize(entries);
   }
 
+  static async getSyncList(
+    userId: string,
+  ): Promise<{ date: string; updatedAt: Date }[]> {
+    await connectDB();
+    const entries = await (EntryModel as any)
+      .find({ userId }, { date: 1, updatedAt: 1 })
+      .sort({ date: -1 })
+      .lean();
+    return serialize(entries);
+  }
+
   static async deleteEntry(userId: string, date: string): Promise<boolean> {
     await connectDB();
 

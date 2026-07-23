@@ -9,11 +9,11 @@ import { useEncryption } from "@/providers/encryption-provider";
 import { BrandLoader } from "@/components/ui/brand-loader";
 import {
   generateRandomSalt,
-  deriveKeyFromPassword,
   generateMasterKey,
   exportKeyToHex,
   encryptText,
 } from "@/lib/crypto-client";
+import { deriveKeyFromPasswordAsync } from "@/lib/crypto-worker-client";
 import {
   getPlaintextEntriesForMigrationAction,
   enableClientEncryptionAction,
@@ -94,7 +94,7 @@ export function MandatorySanctuarySetup({
 
       // 2. Generate random salt and derive password key
       const salt = generateRandomSalt();
-      const passwordKey = await deriveKeyFromPassword(password, salt);
+      const passwordKey = await deriveKeyFromPasswordAsync(password, salt);
 
       // 3. Generate secure random master key
       const newMasterKey = await generateMasterKey();
@@ -135,7 +135,7 @@ export function MandatorySanctuarySetup({
 
       // 7. If PIN lock is enabled, encrypt the master key with the PIN key
       if (diaryLockEnabled && diaryHasPasscode && pinConfirm) {
-        const pinKey = await deriveKeyFromPassword(pinConfirm, salt, 50000);
+        const pinKey = await deriveKeyFromPasswordAsync(pinConfirm, salt, 50000);
         const encryptedMasterKey = await encryptText(masterKeyHex, pinKey);
         localStorage.setItem("withink_encrypted_master_key", encryptedMasterKey);
       } else {

@@ -8,7 +8,8 @@ import { unlockAction, saveLockSettingsAction } from "../actions/lock-actions";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useEncryption } from "@/providers/encryption-provider";
-import { deriveKeyFromPassword, encryptText, exportKeyToHex } from "@/lib/crypto-client";
+import { encryptText, exportKeyToHex } from "@/lib/crypto-client";
+import { deriveKeyFromPasswordAsync } from "@/lib/crypto-worker-client";
 
 interface LockChangeModalProps {
   onClose: () => void;
@@ -91,7 +92,7 @@ export function LockChangeModal({ onClose, onSuccess }: LockChangeModalProps) {
       if (isClientEncrypted && masterKey && encryptionSalt) {
         try {
           const masterKeyHex = await exportKeyToHex(masterKey);
-          const pinKey = await deriveKeyFromPassword(newPin, encryptionSalt, 50000);
+          const pinKey = await deriveKeyFromPasswordAsync(newPin, encryptionSalt, 50000);
           const encryptedMasterKey = await encryptText(masterKeyHex, pinKey);
           localStorage.setItem("withink_encrypted_master_key", encryptedMasterKey);
           localStorage.removeItem("withink_master_key");

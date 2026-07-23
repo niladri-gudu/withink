@@ -2,11 +2,11 @@
 
 import * as React from "react";
 import {
-  deriveKeyFromPassword,
   decryptText,
   importKeyFromHex,
-  deriveKeyFromPassword as derivePasscodeKey
 } from "@/lib/crypto-client";
+import { deriveKeyFromPasswordAsync } from "@/lib/crypto-worker-client";
+import { sanctuaryCacheService } from "@/features/journal/services/sanctuary-cache-service";
 
 interface EncryptionSettings {
   isClientEncrypted: boolean;
@@ -53,6 +53,31 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
     }
   }, []);
 
+  // Background flush offline sync queue when network is restored
+  React.useEffect(() => {
+    if (!masterKey) return;
+
+    const flushQueue = async () => {
+      try {
+        const { getLocalDateString } = await import("@/lib/utils/date");
+        const localToday = getLocalDateString();
+        await sanctuaryCacheService.flushOfflineSyncQueue(masterKey, localToday);
+      } catch (err) {
+        console.error("Failed to run background sync queue flush:", err);
+      }
+    };
+
+    // Run once on unlock
+    flushQueue();
+
+    const handleOnline = () => {
+      flushQueue();
+    };
+
+    window.addEventListener("online", handleOnline);
+    return () => window.removeEventListener("online", handleOnline);
+  }, [masterKey]);
+
   const setEncryptionSettings = React.useCallback((settings: EncryptionSettings) => {
     setIsClientEncrypted(settings.isClientEncrypted);
     setEncryptionSalt(settings.encryptionSalt);
@@ -68,7 +93,7 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
 
       try {
         // 1. Derive the temporary key from the Sanctuary Password + Salt
-        const passwordKey = await deriveKeyFromPassword(password, encryptionSalt);
+        const passwordKey = await deriveKeyFromPasswordAsync(password, encryptionSalt);
 
         // 2. Try to decrypt the verification ciphertext (which yields the Master Key hex)
         const decryptedMasterKeyHex = await decryptText(verificationCiphertext, passwordKey);
@@ -101,7 +126,7 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
       try {
         // 1. Derive the Passcode Key from the 4-digit PIN + Salt
         // Using iterations = 50000 for faster PIN verification
-        const pinKey = await derivePasscodeKey(pin, encryptionSalt, 50000);
+        const pinKey = await deriveKeyFromPasswordAsync(pin, encryptionSalt, 50000);
 
         // 2. Decrypt the Master Key hex from localStorage
         const decryptedMasterKeyHex = await decryptText(encryptedMasterKeyHex, pinKey);
