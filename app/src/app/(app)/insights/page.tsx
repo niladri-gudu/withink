@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
@@ -6,7 +7,7 @@ import { InsightsService } from "@/features/insights/services/insights-service";
 import { InsightsDashboard } from "@/features/insights/components/insights-dashboard";
 import { isDateString, getLocalDateString } from "@/lib/utils/date";
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "Private Insights - Withink",
   description: "Observe long-term habits, writing streaks, and emotional baseline trends in your digital journal sanctuary.",
 };

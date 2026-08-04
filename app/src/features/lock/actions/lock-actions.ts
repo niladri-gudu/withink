@@ -8,6 +8,7 @@ import { LockService } from "../services/lock-service";
 import { passcodeSchema, updateLockSettingsSchema } from "../validation/lock-schema";
 import { handleError } from "@/server/errors";
 import { rateLimit } from "@/server/rate-limit";
+import { redis } from "@/lib/redis";
 
 /**
  * Gets the current user's lock settings configuration
@@ -30,7 +31,8 @@ export async function getLockSettingsAction(): Promise<{
     }
 
     const settings = await LockRepository.getSettings(session.user.id);
-    const isUnlocked = await LockService.isSessionUnlocked(session.user.id);
+    // Read-only: do not extend the unlock cookie when polling settings for UI state.
+    const isUnlocked = await LockService.isSessionUnlocked(session.user.id, true);
 
     return {
       success: true,
@@ -63,23 +65,32 @@ export async function unlockAction(
     // Validate input PIN format
     passcodeSchema.parse(passcode);
 
-    // Apply rate limiting (10 attempts per 5 minutes per user)
-    const limit = await rateLimit(`lock:unlock:${session.user.id}`, {
-      limit: 10,
-      windowSeconds: 300,
-    });
-    if (!limit.success) {
-      return { success: false, error: "Too many failed attempts. Please try again in 5 minutes." };
-    }
-
     const settings = await LockRepository.getSettings(session.user.id);
     if (!settings || !settings.isLockEnabled) {
       return { success: true }; // already unlocked or disabled
     }
 
+    // Rate limit only failed passcode attempts (10 per 5 minutes per user).
+    // Check AFTER verifying passcode so successful unlocks don't burn tokens.
     const verified = LockService.verifyPasscode(passcode, settings.passcodeHash);
     if (!verified) {
+      const limit = await rateLimit(`lock:unlock-failed:${session.user.id}`, {
+        limit: 10,
+        windowSeconds: 300,
+      });
+      if (!limit.success) {
+        return { success: false, error: "Too many failed attempts. Please try again in 5 minutes." };
+      }
       return { success: false, error: "Incorrect passcode" };
+    }
+
+    // Passcode correct — clear any failed-attempt counter so the user starts fresh
+    if (redis) {
+      try {
+        await redis.del(`ratelimit:lock:unlock-failed:${session.user.id}`);
+      } catch {
+        // best-effort cleanup
+      }
     }
 
     // Set cookie token
@@ -174,6 +185,15 @@ export async function requestPasscodeResetEmailAction(): Promise<{
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session) {
       return { success: false, error: "Unauthorized" };
+    }
+
+    // Apply rate limiting (3 reset emails per 15 minutes per user) to prevent email bombing
+    const limit = await rateLimit(`lock:request-reset-email:${session.user.id}`, {
+      limit: 3,
+      windowSeconds: 900,
+    });
+    if (!limit.success) {
+      return { success: false, error: "Too many reset requests. Please try again later." };
     }
 
     const sent = await LockService.sendResetEmail(

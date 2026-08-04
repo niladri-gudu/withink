@@ -22,6 +22,7 @@ import type { DecryptedEntry } from "../../journal/services/journal-service";
 import { cn } from "@/lib/utils";
 import { useEncryption } from "@/providers/encryption-provider";
 import { safeDecryptText } from "@/lib/crypto-client";
+import { formatDisplayDate } from "@/lib/utils/date";
 
 const moodIcons: Record<number, React.ComponentType<{ className?: string }>> = {
   1: Angry,
@@ -46,17 +47,6 @@ const moodColors: Record<number, string> = {
   4: "text-mood-4 bg-mood-4-bg border-mood-4-border",
   5: "text-mood-5 bg-mood-5-bg border-mood-5-border",
 };
-
-function formatDate(dateString: string) {
-  const [year, month, day] = dateString.split("-").map(Number);
-  if (year === undefined || month === undefined || day === undefined) return dateString;
-  return new Date(year, month - 1, day).toLocaleDateString("en-US", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
-}
 
 interface FlashbackViewProps {
   initialEntry: DecryptedEntry | null;
@@ -178,7 +168,12 @@ export function FlashbackView({ initialEntry, initialLabel, localToday }: Flashb
             </span>
           </h1>
           <p className="text-body-small text-muted-foreground mt-1">
-            Written on {formatDate(entry.date)}
+            Written on {formatDisplayDate(entry.date, {
+              weekday: "long",
+              month: "long",
+              day: "numeric",
+              year: "numeric",
+            })}
           </p>
         </div>
 

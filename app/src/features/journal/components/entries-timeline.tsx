@@ -23,9 +23,9 @@ import type { DecryptedEntry } from "../services/journal-service";
 import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { useEncryption } from "@/providers/encryption-provider";
-import { safeDecryptText } from "@/lib/crypto-client";
 import { sanctuaryCacheService } from "../services/sanctuary-cache-service";
 import { addDays } from "@/lib/utils/date";
+import { formatDisplayDate } from "@/lib/utils/date";
 
 interface EntriesTimelineProps {
   initialEntries: DecryptedEntry[];
@@ -51,16 +51,6 @@ const moodColors: Record<number, string> = {
 };
 
 const LIMIT = 5;
-
-function formatDate(dateStr: string) {
-  const [year, month, day] = dateStr.split("-").map(Number);
-  if (year === undefined || month === undefined || day === undefined) return dateStr;
-  return new Date(year, month - 1, day).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
 
 function getSnippet(text: string, query: string, maxLength: number = 180): string {
   if (!query || !query.trim()) {
@@ -259,7 +249,7 @@ export function EntriesTimeline({
         if (isClientEncrypted) {
           await sanctuaryCacheService.deleteLocalMetadata(date);
         }
-        toast.success(`Entry for ${formatDate(date)} deleted.`);
+        toast.success(`Entry for ${formatDisplayDate(date)} deleted.`);
         setDeleteDateConfirm(null);
         onEntryDeleted?.();
         
@@ -425,7 +415,7 @@ export function EntriesTimeline({
                           <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground/60 uppercase mt-0.5">
                             <span className="flex items-center gap-1">
                               <Calendar className="h-3 w-3" />
-                              <Highlight text={formatDate(entry.date)} query={debouncedSearch} />
+                              <Highlight text={formatDisplayDate(entry.date)} query={debouncedSearch} />
                             </span>
                             <span>•</span>
                             <span>{entry.wordCount} words</span>

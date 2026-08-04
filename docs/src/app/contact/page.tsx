@@ -19,7 +19,7 @@ export default function ContactPage() {
       await navigator.clipboard.writeText(supportEmail);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch (err) {}
+    } catch {}
   };
 
   const handleSubmit = (e: React.FormEvent) => {

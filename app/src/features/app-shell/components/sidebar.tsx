@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { signOut } from "@/lib/auth-client";
 import { toast } from "sonner";
+import { clearSwCaches } from "@/lib/sw-cache";
 import { useFocusTrap } from "@/hooks/use-focus-trap";
 
 interface SidebarProps {
@@ -83,6 +84,7 @@ export function Sidebar({
         toast.error(res.error.message || "Failed to sign out.");
         return;
       }
+      await clearSwCaches();
       toast.success("Logged out of your sanctuary.");
       router.refresh();
       router.push(ROUTES.AUTH.LOGIN);

@@ -3,16 +3,12 @@ import type { IEntry } from "./entry-model";
 import { connectDB } from "@/lib/db/mongoose";
 import { getCachedValue, setCachedValue, incrementCachedValue } from "@/lib/redis";
 import { addDays, getLocalDateString, isDateString } from "@/lib/utils/date";
+import { serialize } from "@/lib/utils/serialize";
 
-const HOT_ENTRY_CACHE_TTL_SECONDS = 120; // 2 minutes for today/yesterday
-const ARCHIVE_ENTRY_CACHE_TTL_SECONDS = 7200; // 2 hours for older entries
-const ENTRY_VERSION_TTL_SECONDS = 2592000; // 30 days for version keys
-const LIST_CACHE_TTL_SECONDS = 120; // 2 minutes for listing cache
-
-function serialize<T>(value: T): T {
-  if (value === null || value === undefined) return value;
-  return JSON.parse(JSON.stringify(value)) as T;
-}
+const HOT_ENTRY_CACHE_TTL_SECONDS = 120;
+const ARCHIVE_ENTRY_CACHE_TTL_SECONDS = 7200;
+const ENTRY_VERSION_TTL_SECONDS = 2592000;
+const LIST_CACHE_TTL_SECONDS = 120;
 
 function getEntryCacheTtlSeconds(date: string, localToday?: string) {
   const today = isDateString(localToday) ? localToday : getLocalDateString();
@@ -252,7 +248,7 @@ export class EntryRepository {
     userId: string,
   ): Promise<{ date: string; updatedAt: Date }[]> {
     await connectDB();
-    const entries = await (EntryModel as any)
+    const entries = await (EntryModel as any) // eslint-disable-line @typescript-eslint/no-explicit-any
       .find({ userId }, { date: 1, updatedAt: 1 })
       .sort({ date: -1 })
       .lean();

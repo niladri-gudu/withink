@@ -10,7 +10,9 @@ let ambientFilterNode: BiquadFilterNode | null = null;
 function getClickCtx(): AudioContext | null {
   if (typeof window === "undefined") return null;
   if (!clickCtx) {
-    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    const AudioContextClass =
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext?: typeof window.AudioContext }).webkitAudioContext;
     if (AudioContextClass) {
       clickCtx = new AudioContextClass();
     }
@@ -24,7 +26,9 @@ function getClickCtx(): AudioContext | null {
 function getAmbientCtx(): AudioContext | null {
   if (typeof window === "undefined") return null;
   if (!ambientCtx) {
-    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    const AudioContextClass =
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext?: typeof window.AudioContext }).webkitAudioContext;
     if (AudioContextClass) {
       ambientCtx = new AudioContextClass();
     }
@@ -190,7 +194,7 @@ export const zenAudioService = {
         ambientCtx.close();
         ambientCtx = null;
       }
-    } catch (e) {
+    } catch {
       // already stopped/closed
     }
   }

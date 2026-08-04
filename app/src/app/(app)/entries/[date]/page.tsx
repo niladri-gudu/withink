@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import type { ComponentPropsWithoutRef } from "react";
 import Link from "next/link";
+import type { Route } from "next";
 import dynamic from "next/dynamic";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
@@ -95,7 +95,7 @@ export default async function EntryPage({ params, searchParams }: EntryPageProps
 
           <div className="space-y-4 pt-4">
             <Button asChild className="w-full h-11 cursor-pointer">
-              <Link href={(ROUTES.APP.ENTRY(today) + `?today=${today}`) as unknown as ComponentPropsWithoutRef<typeof Link>["href"]}>
+              <Link href={`${ROUTES.APP.ENTRY(today)}?today=${today}` as Route}>
                 Return to Present
               </Link>
             </Button>

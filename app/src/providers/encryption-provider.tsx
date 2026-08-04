@@ -27,6 +27,7 @@ interface EncryptionContextType {
   unlockWithPassword: (password: string) => Promise<boolean>;
   unlockWithPin: (pin: string, encryptedMasterKeyHex: string) => Promise<boolean>;
   lock: () => void;
+  clearLocalMasterKey: () => void;
 }
 
 const EncryptionContext = React.createContext<EncryptionContextType | undefined>(undefined);
@@ -53,17 +54,24 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
     }
   }, []);
 
-  // Background flush offline sync queue when network is restored
+  // Background flush offline sync queue when network is restored.
+  // Flushes on unlock, on network recovery, on tab becoming visible again,
+  // and on a periodic interval (covers "server down but navigator.onLine=true").
   React.useEffect(() => {
     if (!masterKey) return;
 
+    let isFlushing = false;
     const flushQueue = async () => {
+      if (isFlushing) return;
+      isFlushing = true;
       try {
         const { getLocalDateString } = await import("@/lib/utils/date");
         const localToday = getLocalDateString();
         await sanctuaryCacheService.flushOfflineSyncQueue(masterKey, localToday);
       } catch (err) {
         console.error("Failed to run background sync queue flush:", err);
+      } finally {
+        isFlushing = false;
       }
     };
 
@@ -74,8 +82,23 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
       flushQueue();
     };
 
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        flushQueue();
+      }
+    };
+
+    const interval = setInterval(() => {
+      flushQueue();
+    }, 30_000);
+
     window.addEventListener("online", handleOnline);
-    return () => window.removeEventListener("online", handleOnline);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("online", handleOnline);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
   }, [masterKey]);
 
   const setEncryptionSettings = React.useCallback((settings: EncryptionSettings) => {
@@ -155,6 +178,14 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
     }
   }, []);
 
+  const clearLocalMasterKey = React.useCallback(() => {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("withink_encrypted_master_key");
+      sessionStorage.removeItem("withink_master_key");
+      localStorage.removeItem("withink_master_key");
+    }
+  }, []);
+
   return (
     <EncryptionContext.Provider
       value={{
@@ -170,6 +201,7 @@ export function EncryptionProvider({ children }: { children: React.ReactNode }) 
         unlockWithPassword,
         unlockWithPin,
         lock,
+        clearLocalMasterKey,
       }}
     >
       {children}

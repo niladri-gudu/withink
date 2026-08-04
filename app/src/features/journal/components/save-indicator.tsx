@@ -1,16 +1,16 @@
 import { useEffect, useState } from "react";
-import { Loader2, CheckCheck, WifiOff } from "lucide-react";
+import { Loader2, CheckCheck, WifiOff, Lock, Save } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "motion/react";
-
-type SaveStatus = "idle" | "saving" | "saved" | "error";
+import type { SaveStatus } from "../hooks/use-auto-save";
 
 export function SaveIndicator({ status }: { status: SaveStatus }) {
-  const [isOnline, setIsOnline] = useState(true);
+  const [isOnline, setIsOnline] = useState(
+    () => typeof navigator !== "undefined" ? navigator.onLine : true,
+  );
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    setIsOnline(navigator.onLine);
 
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
@@ -37,11 +37,9 @@ export function SaveIndicator({ status }: { status: SaveStatus }) {
           className={cn(
             "flex items-center gap-2 text-xs px-3.5 py-1.5 rounded-full border shadow-sm backdrop-blur-md",
             status === "saving" && "bg-background/90 text-muted-foreground border-border",
-            status === "saved" && (
-              isOnline 
-                ? "bg-background/90 text-emerald-600 dark:text-emerald-400 border-emerald-500/10" 
-                : "bg-background/90 text-amber-600 dark:text-amber-400 border-amber-500/10"
-            ),
+            status === "saved" && "bg-background/90 text-emerald-600 dark:text-emerald-400 border-emerald-500/10",
+            status === "offline" && "bg-background/90 text-amber-600 dark:text-amber-400 border-amber-500/10",
+            status === "locked" && "bg-background/90 text-amber-600 dark:text-amber-400 border-amber-500/10",
             status === "error" && "bg-destructive/10 text-destructive border-destructive/20",
           )}
         >
@@ -53,8 +51,20 @@ export function SaveIndicator({ status }: { status: SaveStatus }) {
           )}
           {status === "saved" && (
             <>
-              <CheckCheck className={cn("h-3 w-3", isOnline ? "text-emerald-500" : "text-amber-500")} />
-              <span>{isOnline ? "Saved & synced" : "Saved locally (offline) 💾"}</span>
+              <CheckCheck className="h-3 w-3 text-emerald-500" />
+              <span>Saved & synced</span>
+            </>
+          )}
+          {status === "offline" && (
+            <>
+              <Save className="h-3 w-3 text-amber-500" />
+              <span>Saved locally — will sync</span>
+            </>
+          )}
+          {status === "locked" && (
+            <>
+              <Lock className="h-3 w-3 text-amber-500" />
+              <span>Session locked — pending save</span>
             </>
           )}
           {status === "error" && (

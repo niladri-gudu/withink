@@ -47,7 +47,7 @@
     "react-dom": "19.2.4",
     "react-hook-form": "^7.80.0",
     "resend": "^4.0.0",
-    "save-dev": "0.0.1-security",
+    "server-only": "^0.0.1",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.5.0",
     "zod": "^3.24.1"

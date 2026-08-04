@@ -1,14 +1,8 @@
 import "server-only";
-import type { Model } from "mongoose";
 import { EntryRepository } from "../repositories/entry-repository";
 import type { IEntry } from "../repositories/entry-model";
-import { encrypt, safeDecrypt } from "@/lib/encryption";
-import { countWords } from "@/lib/utils/text";
 import { addDays, isDateString } from "@/lib/utils/date";
 import { BusinessRuleError, ValidationError } from "@/server/errors";
-import { logger } from "@/server/logger";
-import { ClientEncryptionSettingsModel } from "@/features/encryption/repositories/encryption-settings-model";
-import type { IClientEncryptionSettings } from "@/features/encryption/repositories/encryption-settings-model";
 
 export interface DecryptedEntry {
   id: string;
@@ -26,24 +20,24 @@ export interface DecryptedEntry {
 
 export class JournalService {
   /**
-   * Decrypts and normalizes an entry model into a client-safe plain object.
+   * Normalizes a stored entry into a client-safe plain object.
+   *
+   * Zero-knowledge only: content fields are client-encrypted blobs that the
+   * server cannot decrypt, so they are returned as-is. Plain JSON documents
+   * (legacy/plaintext records) are parsed so callers keep working.
    */
   private static decryptEntry(entry: IEntry): DecryptedEntry {
-    const contentHtml = (safeDecrypt(entry.contentHtml) as string) || "";
-    const contentText = (safeDecrypt(entry.contentText) as string) || "";
-    const decryptedJsonStr = (safeDecrypt(entry.contentJson) as string) || "";
+    const contentHtml = entry.contentHtml || "";
+    const contentText = entry.contentText || "";
+    const contentJsonRaw = entry.contentJson || "";
 
     let contentJson: any = {}; // eslint-disable-line @typescript-eslint/no-explicit-any
-    if (decryptedJsonStr) {
+    if (contentJsonRaw) {
       try {
-        contentJson = JSON.parse(decryptedJsonStr);
-      } catch (e) {
-        if (decryptedJsonStr.includes(":")) {
-          contentJson = decryptedJsonStr;
-        } else {
-          logger.error("Failed to parse contentJson", e as Error);
-          contentJson = {};
-        }
+        contentJson = JSON.parse(contentJsonRaw);
+      } catch {
+        // Not valid JSON: it's a client-encrypted ciphertext string.
+        contentJson = contentJsonRaw;
       }
     }
 
@@ -122,11 +116,9 @@ export class JournalService {
       }
     }
 
-    // Check ZK settings
-    const settings = await (ClientEncryptionSettingsModel as Model<IClientEncryptionSettings>).findOne({ userId }).lean();
-    const isClientEncrypted = settings?.isClientEncrypted ?? false;
-
-    // 3. Construct update payload and encrypt content fields
+    // 3. Construct update payload. Zero-knowledge only: content fields are
+    //    already encrypted by the client, so they are stored as-is. (The legacy
+    //    server-side encryption path has been removed.)
     const updatePayload: Partial<Omit<IEntry, "userId" | "date">> = {};
 
     if (data.title !== undefined) {
@@ -137,32 +129,17 @@ export class JournalService {
       updatePayload.mood = data.mood;
     }
 
-    if (isClientEncrypted) {
-      // Zero-knowledge: data fields are already encrypted by the client
-      if (data.contentHtml !== undefined) {
-        updatePayload.contentHtml = data.contentHtml;
-      }
-      if (data.contentText !== undefined) {
-        updatePayload.contentText = data.contentText;
-        updatePayload.wordCount = data.wordCount ?? 0;
-      }
-      if (data.contentJson !== undefined) {
-        updatePayload.contentJson = typeof data.contentJson === "string" 
-          ? data.contentJson 
-          : JSON.stringify(data.contentJson);
-      }
-    } else {
-      // Server-side encryption
-      if (data.contentHtml !== undefined) {
-        updatePayload.contentHtml = encrypt(data.contentHtml);
-      }
-      if (data.contentText !== undefined) {
-        updatePayload.contentText = encrypt(data.contentText);
-        updatePayload.wordCount = countWords(data.contentText);
-      }
-      if (data.contentJson !== undefined) {
-        updatePayload.contentJson = encrypt(JSON.stringify(data.contentJson));
-      }
+    if (data.contentHtml !== undefined) {
+      updatePayload.contentHtml = data.contentHtml;
+    }
+    if (data.contentText !== undefined) {
+      updatePayload.contentText = data.contentText;
+      updatePayload.wordCount = data.wordCount ?? 0;
+    }
+    if (data.contentJson !== undefined) {
+      updatePayload.contentJson = typeof data.contentJson === "string"
+        ? data.contentJson
+        : JSON.stringify(data.contentJson);
     }
 
     // 4. Save through the repository

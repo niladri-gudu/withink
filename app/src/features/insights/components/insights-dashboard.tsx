@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { Flame, Sparkles, Type, BarChart3, Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/card";

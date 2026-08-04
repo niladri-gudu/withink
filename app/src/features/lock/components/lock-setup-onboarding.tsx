@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { ShieldAlert, Check, Loader2, X } from "lucide-react";
+import { ShieldAlert, Check, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { saveLockSettingsAction } from "../actions/lock-actions";
@@ -13,12 +13,12 @@ import { encryptText, exportKeyToHex } from "@/lib/crypto-client";
 import { deriveKeyFromPasswordAsync } from "@/lib/crypto-worker-client";
 
 interface LockSetupOnboardingProps {
-  onSetupSuccess: () => void;
-  onDismiss: () => void;
+  pin?: string;
+  onSetupSuccess: (masterKeyHex?: string, salt?: string, verificationCiphertext?: string, pin?: string) => void;
 }
 
-export function LockSetupOnboarding({ onSetupSuccess, onDismiss }: LockSetupOnboardingProps) {
-  const [pin, setPin] = React.useState("");
+export function LockSetupOnboarding({ pin: prefilledPin, onSetupSuccess }: LockSetupOnboardingProps) {
+  const [pin, setPin] = React.useState(prefilledPin || "");
   const [confirmPin, setConfirmPin] = React.useState("");
   const [step, setStep] = React.useState<1 | 2>(1);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -91,7 +91,7 @@ export function LockSetupOnboarding({ onSetupSuccess, onDismiss }: LockSetupOnbo
         }
       }
       toast.success("Sanctuary passcode configured successfully!", { id: toastId });
-      onSetupSuccess();
+      onSetupSuccess("", "", "", pin);
     } else {
       toast.error(res.error || "Failed to set passcode", { id: toastId });
     }
@@ -108,14 +108,6 @@ export function LockSetupOnboarding({ onSetupSuccess, onDismiss }: LockSetupOnbo
         transition={{ type: "spring", stiffness: 200, damping: 22 }}
         className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-xl sm:p-8 relative"
       >
-        <button
-          onClick={onDismiss}
-          className="absolute right-4 top-4 text-muted-foreground hover:text-foreground rounded-full p-1 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-          aria-label="Skip setup"
-        >
-          <X className="h-5 w-5" />
-        </button>
-
         <div className="flex flex-col items-center text-center">
           {/* Logo / Header */}
           <div className="mb-6 flex flex-col items-center">
@@ -186,9 +178,6 @@ export function LockSetupOnboarding({ onSetupSuccess, onDismiss }: LockSetupOnbo
                 </div>
 
                 <div className="flex gap-3 justify-end pt-2">
-                  <Button type="button" variant="ghost" onClick={onDismiss} className="rounded-full">
-                    Skip for now
-                  </Button>
                   <Button type="submit" disabled={pin.length !== 4} className="rounded-full px-6">
                     Continue
                   </Button>

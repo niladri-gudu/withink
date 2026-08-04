@@ -216,7 +216,7 @@ export const sanctuaryCacheService = {
     mood: number | null,
     contentHtml: string,
     contentText: string,
-    contentJson: any,
+    contentJson: any, // eslint-disable-line @typescript-eslint/no-explicit-any
     masterKey: CryptoKey
   ): Promise<void> {
     try {
@@ -247,7 +247,7 @@ export const sanctuaryCacheService = {
     mood: number | null;
     contentHtml: string;
     contentText: string;
-    contentJson: any;
+    contentJson: any; // eslint-disable-line @typescript-eslint/no-explicit-any
   } | null> {
     try {
       const encrypted = await sanctuaryCacheDB.getDocument(date);
@@ -271,7 +271,7 @@ export const sanctuaryCacheService = {
       mood: number | null;
       contentHtml: string;
       contentText: string;
-      contentJson: any;
+      contentJson: any; // eslint-disable-line @typescript-eslint/no-explicit-any
       wordCount: number;
     },
     masterKey: CryptoKey
@@ -281,6 +281,17 @@ export const sanctuaryCacheService = {
       await sanctuaryCacheDB.setSyncItem(date, encrypted);
     } catch (err) {
       console.error(`Failed to queue offline sync for ${date}:`, err);
+    }
+  },
+
+  /**
+   * Removes a single item from the offline sync queue
+   */
+  async removeOfflineSync(date: string): Promise<void> {
+    try {
+      await sanctuaryCacheDB.deleteSyncItem(date);
+    } catch (err) {
+      console.error(`Failed to remove offline sync item for ${date}:`, err);
     }
   },
 
@@ -322,7 +333,7 @@ export const sanctuaryCacheService = {
 
           if (result.success && result.data) {
             // Delete from queue and update local metadata/document timestamps
-            await sanctuaryCacheDB.deleteSyncItem(payload.date);
+            await this.removeOfflineSync(payload.date);
             await this.saveLocalMetadata(
               payload.date,
               payload.title,

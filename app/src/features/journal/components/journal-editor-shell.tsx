@@ -28,23 +28,13 @@ import { useEncryption } from "@/providers/encryption-provider";
 import { decryptText } from "@/lib/crypto-client";
 import { zenAudioService } from "@/lib/zen-audio";
 import { sanctuaryCacheService } from "../services/sanctuary-cache-service";
+import { formatDisplayDate } from "@/lib/utils/date";
 
 interface Props {
   date: string;
   initialTitle: string;
   initialContent: any;
   initialMood: number | null;
-}
-
-function formatDate(dateStr: string) {
-  const [year, month, day] = dateStr.split("-").map(Number);
-  if (year === undefined || month === undefined || day === undefined) return dateStr;
-  return new Date(year, month - 1, day).toLocaleDateString("en-US", {
-    weekday: "short",
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
 }
 
 export function JournalEditorShell({
@@ -102,7 +92,7 @@ export function JournalEditorShell({
       setScrollProgress(Math.min(progress, 100));
     };
 
-    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
     handleScroll();
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
@@ -199,7 +189,7 @@ export function JournalEditorShell({
       }
     };
     loadContent();
-  }, [initialTitle, initialContent, isClientEncrypted, masterKey]);
+  }, [initialTitle, initialContent, isClientEncrypted, masterKey, date]);
 
   // Setup scroll-padding for visual viewport (keyboard avoidance on mobile/Safari)
   useEffect(() => {
@@ -312,7 +302,7 @@ export function JournalEditorShell({
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-4 border-y border-border/10 transition-opacity duration-300">
               <div className="flex items-center gap-3">
                 <time className="text-xs font-mono uppercase tracking-widest text-muted-foreground/70">
-                  {formatDate(date)}
+                  {formatDisplayDate(date)}
                 </time>
               </div>
 

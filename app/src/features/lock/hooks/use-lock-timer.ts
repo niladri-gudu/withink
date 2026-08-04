@@ -28,14 +28,15 @@ export function useLockTimer({
       if (timerRef.current) {
         clearTimeout(timerRef.current);
       }
-      
-      // If timeoutMs is 0, it locks immediately when inactive (we treat it as active-only)
-      // Otherwise, only set timeout if it's positive
-      if (timeoutMs > 0) {
-        timerRef.current = setTimeout(() => {
-          onLock();
-        }, timeoutMs);
-      }
+
+      // timeoutMs < 0 means "never lock on inactivity" (e.g. -1): skip entirely.
+      if (timeoutMs < 0) return;
+
+      // timeoutMs === 0 means "lock immediately": a zero-delay timer fires on the
+      // next event-loop tick unless an activity event resets it first.
+      timerRef.current = setTimeout(() => {
+        onLock();
+      }, timeoutMs);
     };
 
     // Initialize timer on mount/update

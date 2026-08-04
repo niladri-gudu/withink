@@ -270,6 +270,11 @@ export async function getAllEntriesAction(): Promise<{
       return { success: false, error: "Unauthorized" };
     }
 
+    const unlocked = await LockService.isSessionUnlocked(session.user.id);
+    if (!unlocked) {
+      return { success: false, error: "Locked" };
+    }
+
     const entries = await JournalService.getAllEntriesForExport(session.user.id);
     return { success: true, data: entries };
   } catch (err) {

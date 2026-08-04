@@ -7,6 +7,9 @@ const decoder = new TextDecoder();
 // Helper: Convert hex string to Uint8Array
 export function hexToBytes(hex: string): Uint8Array {
   if (!hex) return new Uint8Array(0);
+  if (hex.length % 2 !== 0 || !/^[0-9a-fA-F]+$/.test(hex)) {
+    throw new Error("Invalid hex string");
+  }
   const bytes = new Uint8Array(hex.length / 2);
   for (let i = 0; i < bytes.length; i++) {
     bytes[i] = parseInt(hex.substring(i * 2, i * 2 + 2), 16);

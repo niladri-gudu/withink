@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import { Sidebar } from "./sidebar";
 import { Header } from "./header";
 import { useLockTimer } from "../../lock/hooks/use-lock-timer";
@@ -12,6 +13,7 @@ import { getEncryptionSettingsAction } from "../../encryption/actions/encryption
 import { SanctuaryPasswordUnlockScreen } from "../../encryption/components/sanctuary-password-unlock-screen";
 import { MandatorySanctuarySetup } from "../../encryption/components/mandatory-sanctuary-setup";
 import { BrandLoader } from "@/components/ui/brand-loader";
+import { getLocalDateString } from "@/lib/utils/date";
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -20,9 +22,12 @@ interface AppShellProps {
     email: string;
     image?: string | null;
   } | null;
+  /** Set when the server layout verified the unlock cookie before rendering the shell. */
+  sessionUnlocked?: boolean;
 }
 
-export function AppShell({ children, user }: AppShellProps) {
+export function AppShell({ children, user, sessionUnlocked = false }: AppShellProps) {
+  const router = useRouter();
   const [isCollapsed, setIsCollapsed] = React.useState(false);
   const [isMobileOpen, setIsMobileOpen] = React.useState(false);
   const [mounted, setMounted] = React.useState(false);
@@ -31,112 +36,127 @@ export function AppShell({ children, user }: AppShellProps) {
     isClientEncrypted,
     masterKey,
     setEncryptionSettings,
+    lock: lockEncryption,
   } = useEncryption();
 
-  // Lock feature states - initialized safely to avoid flashes
   const [isLockEnabled, setIsLockEnabled] = React.useState(false);
   const [hasPasscode, setHasPasscode] = React.useState(true);
-  const [autoLockTimeout, setAutoLockTimeout] = React.useState(300); // 5m default
+  const [autoLockTimeout, setAutoLockTimeout] = React.useState(300);
   const [lockOnTabHide, setLockOnTabHide] = React.useState(true);
   const [showSetupPrompt, setShowSetupPrompt] = React.useState(false);
-  const [loadingEncryption, setLoadingEncryption] = React.useState(true);
+  const [loadingEncryption, setLoadingEncryption] = React.useState(!!user);
 
-  const [isUnlocked, setIsUnlocked] = React.useState(() => {
-    if (typeof window === "undefined") return true;
-    const lockEnabled = localStorage.getItem("withink_lock_enabled") === "true";
-    const tabUnlocked = sessionStorage.getItem("withink_tab_unlocked") === "true";
-    if (lockEnabled && !tabUnlocked) return false;
-    return true;
-  });
+  // Server layout already validated the unlock cookie; client state tracks in-session auto-lock only.
+  const [isUnlocked, setIsUnlocked] = React.useState(() => sessionUnlocked || !user);
 
   const userEmail = user?.email;
 
-  // Fetch lock configurations on mount/auth change
   React.useEffect(() => {
     if (!userEmail) return;
 
-    const checkLockStatus = async () => {
-      const res = await getLockSettingsAction();
-      if (res.success && res.data) {
-        setIsLockEnabled(res.data.isLockEnabled);
-        setHasPasscode(res.data.hasPasscode);
-        setAutoLockTimeout(res.data.autoLockTimeout);
-        setLockOnTabHide(res.data.lockOnTabHide);
-        setIsUnlocked(res.data.isUnlocked);
+    const loadShellState = async () => {
+      const [lockRes, encryptionRes] = await Promise.all([
+        getLockSettingsAction(),
+        getEncryptionSettingsAction(),
+      ]);
 
-        // Update local storage configurations for zero-flash page loads
-        localStorage.setItem("withink_lock_enabled", String(res.data.isLockEnabled));
-        if (res.data.isUnlocked) {
-          sessionStorage.setItem("withink_tab_unlocked", "true");
-        } else {
-          sessionStorage.removeItem("withink_tab_unlocked");
-        }
+      if (lockRes.success && lockRes.data) {
+        setIsLockEnabled(lockRes.data.isLockEnabled);
+        setHasPasscode(lockRes.data.hasPasscode);
+        setAutoLockTimeout(lockRes.data.autoLockTimeout);
+        setLockOnTabHide(lockRes.data.lockOnTabHide);
+        setIsUnlocked(lockRes.data.isUnlocked);
 
-        // Onboarding prompt if user has no passcode set
-        if (!res.data.hasPasscode) {
+        if (!lockRes.data.hasPasscode) {
           const dismissed = sessionStorage.getItem("withink_lock_setup_dismissed");
           if (!dismissed) {
             setShowSetupPrompt(true);
           }
         }
       }
-    };
 
-    const checkEncryptionStatus = async () => {
-      try {
-        setLoadingEncryption(true);
-        const res = await getEncryptionSettingsAction();
-        if (res.success && res.data) {
-          setEncryptionSettings(res.data);
-        }
-      } catch (err) {
-        console.error("Failed to load encryption settings:", err);
-      } finally {
-        setLoadingEncryption(false);
+      if (encryptionRes.success && encryptionRes.data) {
+        setEncryptionSettings(encryptionRes.data);
       }
+
+      setLoadingEncryption(false);
     };
 
-    checkLockStatus();
-    checkEncryptionStatus();
+    void loadShellState();
   }, [userEmail, setEncryptionSettings]);
 
   const handleLock = React.useCallback(async () => {
     setIsUnlocked(false);
-    sessionStorage.removeItem("withink_tab_unlocked");
+    lockEncryption();
     await lockAction();
-  }, []);
+  }, [lockEncryption]);
 
-  // Force PIN-lock screen to show if client encryption is active but master key is missing
+  // PIN lock requires the master key in memory; re-lock if the cookie is valid but the key was cleared (refresh).
   React.useEffect(() => {
     if (typeof window === "undefined") return;
     const hasLocalEncryptedKey = !!localStorage.getItem("withink_encrypted_master_key");
-    if (isClientEncrypted && !masterKey && isUnlocked && isLockEnabled && hasPasscode && hasLocalEncryptedKey) {
-      setTimeout(() => {
-        handleLock();
+    if (
+      isClientEncrypted &&
+      !masterKey &&
+      isUnlocked &&
+      isLockEnabled &&
+      hasPasscode &&
+      hasLocalEncryptedKey
+    ) {
+      // Schedule lock outside the effect to avoid synchronous setState
+      const timer = setTimeout(() => {
+        setIsUnlocked(false);
+        lockEncryption();
+        void lockAction();
       }, 0);
+      return () => clearTimeout(timer);
     }
-  }, [isClientEncrypted, masterKey, isUnlocked, isLockEnabled, hasPasscode, handleLock]);
+  }, [isClientEncrypted, masterKey, isUnlocked, isLockEnabled, hasPasscode, lockEncryption]);
 
-  const handleUnlockSuccess = () => {
+  const handleUnlockSuccess = React.useCallback(() => {
     setIsUnlocked(true);
-    sessionStorage.setItem("withink_tab_unlocked", "true");
-  };
+  }, []);
 
-  const handleSetupSuccess = () => {
+  const [showPinSetup, setShowPinSetup] = React.useState(false);
+  const [pendingPin, setPendingPin] = React.useState("");
+  // True when this device unlocked with the Sanctuary Password but has no
+  // locally-encrypted master key, even though the account has a PIN set. The
+  // PIN encrypts the master key per-device, so a new device must bind its own.
+  const [showPinRebind, setShowPinRebind] = React.useState(false);
+
+  const handleSetupSuccess = (masterKeyHex?: string, salt?: string, verificationCiphertext?: string, pin?: string) => {
     setShowSetupPrompt(false);
     setIsLockEnabled(true);
     setHasPasscode(true);
     setIsUnlocked(true);
-    localStorage.setItem("withink_lock_enabled", "true");
-    sessionStorage.setItem("withink_tab_unlocked", "true");
+    if (pin) {
+      setPendingPin(pin);
+      setShowPinSetup(true);
+    }
   };
 
-  const handleSetupDismiss = () => {
-    setShowSetupPrompt(false);
-    sessionStorage.setItem("withink_lock_setup_dismissed", "true");
+  const handlePinSetupSuccess = () => {
+    setShowPinSetup(false);
+    setPendingPin("");
+    setShowPinRebind(false);
   };
 
-  // Bind the inactivity & visibility auto-lock timer hook
+  // Per-device PIN binding: after the master key is in memory (unlocked via the
+  // Sanctuary Password) but there is no local PIN key, prompt the user to set a
+  // PIN on this device so the fast-unlock PIN works here too.
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    const needsRebind =
+      isClientEncrypted &&
+      !!masterKey &&
+      isLockEnabled &&
+      hasPasscode &&
+      !localStorage.getItem("withink_encrypted_master_key");
+    // Schedule outside the effect to avoid synchronous setState in an effect.
+    const timer = setTimeout(() => setShowPinRebind(needsRebind), 0);
+    return () => clearTimeout(timer);
+  }, [isClientEncrypted, masterKey, isLockEnabled, hasPasscode]);
+
   useLockTimer({
     isLockEnabled: isLockEnabled && hasPasscode,
     timeoutMs: autoLockTimeout * 1000,
@@ -145,7 +165,6 @@ export function AppShell({ children, user }: AppShellProps) {
     onLock: handleLock,
   });
 
-  // Synchronize collapse state with localStorage on mount to prevent hydration flash
   React.useEffect(() => {
     const saved = localStorage.getItem("withink_sidebar_collapsed");
     if (saved !== null) {
@@ -155,26 +174,23 @@ export function AppShell({ children, user }: AppShellProps) {
     setMounted(true);
   }, []);
 
-  // Synchronize client local date with a cookie for server components
   React.useEffect(() => {
     const getCookie = (name: string) => {
       const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"));
       return match ? match[2] : null;
     };
 
-    const date = new Date();
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    const localDateStr = `${year}-${month}-${day}`;
-
+    const localDateStr = getLocalDateString();
     const existingCookie = getCookie("withink-local-date");
 
     if (existingCookie !== localDateStr) {
       document.cookie = `withink-local-date=${localDateStr}; path=/; max-age=31536000; SameSite=Lax`;
-      window.location.reload();
+      // Use a soft refresh (not a full reload) so in-memory client state such as
+      // the decrypted master key survives. A hard reload on a new device would
+      // re-prompt for the Sanctuary Password immediately after unlocking.
+      router.refresh();
     }
-  }, []);
+  }, [router]);
 
   const handleToggleCollapse = () => {
     const nextCollapsed = !isCollapsed;
@@ -182,19 +198,17 @@ export function AppShell({ children, user }: AppShellProps) {
     localStorage.setItem("withink_sidebar_collapsed", String(nextCollapsed));
   };
 
-  const showPasswordUnlockPrompt = React.useMemo(() => {
-    if (typeof window === "undefined") return false;
-    const hasLocalEncryptedKey = !!localStorage.getItem("withink_encrypted_master_key");
-    return isClientEncrypted && !masterKey && (!isLockEnabled || !hasPasscode || !hasLocalEncryptedKey);
-  }, [isClientEncrypted, masterKey, isLockEnabled, hasPasscode]);
+  const hasLocalEncryptedKey = typeof window !== "undefined"
+    ? !!localStorage.getItem("withink_encrypted_master_key")
+    : false;
 
-  const wasPasswordPromptActiveRef = React.useRef(false);
-  if (showPasswordUnlockPrompt) {
-    wasPasswordPromptActiveRef.current = true;
-  }
-  if (isUnlocked) {
-    wasPasswordPromptActiveRef.current = false;
-  }
+  const showPasswordUnlockPrompt = React.useMemo(() => {
+    return (
+      isClientEncrypted &&
+      !masterKey &&
+      (!isLockEnabled || !hasPasscode || !hasLocalEncryptedKey)
+    );
+  }, [isClientEncrypted, masterKey, isLockEnabled, hasPasscode, hasLocalEncryptedKey]);
 
   if (user && loadingEncryption) {
     return <BrandLoader message="preparing your private sanctuary..." />;
@@ -205,18 +219,30 @@ export function AppShell({ children, user }: AppShellProps) {
       <MandatorySanctuarySetup
         diaryLockEnabled={isLockEnabled}
         diaryHasPasscode={hasPasscode}
-        onSetupSuccess={() => {}}
+        onSetupSuccess={handleSetupSuccess}
       />
+    );
+  }
+
+  if (user && showPinSetup && pendingPin) {
+    return (
+      <LockSetupOnboarding
+        pin={pendingPin}
+        onSetupSuccess={handlePinSetupSuccess}
+      />
+    );
+  }
+
+  if (user && showPinRebind) {
+    return (
+      <LockSetupOnboarding onSetupSuccess={handlePinSetupSuccess} />
     );
   }
 
   return (
     <>
-      {user && !isUnlocked && !showPasswordUnlockPrompt && !wasPasswordPromptActiveRef.current && (
-        <LockScreen
-          onUnlockSuccess={handleUnlockSuccess}
-          userEmail={user.email}
-        />
+      {user && !isUnlocked && !showPasswordUnlockPrompt && (
+        <LockScreen onUnlockSuccess={handleUnlockSuccess} userEmail={user.email} />
       )}
 
       {user && showPasswordUnlockPrompt && (
@@ -229,42 +255,39 @@ export function AppShell({ children, user }: AppShellProps) {
       {user && showSetupPrompt && (
         <LockSetupOnboarding
           onSetupSuccess={handleSetupSuccess}
-          onDismiss={handleSetupDismiss}
         />
       )}
 
-      <div 
+      <div
         className="flex h-screen w-full overflow-hidden bg-background"
         style={{ "--sidebar-width": isCollapsed ? "64px" : "256px" } as React.CSSProperties}
       >
-      {/* Skip to main content link for keyboard navigation accessibility */}
-      <a
-        href="#main-content"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[9999] focus:px-4 focus:py-2 focus:bg-background focus:text-foreground focus:border focus:border-border focus:rounded-xl focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 text-sm font-medium"
-      >
-        Skip to main content
-      </a>
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[9999] focus:px-4 focus:py-2 focus:bg-background focus:text-foreground focus:border focus:border-border focus:rounded-xl focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 text-sm font-medium"
+        >
+          Skip to main content
+        </a>
 
-      {/* Sidebar navigation */}
-      <Sidebar
-        isCollapsed={mounted ? isCollapsed : false}
-        onToggleCollapse={handleToggleCollapse}
-        isMobileOpen={isMobileOpen}
-        onCloseMobile={() => setIsMobileOpen(false)}
-        user={user}
-      />
+        <Sidebar
+          isCollapsed={mounted ? isCollapsed : false}
+          onToggleCollapse={handleToggleCollapse}
+          isMobileOpen={isMobileOpen}
+          onCloseMobile={() => setIsMobileOpen(false)}
+          user={user}
+        />
 
-      {/* Main panel layout container */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
-        {/* Top Header */}
-        <Header onOpenMobile={() => setIsMobileOpen(true)} />
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
+          <Header onOpenMobile={() => setIsMobileOpen(true)} />
 
-        {/* Scrollable page area */}
-        <main id="main-content" className="flex-1 overflow-y-auto min-w-0 focus:outline-none no-scrollbar flex flex-col">
-          {children}
-        </main>
+          <main
+            id="main-content"
+            className="flex-1 overflow-y-auto min-w-0 focus:outline-none no-scrollbar flex flex-col"
+          >
+            {children}
+          </main>
+        </div>
       </div>
-    </div>
     </>
   );
 }

@@ -10,6 +10,7 @@ import { EntryModel } from "@/features/journal/repositories/entry-model";
 import type { IEntry } from "@/features/journal/repositories/entry-model";
 import { EntryRepository } from "@/features/journal/repositories/entry-repository";
 import { safeDecrypt } from "@/lib/encryption";
+import { LockService } from "@/features/lock/services/lock-service";
 import { handleError } from "@/server/errors";
 
 export async function getEncryptionSettingsAction(): Promise<{
@@ -80,6 +81,11 @@ export async function getPlaintextEntriesForMigrationAction(): Promise<{
       return { success: false, error: "Unauthorized" };
     }
 
+    const unlocked = await LockService.isSessionUnlocked(session.user.id);
+    if (!unlocked) {
+      return { success: false, error: "Locked" };
+    }
+
     await connectDB();
     
     // Safety check: Do not export plaintext if zero-knowledge is already enabled
@@ -147,6 +153,11 @@ export async function enableClientEncryptionAction(
       return { success: false, error: "Unauthorized" };
     }
 
+    const unlocked = await LockService.isSessionUnlocked(session.user.id);
+    if (!unlocked) {
+      return { success: false, error: "Locked" };
+    }
+
     await connectDB();
 
     // Check ZK is already active
@@ -155,6 +166,28 @@ export async function enableClientEncryptionAction(
     }).lean();
     if (settings?.isClientEncrypted) {
       return { success: false, error: "Client-side encryption is already active" };
+    }
+
+    // Validate the salt (16 random bytes as 32 hex chars)
+    if (typeof salt !== "string" || !/^[0-9a-f]{32}$/i.test(salt)) {
+      return { success: false, error: "Invalid encryption salt." };
+    }
+
+    // Validate the verification ciphertext ("iv:ciphertext", both hex)
+    const isHex = (value: string) => /^[0-9a-f]+$/i.test(value);
+    const cipherParts = typeof verificationCiphertext === "string"
+      ? verificationCiphertext.split(":")
+      : [];
+    if (cipherParts.length < 2 || cipherParts.some((part) => part === "" || !isHex(part))) {
+      return { success: false, error: "Invalid verification ciphertext." };
+    }
+
+    // Verify every entry was migrated before enabling zero-knowledge
+    const totalEntries = await (EntryModel as Model<IEntry>).countDocuments({
+      userId: session.user.id,
+    });
+    if (encryptedEntries.length !== totalEntries) {
+      return { success: false, error: "Some entries were not migrated. Please try again." };
     }
 
     // Update settings to enable ZK
@@ -171,8 +204,9 @@ export async function enableClientEncryptionAction(
     );
 
     // Save newly encrypted entry blobs in database
+    let migratedCount = 0;
     for (const entry of encryptedEntries) {
-      await (EntryModel as Model<IEntry>).updateOne(
+      const res = await (EntryModel as Model<IEntry>).updateOne(
         { _id: entry.id, userId: session.user.id },
         {
           $set: {
@@ -184,6 +218,11 @@ export async function enableClientEncryptionAction(
           },
         }
       );
+      if (res.matchedCount > 0) migratedCount++;
+    }
+
+    if (migratedCount !== totalEntries) {
+      return { success: false, error: "Could not verify that all entries were migrated." };
     }
 
     // Invalidate entries cache

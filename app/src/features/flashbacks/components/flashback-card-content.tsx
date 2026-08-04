@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import type { Route } from "next";
 import { ArrowRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -9,18 +10,7 @@ import { ROUTES } from "@/constants/routes";
 import { useEncryption } from "@/providers/encryption-provider";
 import { safeDecryptText } from "@/lib/crypto-client";
 import type { DecryptedEntry } from "../../journal/services/journal-service";
-
-import type { ComponentPropsWithoutRef } from "react";
-
-function formatDateShort(dateStr: string) {
-  const [year, month, day] = dateStr.split("-").map(Number);
-  if (year === undefined || month === undefined || day === undefined) return dateStr;
-  return new Date(year, month - 1, day).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
+import { formatDisplayDate } from "@/lib/utils/date";
 
 interface DashboardFlashbackCardProps {
   entry: DecryptedEntry | null;
@@ -91,7 +81,7 @@ export function DashboardFlashbackCard({ entry, label, today }: DashboardFlashba
           )}
         </CardTitle>
         <CardDescription>
-          {formatDateShort(entry.date)}
+          {formatDisplayDate(entry.date)}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -105,7 +95,7 @@ export function DashboardFlashbackCard({ entry, label, today }: DashboardFlashba
               {snippet}
             </p>
             <Button asChild variant="link" className="p-0 text-primary hover:text-primary/80 h-auto cursor-pointer text-xs font-bold font-mono uppercase tracking-widest gap-1">
-              <Link href={`${ROUTES.APP.ENTRY(entry.date)}?today=${today}` as unknown as ComponentPropsWithoutRef<typeof Link>["href"]}>
+              <Link href={`${ROUTES.APP.ENTRY(entry.date)}?today=${today}` as Route}>
                 Re-read Entry
                 <ArrowRight className="h-3 w-3" />
               </Link>

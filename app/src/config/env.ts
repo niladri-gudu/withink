@@ -70,8 +70,3 @@ export const env: ServerEnv = new Proxy({} as ServerEnv, {
     return cached[prop as keyof ServerEnv];
   },
 });
-
-/** Explicitly validate the environment (e.g. in a startup check or test). */
-export function validateServerEnv(): void {
-  cached = parseServerEnv();
-}

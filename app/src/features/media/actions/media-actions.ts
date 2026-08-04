@@ -7,8 +7,7 @@ import { r2 } from "@/lib/r2";
 import { env } from "@/config/env";
 import { connectDB } from "@/lib/db/mongoose";
 import { EntryModel } from "@/features/journal/repositories/entry-model";
-import { EntryRepository } from "@/features/journal/repositories/entry-repository";
-import { safeDecrypt, encrypt } from "@/lib/encryption";
+import { safeDecrypt } from "@/lib/encryption";
 import { handleError } from "@/server/errors";
 import { LockService } from "@/features/lock/services/lock-service";
 
@@ -129,7 +128,12 @@ export async function getFullMediaLibraryAction(): Promise<{
 }
 
 /**
- * Deletes a media file from R2 and scrubs all occurrences of its URL in user's entries.
+ * Deletes a media file from R2.
+ *
+ * Zero-knowledge only: journal content is client-encrypted, so the server
+ * cannot find or scrub references to the file. The client scrubs affected
+ * entries (decrypt -> remove -> re-encrypt -> save) BEFORE calling this
+ * action, then this action removes the object from storage.
  */
 export async function deleteMediaFileAction(
   fileKey: string,
@@ -151,80 +155,13 @@ export async function deleteMediaFileAction(
       return { success: false, error: "You are not authorized to delete this file." };
     }
 
-    // 1. Delete from R2
+    // Delete from R2
     await r2.send(
       new DeleteObjectCommand({
         Bucket: env.R2_BUCKET_NAME,
         Key: fileKey,
       }),
     );
-
-    const publicUrl = `${env.R2_PUBLIC_URL}/${fileKey}`;
-
-    // 2. Scrub from user entries in MongoDB
-    await connectDB();
-    const entries = await (EntryModel as any).find({ userId: session.user.id }).lean(); // eslint-disable-line @typescript-eslint/no-explicit-any
-    let entriesChanged = false;
-
-    interface TiptapNode {
-      type?: string;
-      attrs?: {
-        src?: string;
-        [key: string]: unknown;
-      };
-      content?: TiptapNode[];
-      [key: string]: unknown;
-    }
-
-    for (const entry of entries) {
-      const contentHtml = (safeDecrypt(entry.contentHtml) as string) || "";
-      const contentJsonRaw = (safeDecrypt(entry.contentJson) as string) || "";
-
-      if (!contentHtml.includes(publicUrl) && !contentJsonRaw.includes(publicUrl)) {
-        continue;
-      }
-
-      // Scrub from HTML img tags
-      const newHtml = contentHtml.replace(
-        new RegExp(`<img[^>]*src="${publicUrl}"[^>]*/?>`, "g"),
-        "",
-      );
-
-      // Scrub from Tiptap JSON node structure
-      let newJson = contentJsonRaw;
-      try {
-        const doc = JSON.parse(contentJsonRaw);
-        const scrub = (node: TiptapNode): TiptapNode | null => {
-          if (node?.type === "image" && node?.attrs?.src === publicUrl) {
-            return null;
-          }
-          if (Array.isArray(node?.content)) {
-            node.content = node.content.map((n) => scrub(n as TiptapNode)).filter(Boolean) as TiptapNode[];
-          }
-          return node;
-        };
-        newJson = JSON.stringify(scrub(doc));
-      } catch {
-        // malformed JSON, skip JSON structure scrub but keep HTML scrub
-      }
-
-      const dirty = newHtml !== contentHtml || newJson !== contentJsonRaw;
-
-      if (dirty) {
-        await (EntryModel as any).updateOne( // eslint-disable-line @typescript-eslint/no-explicit-any
-          { _id: entry._id },
-          {
-            contentHtml: encrypt(newHtml),
-            contentJson: encrypt(newJson),
-          },
-        );
-        entriesChanged = true;
-      }
-    }
-
-    if (entriesChanged) {
-      await EntryRepository.invalidateUserEntryCache(session.user.id);
-    }
 
     return { success: true };
   } catch (err) {
