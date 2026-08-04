@@ -1,9 +1,9 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Outfit", var(--font-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-serif: "EB Garamond", var(--font-serif), Georgia, Cambria, "Times New Roman", Times, serif;
-  --font-mono: var(--font-mono), ui-monospace, SFMono-Regular, monospace;
+  --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "EB Garamond", Georgia, Cambria, "Times New Roman", Times, serif;
+  --font-mono: ui-monospace, SFMono-Regular, monospace;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -191,7 +191,7 @@
 @layer base {
   * {
     border-color: var(--border);
-    outline-color: rgba(var(--ring), 0.5);
+    outline-color: color-mix(in oklch, var(--ring), transparent 50%);
   }
 
   html {
@@ -258,7 +258,7 @@
 
 .card-blur {
   backdrop-filter: blur(12px);
-  background-color: rgba(var(--card), 0.6);
+  background-color: color-mix(in oklch, var(--card), transparent 40%);
   border: 1px solid var(--border);
 }
 

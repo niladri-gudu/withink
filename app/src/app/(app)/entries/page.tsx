@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 };
 import { JournalService } from "@/features/journal/services/journal-service";
 import { EntriesPageShell } from "@/features/journal/components/entries-page-shell";
-import { isDateString, getLocalDateString, addDays } from "@/lib/utils/date";
+import { isDateString, getLocalDateString, computeCurrentStreak } from "@/lib/utils/date";
 
 export default async function EntriesPage() {
   const session = await auth.api.getSession({
@@ -34,27 +34,11 @@ export default async function EntriesPage() {
   ]);
 
   // 3. Compute current streak
-  let currentStreak = 0;
-  const totalEntries = dates.length;
-  if (totalEntries > 0) {
-    const yesterday = addDays(today, -1);
-    const lastEntryDate = dates[0];
-    if (lastEntryDate === today || lastEntryDate === yesterday) {
-      let expectedDate = lastEntryDate;
-      for (const entryDate of dates) {
-        if (entryDate === expectedDate) {
-          currentStreak++;
-          expectedDate = addDays(expectedDate, -1);
-        } else if (entryDate < expectedDate) {
-          break;
-        }
-      }
-    }
-  }
+  const currentStreak = computeCurrentStreak(dates, today);
 
   const streakData = {
     currentStreak,
-    totalEntries,
+    totalEntries: dates.length,
     totalWords: stats.totalWords,
     averageWords: stats.averageWords,
   };

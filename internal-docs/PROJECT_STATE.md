@@ -2,11 +2,11 @@
 
 # Project State
 
-Last Updated: 2026-07-11
+Last Updated: 2026-08-02
 
-Current Phase: Feature Enhancements
+Current Phase: Production Hardening
 
-Current Milestone: Release Ready (Sanctuary Lock Shipped)
+Current Milestone: Release Ready (Security & Housekeeping Remediation)
 
 Project Status: 🟢 Rebuild Complete and Release Ready
 
@@ -382,21 +382,26 @@ Final Polish
 
 # Current Blockers
 
-If no blockers exist:
-
 None.
 
-Otherwise document:
-
-- Problem
-- Cause
-- Proposed Solution
-
-Never leave unresolved issues undocumented.
+Note: MongoDB (`mongodb+srv://`) now connects. The earlier `querySrv ECONNREFUSED` was caused by a c-ares 1.34.6 regression in Node ≥ v24.13.0 (Windows DNS discovery returns no servers → falls back to `127.0.0.1`), not by WARP or app code — resolved by downgrading Node to v24.11.1 (c-ares 1.34.5).
 
 ---
 
 # Recent Decisions
+
+2026-08-02
+
+- Resolved MongoDB `querySrv ECONNREFUSED` (machine-level, NOT code): Root cause proven to be a c-ares 1.34.6 regression in Node ≥ v24.13.0 that fails to read Windows DNS servers (GetAdaptersAddresses) and hard-falls back to `127.0.0.1`, breaking all `dns.resolveSrv()` / `mongodb+srv://` connections. Verified via raw `GetAdaptersAddresses` probe (WARP's `127.0.2.2/127.0.2.3` were present and correct) and upstream issues (nodejs#62748, c-ares#1140). Fixed by downgrading Node v24.18.0 → v24.11.1 (bundles c-ares 1.34.5). Confirmed: `dns.getServers()` → `["127.0.0.2","127.0.0.3"]`, SRV resolves, MongoDB connects, app typecheck/lint/tests (99/99) and dev server all green. Do NOT upgrade Node past v24.12 until Node ships a c-ares 1.34.6 DNS fix.
+
+- Completed Production-Grade Security & Housekeeping Remediation (Tiers 0–6):
+  - Autosave & Offline Reliability: Rewrote `use-auto-save` with single-flight saves, retry, offline queue, and convergence dedupe; added 8 unit tests; offline edits re-sync on unlock. Service worker (`sw.js`) now handles offline navigation with a branded `offline.html`.
+  - Zero-Knowledge Server: Removed all server-side decryption of user entry content; encryption keys live only in the browser. Server retains `safeDecrypt`/`decrypt` solely for the lock session token and legacy plaintext migration. Media list/lightbox scrub user content client-side.
+  - Sanctuary Lock Hardening: Single SSR lock gate in `(app)/layout.tsx` (`SanctuaryLockGate`) covers all nested pages; `getAllEntriesAction` and `/api/media/upload` return locked errors/403 when locked. Passcode verification uses `timingSafeEqual`; reset codes use `crypto.randomInt`; reset-email requests rate-limited (3/15 min); hex validation added to crypto client and worker.
+  - CSP Hardening (both apps): `script-src 'unsafe-eval'` dev-only, added `script-src-attr 'none'` and `object-src 'none'`.
+  - App Shell & UX Fixes: Fixed `app-shell` ref-during-render (state-adjust-during-render pattern), `save-indicator` setState-in-effect, `media-lightbox` stale-cache-on-open, `journal-editor-shell` cross-date stale content, and removed `as any` casts in theme/audio files. Lint now 0 errors / 1 warning (intentional EB Garamond font link).
+  - Dependency Hygiene: Removed bogus `save-dev` (0.0.1-security) placeholder from `app/` and `docs/` package.json; declared `server-only` (used by 14+ server files) as an explicit dependency; pruned ~20 unused app-only dependencies from `docs/package.json` (docs site now installs only its ~10 real packages).
+  - Verification: Typecheck clean, lint clean (docs) / 0 errors + 1 font warning (app), full Vitest suite 99/99 passing, production builds succeed for both `app` (21 routes) and `docs` (7 routes).
 
 2026-07-11
 

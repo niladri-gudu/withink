@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { signOut } from "@/lib/auth-client";
 import { ROUTES } from "@/constants/routes";
+import { clearSwCaches } from "@/lib/sw-cache";
 
 export function LogoutButton() {
   const router = useRouter();
@@ -16,6 +17,7 @@ export function LogoutButton() {
         toast.error(res.error.message || "Failed to sign out.");
         return;
       }
+      await clearSwCaches();
       toast.success("Logged out of your sanctuary.");
       router.refresh();
       router.push(ROUTES.AUTH.LOGIN);

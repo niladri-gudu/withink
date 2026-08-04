@@ -164,40 +164,16 @@ describe("media-actions", () => {
       expect(res.error).toBe("You are not authorized to delete this file.");
     });
 
-    it("should delete from R2 and scrub Mongo entries when deleting file", async () => {
+    it("should delete the file from R2 without touching Mongo (client scrubs entries)", async () => {
       vi.mocked(r2.send).mockResolvedValue({} as any);
-      
-      const mockEntries = [
-        {
-          _id: "entry-1",
-          contentHtml: "This is a <img src=\"http://localhost:3000/r2/dev-journal/user-123/file.jpg\" /> image.",
-          contentJson: JSON.stringify({
-            type: "doc",
-            content: [
-              {
-                type: "image",
-                attrs: { src: "http://localhost:3000/r2/dev-journal/user-123/file.jpg" },
-              },
-            ],
-          }),
-        },
-      ];
-      
-      const leanMock = (EntryModel.find as any)().lean;
-      leanMock.mockResolvedValue(mockEntries);
 
       const res = await deleteMediaFileAction("dev-journal/user-123/file.jpg");
 
       expect(res.success).toBe(true);
-      expect(r2.send).toHaveBeenCalled();
-      expect(EntryModel.updateOne).toHaveBeenCalledWith(
-        { _id: "entry-1" },
-        expect.objectContaining({
-          contentHtml: expect.any(String),
-          contentJson: expect.any(String),
-        })
-      );
-      expect(EntryRepository.invalidateUserEntryCache).toHaveBeenCalledWith(mockUserId);
+      expect(r2.send).toHaveBeenCalledTimes(1);
+      expect(EntryModel.find).not.toHaveBeenCalled();
+      expect(EntryModel.updateOne).not.toHaveBeenCalled();
+      expect(EntryRepository.invalidateUserEntryCache).not.toHaveBeenCalled();
     });
 
     it("should find the corresponding entry date referencing a media URL", async () => {

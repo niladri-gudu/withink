@@ -1,4 +1,4 @@
-import { pbkdf2Sync, randomBytes } from "crypto";
+import { pbkdf2Sync, randomBytes, randomInt, timingSafeEqual } from "crypto";
 import { cookies } from "next/headers";
 import { LockRepository } from "../repositories/lock-repository";
 import { encrypt, decrypt } from "@/lib/encryption";
@@ -35,7 +35,10 @@ export class LockService {
       const [salt, hash] = storedHash.split(":");
       if (!salt || !hash) return false;
       const testHash = pbkdf2Sync(passcode, salt, 10000, 64, "sha256").toString("hex");
-      return hash === testHash;
+      const expected = Buffer.from(hash, "hex");
+      const actual = Buffer.from(testHash, "hex");
+      if (expected.length !== actual.length) return false;
+      return timingSafeEqual(expected, actual);
     } catch {
       return false;
     }
@@ -44,7 +47,7 @@ export class LockService {
   /**
    * Checks if the user's session is currently unlocked by verifying the unlock cookie.
    */
-  static async isSessionUnlocked(userId: string): Promise<boolean> {
+  static async isSessionUnlocked(userId: string, readonly = false): Promise<boolean> {
     const settings = await LockRepository.getSettings(userId);
     // If lock is disabled, user is unlocked by default
     if (!settings || !settings.isLockEnabled) {
@@ -65,12 +68,14 @@ export class LockService {
       if (Date.now() > token.expiresAt) return false;
 
       // Sliding session window: renew the cookie expiration on active verify check
-      try {
-        const timeout = settings.autoLockTimeout > 0 ? settings.autoLockTimeout : 28800;
-        await this.setUnlockCookie(userId, timeout);
-      } catch (cookieErr) {
-        // Safe fallback if called in a read-only request context (e.g. Server Component renders)
-        logger.warn("Failed to slide lock session cookie", undefined, cookieErr as Error);
+      if (!readonly) {
+        try {
+          const timeout = settings.autoLockTimeout > 0 ? settings.autoLockTimeout : 28800;
+          await this.setUnlockCookie(userId, timeout);
+        } catch (cookieErr) {
+          // Safe fallback if called in a read-only request context (e.g. Server Component renders)
+          logger.warn("Failed to slide lock session cookie", undefined, cookieErr as Error);
+        }
       }
 
       return true;
@@ -132,8 +137,8 @@ export class LockService {
   static async sendResetEmail(userId: string, email: string, name: string): Promise<boolean> {
     if (!redis) return false;
 
-    // Generate random 6-digit code
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    // Generate random 6-digit code using a CSPRNG
+    const code = randomInt(100000, 1000000).toString();
     const cacheKey = `lock:reset:${userId}`;
     
     await setCachedValue(cacheKey, code, RESET_CODE_TTL_SECONDS);
@@ -150,7 +155,7 @@ export class LockService {
                 <span style="font-size: 22px; font-weight: 900; color: #f4f4f5; letter-spacing: -1px;">withink.</span>
               </div>
               <h1 style="font-size: 24px; font-weight: 700; color: #f4f4f5; margin: 0 0 8px 0; letter-spacing: -0.5px;">Reset your diary passcode</h1>
-              <p style="font-size: 15px; color: #a1a1aa; margin: 0 0 32px 0; lineHeight: 1.6;">
+              <p style="font-size: 15px; color: #a1a1aa; margin: 0 0 32px 0; line-height: 1.6;">
                 Hey ${name}, we received a request to reset the passcode lock for your diary. Use the code below to reset your lock:
               </p>
               <div style="display: inline-block; background-color: #1e1b4b; border: 1px solid #4f46e5; color: #e0e7ff; font-weight: 700; font-size: 28px; padding: 12px 28px; border-radius: 10px; letter-spacing: 4px; text-align: center; margin-bottom: 32px;">

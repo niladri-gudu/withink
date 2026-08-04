@@ -110,6 +110,7 @@ describe("Lock Actions Suite", () => {
       const spyIsUnlocked = vi.spyOn(LockService, "isSessionUnlocked").mockResolvedValue(true);
 
       const res = await getLockSettingsAction();
+      expect(spyIsUnlocked).toHaveBeenCalledWith(mockSession.user.id, true);
       expect(res.success).toBe(true);
       expect(res.data).toEqual({
         isLockEnabled: true,

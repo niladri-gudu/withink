@@ -24,12 +24,15 @@ export function ThemeToggle() {
     const nextTheme = isDark ? "light" : "dark";
 
     // Trigger View Transition API if supported and reduced motion is disabled
+    const doc = document as Document & {
+      startViewTransition?: (callback: () => void) => unknown;
+    };
     if (
       typeof window !== "undefined" &&
-      (document as any).startViewTransition &&
+      doc.startViewTransition &&
       !window.matchMedia("(prefers-reduced-motion: reduce)").matches
     ) {
-      (document as any).startViewTransition(() => {
+      doc.startViewTransition(() => {
         setTheme(nextTheme);
       });
     } else {

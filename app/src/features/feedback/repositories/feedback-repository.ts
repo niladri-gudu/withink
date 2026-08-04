@@ -1,6 +1,7 @@
 import { FeedbackModel } from "./feedback-model";
 import type { IFeedback } from "./feedback-model";
 import { connectDB } from "@/lib/db/mongoose";
+import { serialize } from "@/lib/utils/serialize";
 
 export type CreateFeedbackData = {
   userId: string;
@@ -10,11 +11,6 @@ export type CreateFeedbackData = {
   message: string;
   imageUrl?: string;
 };
-
-function serialize<T>(value: T): T {
-  if (value === null || value === undefined) return value;
-  return JSON.parse(JSON.stringify(value)) as T;
-}
 
 /**
  * Owns persistence for feedback records. No business rules live here — the

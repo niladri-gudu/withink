@@ -62,7 +62,9 @@ function ThemeSync() {
         lastThemeRef.current = cookieTheme;
         
         // Use View Transition if available to make it smooth
-        const doc = document as any;
+        const doc = document as Document & {
+          startViewTransition?: (callback: () => void) => unknown;
+        };
         if (
           doc.startViewTransition &&
           !window.matchMedia("(prefers-reduced-motion: reduce)").matches

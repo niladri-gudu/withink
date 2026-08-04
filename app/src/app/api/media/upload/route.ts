@@ -9,6 +9,7 @@ import { auth } from "@/lib/auth";
 import { r2 } from "@/lib/r2";
 import { env } from "@/config/env";
 import { logger } from "@/server/logger";
+import { LockService } from "@/features/lock/services/lock-service";
 
 const ALLOWED_TYPES = [
   "image/jpeg",
@@ -31,6 +32,11 @@ export async function POST(req: NextRequest) {
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const unlocked = await LockService.isSessionUnlocked(session.user.id);
+    if (!unlocked) {
+      return NextResponse.json({ error: "Locked" }, { status: 403 });
     }
 
     const body = await req.json();

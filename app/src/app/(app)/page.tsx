@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import type { ComponentPropsWithoutRef } from "react";
+import type { Route } from "next";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -18,23 +18,8 @@ import { FlashbackService } from "@/features/flashbacks/services/flashback-servi
 import { DashboardFlashbackCard } from "@/features/flashbacks/components/flashback-card-content";
 import { RecentReflectionsList } from "@/features/journal/components/recent-reflections-list";
 import { TodayReflectionCard } from "@/features/journal/components/today-reflection-card";
-import { isDateString, getLocalDateString, addDays } from "@/lib/utils/date";
-import { 
-  Flame, 
-  CheckCircle2,
-  Calendar
-} from "lucide-react";
-
-function formatDate(dateStr: string) {
-  const [year, month, day] = dateStr.split("-").map(Number);
-  if (year === undefined || month === undefined || day === undefined) return dateStr;
-  return new Date(year, month - 1, day).toLocaleDateString("en-US", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
-}
+import { getLocalDateString, addDays, isDateString, formatDisplayDate, computeCurrentStreak } from "@/lib/utils/date";
+import { Flame, Calendar } from "lucide-react";
 
 export default async function DashboardPage() {
   const session = await auth.api.getSession({
@@ -51,31 +36,15 @@ export default async function DashboardPage() {
   const yesterday = addDays(today, -1);
 
   // 2. Fetch data in parallel on the server
-  const [todayEntry, yesterdayEntry, recentData, , dates] = await Promise.all([
+  const [todayEntry, yesterdayEntry, recentData, dates] = await Promise.all([
     JournalService.getEntryForDate(session.user.id, today, today),
     JournalService.getEntryForDate(session.user.id, yesterday, today),
     JournalService.getEntriesPage(session.user.id, 1, 3, { today }),
-    JournalService.getEntryStats(session.user.id),
     JournalService.getEntryDates(session.user.id),
   ]);
 
   // 3. Compute streak
-  let currentStreak = 0;
-  const totalEntries = dates.length;
-  if (totalEntries > 0) {
-    const lastEntryDate = dates[0];
-    if (lastEntryDate === today || lastEntryDate === yesterday) {
-      let expectedDate = lastEntryDate;
-      for (const entryDate of dates) {
-        if (entryDate === expectedDate) {
-          currentStreak++;
-          expectedDate = addDays(expectedDate, -1);
-        } else if (entryDate < expectedDate) {
-          break;
-        }
-      }
-    }
-  }
+  const currentStreak = computeCurrentStreak(dates, today);
 
   // 4. Calculate Anniversary or Past Flashback entry using the shared service
   const flashback = await FlashbackService.getFlashbackForToday(session.user.id, today);
@@ -83,7 +52,12 @@ export default async function DashboardPage() {
   const flashbackLabel = flashback ? flashback.label : "";
 
   const firstName = session.user.name ? session.user.name.split(" ")[0] : "Writer";
-  const todayFormatted = formatDate(today);
+  const todayFormatted = formatDisplayDate(today, {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
   const yesterdayWritten = !!yesterdayEntry;
 
   return (
@@ -118,7 +92,7 @@ export default async function DashboardPage() {
             </div>
           </div>
           <Button asChild size="sm" className="rounded-full shadow-sm cursor-pointer px-5 shrink-0 self-end sm:self-center">
-            <Link href={`${ROUTES.APP.ENTRY(yesterday)}?today=${today}` as unknown as ComponentPropsWithoutRef<typeof Link>["href"]}>
+            <Link href={`${ROUTES.APP.ENTRY(yesterday)}?today=${today}` as Route}>
               Write Yesterday
             </Link>
           </Button>

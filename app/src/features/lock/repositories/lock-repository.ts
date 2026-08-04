@@ -3,13 +3,9 @@ import { LockSettingsModel } from "./lock-model";
 import type { ILockSettings } from "./lock-model";
 import { connectDB } from "@/lib/db/mongoose";
 import { getCachedValue, setCachedValue, redis } from "@/lib/redis";
+import { serialize } from "@/lib/utils/serialize";
 
-const LOCK_SETTINGS_CACHE_TTL_SECONDS = 3600; // 1 hour
-
-function serialize<T>(value: T): T {
-  if (value === null || value === undefined) return value;
-  return JSON.parse(JSON.stringify(value)) as T;
-}
+const LOCK_SETTINGS_CACHE_TTL_SECONDS = 3600;
 
 export class LockRepository {
   private static getCacheKey(userId: string): string {

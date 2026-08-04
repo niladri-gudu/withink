@@ -36,6 +36,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { clearSwCaches } from "@/lib/sw-cache";
 import { useFocusTrap } from "@/hooks/use-focus-trap";
 import { useEncryption } from "@/providers/encryption-provider";
 import {
@@ -186,12 +187,13 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
 
   // Zero-Knowledge Encryption States
   const {
-    isClientEncrypted,
-    setEncryptionSettings,
-    setMasterKey,
-    encryptionSalt,
-    verificationCiphertext,
-  } = useEncryption();
+   isClientEncrypted,
+     setEncryptionSettings,
+     setMasterKey,
+     encryptionSalt,
+     verificationCiphertext,
+     clearLocalMasterKey,
+   } = useEncryption();
 
   const [zkPassword, setZkPassword] = React.useState("");
   const [zkPasswordConfirm, setZkPasswordConfirm] = React.useState("");
@@ -638,6 +640,9 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
         verificationCiphertext: newVerificationCiphertext,
       });
 
+      // Invalidate local encrypted master key on all other devices
+      clearLocalMasterKey();
+
       toast.success("Sanctuary Password updated successfully!", { id: toastId });
       setShowZKChangeModal(false);
       setZkOldPassword("");
@@ -683,6 +688,7 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
       }
 
       toast.success("Sanctuary dissolved successfully", { id: toastId });
+      await clearSwCaches();
       await authClient.signOut();
       window.location.href = "/login";
     } catch (err: any) {
@@ -694,6 +700,7 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
   const handleLogout = async () => {
     try {
       await authClient.signOut();
+      await clearSwCaches();
       toast.success("Logged out of your sanctuary");
       window.location.href = "/login";
     } catch {
@@ -1432,9 +1439,6 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
             setDiaryHasPasscode(true);
             setShowSetupModal(false);
             localStorage.setItem("withink_lock_enabled", "true");
-          }}
-          onDismiss={() => {
-            setShowSetupModal(false);
           }}
         />
       )}

@@ -22,7 +22,7 @@ import {
 interface MandatorySanctuarySetupProps {
   diaryLockEnabled: boolean;
   diaryHasPasscode: boolean;
-  onSetupSuccess: (masterKeyHex: string, salt: string, verificationCiphertext: string) => void;
+  onSetupSuccess: (masterKeyHex: string, salt: string, verificationCiphertext: string, pin: string) => void;
 }
 
 export function MandatorySanctuarySetup({
@@ -33,11 +33,13 @@ export function MandatorySanctuarySetup({
   const { setEncryptionSettings, setMasterKey } = useEncryption();
   const [password, setPassword] = React.useState("");
   const [confirmPassword, setConfirmPassword] = React.useState("");
+  const [pin, setPin] = React.useState("");
   const [pinConfirm, setPinConfirm] = React.useState("");
-  const [warningChecked, setWarningChecked] = React.useState(false);
+  const [warningChecked, _setWarningChecked] = React.useState(false);
   const [isMigrating, setIsMigrating] = React.useState(false);
   const [entryCount, setEntryCount] = React.useState<number | null>(null);
   const [loadingInitial, setLoadingInitial] = React.useState(true);
+  const [step, _setStep] = React.useState<"password" | "pin">("password");
 
   // Check how many entries need migration on mount
   React.useEffect(() => {
@@ -72,10 +74,6 @@ export function MandatorySanctuarySetup({
     }
     if (!warningChecked) {
       toast.error("Please confirm the data recovery warning");
-      return;
-    }
-    if (diaryLockEnabled && diaryHasPasscode && !pinConfirm) {
-      toast.error("Please enter your current 4-digit PIN to secure your local key");
       return;
     }
 
@@ -133,9 +131,9 @@ export function MandatorySanctuarySetup({
         throw new Error(enableRes.error || "Failed to enable client encryption");
       }
 
-      // 7. If PIN lock is enabled, encrypt the master key with the PIN key
-      if (diaryLockEnabled && diaryHasPasscode && pinConfirm) {
-        const pinKey = await deriveKeyFromPasswordAsync(pinConfirm, salt, 50000);
+      // 7. If diary lock is enabled, encrypt the master key with the PIN key
+      if (diaryLockEnabled && diaryHasPasscode && pin) {
+        const pinKey = await deriveKeyFromPasswordAsync(pin, salt, 50000);
         const encryptedMasterKey = await encryptText(masterKeyHex, pinKey);
         localStorage.setItem("withink_encrypted_master_key", encryptedMasterKey);
       } else {
@@ -165,7 +163,12 @@ export function MandatorySanctuarySetup({
         { id: toastId }
       );
 
-      onSetupSuccess(masterKeyHex, salt, verificationCiphertext);
+      if (diaryLockEnabled && diaryHasPasscode) {
+        // Pass PIN to parent so it can proceed to PIN setup flow
+        onSetupSuccess(masterKeyHex, salt, verificationCiphertext, pin);
+      } else {
+        onSetupSuccess(masterKeyHex, salt, verificationCiphertext, "");
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : "Encryption setup failed";
       toast.error(message, { id: toastId });
@@ -179,6 +182,7 @@ export function MandatorySanctuarySetup({
   }
 
   const isMigratingOldData = entryCount !== null && entryCount > 0;
+  const needsPin = diaryLockEnabled && diaryHasPasscode;
 
   return (
     <div className="fixed inset-0 z-[9995] flex items-center justify-center bg-background/95 p-4 backdrop-blur-md animate-in fade-in duration-300">
@@ -204,6 +208,17 @@ export function MandatorySanctuarySetup({
           </p>
         </div>
 
+        {/* ⚠️ Zero-Knowledge Warning */}
+        <div className="flex items-start gap-3 rounded-2xl border border-destructive/20 bg-destructive/5 p-4 mb-4">
+          <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-destructive/15 text-destructive text-xs font-bold">
+            !
+          </span>
+          <p className="text-[11px] leading-relaxed text-muted-foreground select-none">
+            This is a <strong className="text-foreground">100% Zero-Knowledge</strong> system. If you lose your Sanctuary Password, your data{" "}
+            <strong className="text-foreground">cannot be recovered by anyone</strong> — not us, not you. There is no &quot;forgot password&quot; for this. Store it in a password manager.
+          </p>
+        </div>
+
         <form onSubmit={handleSetupAndMigrate} className="space-y-5 text-left">
           <div className="space-y-4">
             <div className="space-y-2">
@@ -218,6 +233,7 @@ export function MandatorySanctuarySetup({
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={isMigrating}
                 required
+                minLength={8}
                 className="h-11 rounded-xl bg-background border border-border/60 focus:ring-2 focus:ring-ring"
               />
             </div>
@@ -238,47 +254,60 @@ export function MandatorySanctuarySetup({
               />
             </div>
 
-            {diaryLockEnabled && diaryHasPasscode && (
-              <div className="space-y-2">
-                <label htmlFor="zk-setup-pin-conf" className="text-body-small font-semibold text-foreground">
-                  Confirm 4-digit PIN Passcode
-                </label>
-                <Input
-                  id="zk-setup-pin-conf"
-                  type="password"
-                  maxLength={4}
-                  placeholder="Enter current PIN"
-                  value={pinConfirm}
-                  onChange={(e) => setPinConfirm(e.target.value.replace(/\D/g, ""))}
-                  disabled={isMigrating}
-                  required
-                  className="h-11 rounded-xl bg-background border border-border/60 text-center font-mono tracking-widest text-lg focus:ring-2 focus:ring-ring"
-                />
-                <p className="text-[10px] text-muted-foreground/80 leading-snug">
-                  Required to save your local browser key under your current device PIN lock.
-                </p>
-              </div>
-            )}
-          </div>
+            {needsPin && step === "password" && (
+              <>
+                <div className="space-y-2 pt-2">
+                  <label htmlFor="zk-setup-pin" className="text-body-small font-semibold text-foreground">
+                    Create a 4-digit PIN
+                  </label>
+                  <Input
+                    id="zk-setup-pin"
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={4}
+                    placeholder="••••"
+                    value={pin}
+                    onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
+                    disabled={isMigrating}
+                    required
+                    className="h-11 rounded-xl bg-background border border-border/60 text-center font-mono tracking-widest text-lg focus:ring-2 focus:ring-ring"
+                  />
+                  <p className="text-[10px] text-muted-foreground/80 leading-snug">
+                    This PIN locks your local encrypted key on this device. You&apos;ll need it to unlock quickly.
+                  </p>
+                </div>
 
-          <div className="flex items-start gap-3 rounded-2xl border border-warning/20 bg-warning/5 p-4 mt-2">
-            <input
-              type="checkbox"
-              id="zk-mandatory-warning"
-              checked={warningChecked}
-              onChange={(e) => setWarningChecked(e.target.checked)}
-              disabled={isMigrating}
-              required
-              className="mt-0.5 h-4 w-4 rounded border-border text-accent focus:ring-accent cursor-pointer shrink-0"
-            />
-            <label htmlFor="zk-mandatory-warning" className="text-[11px] leading-relaxed text-muted-foreground cursor-pointer select-none">
-              I understand that Withink is 100% Zero-Knowledge. If I lose my Sanctuary Password, my data cannot be recovered by anyone, including the support team.
-            </label>
+                <div className="space-y-2">
+                  <label htmlFor="zk-setup-pin-conf" className="text-body-small font-semibold text-foreground">
+                    Confirm PIN
+                  </label>
+                  <Input
+                    id="zk-setup-pin-conf"
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={4}
+                    placeholder="••••"
+                    value={pinConfirm}
+                    onChange={(e) => setPinConfirm(e.target.value.replace(/\D/g, ""))}
+                    disabled={isMigrating}
+                    required
+                    className="h-11 rounded-xl bg-background border border-border/60 text-center font-mono tracking-widest text-lg focus:ring-2 focus:ring-ring"
+                  />
+                </div>
+              </>
+            )}
           </div>
 
           <Button
             type="submit"
-            disabled={isMigrating || !password || !confirmPassword || !warningChecked || (diaryLockEnabled && diaryHasPasscode && !pinConfirm)}
+            disabled={
+              isMigrating ||
+              !password ||
+              password.length < 8 ||
+              password !== confirmPassword ||
+              !warningChecked ||
+              (needsPin && (pin.length !== 4 || pin !== pinConfirm))
+            }
             className="w-full h-12 rounded-full font-semibold gap-2 shadow-md hover:shadow-lg transition-all mt-4"
           >
             {isMigrating ? (

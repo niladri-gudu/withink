@@ -34,8 +34,10 @@ const nextConfig: NextConfig = {
 
     const cspHeader = `
       default-src 'self';
-      script-src 'self' 'unsafe-inline' 'unsafe-eval';
+      script-src 'self' 'unsafe-inline'${isProd ? "" : " 'unsafe-eval'"};
+      script-src-attr 'none';
       style-src 'self' 'unsafe-inline';
+      object-src 'none';
       img-src 'self' blob: data: https://images.unsplash.com https://lh3.googleusercontent.com https://${R2_PUBLIC_HOST};
       font-src 'self' data:;
       connect-src 'self' ${isProd ? "" : "ws: wss:"} ${R2_UPLOAD_HOST} https://${R2_PUBLIC_HOST};

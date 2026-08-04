@@ -2,13 +2,14 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import type { ComponentPropsWithoutRef } from "react";
+import type { Route } from "next";
 import { ArrowRight, Angry, Frown, Meh, Smile, SmilePlus, FileText } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
 import type { DecryptedEntry } from "../services/journal-service";
 import { useEncryption } from "@/providers/encryption-provider";
 import { safeDecryptText } from "@/lib/crypto-client";
 import { Button } from "@/components/ui/button";
+import { formatDisplayDate } from "@/lib/utils/date";
 
 const moodIcons: Record<number, React.ComponentType<{ className?: string }>> = {
   1: Angry,
@@ -25,16 +26,6 @@ const moodColors: Record<number, string> = {
   4: "text-emerald-500 bg-emerald-500/10 border-emerald-500/20",
   5: "text-teal-500 bg-teal-500/10 border-teal-500/20",
 };
-
-function formatDateShort(dateStr: string) {
-  const [year, month, day] = dateStr.split("-").map(Number);
-  if (year === undefined || month === undefined || day === undefined) return dateStr;
-  return new Date(year, month - 1, day).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
 
 interface RecentReflectionsListProps {
   initialEntries: DecryptedEntry[];
@@ -81,7 +72,7 @@ export function RecentReflectionsList({ initialEntries, today }: RecentReflectio
         return (
           <Link
             key={entry.date}
-            href={`${ROUTES.APP.ENTRY(entry.date)}?today=${today}` as unknown as ComponentPropsWithoutRef<typeof Link>["href"]}
+            href={`${ROUTES.APP.ENTRY(entry.date)}?today=${today}` as Route}
             className="block"
           >
             <div className="flex items-center justify-between p-3 rounded-xl hover:bg-muted/30 transition-colors border border-transparent hover:border-border/5">
@@ -94,7 +85,7 @@ export function RecentReflectionsList({ initialEntries, today }: RecentReflectio
                     {entry.title || "Untitled Entry"}
                   </h4>
                   <span className="text-[10px] font-mono text-muted-foreground/60 uppercase">
-                    {formatDateShort(entry.date)}
+                    {formatDisplayDate(entry.date)}
                   </span>
                 </div>
               </div>

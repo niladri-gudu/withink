@@ -19,8 +19,10 @@ import {
   findEntryForMediaAction,
   type MediaFile,
 } from "../actions/media-actions";
-import { getAllEntriesAction } from "@/features/journal/actions/entry-actions";
-import { safeDecryptText } from "@/lib/crypto-client";
+import { getAllEntriesAction, saveEntryAction } from "@/features/journal/actions/entry-actions";
+import type { DecryptedEntry } from "@/features/journal/services/journal-service";
+import { safeDecryptText, encryptText } from "@/lib/crypto-client";
+import { getLocalDateString } from "@/lib/utils/date";
 import { useEncryption } from "@/providers/encryption-provider";
 import { Button } from "@/components/ui/button";
 import { useFocusTrap } from "@/hooks/use-focus-trap";
@@ -61,19 +63,24 @@ export function MediaLightbox({
   const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
 
   const { isClientEncrypted, masterKey } = useEncryption();
-  const [cachedEntries, setCachedEntries] = React.useState<any[] | null>(null);
+  const [cachedEntries, setCachedEntries] = React.useState<DecryptedEntry[] | null>(null);
 
-  // Load entries once when lightbox is opened
+  // Load entries once per open/close transition, resetting on each change.
+  const isOpen = index !== null;
+  const [prevOpen, setPrevOpen] = React.useState(isOpen);
+  if (isOpen !== prevOpen) {
+    setPrevOpen(isOpen);
+    setCachedEntries(null);
+  }
+
   React.useEffect(() => {
-    if (index === null) {
-      setCachedEntries(null);
-      return;
-    }
+    if (!isOpen) return;
 
+    let cancelled = false;
     const loadEntries = async () => {
       try {
         const res = await getAllEntriesAction();
-        if (res.success && res.data) {
+        if (res.success && res.data && !cancelled) {
           setCachedEntries(res.data);
         }
       } catch (err) {
@@ -82,7 +89,10 @@ export function MediaLightbox({
     };
 
     loadEntries();
-  }, [index !== null]);
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen]);
 
   // When the shown image changes, look up which entry it belongs to.
   React.useEffect(() => {
@@ -174,10 +184,104 @@ export function MediaLightbox({
     }
   };
 
+  /**
+   * Removes a media URL from a single entry and re-saves it client-side.
+   * Returns true when the entry changed, false when it did not reference the
+   * media, and "error" when it could not be updated.
+   */
+  const scrubEntryFromMedia = async (
+    entry: {
+      date: string;
+      title: string;
+      contentHtml: string;
+      contentText: string;
+      contentJson: unknown;
+      mood: number | null;
+    },
+    mediaUrl: string,
+  ): Promise<boolean | "error"> => {
+    if (!masterKey) return "error";
+    try {
+      const contentHtml = (await safeDecryptText(entry.contentHtml || "", masterKey)) || "";
+      const contentText = (await safeDecryptText(entry.contentText || "", masterKey)) || "";
+      const contentJsonRaw = await safeDecryptText(
+        typeof entry.contentJson === "string"
+          ? entry.contentJson
+          : JSON.stringify(entry.contentJson),
+        masterKey,
+      );
+
+      const escapedUrl = mediaUrl.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const newHtml = contentHtml.replace(
+        new RegExp(`<img[^>]*src="${escapedUrl}"[^>]*/?>`, "g"),
+        "",
+      );
+
+      let newJson = contentJsonRaw;
+      try {
+        const doc = JSON.parse(contentJsonRaw);
+        const scrub = (node: {
+          type?: string;
+          attrs?: { src?: string };
+          content?: unknown[];
+        } | null): unknown => {
+          if (!node) return null;
+          if (node.type === "image" && node.attrs?.src === mediaUrl) return null;
+          if (Array.isArray(node.content)) {
+            node.content = node.content.map((n) => scrub(n as { type?: string; attrs?: { src?: string }; content?: unknown[] })).filter(Boolean);
+          }
+          return node;
+        };
+        newJson = JSON.stringify(scrub(doc));
+      } catch {
+        // malformed JSON / ciphertext: keep as-is (HTML scrub still applies)
+      }
+
+      if (newHtml === contentHtml && newJson === contentJsonRaw) return false;
+
+      const wordCount = contentText.split(/\s+/).filter(Boolean).length;
+      const [encTitle, encHtml, encText, encJson] = await Promise.all([
+        encryptText(entry.title || "", masterKey),
+        encryptText(newHtml, masterKey),
+        encryptText(contentText, masterKey),
+        encryptText(newJson, masterKey),
+      ]);
+
+      const res = await saveEntryAction(
+        {
+          date: entry.date,
+          title: encTitle,
+          mood: entry.mood ?? null,
+          contentHtml: encHtml,
+          contentText: encText,
+          contentJson: encJson,
+          wordCount,
+        },
+        getLocalDateString(),
+      );
+
+      return res.success ? true : "error";
+    } catch {
+      return "error";
+    }
+  };
+
   const handleDelete = async () => {
     if (!file) return;
     setDeleting(file.key);
     try {
+      // Zero-knowledge: scrub affected entries BEFORE removing the file, since
+      // the server cannot decrypt client-encrypted content.
+      if (isClientEncrypted && masterKey && cachedEntries) {
+        for (const entry of cachedEntries) {
+          const outcome = await scrubEntryFromMedia(entry, file.url);
+          if (outcome === "error") {
+            toast.error("Could not update entries. The file was not deleted.");
+            return;
+          }
+        }
+      }
+
       const res = await deleteMediaFileAction(file.key);
       if (res.success) {
         onDeleted(file.key);
