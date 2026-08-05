@@ -53,19 +53,16 @@ export const sanctuaryCacheDB = {
   },
 
   async set(key: string, value: string): Promise<void> {
-    try {
-      const db = await getDB();
-      return new Promise((resolve, reject) => {
-        const transaction = db.transaction(STORE_NAME, "readwrite");
-        const store = transaction.objectStore(STORE_NAME);
-        const request = store.put(value, key);
+    if (typeof window === "undefined") return;
+    const db = await getDB();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(STORE_NAME, "readwrite");
+      const store = transaction.objectStore(STORE_NAME);
+      const request = store.put(value, key);
 
-        request.onerror = () => reject(request.error);
-        request.onsuccess = () => resolve();
-      });
-    } catch (err) {
-      console.error("IndexedDB set error:", err);
-    }
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => resolve();
+    });
   },
 
   async delete(key: string): Promise<void> {
@@ -264,18 +261,19 @@ export const sanctuaryCacheDB = {
   },
 
   async clear(): Promise<void> {
-    try {
-      const db = await getDB();
-      return new Promise((resolve, reject) => {
-        const transaction = db.transaction(STORE_NAME, "readwrite");
-        const store = transaction.objectStore(STORE_NAME);
-        const request = store.clear();
+    if (typeof window === "undefined") return;
+    const db = await getDB();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(
+        [STORE_NAME, DOCUMENT_STORE, SYNC_STORE],
+        "readwrite",
+      );
+      transaction.objectStore(STORE_NAME).clear();
+      transaction.objectStore(DOCUMENT_STORE).clear();
+      transaction.objectStore(SYNC_STORE).clear();
 
-        request.onerror = () => reject(request.error);
-        request.onsuccess = () => resolve();
-      });
-    } catch (err) {
-      console.error("IndexedDB clear error:", err);
-    }
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
+    });
   },
 };

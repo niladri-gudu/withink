@@ -235,4 +235,101 @@ describe("useAutoSave", () => {
     expect(saveEntryActionMock).toHaveBeenCalledTimes(1);
     expect(saveEntryActionMock).toHaveBeenCalledWith(expect.objectContaining({ date: "2026-01-02" }), expect.any(String));
   });
+
+  it("does not send plaintext when encryption is enabled but master key is missing", async () => {
+    encryptionState.isClientEncrypted = true;
+    encryptionState.masterKey = null;
+    saveEntryActionMock.mockResolvedValue(okResult);
+
+    const { rerender, result } = renderSaveHook();
+
+    // enabled is true, but isClientEncrypted and masterKey is null
+    rerender({ data: makeData({ title: "Secret draft" }), enabled: true });
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1500);
+    });
+
+    // Server should NOT be called with plaintext (save should be skipped)
+    expect(saveEntryActionMock).not.toHaveBeenCalled();
+    expect(result.current).toBe("locked");
+  });
+
+  it("does not save when enabled is false due to missing master key", async () => {
+    encryptionState.isClientEncrypted = true;
+    encryptionState.masterKey = null;
+    saveEntryActionMock.mockResolvedValue(okResult);
+
+    const { rerender } = renderHook(
+      ({ data, enabled }) => useAutoSave(data, 1500, enabled),
+      { initialProps: { data: makeData(), enabled: false } },
+    );
+
+    rerender({ data: makeData({ title: "Draft while locked" }), enabled: false });
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(3000);
+    });
+
+    expect(saveEntryActionMock).not.toHaveBeenCalled();
+  });
+
+  it("saves with encryption when master key is present", async () => {
+    encryptionState.isClientEncrypted = true;
+    encryptionState.masterKey = {} as CryptoKey;
+    saveEntryActionMock.mockResolvedValue(okResult);
+
+    const { rerender, result } = renderSaveHook();
+
+    rerender({ data: makeData({ title: "Encrypted draft" }), enabled: true });
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1500);
+    });
+
+    expect(saveEntryActionMock).toHaveBeenCalledTimes(1);
+    expect(saveEntryActionMock).toHaveBeenCalledWith(
+      expect.objectContaining({ date: "2026-01-01" }),
+      expect.any(String),
+    );
+    expect(result.current).toBe("saved");
+  });
+
+  it("resets retry count when user makes new changes during retry backoff", async () => {
+    encryptionState.isClientEncrypted = false;
+    encryptionState.masterKey = null;
+    // First two saves fail with a server error
+    saveEntryActionMock
+      .mockResolvedValueOnce({ success: false, error: "Server error" })
+      .mockResolvedValueOnce({ success: false, error: "Server error" })
+      .mockResolvedValue(okResult);
+
+    const { result, rerender } = renderSaveHook();
+
+    rerender({ data: makeData({ title: "Attempt 1" }), enabled: true });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1500);
+    });
+    expect(saveEntryActionMock).toHaveBeenCalledTimes(1);
+    expect(result.current).toBe("error");
+
+    // Retry timer fires after RETRY_BASE_MS (5 seconds for first attempt)
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(5000);
+    });
+    expect(saveEntryActionMock).toHaveBeenCalledTimes(2);
+    expect(result.current).toBe("error");
+
+    // User types something new while retry backoff is growing
+    saveEntryActionMock.mockClear();
+    rerender({ data: makeData({ title: "Attempt 2" }), enabled: true });
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1500);
+    });
+
+    // The new change should trigger a fresh debounce save (not a retry)
+    expect(saveEntryActionMock).toHaveBeenCalledTimes(1);
+    expect(result.current).toBe("saved");
+  });
 });

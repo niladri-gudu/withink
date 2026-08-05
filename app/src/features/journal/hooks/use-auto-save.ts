@@ -14,7 +14,7 @@ interface AutoSaveData {
   mood: number | null;
   contentHtml: string;
   contentText: string;
-  contentJson: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  contentJson: unknown;
 }
 
 type PersistOutcome = "synced" | "offline" | "locked" | "error";
@@ -27,6 +27,7 @@ const LOCKED_RETRY_MS = 30_000;
 
 function isDataDirty(a: AutoSaveData, b: AutoSaveData): boolean {
   return (
+    a.date !== b.date ||
     a.title !== b.title ||
     a.mood !== b.mood ||
     a.contentHtml !== b.contentHtml ||
@@ -79,7 +80,7 @@ export function useAutoSave(
 
   // Latest-callback refs so timers/effects always invoke the most recent closure
   // (e.g. after the master key changes on unlock) without re-binding listeners.
-  const runSaveRef = useRef<() => Promise<void>>(async () => {});
+  const runSaveRef = useRef<() => Promise<void>>(() => Promise.resolve());
   const scheduleSaveRef = useRef<() => void>(() => {});
 
   useEffect(() => {
@@ -111,6 +112,12 @@ export function useAutoSave(
     }
   };
 
+  const clearAllTimers = () => {
+    clearDebounceTimer();
+    clearRetryTimer();
+    clearIdleTimer();
+  };
+
   const scheduleIdleReset = () => {
     clearIdleTimer();
     idleTimerRef.current = setTimeout(() => {
@@ -127,58 +134,75 @@ export function useAutoSave(
     updatedAt: string | Date,
   ) => {
     if (!isClientEncrypted || !masterKey) return;
-    await sanctuaryCacheService.saveLocalDocument(
-      payload.date,
-      payload.title,
-      payload.mood,
-      payload.contentHtml,
-      payload.contentText,
-      payload.contentJson,
-      masterKey,
-    );
-    await sanctuaryCacheService.saveLocalMetadata(
-      payload.date,
-      payload.title,
-      payload.contentText,
-      wordCount,
-      payload.mood,
-      updatedAt,
-      masterKey,
-    );
+    try {
+      await sanctuaryCacheService.saveLocalDocument(
+        payload.date,
+        payload.title,
+        payload.mood,
+        payload.contentHtml,
+        payload.contentText,
+        payload.contentJson,
+        masterKey,
+      );
+      await sanctuaryCacheService.saveLocalMetadata(
+        payload.date,
+        payload.title,
+        payload.contentText,
+        wordCount,
+        payload.mood,
+        updatedAt,
+        masterKey,
+      );
+    } catch (err) {
+      console.error(`Failed to persist local cache for ${payload.date}:`, err);
+    }
   };
 
   const queueOffline = async (payload: AutoSaveData, wordCount: number) => {
     if (!isClientEncrypted || !masterKey) return;
-    await sanctuaryCacheService.enqueueOfflineSync(
-      payload.date,
-      {
-        date: payload.date,
-        title: payload.title,
-        mood: payload.mood,
-        contentHtml: payload.contentHtml,
-        contentText: payload.contentText,
-        contentJson: payload.contentJson,
-        wordCount,
-      },
-      masterKey,
-    );
+    try {
+      await sanctuaryCacheService.enqueueOfflineSync(
+        payload.date,
+        {
+          date: payload.date,
+          title: payload.title,
+          mood: payload.mood,
+          contentHtml: payload.contentHtml,
+          contentText: payload.contentText,
+          contentJson: payload.contentJson,
+          wordCount,
+        },
+        masterKey,
+      );
+    } catch (err) {
+      console.error(`Failed to queue offline sync for ${payload.date}:`, err);
+    }
   };
 
   const persist = async (payload: AutoSaveData): Promise<PersistOutcome> => {
     const userLocalToday = getLocalDateString();
     const wordCount = payload.contentText.split(/\s+/).filter(Boolean).length;
 
+    // Security: never send plaintext when encryption is enabled but key is missing
+    if (isClientEncrypted && !masterKey) {
+      return "locked";
+    }
+
     let titlePayload = payload.title;
     let htmlPayload = payload.contentHtml;
     let textPayload = payload.contentText;
-    let jsonPayload = payload.contentJson;
+    let jsonPayload: unknown = payload.contentJson;
 
     if (isClientEncrypted && masterKey) {
       try {
+        const jsonStr =
+          typeof payload.contentJson === "string"
+            ? payload.contentJson
+            : JSON.stringify(payload.contentJson);
         titlePayload = await encryptText(payload.title, masterKey);
         htmlPayload = await encryptText(payload.contentHtml, masterKey);
         textPayload = await encryptText(payload.contentText, masterKey);
-        jsonPayload = await encryptText(JSON.stringify(payload.contentJson), masterKey);
+        jsonPayload = await encryptText(jsonStr, masterKey);
       } catch (err) {
         console.error("Auto-save encryption failed:", err);
         return "error";
@@ -203,23 +227,25 @@ export function useAutoSave(
       );
 
       if (result.success && result.data) {
-        await persistLocalCache(payload, wordCount, result.data.updatedAt);
+        void persistLocalCache(payload, wordCount, result.data.updatedAt);
         return "synced";
       }
 
       if (result.error === "Locked") {
         // Keep data safe locally even while locked so nothing is lost on close.
-        await persistLocalCache(payload, wordCount, new Date());
-        await queueOffline(payload, wordCount);
+        void persistLocalCache(payload, wordCount, new Date());
+        void queueOffline(payload, wordCount);
         return "locked";
       }
 
+      // Generic server error: still cache locally before reporting error
+      void persistLocalCache(payload, wordCount, new Date());
       return "error";
     } catch (err) {
       // Network failure, server unreachable, or timeout -> queue changes locally
       console.warn("Failed to reach server, falling back to offline queue:", err);
-      await persistLocalCache(payload, wordCount, new Date());
-      await queueOffline(payload, wordCount);
+      void persistLocalCache(payload, wordCount, new Date());
+      void queueOffline(payload, wordCount);
       return isClientEncrypted && masterKey ? "offline" : "error";
     }
   };
@@ -231,10 +257,21 @@ export function useAutoSave(
     }
     if (!enabledRef.current || !dirtyRef.current || !baselineRef.current) return;
 
+    // Security: never attempt a save when encryption is enabled but the key is missing
+    if (isClientEncrypted && !masterKey) {
+      if (!unmountedRef.current) setStatus("locked");
+      return;
+    }
+
     savingRef.current = true;
     if (!unmountedRef.current) setStatus("saving");
 
+    // Clear debounce timer since we're now actually saving
+    clearDebounceTimer();
+
     const payload = { ...latestDataRef.current };
+    // Reset retry counter on a fresh save attempt (not a retry)
+    retryAttemptRef.current = 0;
 
     try {
       const outcome = await persist(payload);
@@ -286,6 +323,8 @@ export function useAutoSave(
   const scheduleSave = () => {
     clearDebounceTimer();
     clearRetryTimer();
+    // Reset retry counter when the user makes new changes
+    retryAttemptRef.current = 0;
     debounceTimerRef.current = setTimeout(() => {
       debounceTimerRef.current = null;
       void runSaveRef.current();
@@ -306,9 +345,7 @@ export function useAutoSave(
       dirtyRef.current = false;
       pendingRef.current = false;
       retryAttemptRef.current = 0;
-      clearDebounceTimer();
-      clearRetryTimer();
-      clearIdleTimer();
+      clearAllTimers();
       if (!unmountedRef.current) setStatus("idle");
     }
 
@@ -326,6 +363,7 @@ export function useAutoSave(
     } else {
       dirtyRef.current = false;
       clearDebounceTimer();
+      clearRetryTimer();
     }
   }, [data, enabled, debounceMs]);
 
@@ -347,14 +385,24 @@ export function useAutoSave(
     };
   }, []);
 
+  // Track enabled state for async closures
+  useEffect(() => {
+    enabledRef.current = enabled;
+  });
+
+  // Clean up timers when enabled changes
+  useEffect(() => {
+    if (!enabled) {
+      clearAllTimers();
+    }
+  }, [enabled]);
+
   // Best-effort flush of unsaved changes on unmount
   useEffect(() => {
     unmountedRef.current = false;
     return () => {
       unmountedRef.current = true;
-      clearDebounceTimer();
-      clearRetryTimer();
-      clearIdleTimer();
+      clearAllTimers();
       if (dirtyRef.current && enabledRef.current && baselineRef.current) {
         void runSaveRef.current();
       }

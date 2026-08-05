@@ -283,14 +283,15 @@ export function LandingPageContent({ APP_URL, hasSession = false }: LandingPageC
                 custom={1}
                 className="text-hero md:text-display text-foreground font-serif leading-tight tracking-tight max-w-xl mx-auto"
               >
-                Quiet space for your thoughts.
+                Quiet space for your thoughts. Protected always.
               </motion.h1>
               <motion.p
                 variants={fadeInVariants}
                 custom={2}
                 className="text-subtitle max-w-lg mx-auto text-muted-foreground/90 leading-relaxed font-sans"
               >
-                A beautiful, private, and encrypted journal built to encourage daily reflection and preserve your lifelong memories.
+                An encrypted journal with zero cloud tracking. Write daily reflections,
+                capture memories, and keep everything yours — offline first, always encrypted.
               </motion.p>
             </div>
 
@@ -335,14 +336,83 @@ export function LandingPageContent({ APP_URL, hasSession = false }: LandingPageC
           </motion.div>
         </section>
 
+        {/* Why withink */}
+        <section className="max-w-4xl mx-auto px-6 py-16 border-t border-border/30">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.2 }}
+            className="space-y-12"
+          >
+            <motion.div
+              variants={fadeInVariants}
+              custom={0}
+              className="text-center space-y-4"
+            >
+              <h2 className="text-h2 font-serif text-foreground mx-auto max-w-xl">
+                Built for the quiet habit of showing up.
+              </h2>
+              <p className="text-subtitle text-muted-foreground/80 mx-auto max-w-lg">
+                withink. turns daily reflection into something you look forward to — not another
+                app you check off.
+              </p>
+            </motion.div>
+
+            <motion.div
+              variants={fadeInVariants}
+              custom={1}
+              className="grid md:grid-cols-3 gap-6 text-center"
+            >
+              <div className="rounded-2xl border border-border/40 bg-card/40 p-6 space-y-3">
+                <div className="h-10 w-10 rounded-xl bg-secondary/15 text-accent flex items-center justify-center mx-auto border border-border/20">
+                  <TrendingUp className="h-5 w-5" />
+                </div>
+                <h3 className="text-sm font-serif font-bold text-foreground">Grows with you</h3>
+                <p className="text-[11px] text-muted-foreground/75 leading-relaxed font-sans">
+                  Streaks, heatmaps, and mood insights help you notice patterns in your writing without ever leaving the page.
+                </p>
+              </div>
+              <div className="rounded-2xl border border-border/40 bg-card/40 p-6 space-y-3">
+                <div className="h-10 w-10 rounded-xl bg-secondary/15 text-accent flex items-center justify-center mx-auto border border-border/20">
+                  <Sparkles className="h-5 w-5" />
+                </div>
+                <h3 className="text-sm font-serif font-bold text-foreground">Designed to focus</h3>
+                <p className="text-[11px] text-muted-foreground/75 leading-relaxed font-sans">
+                  A warm, paper-like canvas with a distraction-free editor. No notifications, no feeds, no noise.
+                </p>
+              </div>
+              <div className="rounded-2xl border border-border/40 bg-card/40 p-6 space-y-3">
+                <div className="h-10 w-10 rounded-xl bg-secondary/15 text-accent flex items-center justify-center mx-auto border border-border/20">
+                  <Archive className="h-5 w-5" />
+                </div>
+                <h3 className="text-sm font-serif font-bold text-foreground">Yours, always</h3>
+                <p className="text-[11px] text-muted-foreground/75 leading-relaxed font-sans">
+                  One-click ZIP export of your entire journal — HTML entries, media, and metadata. Your data, your choice.
+                </p>
+              </div>
+            </motion.div>
+          </motion.div>
+        </section>
+
         {/* Feature Bento Showcase Grid */}
         <section className="max-w-4xl mx-auto px-6 py-16 border-t border-border/30">
           <motion.div
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, amount: 0.15 }}
-            className="grid grid-cols-1 md:grid-cols-3 gap-6"
+            viewport={{ once: true, amount: 0.2 }}
+            className="space-y-10"
           >
+            <motion.div variants={fadeInVariants} custom={0} className="text-center">
+              <span className="text-xs uppercase tracking-[0.2em] font-mono text-muted-foreground/70 block">
+                See your sanctuary in action
+              </span>
+            </motion.div>
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.15 }}
+              className="grid grid-cols-1 md:grid-cols-3 gap-6"
+            >
             {/* Tile 1: Rich Text Editor & Live Mood Selector Glow (Spans 2 columns) */}
             <motion.div
               variants={fadeInVariants}
@@ -447,7 +517,7 @@ export function LandingPageContent({ APP_URL, hasSession = false }: LandingPageC
               </div>
             </motion.div>
 
-            {/* Tile 2: Sanctuary Passcode Security PIN lock (Spans 1 column) */}
+             {/* Tile 2: Encrypted Sanctuary PIN lock */}
             <motion.div
               variants={fadeInVariants}
               custom={1}
@@ -458,7 +528,7 @@ export function LandingPageContent({ APP_URL, hasSession = false }: LandingPageC
                   <Lock className="h-3 w-3" /> Encrypted Sanctuary
                 </span>
                 <span className="text-[9px] font-mono bg-accent/25 border border-accent/20 px-2 py-0.5 rounded text-accent-foreground">
-                  PIN: 1234
+                   Demo mode
                 </span>
               </div>
 
@@ -544,7 +614,7 @@ export function LandingPageContent({ APP_URL, hasSession = false }: LandingPageC
               </div>
             </motion.div>
 
-            {/* Tile 3: Nostalgic Flashbacks Memory (Spans 1 column) */}
+             {/* Tile 3: Nostalgic Flashback with reflection input */}
             <motion.div
               variants={fadeInVariants}
               custom={2}
@@ -601,7 +671,7 @@ export function LandingPageContent({ APP_URL, hasSession = false }: LandingPageC
               </div>
             </motion.div>
 
-            {/* Tile 4: Polaroid Media Gallery & Lightbox (Spans 1 column) */}
+             {/* Tile 4: Media gallery with polaroid lightbox */}
             <motion.div
               variants={fadeInVariants}
               custom={3}
@@ -646,7 +716,7 @@ export function LandingPageContent({ APP_URL, hasSession = false }: LandingPageC
               </div>
             </motion.div>
 
-            {/* Tile 6: One-click Export ZIP (Spans 1 column) */}
+             {/* Tile 6: One-click ZIP export with progress */}
             <motion.div
               variants={fadeInVariants}
               custom={4}
@@ -700,7 +770,7 @@ export function LandingPageContent({ APP_URL, hasSession = false }: LandingPageC
               </div>
             </motion.div>
 
-            {/* Tile 5: Insights Heatmap & Monthly Stats Dashboard (Spans 3 columns / full width on desktop) */}
+             {/* Tile 5: Writing frequency heatmap & mood insights (full width) */}
             <motion.div
               variants={fadeInVariants}
               custom={5}
@@ -819,76 +889,72 @@ export function LandingPageContent({ APP_URL, hasSession = false }: LandingPageC
               </div>
             </motion.div>
           </motion.div>
+          </motion.div>
         </section>
 
-        {/* Security & Local First Privacy Philosophy Section */}
+        {/* Trust & Privacy Philosophy Section */}
         <section className="bg-secondary/20 border-t border-b border-border/30 py-16 md:py-20">
-          <div className="max-w-4xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="space-y-3">
-              <div className="h-10 w-10 rounded-xl bg-card border border-border/40 text-primary flex items-center justify-center shadow-sm">
-                <Shield className="h-5 w-5" />
+          <div className="max-w-4xl mx-auto px-6 text-center space-y-6">
+            <h2 className="text-h2 font-serif text-foreground max-w-2xl mx-auto">
+              Your data stays yours. Always.
+            </h2>
+            <p className="text-subtitle text-muted-foreground/80 max-w-xl mx-auto">
+              Zero cloud tracking. No advertising. No telemetry. Encrypt locally, write anywhere, export anytime — your journal, yours from day one.
+            </p>
+            <div className="pt-4 grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="space-y-3">
+                <div className="h-10 w-10 rounded-xl bg-card border border-border/40 text-primary flex items-center justify-center mx-auto shadow-sm">
+                  <Shield className="h-5 w-5" />
+                </div>
+                <h3 className="text-lg font-serif font-bold text-foreground">Zero Cloud Trackers</h3>
+                <p className="text-xs font-sans text-muted-foreground/80 leading-relaxed">
+                  No tracking scripts, advertising trackers, or telemetry. Your sanctuary belongs only to you.
+                </p>
               </div>
-              <h3 className="text-lg font-serif font-bold text-foreground">Zero Cloud Trackers</h3>
-              <p className="text-xs font-sans text-muted-foreground/80 leading-relaxed max-w-[28ch]">
-                We embed no tracking scripts, advertising trackers, or telemetry. Your private sanctuary belongs to you alone.
-              </p>
-            </div>
-            <div className="space-y-3">
-              <div className="h-10 w-10 rounded-xl bg-card border border-border/40 text-primary flex items-center justify-center shadow-sm">
-                <Key className="h-5 w-5" />
+              <div className="space-y-3">
+                <div className="h-10 w-10 rounded-xl bg-card border border-border/40 text-primary flex items-center justify-center mx-auto shadow-sm">
+                  <Key className="h-5 w-5" />
+                </div>
+                <h3 className="text-lg font-serif font-bold text-foreground">Sanctuary Encryption</h3>
+                <p className="text-xs font-sans text-muted-foreground/80 leading-relaxed">
+                  Optional double lock with a tactile PIN. Even on a shared device, your entries stay unreadable.
+                </p>
               </div>
-              <h3 className="text-lg font-serif font-bold text-foreground">Sanctuary Encryption</h3>
-              <p className="text-xs font-sans text-muted-foreground/80 leading-relaxed max-w-[28ch]">
-                Double lock options: secure your journal database using a tactile PIN keypad, protecting content from local devices.
-              </p>
-            </div>
-            <div className="space-y-3">
-              <div className="h-10 w-10 rounded-xl bg-card border border-border/40 text-primary flex items-center justify-center shadow-sm">
-                <EyeOff className="h-5 w-5" />
+              <div className="space-y-3">
+                <div className="h-10 w-10 rounded-xl bg-card border border-border/40 text-primary flex items-center justify-center mx-auto shadow-sm">
+                  <EyeOff className="h-5 w-5" />
+                </div>
+                <h3 className="text-lg font-serif font-bold text-foreground">Local Sovereign Data</h3>
+                <p className="text-xs font-sans text-muted-foreground/80 leading-relaxed">
+                  One-click ZIP of plain HTML entries, media, and JSON metadata. Leave anytime, take it all.
+                </p>
               </div>
-              <h3 className="text-lg font-serif font-bold text-foreground">Local Sovereign Data</h3>
-              <p className="text-xs font-sans text-muted-foreground/80 leading-relaxed max-w-[28ch]">
-                Export your diary in an open structure ZIP backup, containing plain HTML entries, attachments, and JSON metadata.
-              </p>
             </div>
           </div>
-        </section>
-
-        {/* User Testimonial & Quote Section */}
-        <section className="max-w-4xl mx-auto px-6 py-16 md:py-24 text-center">
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            className="space-y-6 max-w-xl mx-auto"
-          >
-            <QuoteIcon className="h-8 w-8 mx-auto text-accent opacity-50" />
-            <blockquote className="text-base sm:text-lg font-serif italic text-foreground leading-relaxed">
-              &ldquo;Writing here feels like stepping into a quiet library. No notifications, no noise, just my thoughts and a blank warm paper. It has completely transformed my evening reflection routine.&rdquo;
-            </blockquote>
-            <cite className="block text-xs uppercase tracking-wider font-mono text-muted-foreground/75 not-italic">
-              — Marcus A., Longtime Writer
-            </cite>
-          </motion.div>
         </section>
 
         {/* CTA Footer Section */}
         <section className="border-t border-border/30 bg-secondary/15 py-12 md:py-16 text-center">
           <div className="max-w-4xl mx-auto px-6 space-y-6">
             <h2 className="text-h2 font-serif text-foreground">Build your private digital sanctuary.</h2>
-            <div className="flex items-center justify-center">
-              <motion.div whileHover={prefersReduced ? {} : { scale: 1.02 }} whileTap={prefersReduced ? {} : { scale: 0.98 }}>
-                <Button
-                  size="lg"
-                  asChild
-                  className="rounded-full shadow-sm px-8 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 gap-1.5"
-                >
-                  <a href={`${APP_URL}/register`}>
-                    Get Started Free <ChevronRight className="h-4 w-4" />
-                  </a>
-                </Button>
-              </motion.div>
-            </div>
+            <motion.div
+              whileHover={prefersReduced ? {} : { scale: 1.02 }}
+              whileTap={prefersReduced ? {} : { scale: 0.98 }}
+              className="flex items-center justify-center"
+            >
+              <Button
+                size="lg"
+                asChild
+                className="rounded-full shadow-sm px-8 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 gap-1.5"
+              >
+                <a href={`${APP_URL}/register`}>
+                  Create Your Sanctuary <ChevronRight className="h-4 w-4" />
+                </a>
+              </Button>
+            </motion.div>
+            <p className="text-[11px] text-muted-foreground/70 font-mono">
+              No credit card. No trackers. No upsells. Free for 30 days, then $5/month.
+            </p>
           </div>
         </section>
       </main>
