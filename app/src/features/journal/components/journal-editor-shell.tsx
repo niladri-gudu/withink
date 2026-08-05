@@ -233,6 +233,8 @@ export function JournalEditorShell({
     };
   }, []);
 
+  const isUnlocked = editorReady && decryptedContent !== null;
+  const canEncrypt = isClientEncrypted ? !!masterKey : true;
   const saveStatus = useAutoSave(
     {
       date,
@@ -243,7 +245,7 @@ export function JournalEditorShell({
       contentJson: editorContent.json,
     },
     1500,
-    editorReady && decryptedContent !== null,
+    isUnlocked && canEncrypt,
   );
 
   return (
