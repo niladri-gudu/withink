@@ -45,7 +45,12 @@ export const metadata: Metadata = {
     process.env.IS_PROD === "true" ? "https://withink.me" : "http://localhost:3001"
   ),
   icons: {
-    icon: "/favicon.ico",
+    icon: [
+      { rel: "icon", url: "/favicon.svg", sizes: "any", type: "image/svg+xml" },
+      { rel: "icon", url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      { rel: "icon", url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+    ],
+    apple: [{ rel: "apple-touch-icon", url: "/apple-touch-icon.png", sizes: "180x180" }],
   },
   robots: {
     index: true,
