@@ -1,0 +1,22 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+
+catalog:
+  next: 16.2.9
+  react: 19.2.4
+  react-dom: 19.2.4
+  typescript: ^5.7.0
+  tailwindcss: ^4.1.0
+  lucide-react: ^0.469.0
+  class-variance-authority: ^0.7.1
+  clsx: ^2.1.1
+  tailwind-merge: ^3.5.0
+
+# pnpm 10 blocks dependency lifecycle scripts by default. Allowlist the ones
+# that legitimately need to run postinstall (verified at install time).
+onlyBuiltDependencies:
+  - "@tailwindcss/oxide"
+  - esbuild
+  - sharp
+  - unrs-resolver

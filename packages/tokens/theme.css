@@ -1,0 +1,392 @@
+@theme {
+  --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "EB Garamond", Georgia, Cambria, "Times New Roman", Times, serif;
+  --font-mono: ui-monospace, SFMono-Regular, monospace;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+
+  /* Transition speeds from timing scale */
+  --transition-duration-instant: 100ms;
+  --transition-duration-fast: 150ms;
+  --transition-duration-standard: 200ms;
+  --transition-duration-slow: 250ms;
+
+  --color-mood-1: var(--mood-angry);
+  --color-mood-1-bg: var(--mood-angry-bg);
+  --color-mood-1-border: var(--mood-angry-border);
+  --color-mood-2: var(--mood-sad);
+  --color-mood-2-bg: var(--mood-sad-bg);
+  --color-mood-2-border: var(--mood-sad-border);
+  --color-mood-3: var(--mood-neutral);
+  --color-mood-3-bg: var(--mood-neutral-bg);
+  --color-mood-3-border: var(--mood-neutral-border);
+  --color-mood-4: var(--mood-happy);
+  --color-mood-4-bg: var(--mood-happy-bg);
+  --color-mood-4-border: var(--mood-happy-border);
+  --color-mood-5: var(--mood-radiant);
+  --color-mood-5-bg: var(--mood-radiant-bg);
+  --color-mood-5-border: var(--mood-radiant-border);
+}
+
+@layer base {
+  :root {
+    /* Cream/Ivory paper background, dark brown-ink text, warm amber accents */
+    --background: oklch(0.98 0.015 76);
+    --foreground: oklch(0.24 0.03 55);
+
+    --card: oklch(0.99 0.005 76);
+    --card-foreground: oklch(0.24 0.03 55);
+
+    --popover: oklch(0.99 0.005 76);
+    --popover-foreground: oklch(0.24 0.03 55);
+
+    --primary: oklch(0.24 0.03 55);
+    --primary-foreground: oklch(0.98 0.015 76);
+
+    --secondary: oklch(0.94 0.015 76);
+    --secondary-foreground: oklch(0.24 0.03 55);
+
+    --muted: oklch(0.94 0.015 76);
+    --muted-foreground: oklch(0.45 0.02 60);
+
+    --accent: oklch(0.78 0.12 75);
+    --accent-foreground: oklch(0.24 0.03 55);
+
+    --destructive: oklch(0.6 0.14 25);
+    --destructive-foreground: oklch(0.98 0.015 76);
+
+    --border: oklch(0.9 0.015 76);
+    --input: oklch(0.9 0.015 76);
+    --ring: oklch(0.24 0.03 55);
+    --radius: 0.75rem;
+
+    --sidebar: oklch(0.96 0.015 76);
+    --sidebar-foreground: oklch(0.24 0.03 55);
+    --sidebar-primary: oklch(0.24 0.03 55);
+    --sidebar-primary-foreground: oklch(0.98 0.015 76);
+    --sidebar-accent: oklch(0.92 0.015 76);
+    --sidebar-accent-foreground: oklch(0.24 0.03 55);
+    --sidebar-border: oklch(0.9 0.015 76);
+    --sidebar-ring: oklch(0.24 0.03 55);
+
+    --withink-paper-scale: 1;
+
+    /* Mood rating custom variables */
+    --mood-angry: oklch(0.6 0.14 25);
+    --mood-angry-bg: oklch(0.6 0.14 25 / 0.1);
+    --mood-angry-border: oklch(0.6 0.14 25 / 0.2);
+    --mood-sad: oklch(0.65 0.12 50);
+    --mood-sad-bg: oklch(0.65 0.12 50 / 0.1);
+    --mood-sad-border: oklch(0.65 0.12 50 / 0.2);
+    --mood-neutral: oklch(0.45 0.02 60);
+    --mood-neutral-bg: oklch(0.94 0.015 76);
+    --mood-neutral-border: oklch(0.9 0.015 76);
+    --mood-happy: oklch(0.6 0.12 145);
+    --mood-happy-bg: oklch(0.6 0.12 145 / 0.1);
+    --mood-happy-border: oklch(0.6 0.12 145 / 0.2);
+    --mood-radiant: oklch(0.78 0.12 75);
+    --mood-radiant-bg: oklch(0.78 0.12 75 / 0.2);
+    --mood-radiant-border: oklch(0.78 0.12 75 / 0.3);
+  }
+
+  .dark {
+    /* Low-strain warm charcoal, cream-colored text */
+    --background: oklch(0.18 0.01 70);
+    --foreground: oklch(0.92 0.01 75);
+
+    --card: oklch(0.22 0.01 70);
+    --card-foreground: oklch(0.92 0.01 75);
+
+    --popover: oklch(0.22 0.01 70);
+    --popover-foreground: oklch(0.92 0.01 75);
+
+    --primary: oklch(0.92 0.01 75);
+    --primary-foreground: oklch(0.18 0.01 70);
+
+    --secondary: oklch(0.25 0.01 70);
+    --secondary-foreground: oklch(0.92 0.01 75);
+
+    --muted: oklch(0.25 0.01 70);
+    --muted-foreground: oklch(0.65 0.01 75);
+
+    --accent: oklch(0.7 0.1 75);
+    --accent-foreground: oklch(0.18 0.01 70);
+
+    --destructive: oklch(0.55 0.1 25);
+    --destructive-foreground: oklch(0.92 0.01 75);
+
+    --border: oklch(0.28 0.01 70);
+    --input: oklch(0.28 0.01 70);
+    --ring: oklch(0.92 0.01 75);
+
+    --sidebar: oklch(0.15 0.01 70);
+    --sidebar-foreground: oklch(0.92 0.01 75);
+    --sidebar-primary: oklch(0.92 0.01 75);
+    --sidebar-primary-foreground: oklch(0.18 0.01 70);
+    --sidebar-accent: oklch(0.22 0.01 70);
+    --sidebar-accent-foreground: oklch(0.92 0.01 75);
+    --sidebar-border: oklch(0.2 0.01 70);
+    --sidebar-ring: oklch(0.92 0.01 75);
+
+    /* Mood rating custom variables */
+    --mood-angry: oklch(0.55 0.1 25);
+    --mood-angry-bg: oklch(0.55 0.1 25 / 0.1);
+    --mood-angry-border: oklch(0.55 0.1 25 / 0.2);
+    --mood-sad: oklch(0.6 0.08 50);
+    --mood-sad-bg: oklch(0.6 0.08 50 / 0.2);
+    --mood-sad-border: oklch(0.6 0.08 50 / 0.2);
+    --mood-neutral: oklch(0.65 0.01 75);
+    --mood-neutral-bg: oklch(0.25 0.01 70);
+    --mood-neutral-border: oklch(0.28 0.01 70);
+    --mood-happy: oklch(0.55 0.1 145);
+    --mood-happy-bg: oklch(0.55 0.1 145 / 0.2);
+    --mood-happy-border: oklch(0.55 0.1 145 / 0.2);
+    --mood-radiant: oklch(0.7 0.1 75);
+    --mood-radiant-bg: oklch(0.7 0.1 75 / 0.3);
+    --mood-radiant-border: oklch(0.7 0.1 75 / 0.3);
+  }
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+    outline-color: color-mix(in oklch, var(--ring), transparent 50%);
+  }
+
+  html {
+    font-size: calc(16px * var(--withink-paper-scale, 1));
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  html::-webkit-scrollbar {
+    display: none;
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Targeted smooth theme transitions for layout containers and copy, preventing global performance jank */
+  body,
+  header,
+  footer,
+  aside,
+  main,
+  section,
+  article,
+  div,
+  button,
+  input,
+  textarea,
+  a,
+  span,
+  p,
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  nav,
+  svg {
+    transition-property: color, background-color, border-color,
+      text-decoration-color, fill, stroke, box-shadow;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 250ms;
+  }
+
+  /* View Transition API styles for smooth cross-fade theme transitions */
+  ::view-transition-old(root) {
+    animation: 200ms cubic-bezier(0.4, 0, 0.2, 1) both fade-out;
+  }
+  ::view-transition-new(root) {
+    animation: 200ms cubic-bezier(0.4, 0, 0.2, 1) both fade-in;
+  }
+
+  @keyframes fade-out {
+    from {
+      opacity: 1;
+    }
+    to {
+      opacity: 0;
+    }
+  }
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background-color: var(--accent);
+    color: var(--accent-foreground);
+  }
+}
+
+/* Custom Scrollbar and Utility Classes */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.card-blur {
+  backdrop-filter: blur(12px);
+  background-color: color-mix(in oklch, var(--card), transparent 40%);
+  border: 1px solid var(--border);
+}
+
+/* Typography Scale Utilities */
+@utility text-display {
+  font-family: var(--font-serif), Georgia, Cambria, serif;
+  font-size: 3.75rem; /* 60px */
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+@utility text-hero {
+  font-family: var(--font-serif), Georgia, Cambria, serif;
+  font-size: 3rem; /* 48px */
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+}
+
+@utility text-h1 {
+  font-family: var(--font-serif), Georgia, Cambria, serif;
+  font-size: 2.25rem; /* 36px */
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+}
+
+@utility text-h2 {
+  font-family: var(--font-serif), Georgia, Cambria, serif;
+  font-size: 1.875rem; /* 30px */
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.005em;
+}
+
+@utility text-h3 {
+  font-family: var(--font-serif), Georgia, Cambria, serif;
+  font-size: 1.5rem; /* 24px */
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+@utility text-title {
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  font-size: 1.25rem; /* 20px */
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+@utility text-subtitle {
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  font-size: 1.125rem; /* 18px */
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--muted-foreground);
+}
+
+@utility text-body-large {
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  font-size: 1.125rem; /* 18px */
+  font-weight: 400;
+  line-height: 1.6;
+}
+
+@utility text-body {
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  font-size: 1rem; /* 16px */
+  font-weight: 400;
+  line-height: 1.625;
+}
+
+@utility text-body-small {
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.875rem; /* 14px */
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+@utility text-caption {
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.75rem; /* 12px */
+  font-weight: 400;
+  line-height: 1.4;
+  color: var(--muted-foreground);
+}
+
+@utility text-label {
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.875rem; /* 14px */
+  font-weight: 500;
+  line-height: 1.25;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+@utility text-helper {
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.75rem; /* 12px */
+  font-weight: 400;
+  line-height: 1.3;
+  color: var(--muted-foreground);
+}

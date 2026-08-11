@@ -1,0 +1,14 @@
+{
+  "name": "@withink/eslint-config",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "index.mjs",
+  "exports": {
+    ".": "./index.mjs"
+  },
+  "peerDependencies": {
+    "eslint": "^9.17.0",
+    "eslint-config-next": "16.2.9"
+  }
+}

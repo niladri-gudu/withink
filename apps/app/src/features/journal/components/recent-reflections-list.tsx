@@ -1,0 +1,129 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import type { Route } from "next";
+import Link from "next/link";
+import { Button } from "@withink/ui/button";
+import {
+  Angry,
+  ArrowRight,
+  FileText,
+  Frown,
+  Meh,
+  Smile,
+  SmilePlus,
+} from "lucide-react";
+
+import { ROUTES } from "@/constants/routes";
+import { safeDecryptText } from "@/lib/crypto-client";
+import { formatDisplayDate } from "@/lib/utils/date";
+import { useEncryption } from "@/providers/encryption-provider";
+
+import type { DecryptedEntry } from "../services/journal-service";
+
+const moodIcons: Record<number, React.ComponentType<{ className?: string }>> = {
+  1: Angry,
+  2: Frown,
+  3: Meh,
+  4: Smile,
+  5: SmilePlus,
+};
+
+const moodColors: Record<number, string> = {
+  1: "text-red-500 bg-red-500/10 border-red-500/20",
+  2: "text-orange-500 bg-orange-500/10 border-orange-500/20",
+  3: "text-yellow-500 bg-yellow-500/10 border-yellow-500/20",
+  4: "text-emerald-500 bg-emerald-500/10 border-emerald-500/20",
+  5: "text-teal-500 bg-teal-500/10 border-teal-500/20",
+};
+
+interface RecentReflectionsListProps {
+  initialEntries: DecryptedEntry[];
+  today: string;
+}
+
+export function RecentReflectionsList({
+  initialEntries,
+  today,
+}: RecentReflectionsListProps) {
+  const { isClientEncrypted, masterKey } = useEncryption();
+  const [entries, setEntries] = useState<DecryptedEntry[]>(initialEntries);
+
+  useEffect(() => {
+    const decryptEntries = async () => {
+      if (isClientEncrypted && masterKey) {
+        const decrypted = [];
+        for (const entry of initialEntries) {
+          const title = await safeDecryptText(entry.title || "", masterKey);
+          decrypted.push({
+            ...entry,
+            title: title || "Untitled Entry",
+          });
+        }
+        setEntries(decrypted);
+      } else {
+        setEntries(initialEntries);
+      }
+    };
+    decryptEntries();
+  }, [initialEntries, isClientEncrypted, masterKey]);
+
+  if (entries.length === 0) {
+    return (
+      <div className="text-muted-foreground py-10 text-center font-serif text-sm">
+        No entries found.
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {entries.map((entry) => {
+        const MoodIcon = (entry.mood && moodIcons[entry.mood]) || FileText;
+        const moodColor = entry.mood
+          ? moodColors[entry.mood]
+          : "text-muted-foreground/60 bg-muted/10 border-border/10";
+
+        return (
+          <Link
+            key={entry.date}
+            href={`${ROUTES.APP.ENTRY(entry.date)}?today=${today}` as Route}
+            className="block"
+          >
+            <div className="hover:bg-muted/30 hover:border-border/5 flex items-center justify-between rounded-xl border border-transparent p-3 transition-colors">
+              <div className="flex min-w-0 items-center gap-3">
+                <div
+                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border ${moodColor}`}
+                >
+                  <MoodIcon className="h-4.5 w-4.5" />
+                </div>
+                <div className="min-w-0">
+                  <h4 className="text-foreground truncate font-serif text-sm font-bold">
+                    {entry.title || "Untitled Entry"}
+                  </h4>
+                  <span className="text-muted-foreground/60 font-mono text-[10px] uppercase">
+                    {formatDisplayDate(entry.date)}
+                  </span>
+                </div>
+              </div>
+              <ArrowRight className="text-muted-foreground/40 h-4 w-4 shrink-0" />
+            </div>
+          </Link>
+        );
+      })}
+      <div className="flex justify-end pt-2">
+        <Button
+          asChild
+          variant="ghost"
+          size="sm"
+          className="text-muted-foreground hover:text-foreground cursor-pointer gap-1.5 p-0 font-mono text-xs tracking-widest uppercase hover:bg-transparent"
+        >
+          <Link href={ROUTES.APP.ENTRIES}>
+            View Archive
+            <ArrowRight className="h-3 w-3" />
+          </Link>
+        </Button>
+      </div>
+    </div>
+  );
+}
