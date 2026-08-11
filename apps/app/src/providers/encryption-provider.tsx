@@ -6,6 +6,27 @@ import { decryptText, importKeyFromHex } from "@/lib/crypto-client";
 import { deriveKeyFromPasswordAsync } from "@/lib/crypto-worker-client";
 import { sanctuaryCacheService } from "@/features/journal/services/sanctuary-cache-service";
 
+// Memory-only cache of derived wrapper keys keyed by `${iterations}:${saltHex}`.
+// The derived key alone cannot decrypt journal content — it only unwraps the
+// master key — but keeping it in memory (never persisted) makes re-unlock after
+// an auto-lock within the same tab session instant, since PBKDF2 no longer
+// re-runs. Cleared on page reload by design.
+const derivedKeyCache = new Map<string, CryptoKey>();
+
+async function deriveCachedKey(
+  password: string,
+  saltHex: string,
+  iterations: number,
+): Promise<CryptoKey> {
+  const cacheKey = `${iterations}:${saltHex}`;
+  const cached = derivedKeyCache.get(cacheKey);
+  if (cached) return cached;
+
+  const key = await deriveKeyFromPasswordAsync(password, saltHex, iterations);
+  derivedKeyCache.set(cacheKey, key);
+  return key;
+}
+
 interface EncryptionSettings {
   isClientEncrypted: boolean;
   encryptionSalt: string;
@@ -130,9 +151,10 @@ export function EncryptionProvider({
 
       try {
         // 1. Derive the temporary key from the Sanctuary Password + Salt
-        const passwordKey = await deriveKeyFromPasswordAsync(
+        const passwordKey = await deriveCachedKey(
           password,
           encryptionSalt,
+          100000,
         );
 
         // 2. Try to decrypt the verification ciphertext (which yields the Master Key hex)
@@ -145,11 +167,15 @@ export function EncryptionProvider({
         const key = await importKeyFromHex(decryptedMasterKeyHex);
         setMasterKey(key);
 
-        // Set server-side unlock cookie!
-        const { unlockSessionAction } = await import(
-          "@/features/lock/actions/lock-actions"
-        );
-        await unlockSessionAction();
+        // Set the server-side unlock cookie best-effort and non-blocking so the
+        // UI reveals instantly instead of waiting on a network round-trip. If
+        // the cookie fails to set, this session still works (the key is in
+        // memory) and the next page load simply asks to unlock again.
+        void import("@/features/lock/actions/lock-actions")
+          .then(({ unlockSessionAction }) => unlockSessionAction())
+          .catch((err) => {
+            console.error("Failed to set unlock session cookie:", err);
+          });
 
         setPromptOpen(false);
         return true;
@@ -171,11 +197,7 @@ export function EncryptionProvider({
       try {
         // 1. Derive the Passcode Key from the 4-digit PIN + Salt
         // Using iterations = 50000 for faster PIN verification
-        const pinKey = await deriveKeyFromPasswordAsync(
-          pin,
-          encryptionSalt,
-          50000,
-        );
+        const pinKey = await deriveCachedKey(pin, encryptionSalt, 50000);
 
         // 2. Decrypt the Master Key hex from localStorage
         const decryptedMasterKeyHex = await decryptText(

@@ -275,7 +275,7 @@ export function AppShell({
 
   return (
     <>
-      {user && !isUnlocked && !showPasswordUnlockPrompt && (
+      {user && !isUnlocked && !masterKey && !showPasswordUnlockPrompt && (
         <LockScreen
           onUnlockSuccess={handleUnlockSuccess}
           userEmail={user.email}

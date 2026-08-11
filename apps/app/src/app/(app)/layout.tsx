@@ -2,7 +2,6 @@ import { headers } from "next/headers";
 
 import { auth } from "@/lib/auth";
 import { AppShell } from "@/features/app-shell/components/app-shell";
-import { SanctuaryLockGate } from "@/features/lock/components/sanctuary-lock-gate";
 import { LockService } from "@/features/lock/services/lock-service";
 
 interface AppLayoutProps {
@@ -14,18 +13,16 @@ export default async function AppLayout({ children }: AppLayoutProps) {
     headers: await headers(),
   });
 
+  // The lock is enforced client-side by AppShell (and every server action /
+  // route handler re-verifies isSessionUnlocked). Here we only seed the boot
+  // state so users with a valid unlock cookie skip the lock overlay entirely.
+  let sessionUnlocked = true;
   if (session?.user) {
-    const isUnlocked = await LockService.isSessionUnlocked(
-      session.user.id,
-      true,
-    );
-    if (!isUnlocked) {
-      return <SanctuaryLockGate userEmail={session.user.email} />;
-    }
+    sessionUnlocked = await LockService.isSessionUnlocked(session.user.id, true);
   }
 
   return (
-    <AppShell user={session?.user || null} sessionUnlocked>
+    <AppShell user={session?.user || null} sessionUnlocked={sessionUnlocked}>
       {children}
     </AppShell>
   );
