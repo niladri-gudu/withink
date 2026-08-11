@@ -6,7 +6,7 @@ import { decryptText, importKeyFromHex } from "@/lib/crypto-client";
 import { deriveKeyFromPasswordAsync } from "@/lib/crypto-worker-client";
 import { sanctuaryCacheService } from "@/features/journal/services/sanctuary-cache-service";
 
-// Memory-only cache of derived wrapper keys keyed by `${iterations}:${saltHex}`.
+// Memory-only cache of derived wrapper keys keyed by `${iterations}:${saltHex}:${password}`.
 // The derived key alone cannot decrypt journal content — it only unwraps the
 // master key — but keeping it in memory (never persisted) makes re-unlock after
 // an auto-lock within the same tab session instant, since PBKDF2 no longer
@@ -18,7 +18,10 @@ async function deriveCachedKey(
   saltHex: string,
   iterations: number,
 ): Promise<CryptoKey> {
-  const cacheKey = `${iterations}:${saltHex}`;
+  // The password MUST be part of the key: derived keys are password-bound, so
+  // keying only on (iterations, salt) would return the wrong key after any
+  // earlier attempt with a different password, rejecting the correct one.
+  const cacheKey = `${iterations}:${saltHex}:${password}`;
   const cached = derivedKeyCache.get(cacheKey);
   if (cached) return cached;
 

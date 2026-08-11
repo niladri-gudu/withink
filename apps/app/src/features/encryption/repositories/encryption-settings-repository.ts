@@ -1,7 +1,7 @@
 import type { Model } from "mongoose";
 
 import { connectDB } from "@/lib/db/mongoose";
-import { getCachedValue, redis, setCachedValue } from "@/lib/redis";
+import { redis } from "@/lib/redis";
 import { serialize } from "@/lib/utils/serialize";
 
 import {
@@ -9,45 +9,29 @@ import {
   type IClientEncryptionSettings,
 } from "./encryption-settings-model";
 
-const ENCRYPTION_SETTINGS_CACHE_TTL_SECONDS = 3600;
-
 export class EncryptionSettingsRepository {
   private static getCacheKey(userId: string): string {
     return `encryption:${userId}:settings`;
   }
 
+  /**
+   * Reads the user's client-encryption settings straight from MongoDB.
+   *
+   * Deliberately NOT cached: a stale verificationCiphertext would make the
+   * Sanctuary Password verification fail, and local dev + the dev deployment
+   * share the same Redis, so a poisoned value breaks both. This is a single
+   * indexed document lookup, so caching adds risk for negligible gain.
+   */
   static async getSettings(
     userId: string,
   ): Promise<IClientEncryptionSettings | null> {
-    const cacheKey = this.getCacheKey(userId);
-
-    // 1. Try to fetch from Redis
-    const cached = await getCachedValue<IClientEncryptionSettings | null>(
-      cacheKey,
-    );
-    if (cached !== null) {
-      return cached;
-    }
-
-    // 2. Fallback to MongoDB
     await connectDB();
     const settings = await (
       ClientEncryptionSettingsModel as Model<IClientEncryptionSettings>
     )
       .findOne({ userId })
       .lean();
-    const serializedSettings = serialize(settings);
-
-    // 3. Cache the result if found
-    if (serializedSettings) {
-      await setCachedValue(
-        cacheKey,
-        serializedSettings,
-        ENCRYPTION_SETTINGS_CACHE_TTL_SECONDS,
-      );
-    }
-
-    return serializedSettings as IClientEncryptionSettings | null;
+    return serialize(settings) as IClientEncryptionSettings | null;
   }
 
   static async saveSettings(
@@ -56,7 +40,6 @@ export class EncryptionSettingsRepository {
   ): Promise<IClientEncryptionSettings> {
     await connectDB();
 
-    // 1. Update or create settings in DB
     const settings = await (
       ClientEncryptionSettingsModel as Model<IClientEncryptionSettings>
     ).findOneAndUpdate(
@@ -68,20 +51,10 @@ export class EncryptionSettingsRepository {
       { upsert: true, new: true, lean: true },
     );
 
-    const serializedSettings = serialize(settings);
-
-    // 2. Invalidate cache in Redis
+    // Drop any previously cached value so readers never see stale settings.
     await this.invalidateCache(userId);
 
-    // 3. Eagerly write to cache
-    const cacheKey = this.getCacheKey(userId);
-    await setCachedValue(
-      cacheKey,
-      serializedSettings,
-      ENCRYPTION_SETTINGS_CACHE_TTL_SECONDS,
-    );
-
-    return serializedSettings as unknown as IClientEncryptionSettings;
+    return serialize(settings) as unknown as IClientEncryptionSettings;
   }
 
   static async invalidateCache(userId: string): Promise<void> {
