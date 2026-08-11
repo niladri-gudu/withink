@@ -16,6 +16,17 @@ const DB_NAME = env.IS_PROD ? "withink_prod" : "withink_dev";
 export const auth = betterAuth({
   database: mongodbAdapter(client.db(DB_NAME), { client }),
 
+  trustedOrigins: env.IS_PROD
+    ? ["https://withink.me", "https://app.withink.me"]
+    : ["http://localhost:3000", "https://dev.withink.me"],
+
+  advanced: {
+    crossSubDomainCookies: {
+      enabled: env.IS_PROD,
+      domain: "withink.me",
+    },
+  },
+
   databaseHooks: {
     user: {
       create: {
@@ -128,13 +139,6 @@ export const auth = betterAuth({
 
   plugins: [nextCookies()],
   trustHost: true,
-  cookies: {
-    sessionToken: {
-      options: {
-        domain: env.IS_PROD ? ".withink.me" : undefined,
-      },
-    },
-  },
 });
 
 export type Session = typeof auth.$Infer.Session;
