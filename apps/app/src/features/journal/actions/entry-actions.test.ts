@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { auth } from "@/lib/auth";
+import { getRequestSession } from "@/lib/request-cache";
 
 import { JournalService } from "../services/journal-service";
 import {
@@ -13,11 +13,6 @@ import {
   saveEntryAction,
 } from "./entry-actions";
 
-// Mock next/headers
-vi.mock("next/headers", () => ({
-  headers: vi.fn().mockResolvedValue(new Map()),
-}));
-
 // Mock LockService
 vi.mock("@/features/lock/services/lock-service", () => ({
   LockService: {
@@ -25,13 +20,9 @@ vi.mock("@/features/lock/services/lock-service", () => ({
   },
 }));
 
-// Mock auth
-vi.mock("@/lib/auth", () => ({
-  auth: {
-    api: {
-      getSession: vi.fn(),
-    },
-  },
+// Mock getRequestSession (never run the real cache()-wrapped implementation)
+vi.mock("@/lib/request-cache", () => ({
+  getRequestSession: vi.fn(),
 }));
 
 // Mock JournalService
@@ -60,7 +51,7 @@ describe("entry-actions", () => {
 
   describe("unauthorized checks", () => {
     beforeEach(() => {
-      vi.mocked(auth.api.getSession).mockResolvedValue(null);
+      vi.mocked(getRequestSession).mockResolvedValue(null);
     });
 
     it("should fail getEntryAction if unauthorized", async () => {
@@ -102,7 +93,7 @@ describe("entry-actions", () => {
 
   describe("authorized behavior", () => {
     beforeEach(() => {
-      vi.mocked(auth.api.getSession).mockResolvedValue(mockSession as any);
+      vi.mocked(getRequestSession).mockResolvedValue(mockSession as any);
     });
 
     it("should call getEntryForDate on getEntryAction", async () => {

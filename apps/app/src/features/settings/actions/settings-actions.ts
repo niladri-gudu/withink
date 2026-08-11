@@ -1,14 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use server";
 
-import { headers } from "next/headers";
 import { DeleteObjectsCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
 
 import { env } from "@/config/env";
-import { auth } from "@/lib/auth";
 import { client } from "@/lib/db";
 import { connectDB } from "@/lib/db/mongoose";
 import { r2 } from "@/lib/r2";
+import { getRequestSession } from "@/lib/request-cache";
 import { handleError } from "@/server/errors";
 import { logger } from "@/server/logger";
 import { EntryModel } from "@/features/journal/repositories/entry-model";
@@ -26,7 +25,7 @@ export async function deleteAccountAction(): Promise<{
   error?: string;
 }> {
   try {
-    const session = await auth.api.getSession({ headers: await headers() });
+    const session = await getRequestSession();
     if (!session) {
       return { success: false, error: "Unauthorized" };
     }

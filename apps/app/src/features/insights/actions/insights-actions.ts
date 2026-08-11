@@ -1,8 +1,6 @@
 "use server";
 
-import { headers } from "next/headers";
-
-import { auth } from "@/lib/auth";
+import { getRequestSession } from "@/lib/request-cache";
 import { handleError } from "@/server/errors";
 import { LockService } from "@/features/lock/services/lock-service";
 
@@ -20,9 +18,7 @@ export async function getInsightsAction(
   error?: string;
 }> {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const session = await getRequestSession();
     if (!session) {
       return { success: false, error: "Unauthorized" };
     }

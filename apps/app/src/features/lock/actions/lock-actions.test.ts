@@ -2,7 +2,7 @@
 import { cookies } from "next/headers";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { auth } from "@/lib/auth";
+import { getRequestSession } from "@/lib/request-cache";
 
 import { LockRepository } from "../repositories/lock-repository";
 import { LockService } from "../services/lock-service";
@@ -14,7 +14,7 @@ import {
   verifyPasswordAndResetLockAction,
 } from "./lock-actions";
 
-// Mock next/headers
+// Mock next/headers (cookies() is used by LockService + the test)
 vi.mock("next/headers", () => {
   const mCookies = {
     set: vi.fn(),
@@ -27,7 +27,7 @@ vi.mock("next/headers", () => {
   };
 });
 
-// Mock auth
+// Mock auth (kept so LockService's `auth` import resolves in tests)
 vi.mock("@/lib/auth", () => ({
   auth: {
     api: {
@@ -35,6 +35,11 @@ vi.mock("@/lib/auth", () => ({
       signInEmail: vi.fn(),
     },
   },
+}));
+
+// Mock getRequestSession (never run the real cache()-wrapped implementation)
+vi.mock("@/lib/request-cache", () => ({
+  getRequestSession: vi.fn(),
 }));
 
 // Mock Redis
@@ -89,14 +94,14 @@ describe("Lock Actions Suite", () => {
 
   describe("getLockSettingsAction", () => {
     it("should return Unauthorized if session is missing", async () => {
-      vi.mocked(auth.api.getSession).mockResolvedValue(null);
+      vi.mocked(getRequestSession).mockResolvedValue(null);
       const res = await getLockSettingsAction();
       expect(res.success).toBe(false);
       expect(res.error).toBe("Unauthorized");
     });
 
     it("should return lock settings and unlock status on success", async () => {
-      vi.mocked(auth.api.getSession).mockResolvedValue(mockSession as any);
+      vi.mocked(getRequestSession).mockResolvedValue(mockSession as any);
       vi.mocked(LockRepository.getSettings).mockResolvedValue({
         isLockEnabled: true,
         passcodeHash: "salt:hash",
@@ -132,21 +137,21 @@ describe("Lock Actions Suite", () => {
 
   describe("unlockAction", () => {
     it("should return Unauthorized if session is missing", async () => {
-      vi.mocked(auth.api.getSession).mockResolvedValue(null);
+      vi.mocked(getRequestSession).mockResolvedValue(null);
       const res = await unlockAction("1234");
       expect(res.success).toBe(false);
       expect(res.error).toBe("Unauthorized");
     });
 
     it("should return error if passcode format is invalid", async () => {
-      vi.mocked(auth.api.getSession).mockResolvedValue(mockSession as any);
+      vi.mocked(getRequestSession).mockResolvedValue(mockSession as any);
       const res = await unlockAction("abc");
       expect(res.success).toBe(false);
       expect(res.error).toContain("Passcode"); // Zod validation message
     });
 
     it("should return success directly if lock is disabled", async () => {
-      vi.mocked(auth.api.getSession).mockResolvedValue(mockSession as any);
+      vi.mocked(getRequestSession).mockResolvedValue(mockSession as any);
       vi.mocked(LockRepository.getSettings).mockResolvedValue({
         isLockEnabled: false,
       } as any);
@@ -156,7 +161,7 @@ describe("Lock Actions Suite", () => {
     });
 
     it("should set unlock cookie and return success on correct passcode", async () => {
-      vi.mocked(auth.api.getSession).mockResolvedValue(mockSession as any);
+      vi.mocked(getRequestSession).mockResolvedValue(mockSession as any);
       vi.mocked(LockRepository.getSettings).mockResolvedValue({
         isLockEnabled: true,
         passcodeHash: "salt:hash",
@@ -180,7 +185,7 @@ describe("Lock Actions Suite", () => {
     });
 
     it("should return error on incorrect passcode", async () => {
-      vi.mocked(auth.api.getSession).mockResolvedValue(mockSession as any);
+      vi.mocked(getRequestSession).mockResolvedValue(mockSession as any);
       vi.mocked(LockRepository.getSettings).mockResolvedValue({
         isLockEnabled: true,
         passcodeHash: "salt:hash",
@@ -212,7 +217,7 @@ describe("Lock Actions Suite", () => {
 
   describe("saveLockSettingsAction", () => {
     it("should save settings and set unlock cookie when enabling", async () => {
-      vi.mocked(auth.api.getSession).mockResolvedValue(mockSession as any);
+      vi.mocked(getRequestSession).mockResolvedValue(mockSession as any);
       vi.mocked(LockRepository.getSettings).mockResolvedValue(null);
 
       const spyHash = vi
@@ -243,7 +248,7 @@ describe("Lock Actions Suite", () => {
     });
 
     it("should clear unlock cookie when disabling", async () => {
-      vi.mocked(auth.api.getSession).mockResolvedValue(mockSession as any);
+      vi.mocked(getRequestSession).mockResolvedValue(mockSession as any);
       const spyClear = vi
         .spyOn(LockService, "clearUnlockCookie")
         .mockResolvedValue(undefined);
@@ -269,7 +274,7 @@ describe("Lock Actions Suite", () => {
 
   describe("verifyPasswordAndResetLockAction", () => {
     it("should verify password and disable lock on success", async () => {
-      vi.mocked(auth.api.getSession).mockResolvedValue(mockSession as any);
+      vi.mocked(getRequestSession).mockResolvedValue(mockSession as any);
 
       const spyVerifyPass = vi
         .spyOn(LockService, "verifyLoginPassword")
@@ -295,7 +300,7 @@ describe("Lock Actions Suite", () => {
     });
 
     it("should fail and not disable lock on incorrect password", async () => {
-      vi.mocked(auth.api.getSession).mockResolvedValue(mockSession as any);
+      vi.mocked(getRequestSession).mockResolvedValue(mockSession as any);
 
       const spyVerifyPass = vi
         .spyOn(LockService, "verifyLoginPassword")

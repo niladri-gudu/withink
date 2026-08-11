@@ -1,26 +1,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { auth } from "@/lib/auth";
 import { client } from "@/lib/db";
 import { r2 } from "@/lib/r2";
+import { getRequestSession } from "@/lib/request-cache";
 import { EntryModel } from "@/features/journal/repositories/entry-model";
 import { EntryRepository } from "@/features/journal/repositories/entry-repository";
 
 import { deleteAccountAction } from "./settings-actions";
 
-// Mock next/headers
-vi.mock("next/headers", () => ({
-  headers: vi.fn().mockResolvedValue(new Map()),
-}));
-
-// Mock auth
-vi.mock("@/lib/auth", () => ({
-  auth: {
-    api: {
-      getSession: vi.fn(),
-    },
-  },
+// Mock getRequestSession (never run the real cache()-wrapped implementation)
+vi.mock("@/lib/request-cache", () => ({
+  getRequestSession: vi.fn(),
 }));
 
 // Mock r2
@@ -84,7 +75,7 @@ describe("deleteAccountAction", () => {
   };
 
   it("should fail and return Unauthorized if user session is missing", async () => {
-    vi.mocked(auth.api.getSession).mockResolvedValue(null);
+    vi.mocked(getRequestSession).mockResolvedValue(null);
 
     const result = await deleteAccountAction();
 
@@ -94,7 +85,7 @@ describe("deleteAccountAction", () => {
   });
 
   it("should delete MongoDB entries, clean R2 objects, purge Better Auth records, and invalidate cache on success", async () => {
-    vi.mocked(auth.api.getSession).mockResolvedValue(mockSession as any);
+    vi.mocked(getRequestSession).mockResolvedValue(mockSession as any);
     vi.mocked(EntryModel.deleteMany).mockResolvedValue({
       deletedCount: 5,
     } as any);
@@ -139,7 +130,7 @@ describe("deleteAccountAction", () => {
   });
 
   it("should succeed even if R2 bucket is empty", async () => {
-    vi.mocked(auth.api.getSession).mockResolvedValue(mockSession as any);
+    vi.mocked(getRequestSession).mockResolvedValue(mockSession as any);
     vi.mocked(EntryModel.deleteMany).mockResolvedValue({
       deletedCount: 0,
     } as any);
@@ -154,7 +145,7 @@ describe("deleteAccountAction", () => {
   });
 
   it("should handle error gracefully and return standard error payload if an exception occurs", async () => {
-    vi.mocked(auth.api.getSession).mockResolvedValue(mockSession as any);
+    vi.mocked(getRequestSession).mockResolvedValue(mockSession as any);
     vi.mocked(EntryModel.deleteMany).mockRejectedValue(
       new Error("Database connection dropped"),
     );

@@ -1,9 +1,7 @@
 "use server";
 
-import { headers } from "next/headers";
-
-import { auth } from "@/lib/auth";
 import { addDays, getLocalDateString, isDateString } from "@/lib/utils/date";
+import { getRequestSession } from "@/lib/request-cache";
 import { handleError } from "@/server/errors";
 import { LockService } from "@/features/lock/services/lock-service";
 
@@ -18,9 +16,7 @@ export async function getEntryAction(
   today: string,
 ): Promise<{ success: boolean; data?: DecryptedEntry | null; error?: string }> {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const session = await getRequestSession();
     if (!session) {
       return { success: false, error: "Unauthorized" };
     }
@@ -47,9 +43,7 @@ export async function saveEntryAction(
   userLocalToday: string,
 ): Promise<{ success: boolean; data?: DecryptedEntry; error?: string }> {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const session = await getRequestSession();
     if (!session) {
       return { success: false, error: "Unauthorized" };
     }
@@ -99,9 +93,7 @@ export async function getEntriesListAction(
   error?: string;
 }> {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const session = await getRequestSession();
     if (!session) {
       return { success: false, error: "Unauthorized" };
     }
@@ -135,9 +127,7 @@ export async function getStreakAndStatsAction(localToday: string): Promise<{
   error?: string;
 }> {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const session = await getRequestSession();
     if (!session) {
       return { success: false, error: "Unauthorized" };
     }
@@ -204,9 +194,7 @@ export async function getEntryDatesAction(): Promise<{
   error?: string;
 }> {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const session = await getRequestSession();
     if (!session) {
       return { success: false, error: "Unauthorized" };
     }
@@ -236,9 +224,7 @@ export async function getCalendarEntriesAction(): Promise<{
   error?: string;
 }> {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const session = await getRequestSession();
     if (!session) {
       return { success: false, error: "Unauthorized" };
     }
@@ -260,9 +246,7 @@ export async function deleteEntryAction(
   date: string,
 ): Promise<{ success: boolean; data?: boolean; error?: string }> {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const session = await getRequestSession();
     if (!session) {
       return { success: false, error: "Unauthorized" };
     }
@@ -286,9 +270,7 @@ export async function getAllEntriesAction(): Promise<{
   error?: string;
 }> {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const session = await getRequestSession();
     if (!session) {
       return { success: false, error: "Unauthorized" };
     }
@@ -314,9 +296,7 @@ export async function getEntrySyncListAction(): Promise<{
   error?: string;
 }> {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const session = await getRequestSession();
     if (!session) {
       return { success: false, error: "Unauthorized" };
     }

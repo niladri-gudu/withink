@@ -1,11 +1,10 @@
 "use server";
 
-import { headers } from "next/headers";
 import type { Model } from "mongoose";
 
-import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/db/mongoose";
 import { safeDecrypt } from "@/lib/encryption";
+import { getRequestSession } from "@/lib/request-cache";
 import { handleError } from "@/server/errors";
 import {
   EntryModel,
@@ -18,6 +17,7 @@ import {
   ClientEncryptionSettingsModel,
   type IClientEncryptionSettings,
 } from "../repositories/encryption-settings-model";
+import { EncryptionSettingsRepository } from "../repositories/encryption-settings-repository";
 
 export async function getEncryptionSettingsAction(): Promise<{
   success: boolean;
@@ -29,21 +29,15 @@ export async function getEncryptionSettingsAction(): Promise<{
   error?: string;
 }> {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const session = await getRequestSession();
     if (!session) {
       return { success: false, error: "Unauthorized" };
     }
 
     await connectDB();
-    const settings = await (
-      ClientEncryptionSettingsModel as Model<IClientEncryptionSettings>
-    )
-      .findOne({
-        userId: session.user.id,
-      })
-      .lean();
+    const settings = await EncryptionSettingsRepository.getSettings(
+      session.user.id,
+    );
 
     if (!settings) {
       return {
@@ -84,9 +78,7 @@ export async function getPlaintextEntriesForMigrationAction(): Promise<{
   error?: string;
 }> {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const session = await getRequestSession();
     if (!session) {
       return { success: false, error: "Unauthorized" };
     }
@@ -99,13 +91,9 @@ export async function getPlaintextEntriesForMigrationAction(): Promise<{
     await connectDB();
 
     // Safety check: Do not export plaintext if zero-knowledge is already enabled
-    const settings = await (
-      ClientEncryptionSettingsModel as Model<IClientEncryptionSettings>
-    )
-      .findOne({
-        userId: session.user.id,
-      })
-      .lean();
+    const settings = await EncryptionSettingsRepository.getSettings(
+      session.user.id,
+    );
     if (settings?.isClientEncrypted) {
       return {
         success: false,
@@ -163,9 +151,7 @@ export async function enableClientEncryptionAction(
   encryptedEntries: EncryptedEntryInput[],
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const session = await getRequestSession();
     if (!session) {
       return { success: false, error: "Unauthorized" };
     }
@@ -178,13 +164,9 @@ export async function enableClientEncryptionAction(
     await connectDB();
 
     // Check ZK is already active
-    const settings = await (
-      ClientEncryptionSettingsModel as Model<IClientEncryptionSettings>
-    )
-      .findOne({
-        userId: session.user.id,
-      })
-      .lean();
+    const settings = await EncryptionSettingsRepository.getSettings(
+      session.user.id,
+    );
     if (settings?.isClientEncrypted) {
       return {
         success: false,
@@ -222,19 +204,11 @@ export async function enableClientEncryptionAction(
     }
 
     // Update settings to enable ZK
-    await (
-      ClientEncryptionSettingsModel as Model<IClientEncryptionSettings>
-    ).findOneAndUpdate(
-      { userId: session.user.id },
-      {
-        $set: {
-          isClientEncrypted: true,
-          encryptionSalt: salt,
-          verificationCiphertext,
-        },
-      },
-      { upsert: true, new: true },
-    );
+    await EncryptionSettingsRepository.saveSettings(session.user.id, {
+      isClientEncrypted: true,
+      encryptionSalt: salt,
+      verificationCiphertext,
+    });
 
     // Save newly encrypted entry blobs in database
     let migratedCount = 0;
@@ -275,9 +249,7 @@ export async function updateSanctuaryPasswordAction(
   verificationCiphertext: string,
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const session = await getRequestSession();
     if (!session) {
       return { success: false, error: "Unauthorized" };
     }
@@ -297,6 +269,8 @@ export async function updateSanctuaryPasswordAction(
         error: "Client-side encryption is not enabled for this user",
       };
     }
+
+    await EncryptionSettingsRepository.invalidateCache(session.user.id);
 
     return { success: true };
   } catch (err) {

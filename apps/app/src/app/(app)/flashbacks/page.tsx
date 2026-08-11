@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import { cookies, headers } from "next/headers";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { ROUTES } from "@/constants/routes";
-import { auth } from "@/lib/auth";
+import { getRequestSession } from "@/lib/request-cache";
 import { getLocalDateString, isDateString } from "@/lib/utils/date";
 import { FlashbackView } from "@/features/flashbacks/components/flashback-view";
 import { FlashbackService } from "@/features/flashbacks/services/flashback-service";
@@ -14,9 +14,7 @@ export const metadata: Metadata = {
 };
 
 export default async function FlashbacksPage() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getRequestSession();
   if (!session) {
     redirect(ROUTES.AUTH.LOGIN);
   }

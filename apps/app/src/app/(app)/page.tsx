@@ -1,5 +1,6 @@
 import type { Metadata, Route } from "next";
-import { cookies, headers } from "next/headers";
+import { Suspense } from "react";
+import { cookies } from "next/headers";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Button } from "@withink/ui/button";
@@ -14,7 +15,7 @@ import { cn } from "@withink/utils";
 import { Calendar, Flame } from "lucide-react";
 
 import { ROUTES } from "@/constants/routes";
-import { auth } from "@/lib/auth";
+import { getRequestSession } from "@/lib/request-cache";
 import {
   addDays,
   computeCurrentStreak,
@@ -22,9 +23,9 @@ import {
   getLocalDateString,
   isDateString,
 } from "@/lib/utils/date";
-import { DashboardFlashbackCard } from "@/features/flashbacks/components/flashback-card-content";
-import { FlashbackService } from "@/features/flashbacks/services/flashback-service";
-import { RecentReflectionsList } from "@/features/journal/components/recent-reflections-list";
+import DashboardLowerGrid, {
+  DashboardLowerGridSkeleton,
+} from "@/features/journal/components/dashboard-lower-grid";
 import { TodayReflectionCard } from "@/features/journal/components/today-reflection-card";
 import { JournalService } from "@/features/journal/services/journal-service";
 
@@ -34,9 +35,7 @@ export const metadata: Metadata = {
 };
 
 export default async function DashboardPage() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getRequestSession();
   if (!session) {
     redirect(ROUTES.AUTH.LOGIN);
   }
@@ -47,24 +46,17 @@ export default async function DashboardPage() {
   const today = isDateString(cookieToday) ? cookieToday : getLocalDateString();
   const yesterday = addDays(today, -1);
 
-  // 2. Fetch data in parallel on the server
-  const [todayEntry, yesterdayEntry, recentData, dates] = await Promise.all([
+  // 2. Fetch data in parallel on the server. The below-the-fold dashboard
+  // sections (flashback + recent reflections) stream in separately via
+  // <DashboardLowerGrid> so the top of the page paints faster.
+  const [todayEntry, yesterdayEntry, dates] = await Promise.all([
     JournalService.getEntryForDate(session.user.id, today, today),
     JournalService.getEntryForDate(session.user.id, yesterday, today),
-    JournalService.getEntriesPage(session.user.id, 1, 3, { today }),
     JournalService.getEntryDates(session.user.id),
   ]);
 
   // 3. Compute streak
   const currentStreak = computeCurrentStreak(dates, today);
-
-  // 4. Calculate Anniversary or Past Flashback entry using the shared service
-  const flashback = await FlashbackService.getFlashbackForToday(
-    session.user.id,
-    today,
-  );
-  const flashbackEntry = flashback ? flashback.entry : null;
-  const flashbackLabel = flashback ? flashback.label : "";
 
   const firstName = session.user.name
     ? session.user.name.split(" ")[0]
@@ -164,33 +156,9 @@ export default async function DashboardPage() {
       </div>
 
       {/* Bottom sections */}
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-        {/* Flashback */}
-        <DashboardFlashbackCard
-          entry={flashbackEntry}
-          label={flashbackLabel}
-          today={today}
-        />
-
-        {/* Insights */}
-        <Card
-          className="border-border bg-card/60 border backdrop-blur-sm"
-          interactive
-        >
-          <CardHeader>
-            <CardTitle className="text-foreground font-serif text-lg font-semibold">
-              Recent Reflections
-            </CardTitle>
-            <CardDescription>Your latest journal entries</CardDescription>
-          </CardHeader>
-          <CardContent className="pt-2">
-            <RecentReflectionsList
-              initialEntries={recentData.entries}
-              today={today}
-            />
-          </CardContent>
-        </Card>
-      </div>
+      <Suspense fallback={<DashboardLowerGridSkeleton />}>
+        <DashboardLowerGrid userId={session.user.id} today={today} />
+      </Suspense>
     </div>
   );
 }

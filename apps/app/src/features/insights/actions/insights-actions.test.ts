@@ -1,15 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { auth } from "@/lib/auth";
+import { getRequestSession } from "@/lib/request-cache";
 
 import { InsightsService } from "../services/insights-service";
 import { getInsightsAction } from "./insights-actions";
-
-// Mock next/headers
-vi.mock("next/headers", () => ({
-  headers: vi.fn().mockResolvedValue(new Map()),
-}));
 
 // Mock LockService
 vi.mock("@/features/lock/services/lock-service", () => ({
@@ -18,13 +13,9 @@ vi.mock("@/features/lock/services/lock-service", () => ({
   },
 }));
 
-// Mock auth
-vi.mock("@/lib/auth", () => ({
-  auth: {
-    api: {
-      getSession: vi.fn(),
-    },
-  },
+// Mock getRequestSession (never run the real cache()-wrapped implementation)
+vi.mock("@/lib/request-cache", () => ({
+  getRequestSession: vi.fn(),
 }));
 
 // Mock InsightsService
@@ -47,7 +38,7 @@ describe("getInsightsAction", () => {
   };
 
   it("should fail and return Unauthorized if user session is missing", async () => {
-    vi.mocked(auth.api.getSession).mockResolvedValue(null);
+    vi.mocked(getRequestSession).mockResolvedValue(null);
 
     const result = await getInsightsAction("2026-07-06", 0);
 
@@ -57,7 +48,7 @@ describe("getInsightsAction", () => {
   });
 
   it("should retrieve insights from service layer and return success on authenticated session", async () => {
-    vi.mocked(auth.api.getSession).mockResolvedValue(mockSession as any);
+    vi.mocked(getRequestSession).mockResolvedValue(mockSession as any);
     const mockInsightsPayload = {
       streaks: { currentStreak: 3, longestStreak: 12 },
       moodStats: { averageMood: 4.2 },
@@ -78,7 +69,7 @@ describe("getInsightsAction", () => {
   });
 
   it("should handle error gracefully and return standard error payload if service throws", async () => {
-    vi.mocked(auth.api.getSession).mockResolvedValue(mockSession as any);
+    vi.mocked(getRequestSession).mockResolvedValue(mockSession as any);
     vi.mocked(InsightsService.getInsights).mockRejectedValue(
       new Error("Failed to compute insights"),
     );

@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { ROUTES } from "@/constants/routes";
-import { auth } from "@/lib/auth";
+import { getRequestSession } from "@/lib/request-cache";
 import { MediaGallery } from "@/features/media/components/media-gallery";
 
 export const metadata: Metadata = {
@@ -13,9 +12,7 @@ export const metadata: Metadata = {
 };
 
 export default async function MediaPage() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getRequestSession();
 
   if (!session) {
     redirect(ROUTES.AUTH.LOGIN);

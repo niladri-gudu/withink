@@ -1,10 +1,8 @@
 "use server";
 
-import { headers } from "next/headers";
-
 import { env } from "@/config/env";
 import { LIMITS } from "@/constants/limits";
-import { auth } from "@/lib/auth";
+import { getRequestSession } from "@/lib/request-cache";
 import { handleError } from "@/server/errors";
 import { logger } from "@/server/logger";
 import { rateLimit } from "@/server/rate-limit";
@@ -33,7 +31,7 @@ export async function submitFeedbackAction(
 ): Promise<SubmitFeedbackResult> {
   try {
     // 1. Authenticate.
-    const session = await auth.api.getSession({ headers: await headers() });
+    const session = await getRequestSession();
     if (!session) {
       return {
         success: false,

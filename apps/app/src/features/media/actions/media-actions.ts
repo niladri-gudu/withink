@@ -1,13 +1,12 @@
 "use server";
 
-import { headers } from "next/headers";
 import { DeleteObjectCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
 
 import { env } from "@/config/env";
-import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/db/mongoose";
 import { safeDecrypt } from "@/lib/encryption";
 import { r2 } from "@/lib/r2";
+import { getRequestSession } from "@/lib/request-cache";
 import { handleError } from "@/server/errors";
 import { EntryModel } from "@/features/journal/repositories/entry-model";
 import { LockService } from "@/features/lock/services/lock-service";
@@ -39,7 +38,7 @@ export async function getStorageStatsAction(): Promise<{
   error?: string;
 }> {
   try {
-    const session = await auth.api.getSession({ headers: await headers() });
+    const session = await getRequestSession();
     if (!session) {
       return { success: false, error: "Unauthorized" };
     }
@@ -90,7 +89,7 @@ export async function getFullMediaLibraryAction(): Promise<{
   error?: string;
 }> {
   try {
-    const session = await auth.api.getSession({ headers: await headers() });
+    const session = await getRequestSession();
     if (!session) {
       return { success: false, error: "Unauthorized" };
     }
@@ -142,7 +141,7 @@ export async function deleteMediaFileAction(
   fileKey: string,
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const session = await auth.api.getSession({ headers: await headers() });
+    const session = await getRequestSession();
     if (!session) {
       return { success: false, error: "Unauthorized" };
     }
@@ -183,7 +182,7 @@ export async function findEntryForMediaAction(
   url: string,
 ): Promise<{ success: boolean; date?: string | null; error?: string }> {
   try {
-    const session = await auth.api.getSession({ headers: await headers() });
+    const session = await getRequestSession();
     if (!session) {
       return { success: false, error: "Unauthorized" };
     }

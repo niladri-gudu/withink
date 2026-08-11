@@ -1,7 +1,6 @@
-import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 
-import { auth } from "@/lib/auth";
+import { getRequestSession } from "@/lib/request-cache";
 import { handleError } from "@/server/errors";
 import { logger } from "@/server/logger";
 import { ExportService } from "@/features/export/services/export-service";
@@ -12,7 +11,7 @@ import { LockService } from "@/features/lock/services/lock-service";
  * Binary file downloads belong in a route handler rather than a Server Action.
  */
 export async function GET() {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getRequestSession();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

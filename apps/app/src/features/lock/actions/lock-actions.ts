@@ -1,10 +1,9 @@
 "use server";
 
-import { headers } from "next/headers";
 import { z } from "zod";
 
-import { auth } from "@/lib/auth";
 import { redis } from "@/lib/redis";
+import { getRequestSession } from "@/lib/request-cache";
 import { handleError } from "@/server/errors";
 import { rateLimit } from "@/server/rate-limit";
 
@@ -30,7 +29,7 @@ export async function getLockSettingsAction(): Promise<{
   error?: string;
 }> {
   try {
-    const session = await auth.api.getSession({ headers: await headers() });
+    const session = await getRequestSession();
     if (!session) {
       return { success: false, error: "Unauthorized" };
     }
@@ -65,7 +64,7 @@ export async function unlockAction(
   passcode: string,
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const session = await auth.api.getSession({ headers: await headers() });
+    const session = await getRequestSession();
     if (!session) {
       return { success: false, error: "Unauthorized" };
     }
@@ -148,7 +147,7 @@ export async function saveLockSettingsAction(
   inputData: unknown,
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const session = await auth.api.getSession({ headers: await headers() });
+    const session = await getRequestSession();
     if (!session) {
       return { success: false, error: "Unauthorized" };
     }
@@ -212,7 +211,7 @@ export async function requestPasscodeResetEmailAction(): Promise<{
   error?: string;
 }> {
   try {
-    const session = await auth.api.getSession({ headers: await headers() });
+    const session = await getRequestSession();
     if (!session) {
       return { success: false, error: "Unauthorized" };
     }
@@ -259,7 +258,7 @@ export async function verifyPasscodeResetCodeAction(
   code: string,
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const session = await auth.api.getSession({ headers: await headers() });
+    const session = await getRequestSession();
     if (!session) {
       return { success: false, error: "Unauthorized" };
     }
@@ -299,7 +298,7 @@ export async function verifyPasswordAndResetLockAction(
   password: string,
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const session = await auth.api.getSession({ headers: await headers() });
+    const session = await getRequestSession();
     if (!session) {
       return { success: false, error: "Unauthorized" };
     }
@@ -349,7 +348,7 @@ export async function unlockSessionAction(): Promise<{
   error?: string;
 }> {
   try {
-    const session = await auth.api.getSession({ headers: await headers() });
+    const session = await getRequestSession();
     if (!session) {
       return { success: false, error: "Unauthorized" };
     }

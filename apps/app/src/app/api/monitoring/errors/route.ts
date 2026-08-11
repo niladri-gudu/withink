@@ -2,7 +2,7 @@ import { headers } from "next/headers";
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 
-import { auth } from "@/lib/auth";
+import { getRequestSession } from "@/lib/request-cache";
 import { logger } from "@/server/logger";
 
 const errorReportingSchema = z.object({
@@ -14,7 +14,7 @@ const errorReportingSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await auth.api.getSession({ headers: await headers() });
+    const session = await getRequestSession();
     const userId = session?.user?.id || "anonymous";
 
     const body = await req.json();

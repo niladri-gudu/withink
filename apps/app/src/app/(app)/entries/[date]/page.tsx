@@ -1,12 +1,12 @@
 import type { Metadata, Route } from "next";
 import dynamic from "next/dynamic";
-import { cookies, headers } from "next/headers";
+import { cookies } from "next/headers";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Button } from "@withink/ui/button";
 
 import { ROUTES } from "@/constants/routes";
-import { auth } from "@/lib/auth";
+import { getRequestSession } from "@/lib/request-cache";
 import { addDays, getLocalDateString, isDateString } from "@/lib/utils/date";
 import { EditorSkeleton } from "@/features/journal/components/editor-skeleton";
 import { JournalService } from "@/features/journal/services/journal-service";
@@ -48,9 +48,7 @@ export default async function EntryPage({
     redirect(ROUTES.APP.DASHBOARD);
   }
 
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getRequestSession();
   if (!session) {
     redirect(ROUTES.AUTH.LOGIN);
   }

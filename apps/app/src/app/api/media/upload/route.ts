@@ -1,13 +1,12 @@
 import { randomUUID } from "crypto";
-import { headers } from "next/headers";
 import { NextResponse, type NextRequest } from "next/server";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { z } from "zod";
 
 import { env } from "@/config/env";
-import { auth } from "@/lib/auth";
 import { r2 } from "@/lib/r2";
+import { getRequestSession } from "@/lib/request-cache";
 import { logger } from "@/server/logger";
 import { LockService } from "@/features/lock/services/lock-service";
 
@@ -29,7 +28,7 @@ const uploadSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await auth.api.getSession({ headers: await headers() });
+    const session = await getRequestSession();
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
