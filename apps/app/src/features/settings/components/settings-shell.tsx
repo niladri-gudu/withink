@@ -1588,6 +1588,7 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
             setShowSetupModal(false);
             localStorage.setItem("withink_lock_enabled", "true");
           }}
+          onCancel={() => setShowSetupModal(false)}
         />
       )}
 

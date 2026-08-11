@@ -80,6 +80,15 @@ export function LockChangeModal({ onClose, onSuccess }: LockChangeModalProps) {
       return;
     }
 
+    // Don't rotate the passcode if we can't re-bind the master key on this
+    // device (the old local key would become unusable and force a password
+    // unlock on every lock).
+    if (!masterKey || !encryptionSalt) {
+      toast.error("Session locked. Please unlock your sanctuary and try again.");
+      onClose();
+      return;
+    }
+
     setIsSubmitting(true);
     const toastId = toast.loading("Updating your passcode…");
 

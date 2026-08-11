@@ -2,23 +2,31 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { BrandLoader } from "@withink/ui/brand-loader";
 
 import { getLocalDateString } from "@/lib/utils/date";
 import { useEncryption } from "@/providers/encryption-provider";
 
-import { getEncryptionSettingsAction } from "../../encryption/actions/encryption-actions";
 import { MandatorySanctuarySetup } from "../../encryption/components/mandatory-sanctuary-setup";
 import { SanctuaryPasswordUnlockScreen } from "../../encryption/components/sanctuary-password-unlock-screen";
-import {
-  getLockSettingsAction,
-  lockAction,
-} from "../../lock/actions/lock-actions";
+import { getLockSettingsAction, lockAction } from "../../lock/actions/lock-actions";
 import { LockScreen } from "../../lock/components/lock-screen";
 import { LockSetupOnboarding } from "../../lock/components/lock-setup-onboarding";
 import { useLockTimer } from "../../lock/hooks/use-lock-timer";
 import { Header } from "./header";
 import { Sidebar } from "./sidebar";
+
+interface LockSettingsSeed {
+  isLockEnabled: boolean;
+  hasPasscode: boolean;
+  autoLockTimeout: number;
+  lockOnTabHide: boolean;
+}
+
+interface EncryptionSettingsSeed {
+  isClientEncrypted: boolean;
+  encryptionSalt: string;
+  verificationCiphertext: string;
+}
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -29,12 +37,18 @@ interface AppShellProps {
   } | null;
   /** Set when the server layout verified the unlock cookie before rendering the shell. */
   sessionUnlocked?: boolean;
+  /** Server-seeded lock settings so the shell boots configured without a round-trip. */
+  initialLockSettings?: LockSettingsSeed | null;
+  /** Server-seeded encryption settings so the shell boots configured without a round-trip. */
+  initialEncryptionSettings?: EncryptionSettingsSeed | null;
 }
 
 export function AppShell({
   children,
   user,
   sessionUnlocked = false,
+  initialLockSettings = null,
+  initialEncryptionSettings = null,
 }: AppShellProps) {
   const router = useRouter();
   const [isCollapsed, setIsCollapsed] = React.useState(false);
@@ -48,60 +62,63 @@ export function AppShell({
     lock: lockEncryption,
   } = useEncryption();
 
-  const [isLockEnabled, setIsLockEnabled] = React.useState(false);
-  const [hasPasscode, setHasPasscode] = React.useState(true);
-  const [autoLockTimeout, setAutoLockTimeout] = React.useState(300);
-  const [lockOnTabHide, setLockOnTabHide] = React.useState(true);
+  const [isLockEnabled, setIsLockEnabled] = React.useState(
+    () => initialLockSettings?.isLockEnabled ?? false,
+  );
+  const [hasPasscode, setHasPasscode] = React.useState(
+    () => initialLockSettings?.hasPasscode ?? true,
+  );
+  const [autoLockTimeout] = React.useState(
+    () => initialLockSettings?.autoLockTimeout ?? 300,
+  );
+  const [lockOnTabHide] = React.useState(
+    () => initialLockSettings?.lockOnTabHide ?? true,
+  );
   const [showSetupPrompt, setShowSetupPrompt] = React.useState(false);
-  const [loadingEncryption, setLoadingEncryption] = React.useState(!!user);
 
   // Server layout already validated the unlock cookie; client state tracks in-session auto-lock only.
   const [isUnlocked, setIsUnlocked] = React.useState(
     () => sessionUnlocked || !user,
   );
 
-  const userEmail = user?.email;
+  // Seed the encryption provider from server-rendered settings. No network
+  // round-trip on mount — the layout already loaded these values. Layout effect
+  // so existing encrypted users never flash the setup screen before the seed.
+  React.useLayoutEffect(() => {
+    if (initialEncryptionSettings) {
+      setEncryptionSettings(initialEncryptionSettings);
+    }
+  }, [initialEncryptionSettings, setEncryptionSettings]);
 
+  // Prompt users without a diary passcode to set one up on first launch.
   React.useEffect(() => {
-    if (!userEmail) return;
-
-    const loadShellState = async () => {
-      const [lockRes, encryptionRes] = await Promise.all([
-        getLockSettingsAction(),
-        getEncryptionSettingsAction(),
-      ]);
-
-      if (lockRes.success && lockRes.data) {
-        setIsLockEnabled(lockRes.data.isLockEnabled);
-        setHasPasscode(lockRes.data.hasPasscode);
-        setAutoLockTimeout(lockRes.data.autoLockTimeout);
-        setLockOnTabHide(lockRes.data.lockOnTabHide);
-        setIsUnlocked(lockRes.data.isUnlocked);
-
-        if (!lockRes.data.hasPasscode) {
-          const dismissed = sessionStorage.getItem(
-            "withink_lock_setup_dismissed",
-          );
-          if (!dismissed) {
-            setShowSetupPrompt(true);
-          }
-        }
+    if (!user || initialLockSettings?.hasPasscode) return;
+    const timer = setTimeout(() => {
+      const dismissed = sessionStorage.getItem("withink_lock_setup_dismissed");
+      if (!dismissed) {
+        setShowSetupPrompt(true);
       }
-
-      if (encryptionRes.success && encryptionRes.data) {
-        setEncryptionSettings(encryptionRes.data);
-      }
-
-      setLoadingEncryption(false);
-    };
-
-    void loadShellState();
-  }, [userEmail, setEncryptionSettings]);
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [user, initialLockSettings?.hasPasscode]);
 
   const handleLock = React.useCallback(async () => {
     setIsUnlocked(false);
     lockEncryption();
     await lockAction();
+
+    // Re-sync the authoritative lock config so the unlock screen shown on the
+    // next render isn't based on stale one-shot state (e.g. the lock was just
+    // enabled or the PIN just set in this session).
+    try {
+      const res = await getLockSettingsAction();
+      if (res.success && res.data) {
+        setIsLockEnabled(res.data.isLockEnabled);
+        setHasPasscode(res.data.hasPasscode);
+      }
+    } catch {
+      // Best-effort; fall back to current client state.
+    }
   }, [lockEncryption]);
 
   // PIN lock requires the master key in memory; re-lock if the cookie is valid but the key was cleared (refresh).
@@ -166,6 +183,11 @@ export function AppShell({
     setShowPinSetup(false);
     setPendingPin("");
     setShowPinRebind(false);
+    // The rebind path doesn't run through handleSetupSuccess, so make sure the
+    // lock config flags reflect the completed PIN binding (avoids a stale
+    // "no passcode" state that would route to the Sanctuary Password screen).
+    setIsLockEnabled(true);
+    setHasPasscode(true);
   };
 
   // Per-device PIN binding: after the master key is in memory (unlocked via the
@@ -185,7 +207,10 @@ export function AppShell({
   }, [isClientEncrypted, masterKey, isLockEnabled, hasPasscode]);
 
   useLockTimer({
-    isLockEnabled: isLockEnabled && hasPasscode,
+    // Pause auto/tab lock while a PIN setup or rebind flow is open so the
+    // in-memory master key can't be wiped mid-binding.
+    isLockEnabled:
+      isLockEnabled && hasPasscode && !(showPinSetup || showPinRebind || showSetupPrompt),
     timeoutMs: autoLockTimeout * 1000,
     lockOnTabHide,
     isLocked: !isUnlocked,
@@ -246,11 +271,7 @@ export function AppShell({
     hasLocalEncryptedKey,
   ]);
 
-  if (user && loadingEncryption) {
-    return <BrandLoader message="preparing your private sanctuary..." />;
-  }
-
-  if (user && !loadingEncryption && !isClientEncrypted) {
+  if (user && !isClientEncrypted) {
     return (
       <MandatorySanctuarySetup
         diaryLockEnabled={isLockEnabled}
@@ -265,12 +286,21 @@ export function AppShell({
       <LockSetupOnboarding
         pin={pendingPin}
         onSetupSuccess={handlePinSetupSuccess}
+        onCancel={() => {
+          setShowPinSetup(false);
+          setPendingPin("");
+        }}
       />
     );
   }
 
   if (user && showPinRebind) {
-    return <LockSetupOnboarding onSetupSuccess={handlePinSetupSuccess} />;
+    return (
+      <LockSetupOnboarding
+        onSetupSuccess={handlePinSetupSuccess}
+        onCancel={() => setShowPinRebind(false)}
+      />
+    );
   }
 
   return (
@@ -290,7 +320,10 @@ export function AppShell({
       )}
 
       {user && showSetupPrompt && (
-        <LockSetupOnboarding onSetupSuccess={handleSetupSuccess} />
+        <LockSetupOnboarding
+          onSetupSuccess={handleSetupSuccess}
+          onCancel={() => setShowSetupPrompt(false)}
+        />
       )}
 
       <div

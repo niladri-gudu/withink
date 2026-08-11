@@ -22,11 +22,14 @@ interface LockSetupOnboardingProps {
     verificationCiphertext?: string,
     pin?: string,
   ) => void;
+  /** Called when binding cannot complete (e.g. the master key was cleared mid-setup). */
+  onCancel?: () => void;
 }
 
 export function LockSetupOnboarding({
   pin: prefilledPin,
   onSetupSuccess,
+  onCancel,
 }: LockSetupOnboardingProps) {
   const [pin, setPin] = React.useState(prefilledPin || "");
   const [confirmPin, setConfirmPin] = React.useState("");
@@ -75,6 +78,18 @@ export function LockSetupOnboarding({
       setPin("");
       setConfirmPin("");
       setStep(1);
+      return;
+    }
+
+    // The master key must be in memory to bind it to this device with the PIN.
+    // If it was cleared (e.g. an auto-lock/tab lock fired mid-setup), we must
+    // not save a passcode that this device can't actually use — route the user
+    // back through the Sanctuary Password unlock instead.
+    if (!masterKey || !encryptionSalt) {
+      toast.error(
+        "Session locked. Please unlock your sanctuary and try again.",
+      );
+      onCancel?.();
       return;
     }
 
