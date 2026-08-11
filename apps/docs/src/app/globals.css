@@ -1,0 +1,8 @@
+@import "tailwindcss";
+@import "@withink/tokens/theme.css";
+
+/* Tailwind v4 scans each app dir automatically; add workspace package source
+   so utilities used inside @withink/* components are generated here too. */
+@source "../../../../packages/ui/src";
+@source "../../../../packages/theme/src";
+@source "../../../../packages/config/src";

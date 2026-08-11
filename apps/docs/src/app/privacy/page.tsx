@@ -1,0 +1,51 @@
+import Link from "next/link";
+
+import { Button } from "@withink/ui/button";
+
+export const metadata = {
+  title: "Privacy Philosophy",
+};
+
+export default function PrivacyPage() {
+  return (
+    <div className="mx-auto flex max-w-2xl flex-1 flex-col justify-center space-y-8 px-6 py-16">
+      <div className="space-y-4">
+        <h1 className="text-h1 text-foreground">Privacy Philosophy</h1>
+        <p className="text-caption text-muted-foreground">
+          Last updated: July 1, 2026
+        </p>
+      </div>
+
+      <div className="text-body-small text-muted-foreground space-y-6 leading-relaxed">
+        <p>
+          At <strong>withink.</strong>, privacy is not a compliance check box.
+          It is the cornerstone of why we built this sanctuary. Your journal
+          entries are your private thoughts, dreams, and reflections. They
+          belong entirely to you.
+        </p>
+        <h2 className="text-title text-foreground pt-4 font-serif">
+          1. Data Encryption
+        </h2>
+        <p>
+          All journal content is encrypted server-side using industry-standard
+          AES-256-GCM. We ensure your reflections are protected from
+          unauthorized access at rest and in transit.
+        </p>
+        <h2 className="text-title text-foreground pt-4 font-serif">
+          2. No Ad Tracking or Sharing
+        </h2>
+        <p>
+          We do not sell, rent, or share your journal entries or personal data
+          with any third-party advertising networks. Your sanctuary remains free
+          of trackers and visual noise.
+        </p>
+      </div>
+
+      <div className="border-border flex items-center justify-between border-t pt-6">
+        <Button variant="ghost" asChild>
+          <Link href="/">Back to Sanctuary</Link>
+        </Button>
+      </div>
+    </div>
+  );
+}

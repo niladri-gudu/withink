@@ -33,22 +33,42 @@ Always prioritize:
 
 ```
 /
-├── app/              ← Version 2 Dashboard App Layer (app.withink.me)
-├── docs/              ← Public Landing & Policy Pages (withink.me)
-└── internal-docs/     ← Markdown engineering docs (Architecture, PRD, design system, logs)
+├── apps/
+│   ├── app/              ← Version 2 Dashboard App Layer (app.withink.me)
+│   └── docs/             ← Public Landing & Policy Pages (withink.me)
+├── packages/             ← Shared workspace packages (@withink/ui, @withink/tokens, @withink/utils, ...)
+└── internal-docs/        ← Markdown engineering docs (Architecture, PRD, design system, logs)
 ```
 
 ---
 
-## app
+## apps/app
 
 This directory contains the main development repository representing the sanctuary dashboard application running on `app.withink.me`. All dashboard UI components, database operations, auth routes, and services are implemented here.
 
 ---
 
-## docs
+## apps/docs
 
 This directory contains the public marketing landing page, legal philosophy pages, and an animated Contact Us page running on `withink.me`.
+
+---
+
+## packages
+
+Shared code extracted into a Turborepo workspace. Currently includes:
+
+- `@withink/config` — site configuration
+- `@withink/eslint-config` — shared ESLint flat config
+- `@withink/theme` — theme provider (next-themes + cross-tab cookie sync)
+- `@withink/tokens` — canonical design-token CSS layer (`theme.css`)
+- `@withink/typescript-config` — shared TypeScript compiler presets
+- `@withink/ui` — shadcn-style UI kit (Button, Card, Input, Textarea, Skeleton, Tooltip, BrandLoader, ThemeToggle)
+- `@withink/utils` — `cn()` and other pure utilities
+
+Packages ship as source and are consumed via `transpilePackages`; the data layer
+(Mongoose models, repositories, storage, email, auth) remains app-local and can be
+extracted into `packages/` in a future phase.
 
 ---
 

@@ -2,7 +2,7 @@
 
 # Project State
 
-Last Updated: 2026-08-02
+Last Updated: 2026-08-10
 
 Current Phase: Production Hardening
 
@@ -43,11 +43,13 @@ Version 2 is being built from scratch with a new architecture, improved user exp
 ```
 /
 │
-├── app/              ← Version 2 Dashboard App Layer (Deployed at app.withink.me)
+├── apps/app/              ← Version 2 Dashboard App Layer (Deployed at app.withink.me)
 │
-├── docs/              ← Public Landing & Policy Pages (Deployed at withink.me)
+├── apps/docs/             ← Public Landing & Policy Pages (Deployed at withink.me)
 │
-└── internal-docs/     ← Markdown engineering docs (Architecture, PRD, design system, logs)
+├── packages/              ← Shared workspace packages (@withink/ui, @withink/tokens, ...)
+│
+└── internal-docs/         ← Markdown engineering docs (Architecture, PRD, design system, logs)
 ```
 
 ---
@@ -389,6 +391,15 @@ Note: MongoDB (`mongodb+srv://`) now connects. The earlier `querySrv ECONNREFUSE
 ---
 
 # Recent Decisions
+
+2026-08-10
+
+- Migrated the repository to a proper Turborepo monorepo:
+  - Restructure: moved the two previously-independent apps into `apps/app` (`@withink/app`) and `apps/docs` (`@withink/docs`); created a single root `pnpm-workspace.yaml` (with pnpm version catalog + `onlyBuiltDependencies` allowlist), root lockfile, root `turbo.json` (build/dev/lint/typecheck/test/format tasks with env-aware build caching), `.nvmrc` (Node 24.11.1 pin for the c-ares fix), consolidated root `.gitignore`, and a shared root Prettier config (pinned to 3.4.2 to match existing formatting).
+  - Shared packages: extracted the actual cross-app duplication into `packages/` — `@withink/ui` (Button, Card, Input, Textarea, Skeleton, Tooltip, BrandLoader, ThemeToggle), `@withink/theme` (ThemeProvider + cross-tab cookie sync), `@withink/tokens` (canonical design-token CSS layer), `@withink/utils` (`cn`), `@withink/config` (`siteConfig`), plus `@withink/typescript-config` and `@withink/eslint-config`. Packages ship as source and are consumed via `transpilePackages` + `@source` Tailwind directives; shadcn `components.json` now targets the packages.
+  - Deliberately kept the data layer (Mongoose models, repositories, R2, Resend, Better Auth) app-local; `packages/*` glob leaves room for `@withink/database`, `@withink/email`, etc. in a future phase.
+  - Added a GitHub Actions CI workflow (`.github/workflows/ci.yml`): install → lint → test → build → typecheck → format:check.
+  - Verification: root `pnpm lint` (0 errors), `pnpm typecheck` clean across all packages/apps, full Vitest suite 100/100 passing, production builds succeed for `@withink/app` (21 routes + proxy) and `@withink/docs` (7 routes), `pnpm format:check` clean.
 
 2026-08-02
 
