@@ -193,7 +193,7 @@ The wordmark, the theme toggle, and one short primary button — **"Sign In"** w
 - **This date, one year past** — the flashback page with a reflection note.
 - **Memory pages** — the media library as pinned keepsakes with hand-written captions.
 - **Export anytime** — the ZIP export.
-- **Your year at a glance** — a compact 40px-cell writing calendar and mood distribution.
+- **Your year at a glance** — a compact writing calendar (cells scale `clamp(1.5rem, 7vw, 2.5rem)` so they never overflow on narrow phones) and mood distribution.
 
 ## Do's and Don'ts
 

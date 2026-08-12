@@ -267,7 +267,7 @@ export function LandingPageContent({
       {/* Main Content */}
       <main className="flex-1">
         {/* Hero */}
-        <section className="ledger-lamplight relative flex min-h-[calc(100svh-4rem)] flex-col items-center justify-center px-6 py-16 md:py-20">
+        <section className="ledger-lamplight relative flex min-h-[calc(100svh-4rem)] flex-col items-center justify-start px-6 pb-14 pt-[14vh] md:justify-center md:pb-20 md:pt-0">
           <div
             aria-hidden="true"
             className="ledger-rules pointer-events-none absolute inset-0"
@@ -275,12 +275,12 @@ export function LandingPageContent({
           <motion.div
             initial="hidden"
             animate="visible"
-            className="mx-auto flex max-w-3xl flex-col items-center text-center"
+            className="mx-auto flex w-full max-w-3xl flex-col items-center text-center"
           >
             <motion.h1
               variants={fadeInVariants}
               custom={0}
-              className="text-foreground sm:text-hero md:text-display mx-auto max-w-xl font-serif text-[2.5rem] leading-[1.12] tracking-tight"
+              className="text-foreground sm:text-hero md:text-display mx-auto max-w-xl text-balance font-serif text-5xl leading-[1.12] tracking-tight"
             >
               Your ordinary days are{" "}
               <em className="font-normal italic">worth keeping.</em>
@@ -289,22 +289,30 @@ export function LandingPageContent({
             <motion.p
               variants={fadeInVariants}
               custom={1}
-              className="text-muted-foreground/85 mx-auto mt-7 max-w-lg font-serif text-lg leading-relaxed md:text-xl"
+              className="font-hand text-muted-foreground/75 mt-6 text-2xl"
             >
-              A private, encrypted journal — one page a day, saved offline and
+              the small days become the long story.
+            </motion.p>
+
+            <motion.p
+              variants={fadeInVariants}
+              custom={2}
+              className="text-muted-foreground/85 mx-auto mt-7 max-w-lg text-pretty font-serif text-xl leading-relaxed"
+            >
+              A private, encrypted journal - one page a day, saved offline and
               exported anytime. Yours forever.
             </motion.p>
 
             <motion.div
               variants={fadeInVariants}
-              custom={2}
-              className="mt-10 flex w-full flex-col items-center justify-center gap-3 sm:flex-row"
+              custom={3}
+              className="mt-10 flex w-full flex-col items-center justify-center gap-3 sm:flex-row md:mt-12"
             >
               {hasSession ? (
                 <Button
                   size="lg"
                   asChild
-                  className="focus-visible:ring-ring w-full rounded-lg px-8 font-serif text-xs uppercase tracking-[0.2em] shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 sm:w-auto"
+                  className="focus-visible:ring-ring w-full rounded-xl px-8 font-serif text-xs uppercase tracking-[0.2em] shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 sm:w-auto"
                 >
                   <a href={APP_URL}>Open Sanctuary</a>
                 </Button>
@@ -312,7 +320,7 @@ export function LandingPageContent({
                 <Button
                   size="lg"
                   asChild
-                  className="focus-visible:ring-ring w-full rounded-lg px-8 font-serif text-xs uppercase tracking-[0.2em] shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 sm:w-auto"
+                  className="focus-visible:ring-ring w-full rounded-xl px-8 font-serif text-xs uppercase tracking-[0.2em] shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 sm:w-auto"
                 >
                   <a href={`${APP_URL}/register`}>Open Your Diary</a>
                 </Button>
@@ -321,7 +329,7 @@ export function LandingPageContent({
                 size="lg"
                 variant="outline"
                 asChild
-                className="border-border/80 focus-visible:ring-ring w-full rounded-lg px-8 font-serif text-xs uppercase tracking-[0.2em] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 sm:w-auto"
+                className="border-border/80 focus-visible:ring-ring w-full rounded-xl px-8 font-serif text-xs uppercase tracking-[0.2em] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 sm:w-auto"
               >
                 <Link href="/privacy">Read Privacy Philosophy</Link>
               </Button>
@@ -363,7 +371,7 @@ export function LandingPageContent({
                 <h3 className="text-foreground font-serif text-xl font-bold">
                   Grows with you
                 </h3>
-                <p className="text-muted-foreground/80 mt-2 font-sans text-sm leading-relaxed">
+                <p className="text-muted-foreground/80 mt-2 font-serif text-sm leading-relaxed">
                   Streaks, heatmaps, and mood insights help you notice patterns
                   in your writing without ever leaving the page.
                 </p>
@@ -375,7 +383,7 @@ export function LandingPageContent({
                 <h3 className="text-foreground font-serif text-xl font-bold">
                   Designed to focus
                 </h3>
-                <p className="text-muted-foreground/80 mt-2 font-sans text-sm leading-relaxed">
+                <p className="text-muted-foreground/80 mt-2 font-serif text-sm leading-relaxed">
                   A warm, paper-like canvas with a distraction-free editor. No
                   notifications, no feeds, no noise.
                 </p>
@@ -387,7 +395,7 @@ export function LandingPageContent({
                 <h3 className="text-foreground font-serif text-xl font-bold">
                   Yours, always
                 </h3>
-                <p className="text-muted-foreground/80 mt-2 font-sans text-sm leading-relaxed">
+                <p className="text-muted-foreground/80 mt-2 font-serif text-sm leading-relaxed">
                   One-click ZIP export of your entire journal — HTML entries,
                   media, and metadata. Your data, your choice.
                 </p>
@@ -428,7 +436,7 @@ export function LandingPageContent({
               <motion.div
                 variants={fadeInVariants}
                 custom={0}
-                className="border-border/80 bg-card relative flex min-h-95 flex-col justify-between rounded-xl border shadow-sm md:col-span-2"
+                className="border-border/80 bg-card min-h-95 relative flex flex-col justify-between rounded-xl border shadow-sm md:col-span-2"
               >
                 {/*<div className="from-accent/40 via-foreground/25 to-accent/40 absolute left-0 right-0 top-0 h-[2px] rounded-t-xl bg-gradient-to-r" />*/}
 
@@ -497,7 +505,7 @@ export function LandingPageContent({
                     Today&rsquo;s field note
                   </h3>
 
-                  <div className="relative mt-2 min-h-21">
+                  <div className="min-h-21 relative mt-2">
                     <React.Suspense
                       fallback={
                         <p className="text-muted-foreground border-border/70 border-l py-1 pl-4 font-serif text-sm italic leading-relaxed">
@@ -526,7 +534,7 @@ export function LandingPageContent({
                   <span className="text-muted-foreground block font-serif text-[10px] uppercase tracking-[0.16em]">
                     How are you feeling today?
                   </span>
-                  <div className="mt-3 grid grid-cols-5 gap-2">
+                  <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-5">
                     {moodData.map((mood) => {
                       const MoodIcon = mood.Icon;
                       return (
@@ -541,7 +549,7 @@ export function LandingPageContent({
                           }`}
                         >
                           <MoodIcon className="h-4 w-4" />
-                          <span className="font-serif text-[9px] font-medium uppercase tracking-widest">
+                          <span className="font-serif text-[10px] font-medium uppercase tracking-widest">
                             {mood.label}
                           </span>
                         </button>
@@ -555,7 +563,7 @@ export function LandingPageContent({
               <motion.div
                 variants={fadeInVariants}
                 custom={1}
-                className="border-border/80 bg-card relative flex min-h-95 flex-col justify-between rounded-xl border shadow-sm"
+                className="border-border/80 bg-card min-h-95 relative flex flex-col justify-between rounded-xl border shadow-sm"
               >
                 <div className="p-6 md:p-7">
                   <div className="border-border/70 flex items-center justify-between border-b pb-3">
@@ -627,25 +635,25 @@ export function LandingPageContent({
                       key={num}
                       onClick={() => handlePinPress(num)}
                       disabled={isPinUnlocked}
-                      className="bg-secondary/20 hover:bg-secondary/55 text-foreground border-border/40 focus-visible:ring-ring flex h-9 items-center justify-center rounded-xl border font-serif text-xs font-bold transition-all focus-visible:outline-none focus-visible:ring-1 active:scale-95"
+                      className="bg-secondary/20 hover:bg-secondary/55 text-foreground border-border/40 focus-visible:ring-ring flex h-10 items-center justify-center rounded-xl border font-serif text-xs font-bold transition-all focus-visible:outline-none focus-visible:ring-1 active:scale-95"
                     >
                       {num}
                     </button>
                   ))}
                   <button
                     onClick={handlePinClear}
-                    className="bg-secondary/15 hover:bg-secondary/35 border-border/40 focus-visible:ring-ring flex h-9 items-center justify-center rounded-xl border font-serif text-[10px] font-bold uppercase tracking-wider transition-all focus-visible:outline-none focus-visible:ring-1 active:scale-95"
+                    className="bg-secondary/15 hover:bg-secondary/35 border-border/40 focus-visible:ring-ring flex h-10 items-center justify-center rounded-xl border font-serif text-[10px] font-bold uppercase tracking-wider transition-all focus-visible:outline-none focus-visible:ring-1 active:scale-95"
                   >
                     Clear
                   </button>
                   <button
                     onClick={() => handlePinPress("0")}
                     disabled={isPinUnlocked}
-                    className="bg-secondary/20 hover:bg-secondary/55 text-foreground border-border/40 focus-visible:ring-ring flex h-9 items-center justify-center rounded-xl border font-serif text-xs font-bold transition-all focus-visible:outline-none focus-visible:ring-1 active:scale-95"
+                    className="bg-secondary/20 hover:bg-secondary/55 text-foreground border-border/40 focus-visible:ring-ring flex h-10 items-center justify-center rounded-xl border font-serif text-xs font-bold transition-all focus-visible:outline-none focus-visible:ring-1 active:scale-95"
                   >
                     0
                   </button>
-                  <div className="text-muted-foreground/30 flex h-9 select-none items-center justify-center font-serif text-[11px] italic">
+                  <div className="text-muted-foreground/30 flex h-10 select-none items-center justify-center font-serif text-[11px] italic">
                     Nº
                   </div>
                 </div>
@@ -702,7 +710,7 @@ export function LandingPageContent({
                         placeholder="Write a note on this memory…"
                         value={flashbackReflection}
                         onChange={(e) => setFlashbackReflection(e.target.value)}
-                        className="bg-secondary/15 border-border/40 focus:border-border/80 focus:bg-secondary/30 text-foreground placeholder-muted-foreground/50 w-full rounded-xl border px-3 py-2.5 font-sans text-sm transition-colors focus-visible:outline-none"
+                        className="bg-secondary/15 border-border/40 focus:border-border/80 focus:bg-secondary/30 text-foreground placeholder-muted-foreground/50 w-full rounded-xl border px-3 py-2.5 font-serif text-sm transition-colors focus-visible:outline-none"
                       />
                       <Button
                         type="submit"
@@ -739,12 +747,12 @@ export function LandingPageContent({
                       style={{ left: `calc(50% - 60px + ${idx * 16 - 16}px)` }}
                       className={`bg-card border-border/40 absolute w-32 cursor-zoom-in rounded-xl border p-2 pb-3 shadow-md transition-shadow duration-300 hover:shadow-xl ${p.rotation} focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-2`}
                     >
-                      <div className="bg-secondary/20 relative aspect-4/3 w-full overflow-hidden rounded-md">
+                      <div className="bg-secondary/20 aspect-4/3 relative w-full overflow-hidden rounded-md">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={p.src}
                           alt={p.caption}
-                          className="h-full w-full object-cover grayscale-10 transition-all duration-300 hover:grayscale-0"
+                          className="grayscale-10 h-full w-full object-cover transition-all duration-300 hover:grayscale-0"
                         />
                         <div className="bg-primary/5 absolute inset-0 transition-colors hover:bg-transparent" />
                         <div className="absolute bottom-1 right-1 rounded bg-black/40 p-0.5 text-white backdrop-blur-[2px]">
@@ -826,7 +834,7 @@ export function LandingPageContent({
               <motion.div
                 variants={fadeInVariants}
                 custom={5}
-                className="border-border/80 bg-card relative flex min-h-75 flex-col justify-between rounded-xl border shadow-sm md:col-span-3"
+                className="border-border/80 bg-card min-h-75 relative flex flex-col justify-between rounded-xl border shadow-sm md:col-span-3"
               >
                 <div className="border-border/70 border-b-2 p-6 pb-4 md:p-7 md:pb-4">
                   <div className="flex flex-wrap items-center justify-between gap-3">
@@ -851,7 +859,7 @@ export function LandingPageContent({
                       <span>July 2026</span>
                     </div>
 
-                    <div className="border-border/30 bg-secondary/10 mx-auto grid w-fit grid-cols-7 gap-1.5 rounded-xl border p-3">
+                    <div className="border-border/30 bg-secondary/10 mx-auto grid w-fit grid-cols-7 gap-1 rounded-xl border p-3 sm:gap-1.5">
                       {Array.from({ length: 35 }).map((_, idx) => {
                         // Seeded coloring: active writing states based on index
                         let color =
@@ -892,7 +900,7 @@ export function LandingPageContent({
                             title={
                               dayStr ? `${dayStr}: ${tooltipLabel}` : undefined
                             }
-                            className={`group/cell relative flex h-10 w-10 cursor-pointer items-center justify-center rounded-md border transition-all duration-200 ${color}`}
+                            className={`group/cell relative flex size-[clamp(1.5rem,7vw,2.5rem)] cursor-pointer items-center justify-center rounded-md border transition-all duration-200 ${color}`}
                           >
                             <span className="text-muted-foreground/45 pointer-events-none select-none font-serif text-[10px]">
                               {dayVal > 0 && dayVal <= 31 ? dayVal : ""}
@@ -1013,7 +1021,7 @@ export function LandingPageContent({
                 <h3 className="text-foreground mt-4 font-serif text-xl font-bold">
                   Zero Cloud Trackers
                 </h3>
-                <p className="text-muted-foreground/80 mt-2 font-sans text-sm leading-relaxed">
+                <p className="text-muted-foreground/80 mt-2 font-serif text-sm leading-relaxed">
                   No tracking scripts, advertising trackers, or telemetry. Your
                   sanctuary belongs only to you.
                 </p>
@@ -1025,7 +1033,7 @@ export function LandingPageContent({
                 <h3 className="text-foreground mt-4 font-serif text-xl font-bold">
                   Sanctuary Encryption
                 </h3>
-                <p className="text-muted-foreground/80 mt-2 font-sans text-sm leading-relaxed">
+                <p className="text-muted-foreground/80 mt-2 font-serif text-sm leading-relaxed">
                   Optional double lock with a tactile PIN. Even on a shared
                   device, your entries stay unreadable.
                 </p>
@@ -1037,7 +1045,7 @@ export function LandingPageContent({
                 <h3 className="text-foreground mt-4 font-serif text-xl font-bold">
                   Local Sovereign Data
                 </h3>
-                <p className="text-muted-foreground/80 mt-2 font-sans text-sm leading-relaxed">
+                <p className="text-muted-foreground/80 mt-2 font-serif text-sm leading-relaxed">
                   One-click ZIP of plain HTML entries, media, and JSON metadata.
                   Leave anytime, take it all.
                 </p>
@@ -1132,7 +1140,7 @@ export function LandingPageContent({
                   <X className="h-4 w-4" />
                 </button>
 
-                <div className="bg-secondary/20 relative aspect-4/3 w-full overflow-hidden rounded-md">
+                <div className="bg-secondary/20 aspect-4/3 relative w-full overflow-hidden rounded-md">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={lightboxImg}
