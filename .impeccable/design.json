@@ -1,0 +1,315 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-12T00:00:00.000Z",
+  "title": "Design System: Withink",
+  "extensions": {
+    "colorMeta": {
+      "warm-ivory": {
+        "role": "background",
+        "displayName": "Warm Ivory",
+        "canonical": "oklch(0.98 0.015 76)",
+        "purpose": "Light-mode page background — cream paper.",
+        "tonalRamp": ["oklch(0.30 0.02 76)", "oklch(0.40 0.02 76)", "oklch(0.52 0.02 76)", "oklch(0.64 0.02 76)", "oklch(0.76 0.018 76)", "oklch(0.86 0.016 76)", "oklch(0.93 0.016 76)", "oklch(0.98 0.015 76)"]
+      },
+      "soft-white": {
+        "role": "surface",
+        "displayName": "Soft White",
+        "canonical": "oklch(0.99 0.005 76)",
+        "purpose": "Card and popover paper surface (light).",
+        "tonalRamp": ["oklch(0.30 0.02 76)", "oklch(0.41 0.02 76)", "oklch(0.53 0.02 76)", "oklch(0.65 0.015 76)", "oklch(0.77 0.012 76)", "oklch(0.87 0.008 76)", "oklch(0.94 0.006 76)", "oklch(0.99 0.005 76)"]
+      },
+      "warm-sand": {
+        "role": "secondary",
+        "displayName": "Warm Sand",
+        "canonical": "oklch(0.94 0.015 76)",
+        "purpose": "Secondary/muted surfaces and hover fills (light).",
+        "tonalRamp": ["oklch(0.30 0.02 76)", "oklch(0.40 0.02 76)", "oklch(0.52 0.02 76)", "oklch(0.64 0.018 76)", "oklch(0.76 0.016 76)", "oklch(0.86 0.015 76)", "oklch(0.92 0.015 76)", "oklch(0.94 0.015 76)"]
+      },
+      "warm-gray": {
+        "role": "border",
+        "displayName": "Warm Gray",
+        "canonical": "oklch(0.9 0.015 76)",
+        "purpose": "Hairline borders and input strokes (light).",
+        "tonalRamp": ["oklch(0.30 0.02 76)", "oklch(0.41 0.018 76)", "oklch(0.53 0.016 76)", "oklch(0.65 0.015 76)", "oklch(0.77 0.015 76)", "oklch(0.86 0.015 76)", "oklch(0.90 0.015 76)", "oklch(0.93 0.015 76)"]
+      },
+      "dark-brown": {
+        "role": "primary",
+        "displayName": "Dark Brown Ink",
+        "canonical": "oklch(0.24 0.03 55)",
+        "purpose": "Primary text and primary button fill (light).",
+        "tonalRamp": ["oklch(0.18 0.03 55)", "oklch(0.24 0.03 55)", "oklch(0.30 0.03 55)", "oklch(0.37 0.03 55)", "oklch(0.45 0.03 55)", "oklch(0.55 0.03 55)", "oklch(0.68 0.02 55)", "oklch(0.82 0.015 55)"]
+      },
+      "muted-brown": {
+        "role": "muted",
+        "displayName": "Muted Brown",
+        "canonical": "oklch(0.45 0.02 60)",
+        "purpose": "Secondary text, captions, placeholders (light).",
+        "tonalRamp": ["oklch(0.24 0.02 60)", "oklch(0.32 0.02 60)", "oklch(0.45 0.02 60)", "oklch(0.54 0.02 60)", "oklch(0.63 0.02 60)", "oklch(0.73 0.018 60)", "oklch(0.83 0.016 60)", "oklch(0.92 0.015 60)"]
+      },
+      "warm-amber": {
+        "role": "accent",
+        "displayName": "Warm Amber",
+        "canonical": "oklch(0.78 0.12 75)",
+        "purpose": "The only accent: selection, caret, interactive hover, blockquote rail (light).",
+        "tonalRamp": ["oklch(0.35 0.10 75)", "oklch(0.45 0.11 75)", "oklch(0.55 0.12 75)", "oklch(0.64 0.12 75)", "oklch(0.70 0.12 75)", "oklch(0.74 0.12 75)", "oklch(0.78 0.12 75)", "oklch(0.85 0.10 75)"]
+      },
+      "muted-terracotta": {
+        "role": "destructive",
+        "displayName": "Muted Terracotta",
+        "canonical": "oklch(0.6 0.14 25)",
+        "purpose": "The only danger color and the angry mood (light).",
+        "tonalRamp": ["oklch(0.30 0.12 25)", "oklch(0.40 0.13 25)", "oklch(0.48 0.14 25)", "oklch(0.54 0.14 25)", "oklch(0.60 0.14 25)", "oklch(0.68 0.12 25)", "oklch(0.78 0.10 25)", "oklch(0.88 0.07 25)"]
+      },
+      "sidebar-ivory": {
+        "role": "surface",
+        "displayName": "Sidebar Ivory",
+        "canonical": "oklch(0.96 0.015 76)",
+        "purpose": "Notebook-margin sidebar surface (light).",
+        "tonalRamp": ["oklch(0.30 0.02 76)", "oklch(0.41 0.02 76)", "oklch(0.53 0.02 76)", "oklch(0.65 0.018 76)", "oklch(0.77 0.016 76)", "oklch(0.87 0.015 76)", "oklch(0.93 0.015 76)", "oklch(0.96 0.015 76)"]
+      },
+      "sidebar-sand": {
+        "role": "accent",
+        "displayName": "Sidebar Sand",
+        "canonical": "oklch(0.92 0.015 76)",
+        "purpose": "Sidebar active/hover item fill (light).",
+        "tonalRamp": ["oklch(0.30 0.02 76)", "oklch(0.41 0.02 76)", "oklch(0.53 0.02 76)", "oklch(0.65 0.018 76)", "oklch(0.77 0.016 76)", "oklch(0.86 0.015 76)", "oklch(0.92 0.015 76)", "oklch(0.95 0.015 76)"]
+      },
+      "warm-charcoal": {
+        "role": "background",
+        "displayName": "Warm Charcoal",
+        "canonical": "oklch(0.18 0.01 70)",
+        "purpose": "Dark-mode background — quiet library, soft black.",
+        "tonalRamp": ["oklch(0.15 0.01 70)", "oklch(0.18 0.01 70)", "oklch(0.22 0.01 70)", "oklch(0.28 0.01 70)", "oklch(0.36 0.01 70)", "oklch(0.46 0.01 70)", "oklch(0.60 0.01 70)", "oklch(0.76 0.01 70)"]
+      },
+      "charcoal-card": {
+        "role": "surface",
+        "displayName": "Charcoal Card",
+        "canonical": "oklch(0.22 0.01 70)",
+        "purpose": "Card and popover surface (dark).",
+        "tonalRamp": ["oklch(0.18 0.01 70)", "oklch(0.22 0.01 70)", "oklch(0.26 0.01 70)", "oklch(0.32 0.01 70)", "oklch(0.40 0.01 70)", "oklch(0.50 0.01 70)", "oklch(0.63 0.01 70)", "oklch(0.78 0.01 70)"]
+      },
+      "charcoal-sand": {
+        "role": "secondary",
+        "displayName": "Charcoal Sand",
+        "canonical": "oklch(0.25 0.01 70)",
+        "purpose": "Secondary/muted surfaces and hover fills (dark).",
+        "tonalRamp": ["oklch(0.20 0.01 70)", "oklch(0.25 0.01 70)", "oklch(0.29 0.01 70)", "oklch(0.35 0.01 70)", "oklch(0.43 0.01 70)", "oklch(0.53 0.01 70)", "oklch(0.65 0.01 70)", "oklch(0.80 0.01 70)"]
+      },
+      "charcoal-line": {
+        "role": "border",
+        "displayName": "Charcoal Line",
+        "canonical": "oklch(0.28 0.01 70)",
+        "purpose": "Hairline borders and input strokes (dark).",
+        "tonalRamp": ["oklch(0.22 0.01 70)", "oklch(0.28 0.01 70)", "oklch(0.32 0.01 70)", "oklch(0.38 0.01 70)", "oklch(0.46 0.01 70)", "oklch(0.56 0.01 70)", "oklch(0.68 0.01 70)", "oklch(0.82 0.01 70)"]
+      },
+      "warm-cream": {
+        "role": "primary",
+        "displayName": "Warm Cream",
+        "canonical": "oklch(0.92 0.01 75)",
+        "purpose": "Dark-mode primary text and primary button fill.",
+        "tonalRamp": ["oklch(0.28 0.02 75)", "oklch(0.40 0.02 75)", "oklch(0.52 0.02 75)", "oklch(0.64 0.015 75)", "oklch(0.74 0.012 75)", "oklch(0.83 0.010 75)", "oklch(0.88 0.010 75)", "oklch(0.92 0.01 75)"]
+      },
+      "muted-cream": {
+        "role": "muted",
+        "displayName": "Muted Cream",
+        "canonical": "oklch(0.65 0.01 75)",
+        "purpose": "Secondary text, captions, placeholders (dark).",
+        "tonalRamp": ["oklch(0.28 0.02 75)", "oklch(0.38 0.015 75)", "oklch(0.48 0.012 75)", "oklch(0.56 0.010 75)", "oklch(0.65 0.01 75)", "oklch(0.72 0.01 75)", "oklch(0.80 0.01 75)", "oklch(0.88 0.01 75)"]
+      },
+      "night-amber": {
+        "role": "accent",
+        "displayName": "Night Amber",
+        "canonical": "oklch(0.7 0.1 75)",
+        "purpose": "The only accent (dark) — softened lamp glow.",
+        "tonalRamp": ["oklch(0.30 0.08 75)", "oklch(0.40 0.09 75)", "oklch(0.49 0.10 75)", "oklch(0.56 0.10 75)", "oklch(0.63 0.10 75)", "oklch(0.70 0.10 75)", "oklch(0.76 0.09 75)", "oklch(0.84 0.08 75)"]
+      },
+      "night-terracotta": {
+        "role": "destructive",
+        "displayName": "Night Terracotta",
+        "canonical": "oklch(0.55 0.1 25)",
+        "purpose": "The only danger color (dark).",
+        "tonalRamp": ["oklch(0.26 0.09 25)", "oklch(0.36 0.10 25)", "oklch(0.44 0.10 25)", "oklch(0.49 0.10 25)", "oklch(0.55 0.10 25)", "oklch(0.63 0.09 25)", "oklch(0.74 0.08 25)", "oklch(0.86 0.06 25)"]
+      },
+      "sidebar-charcoal": {
+        "role": "surface",
+        "displayName": "Sidebar Charcoal",
+        "canonical": "oklch(0.15 0.01 70)",
+        "purpose": "Notebook-margin sidebar surface (dark).",
+        "tonalRamp": ["oklch(0.13 0.01 70)", "oklch(0.15 0.01 70)", "oklch(0.19 0.01 70)", "oklch(0.25 0.01 70)", "oklch(0.33 0.01 70)", "oklch(0.43 0.01 70)", "oklch(0.56 0.01 70)", "oklch(0.72 0.01 70)"]
+      },
+      "sidebar-charcoal-sand": {
+        "role": "accent",
+        "displayName": "Sidebar Charcoal Sand",
+        "canonical": "oklch(0.22 0.01 70)",
+        "purpose": "Sidebar active/hover item fill (dark).",
+        "tonalRamp": ["oklch(0.17 0.01 70)", "oklch(0.22 0.01 70)", "oklch(0.26 0.01 70)", "oklch(0.32 0.01 70)", "oklch(0.40 0.01 70)", "oklch(0.50 0.01 70)", "oklch(0.63 0.01 70)", "oklch(0.78 0.01 70)"]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Hero moments — landing headlines, brand moments.",
+        "fontFamily": "EB Garamond, Georgia, Cambria, serif"
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Hero-to-heading landing copy.",
+        "fontFamily": "EB Garamond, Georgia, Cambria, serif"
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Card titles and UI subheadings.",
+        "fontFamily": "Outfit, ui-sans-serif, system-ui, sans-serif"
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Default text, reading column ~65–75ch.",
+        "fontFamily": "Outfit, ui-sans-serif, system-ui, sans-serif"
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Micro-labels, eyebrow text, form labels (uppercase).",
+        "fontFamily": "Outfit, ui-sans-serif, system-ui, sans-serif"
+      }
+    },
+    "shadows": [
+      { "name": "shadow-sm", "value": "0 1px 2px 0 rgb(0 0 0 / 0.05)", "purpose": "Quiet resting lift for cards and buttons." },
+      { "name": "shadow-md", "value": "0 4px 6px -1px rgb(0 0 0 / 0.1)", "purpose": "Interactive card hover — a gentle rise." },
+      { "name": "shadow-lg", "value": "0 10px 15px -3px rgb(0 0 0 / 0.1)", "purpose": "Popovers, context menus, dialogs, mobile drawer." },
+      { "name": "editor-image", "value": "0 4px 20px -2px rgba(0, 0, 0, 0.08)", "purpose": "Soft shelf under memory photos in the editor." }
+    ],
+    "motion": [
+      { "name": "instant", "value": "100ms", "purpose": "Instant feedback (icon flips, micro-states)." },
+      { "name": "fast", "value": "150ms", "purpose": "Small state changes, active press." },
+      { "name": "standard", "value": "200ms", "purpose": "Default interactive transitions, button hovers." },
+      { "name": "slow", "value": "250ms", "purpose": "Theme/color transitions on containers and copy." },
+      { "name": "ease-standard", "value": "cubic-bezier(0.4, 0, 0.2, 1)", "purpose": "Default easing for state transitions." },
+      { "name": "view-transition", "value": "200ms cross-fade", "purpose": "Theme switch via View Transition API (skipped under reduced motion)." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" },
+      { "name": "xl", "value": "1280px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Ink-filled call to action; the single most important action on a screen.",
+      "html": "<button class=\"ds-btn-primary\">Write</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; height: 40px; padding: 0 16px; border: none; border-radius: 0.5rem; background: var(--color-primary); color: var(--color-primary-foreground); font-family: var(--font-sans); font-size: 14px; font-weight: 500; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); cursor: pointer; transition: opacity 200ms cubic-bezier(0.4, 0, 0.2, 1), transform 200ms cubic-bezier(0.4, 0, 0.2, 1); } .ds-btn-primary:hover { opacity: 0.9; } .ds-btn-primary:active { transform: scale(0.98); } .ds-btn-primary:focus-visible { outline: 2px solid var(--color-ring); outline-offset: 2px; } .ds-btn-primary:disabled { opacity: 0.5; pointer-events: none; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Quiet warm-sand button for Cancel, Back, Close, Skip.",
+      "html": "<button class=\"ds-btn-secondary\">Cancel</button>",
+      "css": ".ds-btn-secondary { display: inline-flex; align-items: center; justify-content: center; height: 40px; padding: 0 16px; border: none; border-radius: 0.5rem; background: var(--color-secondary); color: var(--color-secondary-foreground); font-family: var(--font-sans); font-size: 14px; font-weight: 500; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); cursor: pointer; transition: opacity 200ms cubic-bezier(0.4, 0, 0.2, 1), transform 200ms cubic-bezier(0.4, 0, 0.2, 1); } .ds-btn-secondary:hover { opacity: 0.95; } .ds-btn-secondary:active { transform: scale(0.98); } .ds-btn-secondary:focus-visible { outline: 2px solid var(--color-ring); outline-offset: 2px; }"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Transparent fill with a hairline border; fills muted on hover.",
+      "html": "<button class=\"ds-btn-outline\">Back</button>",
+      "css": ".ds-btn-outline { display: inline-flex; align-items: center; justify-content: center; height: 40px; padding: 0 16px; border: 1px solid var(--color-border); border-radius: 0.5rem; background: transparent; color: var(--color-foreground); font-family: var(--font-sans); font-size: 14px; font-weight: 500; cursor: pointer; transition: background-color 200ms cubic-bezier(0.4, 0, 0.2, 1), color 200ms cubic-bezier(0.4, 0, 0.2, 1), transform 200ms cubic-bezier(0.4, 0, 0.2, 1); } .ds-btn-outline:hover { background: var(--color-muted); } .ds-btn-outline:active { transform: scale(0.98); } .ds-btn-outline:focus-visible { outline: 2px solid var(--color-ring); outline-offset: 2px; }"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Low-priority action; almost invisible until hovered.",
+      "html": "<button class=\"ds-btn-ghost\">Skip</button>",
+      "css": ".ds-btn-ghost { display: inline-flex; align-items: center; justify-content: center; height: 40px; padding: 0 16px; border: none; border-radius: 0.5rem; background: transparent; color: var(--color-foreground); font-family: var(--font-sans); font-size: 14px; font-weight: 500; cursor: pointer; transition: background-color 200ms cubic-bezier(0.4, 0, 0.2, 1), transform 200ms cubic-bezier(0.4, 0, 0.2, 1); } .ds-btn-ghost:hover { background: var(--color-muted); } .ds-btn-ghost:active { transform: scale(0.98); } .ds-btn-ghost:focus-visible { outline: 2px solid var(--color-ring); outline-offset: 2px; }"
+    },
+    {
+      "name": "Danger Button",
+      "kind": "button",
+      "refersTo": "button-destructive",
+      "description": "Terracotta fill for destructive actions; kept rare.",
+      "html": "<button class=\"ds-btn-danger\">Delete</button>",
+      "css": ".ds-btn-danger { display: inline-flex; align-items: center; justify-content: center; height: 40px; padding: 0 16px; border: none; border-radius: 0.5rem; background: var(--color-destructive); color: var(--color-destructive-foreground); font-family: var(--font-sans); font-size: 14px; font-weight: 500; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); cursor: pointer; transition: opacity 200ms cubic-bezier(0.4, 0, 0.2, 1), transform 200ms cubic-bezier(0.4, 0, 0.2, 1); } .ds-btn-danger:hover { opacity: 0.9; } .ds-btn-danger:active { transform: scale(0.98); } .ds-btn-danger:focus-visible { outline: 2px solid var(--color-ring); outline-offset: 2px; }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Translucent paper field with a warm-gray hairline; ink ring on focus.",
+      "html": "<label class=\"ds-field\">Email address <input class=\"ds-input\" type=\"text\" placeholder=\"you@example.com\" /></label>",
+      "css": ".ds-field { display: flex; flex-direction: column; gap: 6px; font-family: var(--font-sans); font-size: 13px; font-weight: 500; color: var(--color-foreground); } .ds-input { height: 44px; width: 100%; padding: 10px 16px; border: 1px solid var(--color-border); border-radius: 0.5rem; background: var(--color-card); color: var(--color-foreground); font-family: var(--font-sans); font-size: 14px; transition: border-color 200ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 200ms cubic-bezier(0.4, 0, 0.2, 1); } .ds-input::placeholder { color: var(--color-muted-foreground); opacity: 0.6; } .ds-input:focus-visible { outline: none; border-color: var(--color-ring); box-shadow: 0 0 0 2px var(--color-ring), 0 0 0 4px var(--color-background); } .ds-input:disabled { opacity: 0.5; cursor: not-allowed; }"
+    },
+    {
+      "name": "Textarea",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Generous writing field that resizes vertically.",
+      "html": "<textarea class=\"ds-textarea\" placeholder=\"Write your reflection here...\"></textarea>",
+      "css": ".ds-textarea { min-height: 112px; width: 100%; padding: 12px 16px; border: 1px solid var(--color-border); border-radius: 0.5rem; background: var(--color-card); color: var(--color-foreground); font-family: var(--font-sans); font-size: 14px; line-height: 1.625; resize: vertical; transition: border-color 200ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 200ms cubic-bezier(0.4, 0, 0.2, 1); } .ds-textarea::placeholder { color: var(--color-muted-foreground); opacity: 0.6; } .ds-textarea:focus-visible { outline: none; border-color: var(--color-ring); box-shadow: 0 0 0 2px var(--color-ring), 0 0 0 4px var(--color-background); }"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Paper sheet on the page: soft surface, hairline border, serif title.",
+      "html": "<div class=\"ds-card\"><h3 class=\"ds-card-title\">Today's Reflection</h3><p class=\"ds-card-desc\">A quiet moment to write.</p><div class=\"ds-card-body\">Your most recent entry appears here.</div></div>",
+      "css": ".ds-card { border: 1px solid var(--color-border); border-radius: 0.75rem; background: var(--color-card); color: var(--color-card-foreground); box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); padding: 24px; font-family: var(--font-sans); transition: transform 200ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 200ms cubic-bezier(0.4, 0, 0.2, 1), border-color 200ms cubic-bezier(0.4, 0, 0.2, 1); } .ds-card-title { margin: 0 0 4px; font-family: var(--font-serif); font-size: 20px; font-weight: 700; letter-spacing: -0.025em; line-height: 1.25; color: var(--color-foreground); } .ds-card-desc { margin: 0 0 16px; font-size: 14px; color: var(--color-muted-foreground); } .ds-card-body { font-size: 15px; line-height: 1.6; color: var(--color-foreground); }"
+    },
+    {
+      "name": "Theme Toggle",
+      "kind": "custom",
+      "refersTo": "button-ghost",
+      "description": "Ghost icon button whose sun/moon swap as the theme flips.",
+      "html": "<button class=\"ds-theme-toggle\" aria-label=\"Toggle theme\"><svg class=\"ds-sun\" xmlns=\"http://www.w3.org/2000/svg\" width=\"19\" height=\"19\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"4\"></circle><path d=\"M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41\"></path></svg><svg class=\"ds-moon\" xmlns=\"http://www.w3.org/2000/svg\" width=\"19\" height=\"19\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z\"></path></svg></button>",
+      "css": ".ds-theme-toggle { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border: none; border-radius: 0.5rem; background: transparent; color: var(--color-foreground); cursor: pointer; transition: background-color 200ms cubic-bezier(0.4, 0, 0.2, 1); } .ds-theme-toggle:hover { background: var(--color-muted); } .ds-theme-toggle:focus-visible { outline: 2px solid var(--color-ring); outline-offset: 2px; } .ds-sun, .ds-moon { position: absolute; transition: transform 200ms cubic-bezier(0.4, 0, 0.2, 1), opacity 200ms cubic-bezier(0.4, 0, 0.2, 1); } .ds-moon { opacity: 0; transform: rotate(90deg) scale(0); } .dark .ds-sun, [data-theme=\"dark\"] .ds-sun { opacity: 0; transform: rotate(-90deg) scale(0); } .dark .ds-moon, [data-theme=\"dark\"] .ds-moon { opacity: 1; transform: rotate(0deg) scale(1); }"
+    },
+    {
+      "name": "Sidebar Nav Item",
+      "kind": "nav",
+      "refersTo": "button-ghost",
+      "description": "Quiet margin navigation; active item gets a sand fill and semibold text.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav-item\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect width=\"18\" height=\"18\" x=\"3\" y=\"4\" rx=\"2\"></rect><path d=\"M16 2v4M8 2v4M3 10h18\"></path></svg>Entries</a><a class=\"ds-nav-item ds-nav-active\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2zM22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z\"></path></svg>Today</a></nav>",
+      "css": ".ds-nav { display: flex; flex-direction: column; gap: 4px; padding: 8px; font-family: var(--font-sans); } .ds-nav-item { display: flex; align-items: center; gap: 12px; height: 40px; padding: 0 12px; border-radius: 0.5rem; color: var(--color-muted-foreground); font-size: 14px; cursor: pointer; transition: background-color 200ms cubic-bezier(0.4, 0, 0.2, 1), color 200ms cubic-bezier(0.4, 0, 0.2, 1); } .ds-nav-item:hover { background: var(--color-sidebar-accent); color: var(--color-foreground); } .ds-nav-active { background: var(--color-sidebar-accent); color: var(--color-sidebar-accent-foreground); font-weight: 600; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); } .ds-nav-item:focus-visible { outline: 2px solid var(--color-ring); outline-offset: -2px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Quiet Sanctuary",
+    "overview": "Withink is a private digital sanctuary for reflection — a leather journal in a warm reading room on a rainy Sunday afternoon. The interface does not perform; it recedes. Every screen is tuned for one outcome: the user forgets they are using software and keeps writing. Where productivity tools crowd the page, Withink breathes. Where social apps shout, Withink speaks at a murmur.\n\nThe visual language is warm, calm, minimal, human, and timeless. It is built on two material metaphors that never mix: paper and lamplight. In light mode the world is cream paper, brown ink, and a single warm amber accent — morning sunlight on a notebook. In dark mode it becomes a quiet library after hours: warm charcoal, cream text, and a softer amber glow — no pure black, no neon, no blue glare. The system is explicitly anti-futuristic, anti-corporate, anti-gamified; delight comes from quality (typography, spacing, reliable autosave), never gimmicks.\n\nTwo type families divide the labor cleanly: EB Garamond (serif) carries all display and heading text with a literary, editorial warmth, while Outfit (sans) carries body copy, UI labels, and navigation with quiet legibility. Hierarchy comes from size, weight, and spacing — never from bright color. Motion is fast (100–250ms), gentle, purposeful, and never playful. Buttons settle rather than jump; cards lift only a hairline; the theme change cross-fades like turning a page.",
+    "keyCharacteristics": [
+      "Calm and minimal: generous whitespace, few elements, layouts that breathe (content capped at max-w-5xl, never full-bleed).",
+      "Warm and natural: ivory/charcoal surfaces, brown-ink and cream text, a single amber accent used sparingly.",
+      "Editorial typography: serif headlines (EB Garamond) over sans body (Outfit), hierarchy by size and spacing, not color.",
+      "Depth through hairlines, not shadows: cards are flat at rest, softly lifted only on interaction, shadowed strongly only for overlays.",
+      "Quiet and tactile interactions: fade hovers, a subtle press (scale(0.98)), fast 200ms transitions, View-Transition cross-fade on theme change."
+    ],
+    "rules": [
+      { "name": "The One Accent Rule", "body": "Warm amber is the system's only accent color. It appears in ≤5% of any screen: text selection, the caret, an interactive card's hover border, the blockquote rail. No secondary accent is ever introduced.", "section": "colors" },
+      { "name": "The Low-Strain Rule", "body": "All surfaces and text sit in a warm, low-chroma band. Never ship pure white, pure black, or saturated blue anywhere in either theme — eye comfort is a product feature.", "section": "colors" },
+      { "name": "The Serif Headline Rule", "body": "EB Garamond is for display and headings only. Body copy, labels, navigation, and buttons are always Outfit. Never set a paragraph in the serif and never set a label in the serif.", "section": "typography" },
+      { "name": "The Hierarchy-by-Spacing Rule", "body": "Headings never exceed weight 700, and hierarchy is carried by size and spacing rather than by color or extra-bold weights. Bold is a tool, not an exclamation point.", "section": "typography" },
+      { "name": "The Breathe Rule", "body": "Never fill empty space and never compress a layout to fit more content. If a screen looks sparse, the answer is better typography and spacing, not more elements.", "section": "layout" },
+      { "name": "The No-Floating-Cards Rule", "body": "Cards at rest are flat paper with a hairline border. Shadows are earned by interaction or by being an overlay; a static card that hovers above the page is a defect.", "section": "elevation" },
+      { "name": "The 250ms Rule", "body": "All theme/color transitions run at 250ms with standard easing (cubic-bezier(0.4, 0, 0.2, 1)); no transition ever exceeds 300ms. Motion communicates, never entertains.", "section": "elevation" },
+      { "name": "The Soft Corner Rule", "body": "Sharp 0px corners and exaggerated pill radii are both forbidden. Every control sits somewhere in the 0.375–0.875rem band, or is fully round for a deliberately circular element (avatar, mood dot).", "section": "shapes" }
+    ],
+    "dos": [
+      "Do keep every surface and text color in the warm, low-chroma band — no pure white, pure black, or saturated blue.",
+      "Do use EB Garamond for headings and Outfit for body/labels, and let spacing and weight (max 700) carry hierarchy.",
+      "Do let cards rest flat on their hairline border, lifting only on hover and only for real overlays.",
+      "Do keep page content to max-w-5xl and writing to max-w-3xl — whitespace is content.",
+      "Do reserve the amber accent for ≤5% of any screen and reserve terracotta for destructive actions.",
+      "Do keep motion fast (100–250ms, standard easing) and use it to communicate state, never to entertain."
+    ],
+    "donts": [
+      "Don't add a second accent color, neon tones, or any futuristic/cyberpunk/corporate styling.",
+      "Don't set body text or labels in the serif font.",
+      "Don't float static cards with heavy shadows or let shadows appear without an interaction or overlay reason.",
+      "Don't crowd the page — never fill empty space or compress layouts to fit more content.",
+      "Don't use more than one primary button per section, or use danger styling for non-destructive actions.",
+      "Don't exceed 300ms on any animation or apply it where reduced motion is preferred."
+    ]
+  }
+}

@@ -1,4 +1,4 @@
-@import "tailwindcss";
+﻿@import "tailwindcss";
 @import "@withink/tokens/theme.css";
 
 /* Tailwind v4 scans each app dir automatically; add workspace package source
@@ -6,3 +6,124 @@
 @source "../../../../packages/ui/src";
 @source "../../../../packages/theme/src";
 @source "../../../../packages/config/src";
+
+/* The Field Ledger â€” the docs surface's own visual world (see the direction
+   contract comment in layout.tsx). The app keeps The Quiet Sanctuary tokens;
+   these overrides re-theme the marketing site only. */
+@theme {
+  --font-sans: var(--font-alegreya);
+  --font-serif: var(--font-alegreya);
+  --font-mono: var(--font-alegreya);
+  --font-hand: var(--font-caveat);
+}
+
+@layer base {
+  :root {
+    /* Manila field paper, iron-gall ink, warm old-paper gold accent. */
+    --background: oklch(0.925 0.022 82);
+    --foreground: oklch(0.24 0.028 48);
+
+    --card: oklch(0.972 0.013 85);
+    --card-foreground: oklch(0.24 0.028 48);
+
+    --popover: oklch(0.972 0.013 85);
+    --popover-foreground: oklch(0.24 0.028 48);
+
+    --primary: oklch(0.24 0.028 48);
+    --primary-foreground: oklch(0.962 0.013 85);
+
+    --secondary: oklch(0.948 0.017 84);
+    --secondary-foreground: oklch(0.24 0.028 48);
+
+    --muted: oklch(0.948 0.017 84);
+    --muted-foreground: oklch(0.47 0.02 52);
+
+    --accent: oklch(0.7 0.1 75);
+    --accent-foreground: oklch(0.24 0.028 48);
+
+    --destructive: oklch(0.5 0.15 30);
+    --destructive-foreground: oklch(0.962 0.013 85);
+
+    --border: oklch(0.84 0.018 79);
+    --input: oklch(0.84 0.018 79);
+    --ring: oklch(0.7 0.1 75);
+
+    --radius: 0.75rem;
+
+    --sidebar: oklch(0.955 0.014 85);
+    --sidebar-foreground: oklch(0.24 0.028 48);
+    --sidebar-primary: oklch(0.24 0.028 48);
+    --sidebar-primary-foreground: oklch(0.962 0.013 85);
+    --sidebar-accent: oklch(0.93 0.02 82);
+    --sidebar-accent-foreground: oklch(0.24 0.028 48);
+    --sidebar-border: oklch(0.84 0.018 79);
+    --sidebar-ring: oklch(0.7 0.1 75);
+  }
+
+  .dark {
+    /* The desk after dusk: deep umber, parchment text, soft moss light. */
+    --background: oklch(0.21 0.018 70);
+    --foreground: oklch(0.92 0.015 80);
+
+    --card: oklch(0.265 0.018 70);
+    --card-foreground: oklch(0.92 0.015 80);
+
+    --popover: oklch(0.265 0.018 70);
+    --popover-foreground: oklch(0.92 0.015 80);
+
+    --primary: oklch(0.92 0.015 80);
+    --primary-foreground: oklch(0.21 0.018 70);
+
+    --secondary: oklch(0.315 0.016 70);
+    --secondary-foreground: oklch(0.92 0.015 80);
+
+    --muted: oklch(0.315 0.016 70);
+    --muted-foreground: oklch(0.68 0.018 75);
+
+    --accent: oklch(0.74 0.11 75);
+    --accent-foreground: oklch(0.21 0.018 70);
+
+    --destructive: oklch(0.62 0.13 30);
+    --destructive-foreground: oklch(0.92 0.015 80);
+
+    --border: oklch(0.34 0.016 70);
+    --input: oklch(0.34 0.016 70);
+    --ring: oklch(0.74 0.11 75);
+
+    --sidebar: oklch(0.25 0.018 70);
+    --sidebar-foreground: oklch(0.92 0.015 80);
+    --sidebar-primary: oklch(0.92 0.015 80);
+    --sidebar-primary-foreground: oklch(0.21 0.018 70);
+    --sidebar-accent: oklch(0.3 0.018 70);
+    --sidebar-accent-foreground: oklch(0.92 0.015 80);
+    --sidebar-border: oklch(0.3 0.018 70);
+    --sidebar-ring: oklch(0.74 0.11 75);
+  }
+}
+
+/* Field-paper ruling behind the hero plate: the desk, not a decorative grid. */
+.ledger-rules {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    color-mix(in oklch, var(--border), transparent 62%) 0 1px,
+    transparent 1px 2rem
+  );
+  mask-image: linear-gradient(to bottom, black 30%, transparent 92%);
+}
+
+/* A soft window-light wash behind the hero plate. */
+.ledger-lamplight {
+  background: radial-gradient(
+    ellipse 46rem 24rem at 50% 0%,
+    oklch(0.85 0.07 70 / 0.35) 0%,
+    transparent 70%
+  );
+}
+
+.dark .ledger-lamplight {
+  background: radial-gradient(
+    ellipse 46rem 24rem at 50% 0%,
+    oklch(0.7 0.07 70 / 0.18) 0%,
+    transparent 70%
+  );
+}

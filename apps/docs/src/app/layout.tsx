@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Newsreader } from "next/font/google";
+import { Alegreya, Caveat } from "next/font/google";
 
 import { cn } from "@withink/utils";
 
@@ -7,38 +7,33 @@ import { AppProviders } from "@/providers/app-providers";
 
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-mono",
-  subsets: ["latin"],
-});
-
-const newsreader = Newsreader({
-  variable: "--font-serif",
+const alegreya = Alegreya({
+  variable: "--font-alegreya",
   subsets: ["latin"],
   style: ["normal", "italic"],
 });
 
+const caveat = Caveat({
+  variable: "--font-caveat",
+  subsets: ["latin"],
+});
+
 export const metadata: Metadata = {
   title: {
-    default: "withink. - Your Digital Sanctuary",
+    default: "withink. — one page a day, kept for a lifetime",
     template: "%s | withink.",
   },
   description:
-    "A private, encrypted, and minimal space for your digital thoughts. Built for focus.",
+    "A private, encrypted journal. One entry a day, saved offline and exported anytime as plain text — no trackers, no noise.",
   keywords: [
     "journal",
-    "digital sanctuary",
     "encrypted journal",
     "private writing",
+    "daily reflection",
+    "digital journal",
+    "memory keeping",
+    "plain-text export",
     "calm writing",
-    "mindfulness journal",
-    "minimalist journal",
-    "reflection",
   ],
   authors: [{ name: "withink. team", url: "https://withink.me" }],
   creator: "withink.",
@@ -85,9 +80,9 @@ export const metadata: Metadata = {
     },
   },
   openGraph: {
-    title: "withink. - Your Digital Sanctuary",
+    title: "withink. — one page a day, kept for a lifetime",
     description:
-      "A private, encrypted, and minimal space for your digital thoughts. Built for focus.",
+      "A private, encrypted journal. One entry a day, saved offline and exported anytime as plain text — no trackers, no noise.",
     url: "https://withink.me",
     siteName: "withink.",
     locale: "en_US",
@@ -97,15 +92,15 @@ export const metadata: Metadata = {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "withink. - Your Digital Sanctuary",
+        alt: "withink. — one page a day, kept for a lifetime",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "withink. - Your Digital Sanctuary",
+    title: "withink. — one page a day, kept for a lifetime",
     description:
-      "A private, encrypted, and minimal space for your digital thoughts. Built for focus.",
+      "A private, encrypted journal. One entry a day, saved offline and exported anytime as plain text — no trackers, no noise.",
     creator: "@withinkme",
     images: ["/og-image.png"],
   },
@@ -119,12 +114,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html
       lang="en"
-      className={cn(
-        geistSans.variable,
-        geistMono.variable,
-        newsreader.variable,
-        "h-full",
-      )}
+      className={cn(alegreya.variable, caveat.variable, "h-full")}
       suppressHydrationWarning
     >
       <head>
@@ -145,6 +135,18 @@ export default function RootLayout({ children }: RootLayoutProps) {
         />
       </head>
       <body className="bg-background text-foreground selection:bg-accent selection:text-accent-foreground h-full antialiased">
+        <div
+          aria-hidden="true"
+          dangerouslySetInnerHTML={{
+            __html: `<!-- withink docs world · The Field Ledger, kept as a diary
+THESIS: A private journal as a warm field notebook — your ordinary days are worth keeping. Warm old-paper gold accent, no collect-everything framing, no reading-room cliché.
+OWN-WORLD: manila kraft ground, iron-gall sepia ink, one warm old-paper gold accent (oklch 0.70 0.10 75); rounded corners matching the app (0.75rem), hairline borders over soft shadows; two type voices only — Alegreya serif for everything printed, Caveat hand for field notes.
+STORY: A visitor believes their ordinary days deserve keeping, understands the diary is private and encrypted, and opens it.
+FIRST VIEWPORT: Words on the open desk — one-line promise set in serif with an italic accent, a hand-written note, the promise explained, and two imprints (Open Your Diary / Read Privacy Philosophy).
+FORM: Field Ledger refined by user feedback (plate removed, 2 fonts, gold accent, nav CTA); seed ea00c61c retained.
+FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md -->`,
+          }}
+        />
         <AppProviders>{children}</AppProviders>
       </body>
     </html>
