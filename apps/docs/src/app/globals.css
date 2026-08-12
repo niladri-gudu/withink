@@ -58,6 +58,24 @@
     --sidebar-accent-foreground: oklch(0.24 0.028 48);
     --sidebar-border: oklch(0.84 0.018 79);
     --sidebar-ring: oklch(0.7 0.1 75);
+
+    /* Mood rating colors, tuned for manila paper: darker text, stronger
+       badge fills so 12px mood labels hold 4.5:1 (app tokens stay shared). */
+    --mood-angry: oklch(0.42 0.16 25);
+    --mood-angry-bg: oklch(0.42 0.16 25 / 0.14);
+    --mood-angry-border: oklch(0.42 0.16 25 / 0.3);
+    --mood-sad: oklch(0.42 0.1 48);
+    --mood-sad-bg: oklch(0.42 0.1 48 / 0.14);
+    --mood-sad-border: oklch(0.42 0.1 48 / 0.3);
+    --mood-neutral: oklch(0.42 0.02 60);
+    --mood-neutral-bg: oklch(0.94 0.015 76);
+    --mood-neutral-border: oklch(0.9 0.015 76);
+    --mood-happy: oklch(0.42 0.12 145);
+    --mood-happy-bg: oklch(0.42 0.12 145 / 0.14);
+    --mood-happy-border: oklch(0.42 0.12 145 / 0.3);
+    --mood-radiant: oklch(0.46 0.12 75);
+    --mood-radiant-bg: oklch(0.46 0.12 75 / 0.16);
+    --mood-radiant-border: oklch(0.46 0.12 75 / 0.32);
   }
 
   .dark {
@@ -98,6 +116,23 @@
     --sidebar-accent-foreground: oklch(0.92 0.015 80);
     --sidebar-border: oklch(0.3 0.018 70);
     --sidebar-ring: oklch(0.74 0.11 75);
+
+    /* Mood rating colors, tuned for the desk after dusk. */
+    --mood-angry: oklch(0.82 0.09 25);
+    --mood-angry-bg: oklch(0.55 0.1 25 / 0.35);
+    --mood-angry-border: oklch(0.55 0.1 25 / 0.4);
+    --mood-sad: oklch(0.84 0.07 55);
+    --mood-sad-bg: oklch(0.6 0.08 50 / 0.35);
+    --mood-sad-border: oklch(0.6 0.08 50 / 0.4);
+    --mood-neutral: oklch(0.86 0.01 80);
+    --mood-neutral-bg: oklch(0.65 0.01 75 / 0.35);
+    --mood-neutral-border: oklch(0.65 0.01 75 / 0.4);
+    --mood-happy: oklch(0.82 0.1 145);
+    --mood-happy-bg: oklch(0.55 0.1 145 / 0.35);
+    --mood-happy-border: oklch(0.55 0.1 145 / 0.4);
+    --mood-radiant: oklch(0.85 0.09 80);
+    --mood-radiant-bg: oklch(0.7 0.1 75 / 0.35);
+    --mood-radiant-border: oklch(0.7 0.1 75 / 0.4);
   }
 }
 
@@ -114,8 +149,7 @@
 /* A soft window-light wash behind the hero — warm light from above,
    a gentler warm ground beneath the CTAs so the full-height hero breathes. */
 .ledger-lamplight {
-  background:
-    radial-gradient(
+  background: radial-gradient(
       ellipse 44rem 26rem at 50% 0%,
       oklch(0.85 0.07 70 / 0.38) 0%,
       transparent 72%
@@ -128,8 +162,7 @@
 }
 
 .dark .ledger-lamplight {
-  background:
-    radial-gradient(
+  background: radial-gradient(
       ellipse 44rem 26rem at 50% 0%,
       oklch(0.7 0.07 70 / 0.2) 0%,
       transparent 72%

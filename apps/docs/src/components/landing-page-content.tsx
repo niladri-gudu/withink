@@ -9,6 +9,7 @@ import {
   Bold,
   Check,
   ChevronRight,
+  Delete,
   Download,
   EyeOff,
   Feather,
@@ -150,6 +151,11 @@ export function LandingPageContent({
     setPinError(false);
   };
 
+  const handlePinBackspace = () => {
+    if (isPinUnlocked) return;
+    setPinDigits((prev) => prev.slice(0, -1));
+  };
+
   // --- Tile 3: Flashbacks Reflect Input ---
   const [flashbackReflection, setFlashbackReflection] =
     React.useState<string>("");
@@ -164,6 +170,9 @@ export function LandingPageContent({
 
   // --- Tile 4: Polaroid Lightbox State ---
   const [lightboxImg, setLightboxImg] = React.useState<string | null>(null);
+
+  // --- Tile 5: Writing calendar day vignette State ---
+  const [vignetteDay, setVignetteDay] = React.useState<number | null>(null);
 
   const polaroids = [
     {
@@ -182,6 +191,142 @@ export function LandingPageContent({
       rotation: "-rotate-2 hover:rotate-2",
     },
   ];
+
+  // --- Tile 5: Writing calendar day vignettes ---
+  type DayKey = "angry" | "sad" | "neutral" | "happy" | "radiant";
+
+  const dayVignettes: Record<
+    DayKey,
+    { title: string; quote: string; words: number }[]
+  > = {
+    angry: [
+      {
+        title: "The printer won, again",
+        quote:
+          "Forty minutes on that document, and the office printer jammed on the last page. I wrote it all out instead of saying it aloud. Lighter now.",
+        words: 190,
+      },
+      {
+        title: "Traffic and patience",
+        quote:
+          "Two hours crawling home. I counted the red lights to keep from counting the minutes. Tomorrow I'll leave earlier and breathe slower.",
+        words: 190,
+      },
+    ],
+    sad: [
+      {
+        title: "A quiet weight",
+        quote:
+          "Nothing went wrong today. It's just a low, grey kind of day. I let myself sit with it instead of chasing it away.",
+        words: 240,
+      },
+      {
+        title: "Missing someone",
+        quote:
+          "Saw their photo in my camera roll and the afternoon went still. I wrote them a letter I won't send. It helped.",
+        words: 240,
+      },
+    ],
+    neutral: [
+      {
+        title: "A steady day",
+        quote:
+          "Coffee, meetings, a walk around the block at three. Nothing remarkable — and that's quietly fine.",
+        words: 310,
+      },
+      {
+        title: "The in-between",
+        quote:
+          "Not a bad day, not a good one. Just a page with nothing urgent on it. These days count too.",
+        words: 310,
+      },
+    ],
+    happy: [
+      {
+        title: "Reconnecting",
+        quote:
+          "Had a great conversation with an old friend. It's nice to reconnect and share laughs. Feeling peaceful tonight.",
+        words: 420,
+      },
+      {
+        title: "Blue sky, finally",
+        quote:
+          "The rain stopped by lunch and the whole city seemed to exhale. Walked an extra mile for no reason at all.",
+        words: 420,
+      },
+    ],
+    radiant: [
+      {
+        title: "Sunrise at the peak",
+        quote:
+          "We watched the sunrise from the peak. The air was crisp, and the entire city below was silent. I want to remember this feeling of infinite possibility.",
+        words: 530,
+      },
+      {
+        title: "Everything clicked",
+        quote:
+          "Walking through the forest path felt so inspiring. I feel incredibly grateful for these quiet moments.",
+        words: 530,
+      },
+    ],
+  };
+
+  const moodByKey: Record<DayKey, (typeof moodData)[number]> = {
+    angry: moodData[0]!,
+    sad: moodData[1]!,
+    neutral: moodData[2]!,
+    happy: moodData[3]!,
+    radiant: moodData[4]!,
+  };
+
+  const dayMoodKeyFor = (idx: number): DayKey =>
+    idx % 6 === 0
+      ? "angry"
+      : idx % 5 === 0
+        ? "happy"
+        : idx % 3 === 0
+          ? "radiant"
+          : idx % 2 === 0
+            ? "neutral"
+            : "sad";
+
+  const dayVignetteFor = (dayVal: number) => {
+    const key = dayMoodKeyFor(dayVal + 4);
+    const pool = dayVignettes[key];
+    return { key, vignette: pool[(dayVal - 1) % pool.length]! };
+  };
+
+  // --- Overlay a11y: Escape, scroll-lock, focus (lightbox + day vignette) ---
+  const closeOverlay = React.useCallback(() => {
+    setLightboxImg(null);
+    setVignetteDay(null);
+  }, []);
+
+  const lightboxCloseRef = React.useRef<HTMLButtonElement>(null);
+  const vignetteCloseRef = React.useRef<HTMLButtonElement>(null);
+
+  React.useEffect(() => {
+    if (lightboxImg !== null) lightboxCloseRef.current?.focus();
+  }, [lightboxImg]);
+
+  React.useEffect(() => {
+    if (vignetteDay !== null) vignetteCloseRef.current?.focus();
+  }, [vignetteDay]);
+
+  React.useEffect(() => {
+    const open = lightboxImg !== null || vignetteDay !== null;
+    if (!open) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeOverlay();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [lightboxImg, vignetteDay, closeOverlay]);
 
   // --- Tile 6: Zip Export Simulation ---
   const [exportProgress, setExportProgress] = React.useState<number>(-1); // -1 = idle
@@ -203,17 +348,21 @@ export function LandingPageContent({
           return 100;
         }
         const next = prev + 5;
-        if (next === 25) setExportStage("Bundling media assets…");
-        if (next === 55) setExportStage("Compressing rich-text entries…");
-        if (next === 85) setExportStage("Structuring JSON metadata…");
+        if (next === 25) setExportStage("Gathering your photos…");
+        if (next === 55) setExportStage("Setting your pages in order…");
+        if (next === 85) setExportStage("Numbering the pages…");
         return next;
       });
     }, 150);
   };
 
   // Spring animations configs
-  const springTransition = { type: "spring", stiffness: 100, damping: 20 };
-  const quickSpring = { type: "spring", stiffness: 180, damping: 15 };
+  const springTransition = { type: "spring", stiffness: 260, damping: 22 };
+  const quickSpring = { type: "spring", stiffness: 320, damping: 22 };
+
+  const openVignette =
+    vignetteDay !== null ? dayVignetteFor(vignetteDay) : null;
+  const vignetteMood = openVignette ? moodByKey[openVignette.key] : null;
 
   // Scroll animations variants
   const fadeInVariants = {
@@ -299,7 +448,7 @@ export function LandingPageContent({
               custom={2}
               className="text-muted-foreground/85 mx-auto mt-7 max-w-lg text-pretty font-serif text-xl leading-relaxed"
             >
-              A private, encrypted journal - one page a day, saved offline and
+              A private, encrypted journal — one page a day, saved offline and
               exported anytime. Yours forever.
             </motion.p>
 
@@ -369,11 +518,11 @@ export function LandingPageContent({
                   <TrendingUp className="h-5 w-5" />
                 </div>
                 <h3 className="text-foreground font-serif text-xl font-bold">
-                  Grows with you
+                  Your year, already written
                 </h3>
                 <p className="text-muted-foreground/80 mt-2 font-serif text-sm leading-relaxed">
-                  Streaks, heatmaps, and mood insights help you notice patterns
-                  in your writing without ever leaving the page.
+                  Flip back through any month — a quiet streak, a year at a
+                  glance, and the moods you lived, all on one calm screen.
                 </p>
               </div>
               <div className="border-border/80 bg-card hover:border-accent/50 rounded-xl border p-6 shadow-sm transition-all duration-200 hover:shadow-md">
@@ -381,11 +530,11 @@ export function LandingPageContent({
                   <Feather className="h-5 w-5" />
                 </div>
                 <h3 className="text-foreground font-serif text-xl font-bold">
-                  Designed to focus
+                  The desk, not the dashboard
                 </h3>
                 <p className="text-muted-foreground/80 mt-2 font-serif text-sm leading-relaxed">
-                  A warm, paper-like canvas with a distraction-free editor. No
-                  notifications, no feeds, no noise.
+                  A warm, paper-like page with nothing else on it. No
+                  notifications, no feeds, no noise — just today&rsquo;s entry.
                 </p>
               </div>
               <div className="border-border/80 bg-card hover:border-accent/50 rounded-xl border p-6 shadow-sm transition-all duration-200 hover:shadow-md">
@@ -393,11 +542,11 @@ export function LandingPageContent({
                   <Archive className="h-5 w-5" />
                 </div>
                 <h3 className="text-foreground font-serif text-xl font-bold">
-                  Yours, always
+                  Your pages, in your hands
                 </h3>
                 <p className="text-muted-foreground/80 mt-2 font-serif text-sm leading-relaxed">
-                  One-click ZIP export of your entire journal — HTML entries,
-                  media, and metadata. Your data, your choice.
+                  One click turns your whole journal into plain pages you can
+                  keep forever. No lock-in, ever.
                 </p>
               </div>
             </motion.div>
@@ -455,7 +604,7 @@ export function LandingPageContent({
                         {moodData.find((m) => m.level === selectedMood)?.label}
                       </span>
                     </div>
-                    <span className="text-muted-foreground flex items-center gap-1.5 font-serif text-[10px] uppercase tracking-[0.14em]">
+                    <span className="text-muted-foreground flex items-center gap-1.5 font-serif text-xs uppercase tracking-[0.14em]">
                       {isSaving ? (
                         <>
                           <Loader2 className="text-accent h-3 w-3 animate-spin" />
@@ -496,7 +645,7 @@ export function LandingPageContent({
                       <QuoteIcon className="h-3.5 w-3.5" />
                     </button>
                     <div className="bg-border/50 mx-1 h-3.5 w-px" />
-                    <span className="text-muted-foreground/40 font-serif text-[10px]">
+                    <span className="text-muted-foreground/40 font-serif text-xs">
                       rich-text editor
                     </span>
                   </div>
@@ -531,7 +680,7 @@ export function LandingPageContent({
 
                 {/* Mood selector */}
                 <div className="border-border/70 mt-4 border-t p-6 pt-4 md:px-7">
-                  <span className="text-muted-foreground block font-serif text-[10px] uppercase tracking-[0.16em]">
+                  <span className="text-muted-foreground block font-serif text-xs uppercase tracking-[0.16em]">
                     How are you feeling today?
                   </span>
                   <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-5">
@@ -549,7 +698,7 @@ export function LandingPageContent({
                           }`}
                         >
                           <MoodIcon className="h-4 w-4" />
-                          <span className="font-serif text-[10px] font-medium uppercase tracking-widest">
+                          <span className="font-serif text-xs font-medium uppercase tracking-widest">
                             {mood.label}
                           </span>
                         </button>
@@ -567,17 +716,17 @@ export function LandingPageContent({
               >
                 <div className="p-6 md:p-7">
                   <div className="border-border/70 flex items-center justify-between border-b pb-3">
-                    <span className="text-muted-foreground flex items-center gap-1.5 font-serif text-[10px] uppercase tracking-[0.16em]">
+                    <span className="text-muted-foreground flex items-center gap-1.5 font-serif text-xs uppercase tracking-[0.16em]">
                       <Lock className="h-3 w-3" /> Sanctuary Lock
                     </span>
-                    <span className="bg-accent text-accent-foreground rounded-full border border-transparent px-2 py-0.5 font-serif text-[9px] uppercase tracking-[0.14em]">
+                    <span className="bg-accent text-accent-foreground rounded-full border border-transparent px-2 py-0.5 font-serif text-xs uppercase tracking-[0.14em]">
                       Demo
                     </span>
                   </div>
 
                   <motion.div
                     animate={pinError ? { x: [-6, 6, -6, 6, 0] } : {}}
-                    transition={{ duration: 0.4 }}
+                    transition={{ duration: 0.25 }}
                     className="my-auto flex flex-col items-center justify-center space-y-4 py-10"
                   >
                     <motion.div
@@ -617,14 +766,14 @@ export function LandingPageContent({
                       ))}
                     </div>
 
-                    <span className="text-muted-foreground h-4 text-center font-serif text-[11px]">
+                    <span className="text-muted-foreground h-4 text-center font-serif text-xs">
                       {isPinUnlocked
                         ? "Unlocked · Welcome back"
                         : pinError
                           ? "Incorrect PIN · Resetting"
                           : pinDigits.length > 0
                             ? `PIN: ${pinDigits.length} of 4`
-                            : "Enter your PIN"}
+                            : "Enter your PIN · try 1234"}
                     </span>
                   </motion.div>
                 </div>
@@ -642,7 +791,7 @@ export function LandingPageContent({
                   ))}
                   <button
                     onClick={handlePinClear}
-                    className="bg-secondary/15 hover:bg-secondary/35 border-border/40 focus-visible:ring-ring flex h-10 items-center justify-center rounded-xl border font-serif text-[10px] font-bold uppercase tracking-wider transition-all focus-visible:outline-none focus-visible:ring-1 active:scale-95"
+                    className="bg-secondary/15 hover:bg-secondary/35 border-border/40 focus-visible:ring-ring flex h-10 items-center justify-center rounded-xl border font-serif text-xs font-bold uppercase tracking-wider transition-all focus-visible:outline-none focus-visible:ring-1 active:scale-95"
                   >
                     Clear
                   </button>
@@ -653,9 +802,14 @@ export function LandingPageContent({
                   >
                     0
                   </button>
-                  <div className="text-muted-foreground/30 flex h-10 select-none items-center justify-center font-serif text-[11px] italic">
-                    Nº
-                  </div>
+                  <button
+                    onClick={handlePinBackspace}
+                    disabled={isPinUnlocked || pinDigits.length === 0}
+                    aria-label="Delete last digit"
+                    className="bg-secondary/15 hover:bg-secondary/35 border-border/40 focus-visible:ring-ring text-muted-foreground/70 flex h-10 items-center justify-center rounded-xl border text-xs transition-all focus-visible:outline-none focus-visible:ring-1 active:scale-95 disabled:opacity-40 disabled:active:scale-100"
+                  >
+                    <Delete className="h-3.5 w-3.5" />
+                  </button>
                 </div>
               </motion.div>
 
@@ -666,7 +820,7 @@ export function LandingPageContent({
                 className="border-border/80 bg-card flex min-h-80 flex-col justify-between rounded-xl border shadow-sm"
               >
                 <div className="space-y-4 p-6">
-                  <div className="text-muted-foreground border-border/70 flex items-center space-x-2 border-b pb-3 font-serif text-[10px] uppercase tracking-[0.16em]">
+                  <div className="text-muted-foreground border-border/70 flex items-center space-x-2 border-b pb-3 font-serif text-xs uppercase tracking-[0.16em]">
                     <Sparkles className="text-accent h-3 w-3" />
                     <span>This date · one year past</span>
                   </div>
@@ -675,13 +829,13 @@ export function LandingPageContent({
                       <span className="text-muted-foreground/50 font-serif text-xs">
                         12 July 2025
                       </span>
-                      <span className="bg-mood-5-bg text-mood-5 border-mood-5-border rounded-full border px-1.5 py-0.5 text-[10px] font-medium">
+                      <span className="bg-mood-5-bg text-mood-5 border-mood-5-border rounded-full border px-1.5 py-0.5 text-xs font-medium">
                         Radiant
                       </span>
                     </div>
-                    <h4 className="text-foreground font-serif text-base font-bold">
+                    <h3 className="text-foreground font-serif text-base font-bold">
                       Watching the sunrise
-                    </h4>
+                    </h3>
                     <p className="text-muted-foreground/80 border-border/70 border-l pl-3 font-serif text-sm italic leading-relaxed">
                       &ldquo;We watched the sunrise from the peak. The air was
                       crisp, and the entire city below was silent. I want to
@@ -716,7 +870,7 @@ export function LandingPageContent({
                         type="submit"
                         variant="outline"
                         size="sm"
-                        className="border-border/60 hover:bg-secondary/40 w-full rounded-xl font-serif text-[10px] font-medium uppercase tracking-[0.14em]"
+                        className="border-border/60 hover:bg-secondary/40 w-full rounded-xl font-serif text-xs font-medium uppercase tracking-[0.14em]"
                       >
                         Keep the note
                       </Button>
@@ -731,7 +885,7 @@ export function LandingPageContent({
                 custom={3}
                 className="border-border/80 bg-card flex min-h-80 flex-col justify-between rounded-xl border shadow-sm"
               >
-                <div className="text-muted-foreground border-border/70 flex items-center space-x-2 border-b p-6 pb-3 font-serif text-[10px] uppercase tracking-[0.16em]">
+                <div className="text-muted-foreground border-border/70 flex items-center space-x-2 border-b p-6 pb-3 font-serif text-xs uppercase tracking-[0.16em]">
                   <ImageIcon className="h-3 w-3" />
                   <span>Memory pages</span>
                 </div>
@@ -746,12 +900,13 @@ export function LandingPageContent({
                       }
                       style={{ left: `calc(50% - 60px + ${idx * 16 - 16}px)` }}
                       className={`bg-card border-border/40 absolute w-32 cursor-zoom-in rounded-xl border p-2 pb-3 shadow-md transition-shadow duration-300 hover:shadow-xl ${p.rotation} focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-2`}
+                      aria-label={`Enlarge: ${p.caption}`}
                     >
                       <div className="bg-secondary/20 aspect-4/3 relative w-full overflow-hidden rounded-md">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={p.src}
-                          alt={p.caption}
+                          alt=""
                           className="grayscale-10 h-full w-full object-cover transition-all duration-300 hover:grayscale-0"
                         />
                         <div className="bg-primary/5 absolute inset-0 transition-colors hover:bg-transparent" />
@@ -766,7 +921,7 @@ export function LandingPageContent({
                   ))}
                 </div>
 
-                <div className="text-muted-foreground/50 border-border/70 border-t p-6 pt-3 text-center font-serif text-[10px] uppercase tracking-[0.12em]">
+                <div className="text-muted-foreground/50 border-border/70 border-t p-6 pt-3 text-center font-serif text-[11px] uppercase tracking-[0.12em]">
                   Hover to tilt · Click to enlarge
                 </div>
               </motion.div>
@@ -777,7 +932,7 @@ export function LandingPageContent({
                 custom={4}
                 className="border-border/80 bg-card flex min-h-80 flex-col justify-between rounded-xl border shadow-sm"
               >
-                <div className="text-muted-foreground border-border/70 flex items-center space-x-2 border-b p-6 pb-3 font-serif text-[10px] uppercase tracking-[0.16em]">
+                <div className="text-muted-foreground border-border/70 flex items-center space-x-2 border-b p-6 pb-3 font-serif text-xs uppercase tracking-[0.16em]">
                   <Archive className="h-3 w-3" />
                   <span>Export anytime</span>
                 </div>
@@ -787,18 +942,17 @@ export function LandingPageContent({
                     {exportProgress === 100 ? (
                       <Check className="text-accent h-5 w-5" />
                     ) : (
-                      <Archive
-                        className={`h-5 w-5 ${exportProgress >= 0 ? "animate-pulse" : ""}`}
-                      />
+                      <Archive className="h-5 w-5" />
                     )}
                   </div>
                   <div className="space-y-1">
-                    <h4 className="text-foreground font-serif text-lg font-bold">
+                    <h3 className="text-foreground font-serif text-lg font-bold">
                       Your diary, in your hands
-                    </h4>
+                    </h3>
                     <p className="text-muted-foreground mx-auto max-w-[24ch] text-xs leading-normal">
-                      Download everything — HTML text, media files, and metadata
-                      ZIP. Leave anytime, take it all.
+                      One click, and your whole journal becomes plain pages,
+                      photos, and dates you can keep forever. Leave anytime,
+                      take it all.
                     </p>
                   </div>
                 </div>
@@ -813,7 +967,7 @@ export function LandingPageContent({
                           transition={{ ease: "easeOut" }}
                         />
                       </div>
-                      <div className="text-muted-foreground flex items-center justify-between font-serif text-[10px]">
+                      <div className="text-muted-foreground flex items-center justify-between font-serif text-xs">
                         <span>{exportStage}</span>
                         <span>{exportProgress}%</span>
                       </div>
@@ -821,7 +975,7 @@ export function LandingPageContent({
                   ) : (
                     <Button
                       onClick={triggerExport}
-                      className="focus-visible:ring-ring w-full gap-1.5 rounded-xl py-1 font-serif text-[10px] uppercase tracking-[0.16em] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+                      className="focus-visible:ring-ring w-full gap-1.5 rounded-xl py-1 font-serif text-xs uppercase tracking-[0.16em] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
                     >
                       <Download className="h-3.5 w-3.5" />
                       Export My Diary
@@ -838,12 +992,12 @@ export function LandingPageContent({
               >
                 <div className="border-border/70 border-b-2 p-6 pb-4 md:p-7 md:pb-4">
                   <div className="flex flex-wrap items-center justify-between gap-3">
-                    <span className="text-muted-foreground flex items-center gap-1.5 font-serif text-[10px] uppercase tracking-[0.16em]">
+                    <span className="text-muted-foreground flex items-center gap-1.5 font-serif text-xs uppercase tracking-[0.16em]">
                       <BarChart2 className="h-3.5 w-3.5" /> Your year at a
                       glance
                     </span>
-                    <span className="text-muted-foreground flex items-center gap-1 font-serif text-[11px]">
-                      <Flame className="fill-accent text-accent h-3.5 w-3.5 animate-pulse" />
+                    <span className="text-muted-foreground flex items-center gap-1 font-serif text-xs">
+                      <Flame className="fill-accent text-accent h-3.5 w-3.5" />
                       Streak:{" "}
                       <strong className="text-foreground">
                         12 days writing
@@ -854,64 +1008,57 @@ export function LandingPageContent({
 
                 <div className="grid grid-cols-1 items-center gap-8 p-6 md:p-7 lg:grid-cols-3">
                   <div className="space-y-3 lg:col-span-2">
-                    <div className="text-muted-foreground flex items-center justify-between font-serif text-[11px]">
+                    <div className="text-muted-foreground flex items-center justify-between font-serif text-xs">
                       <span>One page a day</span>
                       <span>July 2026</span>
                     </div>
 
                     <div className="border-border/30 bg-secondary/10 mx-auto grid w-fit grid-cols-7 gap-1 rounded-xl border p-3 sm:gap-1.5">
                       {Array.from({ length: 35 }).map((_, idx) => {
-                        // Seeded coloring: active writing states based on index
-                        let color =
-                          "bg-secondary/15 hover:bg-secondary/40 border-border/20";
-                        let tooltipLabel = "No entry logged";
-
                         const dayVal = idx - 4; // Start month offsets
-                        const dayStr =
-                          dayVal > 0 && dayVal <= 31 ? `July ${dayVal}` : null;
+                        const isActive = dayVal > 0 && dayVal <= 31;
 
-                        if (dayStr) {
-                          if (idx % 6 === 0) {
-                            color =
-                              "bg-mood-1-bg border-mood-1-border hover:bg-mood-1/30 text-mood-1";
-                            tooltipLabel = "Angry · 190 words";
-                          } else if (idx % 5 === 0) {
-                            color =
-                              "bg-mood-4-bg border-mood-4-border hover:bg-mood-4/30 text-mood-4";
-                            tooltipLabel = "Happy · 420 words";
-                          } else if (idx % 3 === 0) {
-                            color =
-                              "bg-mood-5-bg border-mood-5-border hover:bg-mood-5/30 text-mood-5";
-                            tooltipLabel = "Radiant · 530 words";
-                          } else if (idx % 2 === 0) {
-                            color =
-                              "bg-mood-3-bg border-mood-3-border hover:bg-mood-3/20 text-mood-3";
-                            tooltipLabel = "Neutral · 310 words";
-                          } else {
-                            color =
-                              "bg-mood-2-bg border-mood-2-border hover:bg-mood-2/30 text-mood-2";
-                            tooltipLabel = "Sad · 240 words";
-                          }
+                        if (!isActive) {
+                          return (
+                            <div
+                              key={idx}
+                              aria-hidden="true"
+                              className="border-border/20 bg-secondary/15 flex size-[clamp(1.5rem,7vw,2.5rem)] items-center justify-center rounded-md border"
+                            />
+                          );
                         }
 
+                        const { key, vignette } = dayVignetteFor(dayVal);
+                        const mood = moodByKey[key];
+                        const tooltipLabel = `${mood.label} · ${vignette.words} words`;
+
+                        const cellColor =
+                          key === "angry"
+                            ? "bg-mood-1-bg border-mood-1-border hover:bg-mood-1/30 text-mood-1"
+                            : key === "sad"
+                              ? "bg-mood-2-bg border-mood-2-border hover:bg-mood-2/30 text-mood-2"
+                              : key === "neutral"
+                                ? "bg-mood-3-bg border-mood-3-border hover:bg-mood-3/20 text-mood-3"
+                                : key === "happy"
+                                  ? "bg-mood-4-bg border-mood-4-border hover:bg-mood-4/30 text-mood-4"
+                                  : "bg-mood-5-bg border-mood-5-border hover:bg-mood-5/30 text-mood-5";
+
                         return (
-                          <div
+                          <button
                             key={idx}
-                            title={
-                              dayStr ? `${dayStr}: ${tooltipLabel}` : undefined
-                            }
-                            className={`group/cell relative flex size-[clamp(1.5rem,7vw,2.5rem)] cursor-pointer items-center justify-center rounded-md border transition-all duration-200 ${color}`}
+                            type="button"
+                            onClick={() => setVignetteDay(dayVal)}
+                            aria-label={`July ${dayVal}, 2026 — ${mood.label}, ${vignette.words} words. Open this day's entry`}
+                            className={`group/cell focus-visible:ring-ring relative flex size-[clamp(1.5rem,7vw,2.5rem)] cursor-pointer items-center justify-center rounded-md border transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-95 ${cellColor}`}
                           >
                             <span className="text-muted-foreground/45 pointer-events-none select-none font-serif text-[10px]">
-                              {dayVal > 0 && dayVal <= 31 ? dayVal : ""}
+                              {dayVal}
                             </span>
 
-                            {dayStr && (
-                              <div className="bg-primary text-primary-foreground absolute bottom-full left-1/2 z-20 mb-1.5 hidden -translate-x-1/2 whitespace-nowrap rounded-md px-2 py-1 font-serif text-[10px] shadow-lg group-hover/cell:block">
-                                {dayStr}: {tooltipLabel}
-                              </div>
-                            )}
-                          </div>
+                            <div className="bg-primary text-primary-foreground absolute bottom-full left-1/2 z-20 mb-1.5 hidden -translate-x-1/2 whitespace-nowrap rounded-md px-2 py-1 font-serif text-[10px] shadow-lg group-hover/cell:block">
+                              July {dayVal}: {tooltipLabel}
+                            </div>
+                          </button>
                         );
                       })}
                     </div>
@@ -927,7 +1074,7 @@ export function LandingPageContent({
                   </div>
 
                   <div className="lg:border-border/70 space-y-4 lg:border-l lg:pl-7">
-                    <span className="text-muted-foreground block font-serif text-[11px]">
+                    <span className="text-muted-foreground block font-serif text-xs">
                       Moods · last 30 days
                     </span>
 
@@ -965,7 +1112,7 @@ export function LandingPageContent({
                         const BarIcon = item.Icon;
                         return (
                           <div key={i} className="space-y-1">
-                            <div className="flex items-center justify-between font-serif text-[11px]">
+                            <div className="flex items-center justify-between font-serif text-xs">
                               <span
                                 className={`${item.text} flex items-center gap-1.5`}
                               >
@@ -987,7 +1134,7 @@ export function LandingPageContent({
                       })}
                     </div>
 
-                    <div className="text-muted-foreground border-border/70 flex items-center justify-between border-t pt-2 font-serif text-[11px]">
+                    <div className="text-muted-foreground border-border/70 flex items-center justify-between border-t pt-2 font-serif text-xs">
                       <span>Mean entry length:</span>
                       <strong className="text-foreground flex items-center gap-0.5">
                         <TrendingUp className="text-accent h-3 w-3" /> 410 words
@@ -1008,9 +1155,8 @@ export function LandingPageContent({
                 Your data stays yours. Always.
               </h2>
               <p className="text-subtitle text-muted-foreground/80 mx-auto max-w-xl">
-                Zero cloud tracking. No advertising. No telemetry. Encrypt
-                locally, write anywhere, export anytime — your journal, yours
-                from day one.
+                No cloud spying, no ads, no analytics. You write on your own
+                device, and your pages stay yours — from the first line.
               </p>
             </div>
             <div className="grid grid-cols-1 gap-6 pt-2 md:grid-cols-3">
@@ -1019,11 +1165,11 @@ export function LandingPageContent({
                   <Shield className="h-5 w-5" />
                 </div>
                 <h3 className="text-foreground mt-4 font-serif text-xl font-bold">
-                  Zero Cloud Trackers
+                  No spies on the page
                 </h3>
                 <p className="text-muted-foreground/80 mt-2 font-serif text-sm leading-relaxed">
-                  No tracking scripts, advertising trackers, or telemetry. Your
-                  sanctuary belongs only to you.
+                  No tracking scripts, no ad trackers, no analytics. What you
+                  write is between you and the page.
                 </p>
               </div>
               <div className="border-border/80 bg-card rounded-xl border p-6 shadow-sm">
@@ -1031,11 +1177,11 @@ export function LandingPageContent({
                   <Key className="h-5 w-5" />
                 </div>
                 <h3 className="text-foreground mt-4 font-serif text-xl font-bold">
-                  Sanctuary Encryption
+                  A lock only you know
                 </h3>
                 <p className="text-muted-foreground/80 mt-2 font-serif text-sm leading-relaxed">
-                  Optional double lock with a tactile PIN. Even on a shared
-                  device, your entries stay unreadable.
+                  An optional second lock with a PIN you choose. On a shared
+                  device, only you open your pages.
                 </p>
               </div>
               <div className="border-border/80 bg-card rounded-xl border p-6 shadow-sm">
@@ -1043,11 +1189,11 @@ export function LandingPageContent({
                   <EyeOff className="h-5 w-5" />
                 </div>
                 <h3 className="text-foreground mt-4 font-serif text-xl font-bold">
-                  Local Sovereign Data
+                  Your pages, in your hands
                 </h3>
                 <p className="text-muted-foreground/80 mt-2 font-serif text-sm leading-relaxed">
-                  One-click ZIP of plain HTML entries, media, and JSON metadata.
-                  Leave anytime, take it all.
+                  One click exports your whole journal as plain pages, photos,
+                  and dates. Leave anytime, take it all.
                 </p>
               </div>
             </div>
@@ -1071,7 +1217,7 @@ export function LandingPageContent({
                 </a>
               </Button>
             </div>
-            <p className="text-muted-foreground/70 font-serif text-[11px]">
+            <p className="text-muted-foreground/70 font-serif text-xs">
               No credit card. No trackers. No upsells. Free to start.
             </p>
           </div>
@@ -1121,8 +1267,11 @@ export function LandingPageContent({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
+              role="dialog"
+              aria-modal="true"
+              aria-label="Pressed keepsake"
               className="bg-background/95 fixed inset-0 z-50 flex items-center justify-center p-6 backdrop-blur-md"
-              onClick={() => setLightboxImg(null)}
+              onClick={closeOverlay}
             >
               <motion.div
                 initial={{ scale: 0.95 }}
@@ -1133,7 +1282,8 @@ export function LandingPageContent({
                 onClick={(e) => e.stopPropagation()}
               >
                 <button
-                  onClick={() => setLightboxImg(null)}
+                  ref={lightboxCloseRef}
+                  onClick={closeOverlay}
                   aria-label="Close Lightbox"
                   className="bg-secondary/80 border-border hover:bg-secondary text-foreground focus-visible:ring-ring absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full border transition-all focus-visible:outline-none focus-visible:ring-2 active:scale-95"
                 >
@@ -1151,6 +1301,70 @@ export function LandingPageContent({
                 <div className="text-muted-foreground font-hand px-2 pb-2 pt-4 text-center text-xl">
                   {polaroids.find((p) => p.src === lightboxImg)?.caption ??
                     "Pressed keepsake"}
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </React.Suspense>
+
+      {/* Day Vignette Overlay */}
+      <React.Suspense fallback={null}>
+        <AnimatePresence>
+          {vignetteDay !== null && openVignette && vignetteMood && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="vignette-title"
+              className="bg-background/95 fixed inset-0 z-50 flex items-center justify-center p-6 backdrop-blur-md"
+              onClick={closeOverlay}
+            >
+              <motion.div
+                initial={{ scale: 0.95 }}
+                animate={{ scale: 1 }}
+                exit={{ scale: 0.95 }}
+                transition={springTransition}
+                className="bg-card border-border relative w-full max-w-md rounded-xl border p-6 shadow-2xl md:p-7"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button
+                  ref={vignetteCloseRef}
+                  onClick={closeOverlay}
+                  aria-label="Close day entry"
+                  className="bg-secondary/80 border-border hover:bg-secondary text-foreground focus-visible:ring-ring absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full border transition-all focus-visible:outline-none focus-visible:ring-2 active:scale-95"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+
+                <div className="border-border/70 flex items-center gap-3 border-b pb-4">
+                  <span className="text-foreground font-serif text-base font-bold">
+                    July {vignetteDay}
+                  </span>
+                  <span
+                    className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${vignetteMood.bgClass}`}
+                  >
+                    {vignetteMood.label}
+                  </span>
+                </div>
+
+                <div className="mt-4">
+                  <h3
+                    id="vignette-title"
+                    className="text-foreground font-serif text-xl font-bold"
+                  >
+                    {openVignette.vignette.title}
+                  </h3>
+                  <p className="text-muted-foreground border-border/70 mt-3 border-l pl-4 font-serif text-sm italic leading-relaxed">
+                    &ldquo;{openVignette.vignette.quote}&rdquo;
+                  </p>
+                </div>
+
+                <div className="text-muted-foreground border-border/70 mt-5 flex items-center justify-between border-t pt-4 font-serif text-xs">
+                  <span>{openVignette.vignette.words} words</span>
+                  <span className="font-hand text-lg">kept for later.</span>
                 </div>
               </motion.div>
             </motion.div>
