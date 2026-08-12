@@ -289,15 +289,7 @@ export function LandingPageContent({
             <motion.p
               variants={fadeInVariants}
               custom={1}
-              className="font-hand text-muted-foreground mt-5 text-center text-2xl md:text-[1.7rem]"
-            >
-              the small days become the long story.
-            </motion.p>
-
-            <motion.p
-              variants={fadeInVariants}
-              custom={2}
-              className="text-muted-foreground/85 mx-auto mt-7 max-w-md font-serif text-base leading-relaxed md:text-lg"
+              className="text-muted-foreground/85 mx-auto mt-7 max-w-lg font-serif text-lg leading-relaxed md:text-xl"
             >
               A private, encrypted journal — one page a day, saved offline and
               exported anytime. Yours forever.
@@ -305,7 +297,7 @@ export function LandingPageContent({
 
             <motion.div
               variants={fadeInVariants}
-              custom={3}
+              custom={2}
               className="mt-10 flex w-full flex-col items-center justify-center gap-3 sm:flex-row"
             >
               {hasSession ? (
