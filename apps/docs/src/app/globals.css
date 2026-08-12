@@ -145,31 +145,3 @@
   );
   mask-image: linear-gradient(to bottom, black 30%, transparent 92%);
 }
-
-/* A soft window-light wash behind the hero — warm light from above,
-   a gentler warm ground beneath the CTAs so the full-height hero breathes. */
-.ledger-lamplight {
-  background: radial-gradient(
-      ellipse 44rem 26rem at 50% 0%,
-      oklch(0.85 0.07 70 / 0.38) 0%,
-      transparent 72%
-    ),
-    radial-gradient(
-      ellipse 36rem 20rem at 50% 100%,
-      oklch(0.85 0.07 70 / 0.16) 0%,
-      transparent 70%
-    );
-}
-
-.dark .ledger-lamplight {
-  background: radial-gradient(
-      ellipse 44rem 26rem at 50% 0%,
-      oklch(0.7 0.07 70 / 0.2) 0%,
-      transparent 72%
-    ),
-    radial-gradient(
-      ellipse 36rem 20rem at 50% 100%,
-      oklch(0.7 0.07 70 / 0.12) 0%,
-      transparent 70%
-    );
-}

@@ -416,7 +416,7 @@ export function LandingPageContent({
       {/* Main Content */}
       <main className="flex-1">
         {/* Hero */}
-        <section className="ledger-lamplight relative flex min-h-[calc(100svh-4rem)] flex-col items-center justify-start px-6 pb-14 pt-[14vh] md:justify-center md:pb-20 md:pt-0">
+        <section className="relative flex min-h-[calc(100svh-4rem)] flex-col items-center justify-start px-6 pb-14 pt-[14vh] md:justify-center md:pb-20 md:pt-0">
           <div
             aria-hidden="true"
             className="ledger-rules pointer-events-none absolute inset-0"
