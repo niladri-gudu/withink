@@ -20,11 +20,11 @@ const caveat = Caveat({
 
 export const metadata: Metadata = {
   title: {
-    default: "withink. — one page a day, kept for a lifetime",
+    default: "withink. - your private journal",
     template: "%s | withink.",
   },
   description:
-    "A private, encrypted journal. One entry a day, saved offline and exported anytime as plain text — no trackers, no noise.",
+    "A private, encrypted journal. One entry a day, saved offline and exported anytime as plain text - no trackers, no noise.",
   keywords: [
     "journal",
     "encrypted journal",
@@ -80,9 +80,9 @@ export const metadata: Metadata = {
     },
   },
   openGraph: {
-    title: "withink. — one page a day, kept for a lifetime",
+    title: "withink. - your private journal",
     description:
-      "A private, encrypted journal. One entry a day, saved offline and exported anytime as plain text — no trackers, no noise.",
+      "A private, encrypted journal. One entry a day, saved offline and exported anytime as plain text - no trackers, no noise.",
     url: "https://withink.me",
     siteName: "withink.",
     locale: "en_US",
@@ -92,15 +92,15 @@ export const metadata: Metadata = {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "withink. — one page a day, kept for a lifetime",
+        alt: "withink. - your private journal",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "withink. — one page a day, kept for a lifetime",
+    title: "withink. - your private journal",
     description:
-      "A private, encrypted journal. One entry a day, saved offline and exported anytime as plain text — no trackers, no noise.",
+      "A private, encrypted journal. One entry a day, saved offline and exported anytime as plain text - no trackers, no noise.",
     creator: "@withinkme",
     images: ["/og-image.png"],
   },

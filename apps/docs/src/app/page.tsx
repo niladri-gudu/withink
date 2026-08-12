@@ -5,9 +5,9 @@ import { cookies } from "next/headers";
 import { LandingPageContent } from "@/components/landing-page-content";
 
 export const metadata: Metadata = {
-  title: "withink. — one page a day, kept for a lifetime",
+  title: "withink. - your private journal",
   description:
-    "A private, encrypted journal. One entry a day, saved offline and exported anytime as plain text — no trackers, no noise.",
+    "A private, encrypted journal. One entry a day, saved offline and exported anytime as plain text - no trackers, no noise.",
 };
 
 async function LandingPageContentWithSession({ APP_URL }: { APP_URL: string }) {
