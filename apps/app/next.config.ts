@@ -41,12 +41,12 @@ const nextConfig: NextConfig = {
 
     const cspHeader = `
       default-src 'self';
-      script-src 'self' 'unsafe-inline'${isProd ? "" : " 'unsafe-eval'"};
+      script-src 'self' 'unsafe-inline'${isProd ? "" : " 'unsafe-eval'"} https://*.googletagmanager.com;
       script-src-attr 'none';
       style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
       img-src 'self' blob: data: https://lh3.googleusercontent.com https://${R2_PUBLIC_HOST};
       font-src 'self' data: https://fonts.gstatic.com;
-      connect-src 'self' ${isProd ? "" : "ws: wss:"} ${R2_UPLOAD_HOST} https://${R2_PUBLIC_HOST} https://fonts.googleapis.com https://fonts.gstatic.com;
+      connect-src 'self' ${isProd ? "" : "ws: wss:"} ${R2_UPLOAD_HOST} https://${R2_PUBLIC_HOST} https://fonts.googleapis.com https://fonts.gstatic.com https://*.googletagmanager.com https://*.google-analytics.com;
       object-src 'none';
       worker-src 'self' blob:;
       child-src 'self' blob:;

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Alegreya, Caveat } from "next/font/google";
+import Script from "next/script";
 
 import { cn } from "@withink/utils";
 
@@ -148,6 +149,22 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
           }}
         />
         <AppProviders>{children}</AppProviders>
+        {process.env.IS_PROD === "true" ? (
+          <>
+            <Script
+              strategy="afterInteractive"
+              src="https://www.googletagmanager.com/gtag/js?id=G-P4ZY1SLYJD"
+            />
+            <Script id="gtag-init" strategy="afterInteractive">
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', 'G-P4ZY1SLYJD');
+              `}
+            </Script>
+          </>
+        ) : null}
       </body>
     </html>
   );
