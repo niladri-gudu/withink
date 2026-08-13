@@ -40,25 +40,21 @@ export const diaryCacheService = {
     updatedAt: string | Date,
     masterKey: CryptoKey,
   ): Promise<void> {
-    try {
-      const updatedAtStr =
-        updatedAt instanceof Date ? updatedAt.toISOString() : updatedAt;
-      const snippet = createSnippet(contentText);
+    const updatedAtStr =
+      updatedAt instanceof Date ? updatedAt.toISOString() : updatedAt;
+    const snippet = createSnippet(contentText);
 
-      const payload: CachedMetadata = {
-        date,
-        title: title || "",
-        snippet,
-        wordCount: wordCount || 0,
-        mood,
-        updatedAt: updatedAtStr,
-      };
+    const payload: CachedMetadata = {
+      date,
+      title: title || "",
+      snippet,
+      wordCount: wordCount || 0,
+      mood,
+      updatedAt: updatedAtStr,
+    };
 
-      const encrypted = await encryptText(JSON.stringify(payload), masterKey);
-      await diaryCacheDB.set(date, encrypted);
-    } catch (err) {
-      console.error(`Failed to save local metadata cache for ${date}:`, err);
-    }
+    const encrypted = await encryptText(JSON.stringify(payload), masterKey);
+    await diaryCacheDB.set(date, encrypted);
   },
 
   /**
@@ -109,13 +105,17 @@ export const diaryCacheService = {
     onProgress?: (current: number, total: number) => void,
   ): Promise<boolean> {
     try {
-      // 1. Fetch server dates and updatedAt stamps
-      const res = await getEntrySyncListAction();
+      // 1. Fetch server dates and updatedAt stamps, plus dates with pending local edits.
+      const [res, syncItems] = await Promise.all([
+        getEntrySyncListAction(),
+        diaryCacheDB.getAllSyncItems(),
+      ]);
       if (!res.success || !res.data) {
         console.error("Failed to fetch sync list from server:", res.error);
         return false;
       }
       const serverEntries = res.data; // array of { date: string, updatedAt: string }
+      const pendingDates = new Set(syncItems.map((item) => item.key));
 
       // 2. Fetch all local entries and decrypt to build a local map
       const localEntriesRaw = await diaryCacheDB.getAllEntries();
@@ -134,17 +134,19 @@ export const diaryCacheService = {
         }),
       );
 
-      // 3. Prune entries deleted on other devices
+      // 3. Prune entries deleted on other devices (never prune pending local edits)
       const serverDates = new Set(serverEntries.map((e) => e.date));
       const pruneKeys = Object.keys(localMap).filter(
-        (date) => !serverDates.has(date),
+        (date) => !serverDates.has(date) && !pendingDates.has(date),
       );
       for (const date of pruneKeys) {
         await diaryCacheDB.delete(date);
       }
 
-      // 4. Identify entries to fetch (missing or updated on server)
+      // 4. Identify entries to fetch (missing or updated on server, excluding
+      //    locally-pending edits which are pushed to the cloud instead)
       const fetchList = serverEntries.filter((serverItem) => {
+        if (pendingDates.has(serverItem.date)) return false;
         const localUpdatedAt = localMap[serverItem.date];
         if (!localUpdatedAt) return true; // missing locally
         // Compare timestamps
@@ -244,20 +246,16 @@ export const diaryCacheService = {
     contentJson: any, // eslint-disable-line @typescript-eslint/no-explicit-any
     masterKey: CryptoKey,
   ): Promise<void> {
-    try {
-      const payload = {
-        date,
-        title,
-        mood,
-        contentHtml,
-        contentText,
-        contentJson,
-      };
-      const encrypted = await encryptText(JSON.stringify(payload), masterKey);
-      await diaryCacheDB.setDocument(date, encrypted);
-    } catch (err) {
-      console.error(`Failed to save local document cache for ${date}:`, err);
-    }
+    const payload = {
+      date,
+      title,
+      mood,
+      contentHtml,
+      contentText,
+      contentJson,
+    };
+    const encrypted = await encryptText(JSON.stringify(payload), masterKey);
+    await diaryCacheDB.setDocument(date, encrypted);
   },
 
   /**
@@ -304,12 +302,8 @@ export const diaryCacheService = {
     },
     masterKey: CryptoKey,
   ): Promise<void> {
-    try {
-      const encrypted = await encryptText(JSON.stringify(payload), masterKey);
-      await diaryCacheDB.setSyncItem(date, encrypted);
-    } catch (err) {
-      console.error(`Failed to queue offline sync for ${date}:`, err);
-    }
+    const encrypted = await encryptText(JSON.stringify(payload), masterKey);
+    await diaryCacheDB.setSyncItem(date, encrypted);
   },
 
   /**
@@ -324,17 +318,20 @@ export const diaryCacheService = {
   },
 
   /**
-   * Flushes all queued offline sync items to the server
+   * Flushes all queued offline sync items to the server, reporting which dates
+   * succeeded and which failed (failed items stay queued for a later retry).
    */
   async flushOfflineSyncQueue(
     masterKey: CryptoKey,
     localToday: string,
-  ): Promise<void> {
+  ): Promise<{ succeeded: string[]; failed: string[] }> {
+    const succeeded: string[] = [];
+    const failed: string[] = [];
     try {
       const queuedItems = await diaryCacheDB.getAllSyncItems();
-      if (queuedItems.length === 0) return;
+      if (queuedItems.length === 0) return { succeeded, failed };
 
-      console.info(`Flushing ${queuedItems.length} offline sync items...`);
+      console.info(`Flushing ${queuedItems.length} pending sync items...`);
       for (const item of queuedItems) {
         try {
           const decryptedStr = await decryptText(item.value, masterKey);
@@ -374,16 +371,21 @@ export const diaryCacheService = {
               result.data.updatedAt,
               masterKey,
             );
+            succeeded.push(payload.date);
+          } else {
+            failed.push(payload.date);
           }
         } catch (e) {
           console.error(
-            `Failed to flush offline sync item for ${item.key}:`,
+            `Failed to flush pending sync item for ${item.key}:`,
             e,
           );
+          failed.push(item.key);
         }
       }
     } catch (err) {
-      console.error("Failed to flush offline sync queue:", err);
+      console.error("Failed to flush pending sync queue:", err);
     }
+    return { succeeded, failed };
   },
 };

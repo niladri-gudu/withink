@@ -24,6 +24,14 @@ const { diaryCacheMock } = vi.hoisted(() => ({
   },
 }));
 
+const { journalSyncMock } = vi.hoisted(() => ({
+  journalSyncMock: {
+    markPending: vi.fn(),
+    requestPush: vi.fn().mockResolvedValue(undefined),
+    requestSync: vi.fn().mockResolvedValue(undefined),
+  },
+}));
+
 vi.mock("../actions/entry-actions", () => ({
   saveEntryAction: saveEntryActionMock,
 }));
@@ -37,6 +45,10 @@ vi.mock("@/providers/encryption-provider", () => ({
 
 vi.mock("../services/diary-cache-service", () => ({
   diaryCacheService: diaryCacheMock,
+}));
+
+vi.mock("../services/journal-sync-service", () => ({
+  journalSyncService: journalSyncMock,
 }));
 
 vi.mock("@/lib/crypto-client", () => ({
@@ -79,6 +91,9 @@ describe("useAutoSave", () => {
     diaryCacheMock.saveLocalDocument.mockClear();
     diaryCacheMock.saveLocalMetadata.mockClear();
     diaryCacheMock.enqueueOfflineSync.mockClear();
+    journalSyncMock.markPending.mockClear();
+    journalSyncMock.requestPush.mockClear();
+    journalSyncMock.requestSync.mockClear();
   });
 
   afterEach(() => {
@@ -177,21 +192,27 @@ describe("useAutoSave", () => {
     );
   });
 
-  it("queues the change locally when the server request times out", async () => {
+  it("saves locally first when encryption is enabled, without waiting on the cloud", async () => {
     encryptionState.isClientEncrypted = true;
     encryptionState.masterKey = {} as CryptoKey;
-    saveEntryActionMock.mockImplementationOnce(() => new Promise(() => {}));
+    saveEntryActionMock.mockImplementation(() => new Promise(() => {}));
 
     const { result, rerender } = renderSaveHook();
 
     rerender({ data: makeData({ title: "Offline draft" }), enabled: true });
     await act(async () => {
-      await vi.advanceTimersByTimeAsync(1500 + 25000);
+      await vi.advanceTimersByTimeAsync(1500);
     });
 
-    expect(saveEntryActionMock).toHaveBeenCalledTimes(1);
+    // The entry is persisted to the encrypted local store and queued for sync —
+    // the server round-trip never blocks the save.
+    expect(saveEntryActionMock).not.toHaveBeenCalled();
+    expect(diaryCacheMock.saveLocalDocument).toHaveBeenCalledTimes(1);
+    expect(diaryCacheMock.saveLocalMetadata).toHaveBeenCalledTimes(1);
     expect(diaryCacheMock.enqueueOfflineSync).toHaveBeenCalledTimes(1);
-    expect(result.current).toBe("offline");
+    expect(journalSyncMock.markPending).toHaveBeenCalledWith("2026-01-01");
+    expect(journalSyncMock.requestPush).toHaveBeenCalledTimes(1);
+    expect(result.current).toBe("saved");
   });
 
   it("shows the locked status when the server reports a locked session", async () => {
@@ -305,7 +326,7 @@ describe("useAutoSave", () => {
     expect(saveEntryActionMock).not.toHaveBeenCalled();
   });
 
-  it("saves with encryption when master key is present", async () => {
+  it("saves locally with encryption when master key is present", async () => {
     encryptionState.isClientEncrypted = true;
     encryptionState.masterKey = {} as CryptoKey;
     saveEntryActionMock.mockResolvedValue(okResult);
@@ -318,11 +339,13 @@ describe("useAutoSave", () => {
       await vi.advanceTimersByTimeAsync(1500);
     });
 
-    expect(saveEntryActionMock).toHaveBeenCalledTimes(1);
-    expect(saveEntryActionMock).toHaveBeenCalledWith(
-      expect.objectContaining({ date: "2026-01-01" }),
-      expect.any(String),
-    );
+    // Encrypted saves never hit the server from the autosave path — they write
+    // locally and hand the push to the background sync service.
+    expect(saveEntryActionMock).not.toHaveBeenCalled();
+    expect(diaryCacheMock.saveLocalDocument).toHaveBeenCalledTimes(1);
+    expect(diaryCacheMock.saveLocalMetadata).toHaveBeenCalledTimes(1);
+    expect(diaryCacheMock.enqueueOfflineSync).toHaveBeenCalledTimes(1);
+    expect(journalSyncMock.requestPush).toHaveBeenCalledTimes(1);
     expect(result.current).toBe("saved");
   });
 

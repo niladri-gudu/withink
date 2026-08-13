@@ -4,7 +4,7 @@ import * as React from "react";
 
 import { decryptText, importKeyFromHex } from "@/lib/crypto-client";
 import { deriveKeyFromPasswordAsync } from "@/lib/crypto-worker-client";
-import { diaryCacheService } from "@/features/journal/services/diary-cache-service";
+import { journalSyncService } from "@/features/journal/services/journal-sync-service";
 
 // Memory-only cache of derived wrapper keys keyed by `${iterations}:${saltHex}:${password}`.
 // The derived key alone cannot decrypt journal content — it only unwraps the
@@ -86,46 +86,30 @@ export function EncryptionProvider({
     }
   }, []);
 
-  // Background flush offline sync queue when network is restored.
-  // Flushes on unlock, on network recovery, on tab becoming visible again,
+  // Background cloud sync when the diary is unlocked.
+  // Runs on unlock, on network recovery, on tab becoming visible again,
   // and on a periodic interval (covers "server down but navigator.onLine=true").
   React.useEffect(() => {
     if (!masterKey) return;
 
-    let isFlushing = false;
-    const flushQueue = async () => {
-      if (isFlushing) return;
-      isFlushing = true;
-      try {
-        const { getLocalDateString } = await import("@/lib/utils/date");
-        const localToday = getLocalDateString();
-        await diaryCacheService.flushOfflineSyncQueue(
-          masterKey,
-          localToday,
-        );
-      } catch (err) {
-        console.error("Failed to run background sync queue flush:", err);
-      } finally {
-        isFlushing = false;
-      }
+    const runSync = () => {
+      journalSyncService.requestSync(masterKey);
     };
 
     // Run once on unlock
-    flushQueue();
+    runSync();
 
     const handleOnline = () => {
-      flushQueue();
+      runSync();
     };
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
-        flushQueue();
+        runSync();
       }
     };
 
-    const interval = setInterval(() => {
-      flushQueue();
-    }, 30_000);
+    const interval = setInterval(runSync, 30_000);
 
     window.addEventListener("online", handleOnline);
     document.addEventListener("visibilitychange", handleVisibilityChange);

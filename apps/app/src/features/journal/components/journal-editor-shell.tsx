@@ -14,6 +14,7 @@ import { zenAudioService } from "@/lib/zen-audio";
 import { useEncryption } from "@/providers/encryption-provider";
 
 import { useAutoSave } from "../hooks/use-auto-save";
+import { useSyncStatus } from "../hooks/use-sync-status";
 import { diaryCacheService } from "../services/diary-cache-service";
 import { EditorToolbar } from "./editor/editor-toolbar";
 import { MoodSelector } from "./mood-selector";
@@ -268,6 +269,7 @@ export function JournalEditorShell({
     1500,
     isUnlocked && canEncrypt,
   );
+  const syncState = useSyncStatus(date);
 
   return (
     <div className="bg-background text-foreground relative flex min-h-screen w-full flex-col transition-colors duration-500">
@@ -386,7 +388,7 @@ export function JournalEditorShell({
       <div
         className={`pointer-events-none fixed right-6 bottom-6 z-50 transition-opacity duration-300 sm:pointer-events-auto ${isFocusMode ? "opacity-30 hover:opacity-100" : "opacity-100"}`}
       >
-        <SaveIndicator status={saveStatus} />
+        <SaveIndicator status={saveStatus} syncState={syncState} />
       </div>
     </div>
   );

@@ -2,7 +2,7 @@
 
 # Project State
 
-Last Updated: 2026-08-10
+Last Updated: 2026-08-13
 
 Current Phase: Production Hardening
 
@@ -391,6 +391,17 @@ Note: MongoDB (`mongodb+srv://`) now connects. The earlier `querySrv ECONNREFUSE
 ---
 
 # Recent Decisions
+
+2026-08-13
+
+- Shipped local-first journal saving with background cloud sync (WhatsApp-style): the editor write path no longer blocks on the cloud.
+  - Save flow: `use-auto-save` now encrypts, writes to the encrypted IndexedDB store (`document_cache` + `metadata_cache`), enqueues a per-date pending sync, marks the date pending, and returns `"saved"` instantly — the server round-trip no longer gates the save (`use-auto-save.ts` `persist()`). The legacy no-encryption network-save path (with retry/backoff and pagehide flush) is preserved unchanged.
+  - New `JournalSyncService` (singleton + class export) runs a coalesced, single-flight reconcile loop: push pending queue → pull remote changes. Triggers: after each local save (push-only), on unlock, `online`, tab-visible, and a 30s interval. Offline runs drop queued work (no busy-loop) and re-trigger when online.
+  - Pull guard fix: `syncDiaryCache` now never overwrites or prunes a locally-pending date (previously a pending local edit could be clobbered by a pull whenever timestamps differed). Conflict resolution is last-write-wins by `updatedAt`; pending local edits always push.
+  - `flushOfflineSyncQueue` now returns `{ succeeded, failed }` outcomes; local store writes (`saveLocalDocument`/`saveLocalMetadata`/`enqueueOfflineSync`) propagate errors so a failed local write surfaces as a save error instead of silently losing the entry.
+  - Sync visibility: `useSyncStatus(date)` (via `useSyncExternalStore` on the service) drives `SaveIndicator` — "Saved · Synced" when the cloud is up to date, "Saved locally · Syncing" while a push is pending. `withink_last_synced` timestamp tracked in localStorage.
+  - Verification: focused journal tests 25/25, full suite 113/113, `tsc --noEmit` clean, `eslint` 0 errors (3 pre-existing `clearAllTimers` exhaustive-deps warnings, unchanged from HEAD), production build clean (21 routes).
+  - Branch: `redesign/field-ledger-app`.
 
 2026-08-13
 

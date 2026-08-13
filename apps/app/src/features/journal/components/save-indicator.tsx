@@ -4,8 +4,15 @@ import { CheckCheck, Loader2, Lock, Save, WifiOff } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 
 import type { SaveStatus } from "../hooks/use-auto-save";
+import type { SyncState } from "../services/journal-sync-service";
 
-export function SaveIndicator({ status }: { status: SaveStatus }) {
+export function SaveIndicator({
+  status,
+  syncState = "synced",
+}: {
+  status: SaveStatus;
+  syncState?: SyncState;
+}) {
   const [isOnline, setIsOnline] = useState(() =>
     typeof navigator !== "undefined" ? navigator.onLine : true,
   );
@@ -28,7 +35,7 @@ export function SaveIndicator({ status }: { status: SaveStatus }) {
     <AnimatePresence mode="wait">
       {status !== "idle" ? (
         <motion.div
-          key={status}
+          key={`${status}:${syncState}`}
           role="status"
           aria-live="polite"
           initial={{ opacity: 0, y: 12, scale: 0.95 }}
@@ -55,16 +62,22 @@ export function SaveIndicator({ status }: { status: SaveStatus }) {
               <span>Saving…</span>
             </>
           )}
-          {status === "saved" && (
+          {status === "saved" && syncState === "synced" && (
             <>
               <CheckCheck className="text-accent h-3 w-3" />
-              <span>Saved & synced</span>
+              <span>Saved · Synced</span>
+            </>
+          )}
+          {status === "saved" && syncState === "pending" && (
+            <>
+              <Save className="text-accent h-3 w-3" />
+              <span>Saved locally · Syncing</span>
             </>
           )}
           {status === "offline" && (
             <>
               <Save className="text-accent h-3 w-3" />
-              <span>Saved locally — will sync</span>
+              <span>Saved locally · Will sync</span>
             </>
           )}
           {status === "locked" && (

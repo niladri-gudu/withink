@@ -7,6 +7,7 @@ import { useEncryption } from "@/providers/encryption-provider";
 
 import { saveEntryAction } from "../actions/entry-actions";
 import { diaryCacheService } from "../services/diary-cache-service";
+import { journalSyncService } from "../services/journal-sync-service";
 
 export type SaveStatus =
   | "idle"
@@ -25,7 +26,7 @@ interface AutoSaveData {
   contentJson: unknown;
 }
 
-type PersistOutcome = "synced" | "offline" | "locked" | "error";
+type PersistOutcome = "saved" | "locked" | "error";
 
 const SAVE_TIMEOUT_MS = 25_000;
 const IDLE_RESET_MS = 2_000;
@@ -135,56 +136,59 @@ export function useAutoSave(
     }, IDLE_RESET_MS);
   };
 
-  // Persist the given payload to the local encrypted cache (no-op when not encrypted)
+  // Persist the given payload to the local encrypted store. Throws when the
+  // write fails — the local store is the source of truth, so a failure means
+  // the entry is not yet safe.
   const persistLocalCache = async (
     payload: AutoSaveData,
     wordCount: number,
     updatedAt: string | Date,
   ) => {
-    if (!isClientEncrypted || !masterKey) return;
-    try {
-      await diaryCacheService.saveLocalDocument(
-        payload.date,
-        payload.title,
-        payload.mood,
-        payload.contentHtml,
-        payload.contentText,
-        payload.contentJson,
-        masterKey,
-      );
-      await diaryCacheService.saveLocalMetadata(
-        payload.date,
-        payload.title,
-        payload.contentText,
-        wordCount,
-        payload.mood,
-        updatedAt,
-        masterKey,
-      );
-    } catch (err) {
-      console.error(`Failed to persist local cache for ${payload.date}:`, err);
+    if (!masterKey) {
+      throw new Error("Master key unavailable for local persist");
     }
+    await diaryCacheService.saveLocalDocument(
+      payload.date,
+      payload.title,
+      payload.mood,
+      payload.contentHtml,
+      payload.contentText,
+      payload.contentJson,
+      masterKey,
+    );
+    await diaryCacheService.saveLocalMetadata(
+      payload.date,
+      payload.title,
+      payload.contentText,
+      wordCount,
+      payload.mood,
+      updatedAt,
+      masterKey,
+    );
   };
 
-  const queueOffline = async (payload: AutoSaveData, wordCount: number) => {
-    if (!isClientEncrypted || !masterKey) return;
-    try {
-      await diaryCacheService.enqueueOfflineSync(
-        payload.date,
-        {
-          date: payload.date,
-          title: payload.title,
-          mood: payload.mood,
-          contentHtml: payload.contentHtml,
-          contentText: payload.contentText,
-          contentJson: payload.contentJson,
-          wordCount,
-        },
-        masterKey,
-      );
-    } catch (err) {
-      console.error(`Failed to queue offline sync for ${payload.date}:`, err);
+  // Enqueue a cloud push for the given date. The queue is keyed by date, so
+  // only the newest content per date is ever pushed.
+  const enqueuePendingSync = async (
+    payload: AutoSaveData,
+    wordCount: number,
+  ) => {
+    if (!masterKey) {
+      throw new Error("Master key unavailable for sync queue");
     }
+    await diaryCacheService.enqueueOfflineSync(
+      payload.date,
+      {
+        date: payload.date,
+        title: payload.title,
+        mood: payload.mood,
+        contentHtml: payload.contentHtml,
+        contentText: payload.contentText,
+        contentJson: payload.contentJson,
+        wordCount,
+      },
+      masterKey,
+    );
   };
 
   const persist = async (payload: AutoSaveData): Promise<PersistOutcome> => {
@@ -217,6 +221,23 @@ export function useAutoSave(
       }
     }
 
+    // Local-first: write to the encrypted local store, then sync to the cloud
+    // in the background. The entry is safe the moment it lands locally.
+    if (isClientEncrypted && masterKey) {
+      const savedAt = new Date();
+      try {
+        await persistLocalCache(payload, wordCount, savedAt);
+        await enqueuePendingSync(payload, wordCount);
+      } catch (err) {
+        console.error("Auto-save local persist failed:", err);
+        return "error";
+      }
+      journalSyncService.markPending(payload.date);
+      void journalSyncService.requestPush(masterKey);
+      return "saved";
+    }
+
+    // Legacy path (no client encryption): direct network save.
     try {
       const result = await withTimeout(
         saveEntryAction(
@@ -235,29 +256,17 @@ export function useAutoSave(
       );
 
       if (result.success && result.data) {
-        void persistLocalCache(payload, wordCount, result.data.updatedAt);
-        return "synced";
+        return "saved";
       }
 
       if (result.error === "Locked") {
-        // Keep data safe locally even while locked so nothing is lost on close.
-        void persistLocalCache(payload, wordCount, new Date());
-        void queueOffline(payload, wordCount);
         return "locked";
       }
 
-      // Generic server error: still cache locally before reporting error
-      void persistLocalCache(payload, wordCount, new Date());
       return "error";
     } catch (err) {
-      // Network failure, server unreachable, or timeout -> queue changes locally
-      console.warn(
-        "Failed to reach server, falling back to offline queue:",
-        err,
-      );
-      void persistLocalCache(payload, wordCount, new Date());
-      void queueOffline(payload, wordCount);
-      return isClientEncrypted && masterKey ? "offline" : "error";
+      console.warn("Failed to reach server, will retry:", err);
+      return "error";
     }
   };
 
@@ -288,14 +297,14 @@ export function useAutoSave(
     try {
       const outcome = await persist(payload);
 
-      if (outcome === "synced" || outcome === "offline") {
+      if (outcome === "saved") {
         baselineRef.current = payload;
         // If the user typed while this save was in flight, keep it dirty so the
         // follow-up save (or the pending debounce) persists the newest content.
         dirtyRef.current = isDataDirty(latestDataRef.current, payload);
         retryAttemptRef.current = 0;
         if (!unmountedRef.current) {
-          setStatus(outcome === "synced" ? "saved" : "offline");
+          setStatus("saved");
           scheduleIdleReset();
           queryClient.invalidateQueries({ queryKey: ["entries"] });
         }
@@ -309,7 +318,8 @@ export function useAutoSave(
           }, LOCKED_RETRY_MS);
         }
       } else {
-        // Generic server error: keep dirty and retry with capped exponential backoff.
+        // Local persist failure (encrypted) or server error (legacy): keep dirty
+        // and retry with capped exponential backoff.
         if (!unmountedRef.current) {
           setStatus("error");
           retryAttemptRef.current += 1;
@@ -379,7 +389,9 @@ export function useAutoSave(
     }
   }, [data, enabled, debounceMs]);
 
-  // Flush any in-flight debounce when the tab is hidden or the page unloads
+  // Flush any in-flight debounce when the tab is hidden or the page unloads.
+  // Local-first: this writes to IndexedDB (fast) and enqueues a push — it never
+  // blocks unload on a server round-trip.
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === "hidden") {
