@@ -21,7 +21,7 @@ export default function InsightsLoading() {
         {Array.from({ length: 4 }).map((_, i) => (
           <Card
             key={i}
-            className="border-border/60 bg-card/40 relative space-y-4 overflow-hidden rounded-2xl border p-6 shadow-sm backdrop-blur-sm"
+            className="border-border/60 bg-card/60 relative space-y-4 overflow-hidden rounded-2xl border p-6 shadow-sm"
           >
             <Skeleton className="h-9 w-9 rounded-xl" />
             <div className="space-y-2">
@@ -39,7 +39,7 @@ export default function InsightsLoading() {
           <Skeleton className="h-5 w-52" />
           <Skeleton className="h-4 w-80 max-w-full" />
         </div>
-        <Card className="border-border/60 bg-card/40 relative overflow-hidden rounded-2xl border p-6 shadow-sm backdrop-blur-sm">
+        <Card className="border-border/60 bg-card/60 relative overflow-hidden rounded-2xl border p-6 shadow-sm">
           <div className="flex flex-wrap gap-1">
             {Array.from({ length: 120 }).map((_, i) => (
               <Skeleton key={i} className="h-3.5 w-3.5 rounded-sm" />
@@ -51,17 +51,17 @@ export default function InsightsLoading() {
       {/* Mood patterns */}
       <section className="space-y-4">
         <Skeleton className="h-5 w-64" />
-        <Card className="border-border/60 bg-card/40 relative overflow-hidden rounded-2xl border p-6 shadow-sm backdrop-blur-sm md:p-8">
+        <Card className="border-border/60 bg-card/60 relative overflow-hidden rounded-2xl border p-6 shadow-sm md:p-8">
           <Skeleton className="h-56 w-full rounded-lg" />
         </Card>
       </section>
 
       {/* Word count + activity */}
       <section className="grid gap-6 md:grid-cols-3">
-        <Card className="border-border/60 bg-card/40 relative overflow-hidden rounded-2xl border p-6 shadow-sm backdrop-blur-sm md:col-span-2">
+        <Card className="border-border/60 bg-card/60 relative overflow-hidden rounded-2xl border p-6 shadow-sm md:col-span-2">
           <Skeleton className="h-48 w-full rounded-lg" />
         </Card>
-        <Card className="border-border/60 bg-card/40 relative overflow-hidden rounded-2xl border p-6 shadow-sm backdrop-blur-sm">
+        <Card className="border-border/60 bg-card/60 relative overflow-hidden rounded-2xl border p-6 shadow-sm">
           <Skeleton className="h-48 w-full rounded-lg" />
         </Card>
       </section>

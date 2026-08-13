@@ -17,7 +17,7 @@ export default function FlashbacksLoading() {
         action={<Skeleton className="h-9 w-28 rounded-full" />}
       />
 
-      <Card className="border-border/60 bg-card/40 relative overflow-hidden rounded-2xl border shadow-sm backdrop-blur-sm">
+      <Card className="border-border/60 bg-card/60 relative overflow-hidden rounded-2xl border shadow-sm">
         <CardHeader className="space-y-3 pb-2">
           <Skeleton className="h-3 w-28" />
           <Skeleton className="h-8 w-2/3 max-w-sm" />

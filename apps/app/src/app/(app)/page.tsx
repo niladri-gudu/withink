@@ -86,7 +86,7 @@ export default async function DashboardPage() {
 
       {/* Yesterday's Missed Reflection Alert Banner */}
       {!yesterdayWritten && (
-        <div className="border-primary/10 bg-primary/5 animate-in slide-in-from-top-2 flex flex-col justify-between gap-4 rounded-2xl border p-5 backdrop-blur-sm duration-300 sm:flex-row sm:items-center">
+        <div className="border-primary/10 bg-primary/5 animate-in slide-in-from-top-2 flex flex-col justify-between gap-4 rounded-xl border p-5 duration-300 sm:flex-row sm:items-center">
           <div className="flex items-center gap-3">
             <div className="bg-primary/10 text-primary flex h-10 w-10 shrink-0 items-center justify-center rounded-full">
               <Calendar className="h-5 w-5" />
@@ -104,7 +104,7 @@ export default async function DashboardPage() {
           <Button
             asChild
             size="sm"
-            className="shrink-0 cursor-pointer self-end rounded-full px-5 shadow-sm sm:self-center"
+            className="shrink-0 cursor-pointer self-end px-5 sm:self-center"
           >
             <Link
               href={`${ROUTES.APP.ENTRY(yesterday)}?today=${today}` as Route}
@@ -121,10 +121,7 @@ export default async function DashboardPage() {
         <TodayReflectionCard entry={todayEntry} today={today} />
 
         {/* Quick stats/streak */}
-        <Card
-          className="border-border bg-card/60 flex flex-col justify-between border backdrop-blur-sm"
-          interactive
-        >
+        <Card className="border-border flex flex-col justify-between border">
           <CardHeader>
             <CardTitle className="text-foreground font-serif text-xl font-semibold">
               Sanctuary Stats

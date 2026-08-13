@@ -64,7 +64,7 @@ export function ForgotPasswordForm() {
   };
 
   return (
-    <div className="bg-card border-border/80 animate-in fade-in mx-auto w-full max-w-md space-y-6 rounded-xl border p-6 shadow-md duration-300 select-none sm:space-y-8 sm:p-8">
+    <div className="bg-card border-border/80 animate-in fade-in mx-auto w-full max-w-md space-y-6 rounded-xl border p-6 shadow-sm duration-300 select-none sm:space-y-8 sm:p-8">
       {sent ? (
         <div className="animate-in fade-in zoom-in space-y-5 text-center duration-500">
           <div className="space-y-1.5">
@@ -137,7 +137,7 @@ export function ForgotPasswordForm() {
             <div className="space-y-3 pt-2 text-center">
               <Button
                 type="submit"
-                className="relative h-11 w-full cursor-pointer overflow-hidden rounded-lg font-serif text-sm font-medium uppercase tracking-[0.15em] transition-transform hover:scale-[1.01] active:scale-[0.99]"
+                className="relative h-11 w-full cursor-pointer overflow-hidden font-serif text-sm font-medium uppercase tracking-[0.15em] transition-transform hover:scale-[1.01] active:scale-[0.99]"
                 disabled={isLoading}
               >
                 {isLoading ? (

@@ -343,7 +343,7 @@ export function MediaLightbox({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
             transition={{ type: "spring", stiffness: 350, damping: 26 }}
-            className="bg-card border-border relative z-10 mx-4 flex w-full max-w-3xl flex-col overflow-hidden rounded-3xl border shadow-2xl"
+            className="bg-card border-border relative z-10 mx-4 flex w-full max-w-3xl flex-col overflow-hidden rounded-xl border shadow-2xl"
           >
             {/* Close Button */}
             <button

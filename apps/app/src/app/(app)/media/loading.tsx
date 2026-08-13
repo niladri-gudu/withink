@@ -18,7 +18,7 @@ export default function MediaLoading() {
 
       <div className="space-y-6">
         {/* Storage stats card */}
-        <Card className="border-border/60 bg-card/40 overflow-hidden rounded-2xl border shadow-sm backdrop-blur-md">
+        <Card className="border-border/60 bg-card/60 overflow-hidden rounded-2xl border shadow-sm">
           <CardContent className="flex flex-col justify-between gap-5 p-5 md:flex-row md:items-center">
             <div className="flex items-start gap-4">
               <Skeleton className="h-11 w-11 shrink-0 rounded-xl" />

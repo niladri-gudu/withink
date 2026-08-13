@@ -882,7 +882,7 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
               <Button
                 onClick={handleSaveProfile}
                 disabled={isSavingProfile || profileName.trim() === user.name}
-                className="rounded-full px-6"
+                className="px-6"
               >
                 {isSavingProfile ? (
                   <>
@@ -980,7 +980,6 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
                 variant="outline"
                 size="sm"
                 onClick={handlePaperScaleReset}
-                className="rounded-full"
               >
                 Reset
               </Button>
@@ -988,7 +987,7 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
                 variant="ghost"
                 size="sm"
                 onClick={handleAutoDetectDevice}
-                className="gap-2 rounded-full"
+                className="gap-2 px-6"
               >
                 <MonitorSmartphone className="h-4 w-4" />
                 Auto-detect device
@@ -1041,7 +1040,7 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
                 variant="secondary"
                 size="sm"
                 onClick={handleScreenDiagonalCalibrate}
-                className="w-full rounded-full"
+                className="w-full"
               >
                 Calculate
               </Button>
@@ -1088,7 +1087,7 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
                     setCardScale(1.0);
                     toast.info("Drag the right edge to match your card.");
                   }}
-                  className="w-full rounded-full"
+                  className="w-full"
                 >
                   Start matching
                 </Button>
@@ -1096,7 +1095,7 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
                 <Button
                   size="sm"
                   onClick={handleCompleteCardCalibration}
-                  className="w-full rounded-full"
+                  className="w-full"
                 >
                   Apply
                 </Button>
@@ -1194,7 +1193,7 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="rounded-full px-6"
+                className="px-6"
               >
                 {isSubmitting && (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -1235,7 +1234,7 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
                 type="button"
                 variant="outline"
                 onClick={() => setShowZKChangeModal(true)}
-                className="rounded-full px-6"
+                className="px-6"
               >
                 Change Sanctuary Password
               </Button>
@@ -1252,7 +1251,7 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
               <Button
                 type="button"
                 onClick={() => setShowZKSetupModal(true)}
-                className="rounded-full px-6"
+                className="px-6"
               >
                 Enable zero-knowledge encryption
               </Button>
@@ -1318,7 +1317,6 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
                       variant="outline"
                       size="sm"
                       onClick={() => setShowChangeModal(true)}
-                      className="rounded-full"
                     >
                       Change PIN
                     </Button>
@@ -1384,7 +1382,7 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
               <Button
                 onClick={handleSaveDiaryLock}
                 disabled={isSavingLockSettings}
-                className="rounded-full px-6"
+                className="px-6"
               >
                 {isSavingLockSettings && (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -1472,7 +1470,7 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
         <Button
           variant="outline"
           onClick={handleLogout}
-          className="gap-2 rounded-full"
+          className="gap-2"
         >
           <LogOut className="h-4 w-4" />
           Sign out
@@ -1494,7 +1492,7 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
           <Button
             variant="destructive"
             onClick={() => setShowDeleteModal(true)}
-            className="gap-2 rounded-full"
+            className="gap-2"
           >
             <Trash2 className="h-4 w-4" />
             Delete account
@@ -1557,7 +1555,7 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
                     setDeleteConfirmText("");
                   }}
                   disabled={isDeletingAccount}
-                  className="flex-1 rounded-full"
+                  className="flex-1"
                 >
                   Cancel
                 </Button>
@@ -1565,7 +1563,7 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
                   variant="destructive"
                   onClick={handleDeleteAccount}
                   disabled={isDeletingAccount || deleteConfirmText !== "DELETE"}
-                  className="flex-1 gap-2 rounded-full"
+                  className="flex-1 gap-2"
                 >
                   {isDeletingAccount ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -1687,7 +1685,7 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
                   variant="outline"
                   onClick={() => setShowZKSetupModal(false)}
                   disabled={isMigrating}
-                  className="flex-1 rounded-full"
+                  className="flex-1"
                 >
                   Cancel
                 </Button>
@@ -1700,7 +1698,7 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
                     !zkWarningChecked ||
                     (diaryLockEnabled && diaryHasPasscode && !zkPINConfirm)
                   }
-                  className="flex-1 gap-2 rounded-full"
+                  className="flex-1 gap-2"
                 >
                   {isMigrating ? (
                     <>
@@ -1771,7 +1769,7 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
                   variant="outline"
                   onClick={() => setShowZKChangeModal(false)}
                   disabled={isChangingZKPassword}
-                  className="flex-1 rounded-full"
+                  className="flex-1"
                 >
                   Cancel
                 </Button>
@@ -1783,7 +1781,7 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
                     !zkNewPassword ||
                     !zkNewPasswordConfirm
                   }
-                  className="flex-1 gap-2 rounded-full"
+                  className="flex-1 gap-2"
                 >
                   {isChangingZKPassword ? (
                     <>

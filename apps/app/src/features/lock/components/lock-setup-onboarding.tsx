@@ -226,7 +226,7 @@ export function LockSetupOnboarding({
                   <Button
                     type="submit"
                     disabled={pin.length !== 4}
-                    className="rounded-full px-6"
+                    className="px-6"
                   >
                     Continue
                   </Button>
@@ -302,14 +302,13 @@ export function LockSetupOnboarding({
                       setConfirmPin("");
                       setStep(1);
                     }}
-                    className="rounded-full"
                   >
                     Back
                   </Button>
                   <Button
                     type="submit"
                     disabled={confirmPin.length !== 4 || isSubmitting}
-                    className="w-full gap-2 rounded-full"
+                    className="w-full gap-2"
                   >
                     {isSubmitting ? (
                       <Loader2 className="h-4 w-4 animate-spin" />

@@ -146,7 +146,7 @@ export function DataExportCard() {
         <Button
           onClick={handleExport}
           disabled={isExporting}
-          className="shrink-0 gap-2 rounded-full"
+          className="shrink-0 gap-2"
         >
           {isExporting ? (
             <>

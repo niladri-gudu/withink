@@ -413,7 +413,7 @@ export function EntriesTimeline({
         </div>
 
         {entries.length === 0 ? (
-          <Card className="border-border/80 bg-card/40 flex flex-col items-center justify-center border py-16 text-center">
+          <Card className="border-border/80 flex flex-col items-center justify-center border py-16 text-center">
             <span className="border-border/40 bg-secondary/40 text-muted-foreground mb-4 flex h-14 w-14 items-center justify-center rounded-full border">
               <FileText className="h-6 w-6" />
             </span>
@@ -485,7 +485,7 @@ export function EntriesTimeline({
                                 )}
                               </h3>
                             </Link>
-                            <div className="text-muted-foreground/60 mt-0.5 flex items-center gap-2 font-serif text-[11px] tracking-[0.12em] uppercase">
+                            <div className="text-muted-foreground/60 mt-0.5 flex items-center gap-2 font-serif text-[11px] tracking-[0.16em] uppercase">
                               <span className="flex items-center gap-1">
                                 <Calendar className="h-3 w-3" />
                                 <Highlight
@@ -519,7 +519,7 @@ export function EntriesTimeline({
                         {confirmOpen ? (
                           <div className="bg-destructive/10 border-destructive/20 animate-in slide-in-from-right-2 flex items-center gap-1.5 rounded-xl border p-1 duration-200">
                             <AlertCircle className="text-destructive ml-1 h-4 w-4 shrink-0" />
-                            <span className="text-destructive font-serif text-[10px] font-semibold tracking-[0.12em] uppercase">
+                            <span className="text-destructive font-serif text-[11px] font-semibold tracking-[0.16em] uppercase">
                               Delete?
                             </span>
                             <Button

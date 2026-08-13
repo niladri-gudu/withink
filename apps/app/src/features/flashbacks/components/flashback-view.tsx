@@ -127,7 +127,7 @@ export function FlashbackView({
             <Button
               asChild
               variant="ghost"
-              className="cursor-pointer gap-1.5 rounded-full font-serif text-xs tracking-[0.15em] uppercase"
+              className="cursor-pointer gap-1.5 font-serif text-xs tracking-[0.16em] uppercase"
             >
               <Link href={ROUTES.APP.DASHBOARD}>
                 <ArrowLeft className="h-3.5 w-3.5" />
@@ -137,13 +137,13 @@ export function FlashbackView({
           }
         />
 
-        <Card className="border-border bg-card/60 border backdrop-blur-sm">
+        <Card className="border-border border">
           <CardContent className="flex flex-col items-center justify-center space-y-6 py-20 text-center">
-            <div className="bg-muted/20 text-muted-foreground border-border/10 mx-auto flex h-16 w-16 items-center justify-center rounded-3xl border">
+            <div className="bg-muted/20 text-muted-foreground border-border/10 mx-auto flex h-16 w-16 items-center justify-center rounded-xl border">
               <MailOpen className="h-8 w-8" />
             </div>
             <div className="max-w-md space-y-2">
-              <span className="text-accent/70 block font-serif text-[10px] font-bold tracking-[0.2em] uppercase">
+              <span className="text-accent/70 block font-serif text-[11px] font-bold tracking-[0.16em] uppercase">
                 Flashback
               </span>
               <h2 className="text-foreground font-serif text-2xl font-bold tracking-tight">
@@ -154,10 +154,7 @@ export function FlashbackView({
                 historical memories back to you here.
               </p>
             </div>
-            <Button
-              asChild
-              className="cursor-pointer rounded-full px-6 shadow-sm"
-            >
+            <Button asChild className="cursor-pointer px-6">
               <Link
                 href={
                   `${ROUTES.APP.ENTRY(localToday)}?today=${localToday}` as unknown as ComponentPropsWithoutRef<
@@ -200,7 +197,7 @@ export function FlashbackView({
               onClick={handleRefresh}
               disabled={isPending}
               variant="outline"
-              className="hover:bg-muted/10 animate-in fade-in h-10 shrink-0 cursor-pointer gap-1.5 rounded-full px-4 font-serif text-xs tracking-[0.15em] uppercase duration-300"
+              className="hover:bg-muted/10 animate-in fade-in h-10 shrink-0 cursor-pointer gap-1.5 px-4 font-serif text-xs tracking-[0.16em] uppercase duration-300"
             >
               <RefreshCw
                 className={cn("h-3.5 w-3.5", isPending && "animate-spin")}
@@ -211,7 +208,7 @@ export function FlashbackView({
             <Button
               asChild
               variant="ghost"
-              className="hover:bg-muted/10 h-10 shrink-0 cursor-pointer gap-1.5 rounded-full px-4 font-serif text-xs tracking-[0.15em] uppercase"
+              className="hover:bg-muted/10 h-10 shrink-0 cursor-pointer gap-1.5 px-4 font-serif text-xs tracking-[0.16em] uppercase"
             >
               <Link href={ROUTES.APP.DASHBOARD}>
                 <ArrowLeft className="h-3.5 w-3.5" />
@@ -226,7 +223,7 @@ export function FlashbackView({
         aria-busy={isPending}
         aria-live="polite"
         className={cn(
-          "border-border bg-card/75 w-full rounded-2xl border shadow-xl backdrop-blur-md transition-all duration-300",
+          "border-border w-full rounded-xl border shadow-sm transition-all duration-300",
           isPending && "scale-[0.99] opacity-60 blur-[1px]",
         )}
       >

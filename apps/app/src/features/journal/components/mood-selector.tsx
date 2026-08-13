@@ -57,7 +57,7 @@ export function MoodSelector({
       <div
         role="radiogroup"
         aria-label="Select mood"
-        className="bg-muted/20 border-border/5 flex items-center gap-1 rounded-2xl border p-1"
+        className="bg-muted/20 border-border/5 flex items-center gap-1 rounded-xl border p-1"
       >
         {moods.map((m) => (
           <motion.button

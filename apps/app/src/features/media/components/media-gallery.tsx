@@ -126,14 +126,14 @@ export function MediaGallery() {
   return (
     <div className="space-y-6">
       {/* Storage stats card */}
-      <Card className="border-border/60 bg-card/40 overflow-hidden rounded-2xl border shadow-sm backdrop-blur-md">
+      <Card className="border-border overflow-hidden rounded-xl border">
         <CardContent className="flex flex-col justify-between gap-5 p-5 select-none md:flex-row md:items-center">
           <div className="flex items-start gap-4">
             <div className="bg-accent/10 text-accent mt-1 rounded-xl p-3 md:mt-0">
               <HardDrive className="h-5 w-5" />
             </div>
             <div className="space-y-1">
-              <p className="text-muted-foreground font-serif text-[11px] tracking-[0.18em] uppercase">
+              <p className="text-muted-foreground font-serif text-[11px] tracking-[0.16em] uppercase">
                 Sanctuary Archives
               </p>
               <div className="flex items-baseline gap-2">
@@ -268,7 +268,7 @@ export function MediaGallery() {
           </p>
         </div>
       ) : filteredFiles.length === 0 ? (
-        <Card className="border-border/60 bg-card/20 rounded-2xl border border-dashed py-20">
+        <Card className="border-border/60 rounded-xl border border-dashed py-20">
           <CardContent className="mx-auto flex max-w-sm flex-col items-center justify-center space-y-4 text-center">
             <div className="bg-secondary/65 text-muted-foreground/60 rounded-full p-4 shadow-inner">
               <ImageIcon className="h-8 w-8" />
@@ -301,7 +301,7 @@ export function MediaGallery() {
                 type="button"
                 onClick={() => setLightboxIndex(index)}
                 aria-label={`View memory: ${filename}`}
-                className="border-border/60 bg-card focus-visible:ring-ring group relative aspect-square cursor-pointer overflow-hidden rounded-2xl border text-left shadow-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+                className="border-border/60 bg-card focus-visible:ring-ring group relative aspect-square cursor-pointer overflow-hidden rounded-xl border text-left shadow-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
               >
                 <Image
                   src={file.url}

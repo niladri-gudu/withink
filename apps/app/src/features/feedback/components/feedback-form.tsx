@@ -187,11 +187,11 @@ export function FeedbackForm() {
           <Button
             onClick={startAnother}
             variant="outline"
-            className="rounded-full px-6"
+            className="px-6"
           >
             Send another
           </Button>
-          <Button asChild className="rounded-full px-6">
+          <Button asChild className="px-6">
             <Link href={ROUTES.APP.DASHBOARD}>Back to Today</Link>
           </Button>
         </div>
@@ -376,7 +376,7 @@ export function FeedbackForm() {
         <Button
           type="submit"
           disabled={isSubmitting || imageUploading}
-          className="gap-2 rounded-full px-6"
+          className="gap-2 px-6"
         >
           {isSubmitting ? (
             <>

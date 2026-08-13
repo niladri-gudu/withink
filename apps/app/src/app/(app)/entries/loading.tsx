@@ -20,7 +20,7 @@ export default function EntriesLoading() {
       <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-3">
         {/* Calendar + stats (1/3) */}
         <div className="space-y-6 lg:col-span-1">
-          <Card className="border-border/60 bg-card/40 relative space-y-4 overflow-hidden rounded-2xl border p-6 shadow-sm backdrop-blur-sm">
+          <Card className="border-border/60 bg-card/60 relative space-y-4 overflow-hidden rounded-xl border p-6 shadow-sm">
             {/* Calendar month header */}
             <div className="flex items-center justify-between">
               <Skeleton className="h-5 w-28" />
@@ -52,7 +52,7 @@ export default function EntriesLoading() {
           {Array.from({ length: 5 }).map((_, i) => (
             <Card
               key={i}
-              className="border-border/60 bg-card/40 relative overflow-hidden rounded-2xl border p-5 shadow-sm backdrop-blur-sm"
+              className="border-border/60 bg-card/60 relative overflow-hidden rounded-xl border p-5 shadow-sm"
             >
               <div className="flex items-start gap-4">
                 <Skeleton className="h-10 w-10 shrink-0 rounded-full" />

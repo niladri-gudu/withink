@@ -101,7 +101,7 @@ export function RecentReflectionsList({
                   <h4 className="text-foreground truncate font-serif text-sm font-bold">
                     {entry.title || "Untitled Entry"}
                   </h4>
-                  <span className="text-muted-foreground/60 font-serif text-[10px] tracking-[0.12em] uppercase">
+                  <span className="text-muted-foreground/60 font-serif text-[11px] tracking-[0.16em] uppercase">
                     {formatDisplayDate(entry.date)}
                   </span>
                 </div>
@@ -116,7 +116,7 @@ export function RecentReflectionsList({
           asChild
           variant="ghost"
           size="sm"
-          className="text-muted-foreground hover:text-foreground cursor-pointer gap-1.5 p-0 font-serif text-xs tracking-[0.15em] uppercase hover:bg-transparent"
+          className="text-muted-foreground hover:text-foreground cursor-pointer gap-1.5 p-0 font-serif text-xs tracking-[0.16em] uppercase hover:bg-transparent"
         >
           <Link href={ROUTES.APP.ENTRIES}>
             View Archive

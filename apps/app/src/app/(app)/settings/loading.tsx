@@ -8,7 +8,7 @@ import {
 /** One settings section card: icon tile + serif title + description, then body rows. */
 function SectionSkeleton({ rows = 3 }: { rows?: number }) {
   return (
-    <div className="border-border/60 bg-card/40 relative overflow-hidden rounded-2xl border p-6 shadow-sm backdrop-blur-md sm:p-8">
+    <div className="border-border/60 bg-card/60 relative overflow-hidden rounded-2xl border p-6 shadow-sm sm:p-8">
       <div className="flex items-start gap-4">
         <Skeleton className="h-10 w-10 shrink-0 rounded-xl" />
         <div className="space-y-2 pt-1">

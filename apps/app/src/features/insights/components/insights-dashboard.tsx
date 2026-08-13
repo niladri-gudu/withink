@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { Card } from "@withink/ui/card";
-import { cn } from "@withink/utils";
 import { BarChart3, Flame, Loader2, Sparkles, Type } from "lucide-react";
 
 import { getInsightsAction } from "../actions/insights-actions";
@@ -95,21 +94,16 @@ export function InsightsDashboard({
         <Card className="border-border/60 flex flex-col justify-between p-6 transition-all duration-300 hover:shadow-sm">
           <div>
             <div className="mb-4 flex h-9 w-9 items-center justify-center rounded-xl border border-accent/20 bg-accent/10 text-accent">
-              <Flame
-                className={cn(
-                  "h-5 w-5",
-                  streaks.currentStreak > 0 && "animate-pulse",
-                )}
-              />
+              <Flame className="h-5 w-5" />
             </div>
-            <p className="text-muted-foreground/60 font-serif text-[10px] font-bold tracking-[0.15em] uppercase">
+            <p className="text-muted-foreground/60 font-serif text-[11px] font-bold tracking-[0.16em] uppercase">
               Current Streak
             </p>
-            <p className="text-foreground mt-1 text-3xl font-bold tracking-tighter">
+            <p className="text-foreground mt-1 text-3xl font-bold tracking-tight">
               {streaks.currentStreak}
             </p>
           </div>
-          <p className="text-muted-foreground/60 mt-2 text-[10px] uppercase">
+          <p className="text-muted-foreground/60 mt-2 text-[11px] uppercase">
             days in a row
           </p>
         </Card>
@@ -120,14 +114,14 @@ export function InsightsDashboard({
             <div className="mb-4 flex h-9 w-9 items-center justify-center rounded-xl border border-accent/20 bg-accent/10 text-accent">
               <Sparkles className="h-5 w-5" />
             </div>
-            <p className="text-muted-foreground/60 font-serif text-[10px] font-bold tracking-[0.15em] uppercase">
+            <p className="text-muted-foreground/60 font-serif text-[11px] font-bold tracking-[0.16em] uppercase">
               Longest Streak
             </p>
-            <p className="text-foreground mt-1 text-3xl font-bold tracking-tighter">
+            <p className="text-foreground mt-1 text-3xl font-bold tracking-tight">
               {streaks.longestStreak}
             </p>
           </div>
-          <p className="text-muted-foreground/60 mt-2 text-[10px] uppercase">
+          <p className="text-muted-foreground/60 mt-2 text-[11px] uppercase">
             consecutive days max
           </p>
         </Card>
@@ -138,14 +132,14 @@ export function InsightsDashboard({
             <div className="mb-4 flex h-9 w-9 items-center justify-center rounded-xl border border-accent/20 bg-accent/10 text-accent">
               <Type className="h-5 w-5" />
             </div>
-            <p className="text-muted-foreground/60 font-serif text-[10px] font-bold tracking-[0.15em] uppercase">
+            <p className="text-muted-foreground/60 font-serif text-[11px] font-bold tracking-[0.16em] uppercase">
               Total Words
             </p>
-            <p className="text-foreground mt-1 text-3xl font-bold tracking-tighter">
+            <p className="text-foreground mt-1 text-3xl font-bold tracking-tight">
               {wordCountStats.total.toLocaleString()}
             </p>
           </div>
-          <p className="text-muted-foreground/60 mt-2 text-[10px] uppercase">
+          <p className="text-muted-foreground/60 mt-2 text-[11px] uppercase">
             written in total
           </p>
         </Card>
@@ -156,14 +150,14 @@ export function InsightsDashboard({
             <div className="mb-4 flex h-9 w-9 items-center justify-center rounded-xl border border-accent/20 bg-accent/10 text-accent">
               <BarChart3 className="h-5 w-5" />
             </div>
-            <p className="text-muted-foreground/60 font-serif text-[10px] font-bold tracking-[0.15em] uppercase">
+            <p className="text-muted-foreground/60 font-serif text-[11px] font-bold tracking-[0.16em] uppercase">
               Total Entries
             </p>
-            <p className="text-foreground mt-1 text-3xl font-bold tracking-tighter">
+            <p className="text-foreground mt-1 text-3xl font-bold tracking-tight">
               {heatmap.filter((d) => d.count > 0).length}
             </p>
           </div>
-          <p className="text-muted-foreground/60 mt-2 text-[10px] uppercase">
+          <p className="text-muted-foreground/60 mt-2 text-[11px] uppercase">
             saved reflections
           </p>
         </Card>

@@ -73,7 +73,7 @@ export function ActivitySummaries({
       {/* Day of Week Card */}
       <Card className="border-border/60">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-muted-foreground/60 font-serif text-xs tracking-[0.15em] uppercase">
+          <CardTitle className="text-muted-foreground/60 font-serif text-[11px] tracking-[0.16em] uppercase">
             Active Writing Day
           </CardTitle>
           <CalendarDays className="text-muted-foreground/60 h-4 w-4" />
@@ -89,7 +89,7 @@ export function ActivitySummaries({
                   <h5 className="text-foreground font-serif text-xl font-bold">
                     {mostActiveDayOfWeek.day}s
                   </h5>
-                  <p className="text-muted-foreground/60 font-serif text-[10px] tracking-[0.12em] uppercase">
+                  <p className="text-muted-foreground/60 font-serif text-[11px] tracking-[0.16em] uppercase">
                     {mostActiveDayOfWeek.count} entries written
                   </p>
                 </div>
@@ -112,7 +112,7 @@ export function ActivitySummaries({
       {/* Time of Day Card */}
       <Card className="border-border/60">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-muted-foreground/60 font-serif text-xs tracking-[0.15em] uppercase">
+          <CardTitle className="text-muted-foreground/60 font-serif text-[11px] tracking-[0.16em] uppercase">
             Typical Writing Time
           </CardTitle>
           {timeDetails ? (
@@ -134,7 +134,7 @@ export function ActivitySummaries({
                   <h5 className="text-foreground font-serif text-xl font-bold">
                     {timeDetails.title}
                   </h5>
-                  <p className="text-muted-foreground/60 font-serif text-[10px] tracking-[0.12em] uppercase">
+                  <p className="text-muted-foreground/60 font-serif text-[11px] tracking-[0.16em] uppercase">
                     {mostActiveTimeOfDay.count} entries written
                   </p>
                 </div>

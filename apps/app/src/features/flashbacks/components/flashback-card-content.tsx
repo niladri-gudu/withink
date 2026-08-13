@@ -55,12 +55,9 @@ export function DashboardFlashbackCard({
 
   if (!entry) {
     return (
-      <Card
-        className="border-border bg-card/60 border backdrop-blur-sm"
-        interactive
-      >
+      <Card className="border-border border">
         <CardHeader>
-          <span className="text-accent font-serif text-[9px] font-semibold tracking-[0.15em] uppercase">
+          <span className="text-accent font-serif text-[11px] font-semibold tracking-[0.16em] uppercase">
             {label || "Flashback"}
           </span>
           <CardTitle className="text-foreground font-serif text-lg font-semibold">
@@ -86,12 +83,9 @@ export function DashboardFlashbackCard({
     : "This entry is waiting for your next reflection.";
 
   return (
-    <Card
-      className="border-border bg-card/60 border backdrop-blur-sm"
-      interactive
-    >
+    <Card className="border-border border">
       <CardHeader>
-        <span className="text-accent font-serif text-[9px] font-semibold tracking-[0.15em] uppercase">
+        <span className="text-accent font-serif text-[11px] font-semibold tracking-[0.16em] uppercase">
           {label || "Flashback"}
         </span>
         <CardTitle className="text-foreground font-serif text-lg font-semibold">

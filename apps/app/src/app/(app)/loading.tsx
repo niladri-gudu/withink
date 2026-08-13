@@ -19,7 +19,7 @@ export default function DashboardLoading() {
       {/* Dashboard Grid */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
         {/* Today's Reflection card */}
-        <Card className="border-border/60 bg-card/40 relative flex flex-col overflow-hidden border backdrop-blur-sm md:col-span-2">
+        <Card className="border-border/60 bg-card/60 relative flex flex-col overflow-hidden border md:col-span-2">
           <CardHeader className="space-y-2">
             <Skeleton className="h-6 w-40" />
             <Skeleton className="h-4 w-64 max-w-full" />
@@ -35,7 +35,7 @@ export default function DashboardLoading() {
         </Card>
 
         {/* Quick stats/streak */}
-        <Card className="border-border/60 bg-card/40 flex flex-col justify-between border p-6 backdrop-blur-sm">
+        <Card className="border-border/60 bg-card/60 flex flex-col justify-between border p-6">
           <div className="space-y-2">
             <Skeleton className="h-6 w-32" />
             <Skeleton className="h-4 w-24" />
@@ -51,7 +51,7 @@ export default function DashboardLoading() {
       {/* Bottom sections */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         {/* Flashback */}
-        <Card className="border-border/60 bg-card/40 space-y-4 border p-6 backdrop-blur-sm">
+        <Card className="border-border/60 bg-card/60 space-y-4 border p-6">
           <div className="space-y-2">
             <Skeleton className="h-3.5 w-16" />
             <Skeleton className="h-5 w-48" />
@@ -65,7 +65,7 @@ export default function DashboardLoading() {
         </Card>
 
         {/* Recent Reflections */}
-        <Card className="border-border/60 bg-card/40 space-y-4 border p-6 backdrop-blur-sm">
+        <Card className="border-border/60 bg-card/60 space-y-4 border p-6">
           <div className="space-y-2">
             <Skeleton className="h-5 w-44" />
             <Skeleton className="h-3.5 w-36" />

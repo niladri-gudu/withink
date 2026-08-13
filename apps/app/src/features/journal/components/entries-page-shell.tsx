@@ -66,10 +66,7 @@ export function EntriesPageShell({
         accent="reflections."
         description="Browse and search your journal history"
         action={
-          <Button
-            asChild
-            className="cursor-pointer gap-2 rounded-full shadow-sm"
-          >
+          <Button asChild className="cursor-pointer gap-2">
             <Link
               href={
                 `${ROUTES.APP.ENTRY(localToday)}?today=${localToday}` as unknown as ComponentPropsWithoutRef<
@@ -98,8 +95,6 @@ export function EntriesPageShell({
         {/* Right Column: Timeline List (2/3 width) */}
         <div className="space-y-6 lg:col-span-2">
           <div className="relative">
-            {/* Visual vertical timeline line (connecting items) */}
-            <div className="bg-border/10 absolute top-6 bottom-0 left-[-20px] hidden w-[2px] lg:block" />
             <EntriesTimeline
               initialEntries={initialEntries}
               initialTotal={initialTotal}

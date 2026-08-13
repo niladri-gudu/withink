@@ -126,8 +126,8 @@ export function MoodHistoryCharts({
       {/* Mood Distribution */}
       <div className="space-y-6">
         <div>
-          <h4 className="text-muted-foreground/60 mb-2 font-serif text-sm tracking-[0.15em] uppercase">
-            Mood Distribution
+          <h4 className="text-foreground mb-2 font-serif text-lg font-semibold tracking-tight">
+            Mood distribution
           </h4>
           {average !== null ? (
             <p className="text-body-small text-muted-foreground">
@@ -186,8 +186,8 @@ export function MoodHistoryCharts({
       {/* Mood Trend (6 Months) */}
       <div className="space-y-4">
         <div>
-          <h4 className="text-muted-foreground/60 mb-2 font-serif text-sm tracking-[0.15em] uppercase">
-            6-Month Mood Trend
+          <h4 className="text-foreground mb-2 font-serif text-lg font-semibold tracking-tight">
+            Six-month mood trend
           </h4>
           <p className="text-body-small text-muted-foreground">
             Observe shifts in your long-term emotional baseline

@@ -139,11 +139,7 @@ export function EntriesCalendar({
   return (
     <div className="space-y-6">
       {/* Consistency Metrics Card */}
-      <Card
-        className="border-border bg-card/60 relative overflow-hidden border backdrop-blur-md"
-        interactive
-      >
-        <div className="from-accent/50 via-accent/25 to-accent/50 absolute top-0 right-0 left-0 h-[2px] bg-gradient-to-r" />
+      <Card className="border-border relative overflow-hidden border">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-lg">
             <Sparkles className="text-accent h-4 w-4" />
@@ -153,16 +149,11 @@ export function EntriesCalendar({
         </CardHeader>
         <CardContent className="grid grid-cols-3 gap-4 pt-2">
           <div className="bg-muted/20 border-border/10 flex flex-col items-center rounded-xl border p-3 text-center">
-            <Flame
-              className={cn(
-                "mb-1 h-6 w-6 text-accent",
-                streakData.currentStreak > 0 && "animate-pulse",
-              )}
-            />
+            <Flame className="text-accent mb-1 h-6 w-6" />
             <span className="text-foreground font-serif text-2xl font-bold">
               {streakData.currentStreak}
             </span>
-            <span className="text-muted-foreground mt-0.5 font-serif text-[10px] tracking-[0.15em] uppercase">
+            <span className="text-muted-foreground mt-0.5 font-serif text-[11px] tracking-[0.16em] uppercase">
               Streak
             </span>
           </div>
@@ -172,7 +163,7 @@ export function EntriesCalendar({
             <span className="text-foreground font-serif text-2xl font-bold">
               {streakData.totalEntries}
             </span>
-            <span className="text-muted-foreground mt-0.5 font-serif text-[10px] tracking-[0.15em] uppercase">
+            <span className="text-muted-foreground mt-0.5 font-serif text-[11px] tracking-[0.16em] uppercase">
               Logs
             </span>
           </div>
@@ -182,7 +173,7 @@ export function EntriesCalendar({
             <span className="text-foreground font-serif text-2xl font-bold">
               {streakData.averageWords}
             </span>
-            <span className="text-muted-foreground mt-0.5 font-serif text-[10px] tracking-[0.15em] uppercase">
+            <span className="text-muted-foreground mt-0.5 font-serif text-[11px] tracking-[0.16em] uppercase">
               Avg Words
             </span>
           </div>
@@ -193,10 +184,10 @@ export function EntriesCalendar({
       <span className="sr-only" aria-live="polite" aria-atomic="true">
         Showing {MONTH_NAMES[currentMonth]} {currentYear}
       </span>
-      <Card className="border-border bg-card/60 border backdrop-blur-md">
+      <Card className="border-border border">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <div className="flex flex-col">
-            <span className="text-muted-foreground/60 font-serif text-[11px] tracking-[0.2em] uppercase">
+            <span className="text-muted-foreground/60 font-serif text-[11px] tracking-[0.16em] uppercase">
               Sanctuary Calendar
             </span>
             <CardTitle className="text-foreground font-serif text-xl font-semibold">
@@ -229,7 +220,7 @@ export function EntriesCalendar({
             {WEEKDAY_NAMES.map((day) => (
               <span
                 key={day}
-                className="text-muted-foreground/50 py-1 font-serif text-[10px] font-semibold tracking-[0.15em] uppercase"
+                className="text-muted-foreground/50 py-1 font-serif text-[11px] font-semibold tracking-[0.16em] uppercase"
               >
                 {day}
               </span>

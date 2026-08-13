@@ -53,9 +53,9 @@ export function TodayReflectionCard({
 
   if (!entry) {
     return (
-      <Card className="border-border bg-card/60 relative flex flex-col overflow-hidden border backdrop-blur-sm md:col-span-2">
+      <Card className="border-border relative flex flex-col overflow-hidden border md:col-span-2">
         <CardHeader>
-          <span className="text-accent font-serif text-[11px] font-semibold tracking-[0.2em] uppercase">
+          <span className="text-accent font-serif text-[11px] font-semibold tracking-[0.16em] uppercase">
             Today&apos;s Reflection
           </span>
           <CardTitle className="text-foreground font-serif text-2xl font-bold">
@@ -71,10 +71,7 @@ export function TodayReflectionCard({
             day is going. Reflections keep your mind clear and your memories
             alive.
           </p>
-          <Button
-            asChild
-            className="w-fit cursor-pointer rounded-full shadow-sm"
-          >
+          <Button asChild className="w-fit cursor-pointer">
             <Link
               href={
                 `${ROUTES.APP.ENTRY(today)}?today=${today}` as unknown as ComponentPropsWithoutRef<
@@ -94,12 +91,12 @@ export function TodayReflectionCard({
     decryptedTitle === null || decryptedText === null || decryptedHtml === null;
 
   return (
-    <Card className="border-border bg-card/60 relative flex flex-col overflow-hidden border backdrop-blur-sm md:col-span-2">
+    <Card className="border-border relative flex flex-col overflow-hidden border md:col-span-2">
       <div className="animate-in fade-in zoom-in absolute top-0 right-0 p-4 duration-300">
         <CheckCircle2 className="text-accent h-6 w-6" />
       </div>
       <CardHeader className="border-border/10 border-b pb-4">
-        <span className="text-accent mb-1 font-serif text-[11px] font-semibold tracking-[0.2em] uppercase">
+        <span className="text-accent mb-1 font-serif text-[11px] font-semibold tracking-[0.16em] uppercase">
           Today&apos;s Reflection
         </span>
         <CardTitle className="text-foreground font-serif text-2xl font-bold">
@@ -137,10 +134,7 @@ export function TodayReflectionCard({
               )}
             </div>
             <div className="border-border/10 flex justify-end border-t pt-4">
-              <Button
-                asChild
-                className="cursor-pointer rounded-full px-6 shadow-sm"
-              >
+              <Button asChild className="cursor-pointer px-6">
                 <Link
                   href={
                     `${ROUTES.APP.ENTRY(today)}?today=${today}` as unknown as ComponentPropsWithoutRef<

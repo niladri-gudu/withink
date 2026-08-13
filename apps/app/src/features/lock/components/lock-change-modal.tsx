@@ -294,14 +294,13 @@ export function LockChangeModal({ onClose, onSuccess }: LockChangeModalProps) {
                     type="button"
                     variant="ghost"
                     onClick={onClose}
-                    className="rounded-full"
                   >
                     Cancel
                   </Button>
                   <Button
                     type="submit"
                     disabled={newPin.length !== 4}
-                    className="rounded-full px-6"
+                    className="px-6"
                   >
                     Continue
                   </Button>
@@ -380,7 +379,6 @@ export function LockChangeModal({ onClose, onSuccess }: LockChangeModalProps) {
                       setConfirmNewPin("");
                       setStep("new-pin");
                     }}
-                    className="rounded-full"
                     disabled={isSubmitting}
                   >
                     Back
@@ -388,7 +386,7 @@ export function LockChangeModal({ onClose, onSuccess }: LockChangeModalProps) {
                   <Button
                     type="submit"
                     disabled={confirmNewPin.length !== 4 || isSubmitting}
-                    className="w-full gap-2 rounded-full"
+                    className="w-full gap-2"
                   >
                     {isSubmitting ? (
                       <Loader2 className="h-4 w-4 animate-spin" />

@@ -30,8 +30,8 @@ export function InsightsCharts({ data }: { data: InsightsPayload }) {
       {/* Heatmap Card */}
       <section className="space-y-4">
         <div className="space-y-1">
-          <h3 className="text-foreground font-serif text-lg font-semibold tracking-tight uppercase">
-            Reflection Frequency
+          <h3 className="text-foreground font-serif text-xl font-semibold tracking-tight">
+            Reflection frequency
           </h3>
           <p className="text-body-small text-muted-foreground">
             A visual summary of your consistency over the past 365 days
@@ -44,8 +44,8 @@ export function InsightsCharts({ data }: { data: InsightsPayload }) {
 
       {/* Mood distributions & Trends */}
       <section className="space-y-4">
-        <h3 className="text-foreground font-serif text-lg font-semibold tracking-tight uppercase">
-          Emotional Patterns & Trends
+        <h3 className="text-foreground font-serif text-xl font-semibold tracking-tight">
+          Emotional patterns &amp; trends
         </h3>
         <Card className="border-border/60 p-6 md:p-8">
           <MoodHistoryCharts

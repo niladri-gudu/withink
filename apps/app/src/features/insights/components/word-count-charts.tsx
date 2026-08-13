@@ -72,8 +72,8 @@ export function WordCountCharts({
     <div className="space-y-6">
       <div className="flex items-end justify-between">
         <div className="space-y-1">
-          <h4 className="text-muted-foreground/60 font-serif text-sm tracking-wider uppercase">
-            Writing Volume
+          <h4 className="text-foreground font-serif text-lg font-semibold tracking-tight">
+            Writing volume
           </h4>
           <p className="text-body-small text-muted-foreground">
             Total of{" "}

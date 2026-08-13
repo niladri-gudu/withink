@@ -79,7 +79,7 @@ export function LoginForm() {
   };
 
   return (
-    <div className="bg-card border-border/80 animate-in fade-in mx-auto w-full max-w-md space-y-6 rounded-xl border p-6 shadow-md duration-300 select-none sm:space-y-8 sm:p-8">
+    <div className="bg-card border-border/80 animate-in fade-in mx-auto w-full max-w-md space-y-6 rounded-xl border p-6 shadow-sm duration-300 select-none sm:space-y-8 sm:p-8">
       <div className="space-y-1.5 text-center sm:text-left">
         <h1 className="text-h2 text-foreground font-serif font-bold">
           Welcome back.
@@ -168,7 +168,7 @@ export function LoginForm() {
         <div className="space-y-3 pt-2">
           <Button
             type="submit"
-            className="relative h-11 w-full cursor-pointer overflow-hidden rounded-lg font-serif text-sm font-medium uppercase tracking-[0.15em] transition-transform hover:scale-[1.01] active:scale-[0.99]"
+            className="relative h-11 w-full cursor-pointer overflow-hidden font-serif text-sm font-medium uppercase tracking-[0.15em] transition-transform hover:scale-[1.01] active:scale-[0.99]"
             disabled={isLoading}
           >
             <div className="flex w-full items-center justify-center gap-2 transition-all duration-200">
@@ -191,7 +191,7 @@ export function LoginForm() {
           <Button
             type="button"
             variant="outline"
-            className="text-muted-foreground hover:bg-muted/40 hover:text-foreground h-11 w-full cursor-pointer rounded-lg font-serif text-xs uppercase transition-transform hover:scale-[1.01] active:scale-[0.99]"
+            className="text-muted-foreground hover:bg-muted/40 hover:text-foreground h-11 w-full cursor-pointer font-serif text-xs uppercase transition-transform hover:scale-[1.01] active:scale-[0.99]"
             onClick={handleGoogleSignIn}
           >
             <GoogleIcon />

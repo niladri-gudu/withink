@@ -21,7 +21,7 @@ interface DashboardLowerGridProps {
 export function DashboardLowerGridSkeleton() {
   return (
     <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-      <Card className="border-border/60 bg-card/40 space-y-4 border p-6 backdrop-blur-sm">
+      <Card className="border-border/60 space-y-4 border p-6">
         <div className="space-y-2">
           <Skeleton className="h-3.5 w-16" />
           <Skeleton className="h-5 w-48" />
@@ -34,7 +34,7 @@ export function DashboardLowerGridSkeleton() {
         </div>
       </Card>
 
-      <Card className="border-border/60 bg-card/40 space-y-4 border p-6 backdrop-blur-sm">
+      <Card className="border-border/60 space-y-4 border p-6">
         <div className="space-y-2">
           <Skeleton className="h-5 w-44" />
           <Skeleton className="h-3.5 w-36" />
@@ -83,7 +83,7 @@ export default async function DashboardLowerGrid({
         today={today}
       />
 
-      <Card className="border-border bg-card/60 border backdrop-blur-sm" interactive>
+      <Card className="border-border border">
         <CardHeader>
           <CardTitle className="text-foreground font-serif text-lg font-semibold">
             Recent Reflections

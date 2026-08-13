@@ -366,7 +366,7 @@ export function JournalEditorShell({
         style={{ bottom: toolbarBottom }}
       >
         {editorInstance && (
-          <div className="border-border/60 bg-card/95 pointer-events-auto flex w-full max-w-full items-center overflow-hidden rounded-2xl border p-1.5 shadow-lg backdrop-blur-md sm:w-auto">
+          <div className="border-border/60 bg-card/95 pointer-events-auto flex w-full max-w-full items-center overflow-hidden rounded-xl border p-1.5 shadow-lg backdrop-blur-md sm:w-auto">
             <EditorToolbar
               editor={editorInstance}
               isFocusMode={isFocusMode}

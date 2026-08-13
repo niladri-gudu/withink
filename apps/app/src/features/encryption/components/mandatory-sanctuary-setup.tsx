@@ -377,7 +377,7 @@ export function MandatorySanctuarySetup({
               !warningChecked ||
               (needsPin && (pin.length !== 4 || pin !== pinConfirm))
             }
-            className="mt-4 h-12 w-full gap-2 rounded-full font-semibold shadow-md transition-all hover:shadow-lg"
+            className="mt-4 h-12 w-full gap-2 font-semibold shadow-md transition-all hover:shadow-lg"
           >
             {isMigrating ? (
               <>
