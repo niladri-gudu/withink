@@ -1,9 +1,15 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 
 import { Button } from "@withink/ui/button";
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "Terms of Service",
+  description:
+    "The terms that govern your use of withink., including data ownership, portability, and acceptable use.",
+  alternates: {
+    canonical: "/terms",
+  },
 };
 
 export default function TermsPage() {

@@ -7,6 +7,9 @@ export const metadata: Metadata = {
   title: "About Us - withink.",
   description:
     "Learn about the mission, values, and story behind withink., your digital diary.",
+  alternates: {
+    canonical: "/about",
+  },
 };
 
 export default function AboutPage() {

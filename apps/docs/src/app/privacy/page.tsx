@@ -1,9 +1,15 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 
 import { Button } from "@withink/ui/button";
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "Privacy Philosophy",
+  description:
+    "How withink. protects your journal: AES-256-GCM encryption at rest, no ad tracking, and no third-party sharing of your data.",
+  alternates: {
+    canonical: "/privacy",
+  },
 };
 
 export default function PrivacyPage() {

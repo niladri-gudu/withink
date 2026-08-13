@@ -6,7 +6,7 @@ export const siteConfig = {
     process.env.IS_PROD === "true"
       ? "https://app.withink.me"
       : "http://localhost:3000",
-  ogImage: "https://withink.me/og.png",
+  ogImage: "https://withink.me/og-image.png",
   links: {
     twitter: "https://twitter.com/withinkme",
     github: "https://github.com/withinkme",

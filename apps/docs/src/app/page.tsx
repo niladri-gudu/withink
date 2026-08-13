@@ -2,12 +2,19 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 
+import { JsonLd } from "@/components/json-ld";
 import { LandingPageContent } from "@/components/landing-page-content";
+
+const SITE_URL =
+  process.env.IS_PROD === "true" ? "https://withink.me" : "http://localhost:3001";
 
 export const metadata: Metadata = {
   title: "withink. - your private journal",
   description:
     "A private, encrypted journal. One entry a day, saved offline and exported anytime as plain text - no trackers, no noise.",
+  alternates: {
+    canonical: "/",
+  },
 };
 
 async function LandingPageContentWithSession({ APP_URL }: { APP_URL: string }) {
@@ -26,10 +33,33 @@ export default async function LandingPage() {
     (isProd ? "https://app.withink.me" : "http://localhost:3000");
 
   return (
-    <Suspense
-      fallback={<LandingPageContent APP_URL={APP_URL} hasSession={false} />}
-    >
-      <LandingPageContentWithSession APP_URL={APP_URL} />
-    </Suspense>
+    <>
+      <JsonLd
+        data={[
+          {
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            name: "withink.",
+            url: SITE_URL,
+            description: metadata.description,
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "SoftwareApplication",
+            name: "withink.",
+            applicationCategory: "LifestyleApplication",
+            operatingSystem: "Web",
+            url: SITE_URL,
+            description: metadata.description,
+            offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+          },
+        ]}
+      />
+      <Suspense
+        fallback={<LandingPageContent APP_URL={APP_URL} hasSession={false} />}
+      >
+        <LandingPageContentWithSession APP_URL={APP_URL} />
+      </Suspense>
+    </>
   );
 }
