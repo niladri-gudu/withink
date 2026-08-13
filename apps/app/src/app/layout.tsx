@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Alegreya, Caveat } from "next/font/google";
 import { cn } from "@withink/utils";
 
 import { AppProviders } from "@/providers/app-providers";
@@ -7,13 +7,14 @@ import { WebVitals } from "@/components/web-vitals";
 
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const alegreya = Alegreya({
+  variable: "--font-alegreya",
   subsets: ["latin"],
+  style: ["normal", "italic"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const caveat = Caveat({
+  variable: "--font-caveat",
   subsets: ["latin"],
 });
 
@@ -113,22 +114,12 @@ export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html
       lang="en"
-      className={cn(geistSans.variable, geistMono.variable, "h-full")}
+      className={cn(alegreya.variable, caveat.variable, "h-full")}
       suppressHydrationWarning
     >
       <head>
         <link rel="manifest" href="/manifest.json" />
-        <meta name="theme-color" content="#FAF7F2" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link
-          rel="preconnect"
-          href="https://fonts.gstatic.com"
-          crossOrigin="anonymous"
-        />
-        <link
-          href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&family=Outfit:wght@100..900&display=swap"
-          rel="stylesheet"
-        />
+        <meta name="theme-color" content="#EADFC7" />
         <script
           dangerouslySetInnerHTML={{
             __html: `
@@ -163,6 +154,18 @@ export default function RootLayout({ children }: RootLayoutProps) {
         />
       </head>
       <body className="bg-background text-foreground selection:bg-accent selection:text-accent-foreground h-full antialiased">
+        <div
+          aria-hidden="true"
+          dangerouslySetInnerHTML={{
+            __html: `<!-- withink app world · The Field Ledger, kept as a diary
+THESIS: The app is the inside of the notebook the docs invite you into — a private field ledger you write in daily, one page at a time. Calm over productivity, marginalia instead of dashboards.
+OWN-WORLD: manila kraft desk, ledger-paper pages, iron-gall sepia ink, one old-paper gold accent (oklch 0.70 0.10 75); rounded 0.75rem corners, hairline borders over soft shadows; two type voices only — Alegreya for everything printed, Caveat for field-note annotations. Margin Rail navigation: the sidebar is the book's margin.
+STORY: A writer opens their diary, writes today's page, and trusts it is private, durable, and theirs. The interface is a calm desk, not a productivity suite.
+FIRST VIEWPORT: The open page — today's greeting set in serif with an italic accent, today's date as a margin note, and the writing surface leading; the section index sits in the left margin.
+FORM: Margin Rail structural candidate (roll 4, seed 8ae8057f) inside the inherited Field Ledger world.
+FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md -->`,
+          }}
+        />
         <WebVitals />
         <AppProviders>{children}</AppProviders>
       </body>

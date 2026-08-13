@@ -84,8 +84,8 @@ export function LoginForm() {
         <h1 className="text-h2 text-foreground font-serif font-bold">
           Welcome back.
         </h1>
-        <p className="text-caption font-mono tracking-[0.16em] uppercase">
-          Verification required • Accessing the archives
+        <p className="text-caption font-serif tracking-[0.16em] uppercase">
+          Open your private notebook
         </p>
       </div>
 
@@ -94,16 +94,15 @@ export function LoginForm() {
           <div className="flex items-end justify-between">
             <label
               htmlFor="email"
-              className="text-helper text-muted-foreground/80 ml-1 font-mono tracking-wider"
+              className="text-helper text-muted-foreground/80 ml-1 font-serif tracking-wider"
             >
-              Identity Email
+              Email
             </label>
             {errors.email?.message && (
               <span
                 id="email-error"
-                className="text-destructive animate-in fade-in font-mono text-[10px] tracking-tight uppercase"
+                className="text-destructive animate-in fade-in font-serif text-[10px] tracking-tight uppercase"
               >
-                {"// "}
                 {errors.email.message}
               </span>
             )}
@@ -127,16 +126,15 @@ export function LoginForm() {
           <div className="flex items-end justify-between">
             <label
               htmlFor="password"
-              className="text-helper text-muted-foreground/80 ml-1 font-mono tracking-wider"
+              className="text-helper text-muted-foreground/80 ml-1 font-serif tracking-wider"
             >
               Secret Key
             </label>
             {errors.password?.message && (
               <span
                 id="password-error"
-                className="text-destructive animate-in fade-in font-mono text-[10px] tracking-tight uppercase"
+                className="text-destructive animate-in fade-in font-serif text-[10px] tracking-tight uppercase"
               >
-                {"// "}
                 {errors.password.message}
               </span>
             )}
@@ -160,7 +158,7 @@ export function LoginForm() {
               onClick={() => setShowPassword(!showPassword)}
               aria-label={showPassword ? "Hide secret key" : "Show secret key"}
               aria-pressed={showPassword}
-              className="text-muted-foreground/60 hover:text-foreground focus-visible:ring-ring absolute top-1/2 right-3 -translate-y-1/2 cursor-pointer p-1 font-mono text-xs tracking-wider uppercase transition-colors focus-visible:rounded focus-visible:ring-2 focus-visible:outline-none"
+              className="text-muted-foreground/60 hover:text-foreground focus-visible:ring-ring absolute top-1/2 right-3 -translate-y-1/2 cursor-pointer p-1 font-serif text-xs tracking-wider uppercase transition-colors focus-visible:rounded focus-visible:ring-2 focus-visible:outline-none"
             >
               {showPassword ? "Hide" : "Show"}
             </button>
@@ -170,14 +168,14 @@ export function LoginForm() {
         <div className="space-y-3 pt-2">
           <Button
             type="submit"
-            className="relative h-11 w-full cursor-pointer overflow-hidden rounded-lg text-base font-medium transition-transform hover:scale-[1.01] active:scale-[0.99]"
+            className="relative h-11 w-full cursor-pointer overflow-hidden rounded-lg font-serif text-sm font-medium uppercase tracking-[0.15em] transition-transform hover:scale-[1.01] active:scale-[0.99]"
             disabled={isLoading}
           >
             <div className="flex w-full items-center justify-center gap-2 transition-all duration-200">
               {isLoading && (
                 <div className="bg-primary absolute inset-0 flex items-center justify-center gap-2">
                   <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
-                  <span>Accessing...</span>
+                  <span>Opening…</span>
                 </div>
               )}
               <div
@@ -185,7 +183,7 @@ export function LoginForm() {
                   isLoading ? "opacity-0" : "opacity-100"
                 }`}
               >
-                <span>Access Journal</span>
+                <span>Open Your Journal</span>
               </div>
             </div>
           </Button>
@@ -193,7 +191,7 @@ export function LoginForm() {
           <Button
             type="button"
             variant="outline"
-            className="text-muted-foreground hover:bg-muted/40 hover:text-foreground h-11 w-full cursor-pointer rounded-lg font-mono text-[10px] tracking-widest uppercase transition-transform hover:scale-[1.01] active:scale-[0.99]"
+            className="text-muted-foreground hover:bg-muted/40 hover:text-foreground h-11 w-full cursor-pointer rounded-lg font-serif text-xs uppercase transition-transform hover:scale-[1.01] active:scale-[0.99]"
             onClick={handleGoogleSignIn}
           >
             <GoogleIcon />
@@ -205,7 +203,7 @@ export function LoginForm() {
       <div className="flex flex-col items-center gap-3 pt-2">
         <Link
           href={ROUTES.AUTH.FORGOT_PASSWORD}
-          className="text-muted-foreground/60 hover:text-foreground font-mono text-xs tracking-widest uppercase italic transition-colors"
+          className="text-muted-foreground/60 hover:text-foreground font-serif text-xs tracking-widest uppercase italic transition-colors"
         >
           Forgot Password?
         </Link>

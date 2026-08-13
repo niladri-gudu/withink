@@ -397,7 +397,7 @@ export function MediaLightbox({
             {/* Info details footer */}
             <div className="bg-card border-border flex flex-col justify-between gap-5 border-t p-6 select-none md:flex-row md:items-center">
               <div className="min-w-0 space-y-1">
-                <p className="text-muted-foreground max-w-sm truncate font-mono text-xs sm:max-w-md">
+                <p className="text-muted-foreground max-w-sm truncate font-serif text-xs sm:max-w-md">
                   {filename}
                 </p>
                 <div className="text-muted-foreground flex items-center gap-2.5 text-xs">
@@ -443,7 +443,7 @@ export function MediaLightbox({
                 >
                   {copiedKey === file.url ? (
                     <>
-                      <Check className="text-success h-3.5 w-3.5" />
+                      <Check className="text-accent h-3.5 w-3.5" />
                       Copied
                     </>
                   ) : (
@@ -458,8 +458,7 @@ export function MediaLightbox({
                   <div className="bg-destructive/10 border-destructive/20 animate-in slide-in-from-right-2 flex items-center gap-1 rounded-xl border p-1 duration-200">
                     <span className="text-destructive shrink-0 px-2 text-[10px] font-semibold">
                       Delete from entries?
-                    </span>
-                    <Button
+                    </span>                    <Button
                       variant="destructive"
                       size="sm"
                       onClick={handleDelete}

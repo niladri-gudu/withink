@@ -117,7 +117,7 @@ function SettingsSection({
             "mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border",
             tone === "danger"
               ? "border-destructive/20 bg-destructive/10 text-destructive"
-              : "border-border bg-secondary/60 text-muted-foreground",
+              : "border-accent/25 bg-accent/10 text-accent",
           )}
         >
           <Icon className="h-5 w-5" />
@@ -790,19 +790,19 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
   const themeOptions = [
     {
       id: "light",
-      name: "Sand",
-      desc: "Warm daylight paper",
+      name: "Desk",
+      desc: "Manila paper by day",
       icon: Sun,
-      swatch: "bg-[#FAF7F2]",
-      ink: "bg-[#2C1A0E]",
+      swatch: "bg-[#EADFC7]",
+      ink: "bg-[#3A2D1D]",
     },
     {
       id: "dark",
-      name: "Moon",
-      desc: "Low-strain night reading",
+      name: "Dusk",
+      desc: "Low-strain umber by night",
       icon: Moon,
-      swatch: "bg-[#0B0B0C]",
-      ink: "bg-[#F4F4F5]",
+      swatch: "bg-[#33291C]",
+      ink: "bg-[#EADFC7]",
     },
   ] as const;
 
@@ -1664,7 +1664,7 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
                 </div>
               )}
 
-              <div className="border-warning/20 bg-warning/5 mt-2 flex items-start gap-2.5 rounded-xl border p-4">
+              <div className="border-accent/25 bg-accent/5 mt-2 flex items-start gap-2.5 rounded-xl border p-4">
                 <input
                   type="checkbox"
                   id="zk-warning"

@@ -181,9 +181,9 @@ export function LockScreen({ onUnlockSuccess }: LockScreenProps) {
               {/* Logo / Header */}
               <div className="mb-6 flex flex-col items-center">
                 <span className="text-foreground mb-2 font-serif text-3xl font-bold tracking-tight">
-                  withink.
+                  withink<span className="text-accent">.</span>
                 </span>
-                <div className="text-muted-foreground bg-secondary/80 border-border flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs">
+                <div className="text-muted-foreground bg-secondary/80 border-border flex items-center gap-1.5 rounded-full border px-3 py-1 font-serif text-xs">
                   <Lock className="text-accent h-3.5 w-3.5" />
                   <span>Sanctuary Lock</span>
                 </div>
@@ -198,7 +198,7 @@ export function LockScreen({ onUnlockSuccess }: LockScreenProps) {
                   className="mb-8 flex h-16 flex-col items-center justify-center gap-4"
                 >
                   <Loader2 className="text-accent h-6 w-6 animate-spin" />
-                  <span className="text-muted-foreground font-mono text-xs tracking-wider uppercase">
+                  <span className="text-muted-foreground font-serif text-xs tracking-wider uppercase">
                     Decrypting your sanctuary…
                   </span>
                 </motion.div>

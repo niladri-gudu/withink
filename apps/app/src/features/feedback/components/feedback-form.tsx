@@ -176,7 +176,7 @@ export function FeedbackForm() {
         className="border-border bg-card rounded-xl border p-8 text-center shadow-sm sm:p-12"
       >
         <div className="bg-accent/15 text-accent-foreground mx-auto flex h-14 w-14 items-center justify-center rounded-full">
-          <Check className="h-7 w-7" />
+          <Check className="text-accent h-7 w-7" />
         </div>
         <h2 className="text-h3 text-foreground mt-6">Thank you.</h2>
         <p className="text-body-small text-muted-foreground mx-auto mt-2 max-w-sm">

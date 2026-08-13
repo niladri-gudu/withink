@@ -10,7 +10,7 @@ export default function EntriesLoading() {
   return (
     <PageLoadingShell>
       <PageLoadingHeader
-        eyebrow="Archives Index • History"
+        eyebrow="the archive, kept in order"
         title="All"
         accent="reflections."
         description="Browse and search your journal history"

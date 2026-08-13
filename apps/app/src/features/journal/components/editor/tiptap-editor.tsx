@@ -50,7 +50,7 @@ export default function TiptapEditor({
         openOnClick: false,
         HTMLAttributes: {
           rel: "noopener noreferrer",
-          class: "text-primary underline cursor-pointer",
+          class: "text-accent underline cursor-pointer",
         },
       }),
       Placeholder.configure({

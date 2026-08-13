@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 
 import { ROUTES } from "@/constants/routes";
+import { PageHeader } from "@/features/app-shell/components/page-header";
 import { safeDecryptText } from "@/lib/crypto-client";
 import { formatDisplayDate } from "@/lib/utils/date";
 import { useEncryption } from "@/providers/encryption-provider";
@@ -117,32 +118,24 @@ export function FlashbackView({
   if (!entry) {
     return (
       <div className="animate-in fade-in mx-auto w-full max-w-5xl flex-1 space-y-6 p-6 duration-300 md:p-10">
-        <header className="flex items-center justify-between">
-          <div className="space-y-1">
-            <span className="text-muted-foreground/60 block font-mono text-[10px] tracking-[0.25em] uppercase">
-              Memory Resurfacing • Flashbacks
-            </span>
-            <h1 className="text-foreground font-serif text-3xl leading-none font-bold tracking-tight sm:text-4xl">
-              Past{" "}
-              <span className="text-primary mt-1 block pl-1 text-4xl font-light italic sm:mt-0 sm:inline sm:text-5xl">
-                flashbacks.
-              </span>
-            </h1>
-            <p className="text-body-small text-muted-foreground mt-1">
-              Reconnect with your past reflections
-            </p>
-          </div>
-          <Button
-            asChild
-            variant="ghost"
-            className="cursor-pointer gap-1.5 rounded-full font-mono text-xs tracking-wider uppercase"
-          >
-            <Link href={ROUTES.APP.DASHBOARD}>
-              <ArrowLeft className="h-3.5 w-3.5" />
-              <span>Dashboard</span>
-            </Link>
-          </Button>
-        </header>
+        <PageHeader
+          note="memories find their way back"
+          title="Past"
+          accent="flashbacks."
+          description="Reconnect with your past reflections"
+          action={
+            <Button
+              asChild
+              variant="ghost"
+              className="cursor-pointer gap-1.5 rounded-full font-serif text-xs tracking-[0.15em] uppercase"
+            >
+              <Link href={ROUTES.APP.DASHBOARD}>
+                <ArrowLeft className="h-3.5 w-3.5" />
+                <span>Dashboard</span>
+              </Link>
+            </Button>
+          }
+        />
 
         <Card className="border-border bg-card/60 border backdrop-blur-sm">
           <CardContent className="flex flex-col items-center justify-center space-y-6 py-20 text-center">
@@ -150,7 +143,7 @@ export function FlashbackView({
               <MailOpen className="h-8 w-8" />
             </div>
             <div className="max-w-md space-y-2">
-              <span className="text-primary/60 block font-mono text-[10px] font-bold tracking-[0.2em] uppercase">
+              <span className="text-accent/70 block font-serif text-[10px] font-bold tracking-[0.2em] uppercase">
                 Flashback
               </span>
               <h2 className="text-foreground font-serif text-2xl font-bold tracking-tight">
@@ -191,53 +184,43 @@ export function FlashbackView({
   return (
     <div className="animate-in fade-in mx-auto w-full max-w-5xl flex-grow space-y-8 p-6 duration-300 md:p-10">
       {/* Unified Page Header */}
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="space-y-1">
-          <span className="text-muted-foreground/60 block font-mono text-[10px] tracking-[0.25em] uppercase">
-            Memory Resurfacing • {label || "Flashback"}
-          </span>
-          <h1 className="text-foreground font-serif text-3xl leading-none font-bold tracking-tight sm:text-4xl">
-            Past{" "}
-            <span className="text-primary pl-1 text-4xl font-light italic sm:text-5xl">
-              flashbacks.
-            </span>
-          </h1>
-          <p className="text-body-small text-muted-foreground mt-1">
-            Written on{" "}
-            {formatDisplayDate(entry.date, {
-              weekday: "long",
-              month: "long",
-              day: "numeric",
-              year: "numeric",
-            })}
-          </p>
-        </div>
+      <PageHeader
+        note={label ? `this date, one year past — ${label}` : "this date, one year past"}
+        title="Past"
+        accent="flashbacks."
+        description={`Written on ${formatDisplayDate(entry.date, {
+          weekday: "long",
+          month: "long",
+          day: "numeric",
+          year: "numeric",
+        })}`}
+        action={
+          <div className="flex items-center gap-2.5">
+            <Button
+              onClick={handleRefresh}
+              disabled={isPending}
+              variant="outline"
+              className="hover:bg-muted/10 animate-in fade-in h-10 shrink-0 cursor-pointer gap-1.5 rounded-full px-4 font-serif text-xs tracking-[0.15em] uppercase duration-300"
+            >
+              <RefreshCw
+                className={cn("h-3.5 w-3.5", isPending && "animate-spin")}
+              />
+              <span>Show another</span>
+            </Button>
 
-        <div className="flex items-center gap-2.5">
-          <Button
-            onClick={handleRefresh}
-            disabled={isPending}
-            variant="outline"
-            className="hover:bg-muted/10 animate-in fade-in h-10 shrink-0 cursor-pointer gap-1.5 rounded-full px-4 font-mono text-xs tracking-wider uppercase duration-300"
-          >
-            <RefreshCw
-              className={cn("h-3.5 w-3.5", isPending && "animate-spin")}
-            />
-            <span>Show another</span>
-          </Button>
-
-          <Button
-            asChild
-            variant="ghost"
-            className="hover:bg-muted/10 h-10 shrink-0 cursor-pointer gap-1.5 rounded-full px-4 font-mono text-xs tracking-wider uppercase"
-          >
-            <Link href={ROUTES.APP.DASHBOARD}>
-              <ArrowLeft className="h-3.5 w-3.5" />
-              <span>Back to Home</span>
-            </Link>
-          </Button>
-        </div>
-      </header>
+            <Button
+              asChild
+              variant="ghost"
+              className="hover:bg-muted/10 h-10 shrink-0 cursor-pointer gap-1.5 rounded-full px-4 font-serif text-xs tracking-[0.15em] uppercase"
+            >
+              <Link href={ROUTES.APP.DASHBOARD}>
+                <ArrowLeft className="h-3.5 w-3.5" />
+                <span>Back to Home</span>
+              </Link>
+            </Button>
+          </div>
+        }
+      />
 
       <Card
         aria-busy={isPending}
@@ -249,12 +232,12 @@ export function FlashbackView({
       >
         <CardHeader className="border-border/10 flex flex-row items-center justify-between gap-4 border-b pb-4">
           <div className="flex items-center gap-2">
-            <span className="text-muted-foreground/60 font-mono text-[10px] tracking-wider uppercase">
+            <span className="text-muted-foreground/60 font-serif text-[11px] tracking-[0.15em] uppercase">
               Mood
             </span>
             <div
               className={cn(
-                "flex items-center gap-1 rounded-full border px-3 py-1 font-sans text-xs font-bold",
+                "flex items-center gap-1 rounded-full border px-3 py-1 font-serif text-xs font-bold",
                 moodColorClass,
               )}
             >
@@ -262,7 +245,7 @@ export function FlashbackView({
               {moodText}
             </div>
           </div>
-          <div className="text-muted-foreground/70 flex items-center gap-1.5 font-mono text-xs font-semibold">
+          <div className="text-muted-foreground/70 flex items-center gap-1.5 font-serif text-xs font-semibold">
             <Type className="h-3.5 w-3.5" />
             <span>{entry.wordCount} words</span>
           </div>
@@ -292,7 +275,7 @@ export function FlashbackView({
         </CardContent>
       </Card>
 
-      <p className="text-muted-foreground/60 py-4 text-center font-mono text-[10px]">
+      <p className="text-muted-foreground/60 py-4 text-center font-hand text-xl">
         Withink resurfaces one memory at a time so reflection stays gentle.
       </p>
     </div>

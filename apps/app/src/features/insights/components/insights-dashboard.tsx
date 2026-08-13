@@ -66,20 +66,20 @@ export function InsightsDashboard({
   return (
     <div className="relative mx-auto max-w-5xl flex-1 space-y-10 p-6 md:p-10">
       {isLoading && (
-        <div className="text-muted-foreground/60 absolute top-6 right-10 flex items-center gap-2 font-mono text-xs uppercase">
-          <Loader2 className="text-primary h-3 w-3 animate-spin" />
+        <div className="text-muted-foreground/60 absolute top-6 right-10 flex items-center gap-2 font-serif text-xs uppercase">
+          <Loader2 className="text-accent h-3 w-3 animate-spin" />
           <span>Adjusting timezone…</span>
         </div>
       )}
 
       {/* Header */}
-      <header className="space-y-1">
-        <span className="text-muted-foreground/60 block font-mono text-[10px] tracking-[0.25em] uppercase">
-          System Analysis • Private Stats
-        </span>
+      <header className="space-y-2">
+        <p className="text-muted-foreground/70 font-hand text-lg">
+          a quiet look at your year
+        </p>
         <h1 className="text-foreground font-serif text-3xl leading-none font-bold tracking-tight sm:text-4xl">
           Private{" "}
-          <span className="text-primary mt-1 block pl-1 text-4xl font-light italic sm:mt-0 sm:inline sm:text-5xl">
+          <span className="text-accent mt-1 block pl-1 text-4xl font-normal italic sm:mt-0 sm:inline sm:text-5xl">
             insights.
           </span>
         </h1>
@@ -94,7 +94,7 @@ export function InsightsDashboard({
         {/* Current Streak */}
         <Card className="border-border/60 flex flex-col justify-between p-6 transition-all duration-300 hover:shadow-sm">
           <div>
-            <div className="mb-4 flex h-9 w-9 items-center justify-center rounded-xl border border-orange-500/20 bg-orange-500/10 text-orange-500">
+            <div className="mb-4 flex h-9 w-9 items-center justify-center rounded-xl border border-accent/20 bg-accent/10 text-accent">
               <Flame
                 className={cn(
                   "h-5 w-5",
@@ -102,7 +102,7 @@ export function InsightsDashboard({
                 )}
               />
             </div>
-            <p className="text-muted-foreground/60 font-mono text-[10px] font-bold tracking-wider uppercase">
+            <p className="text-muted-foreground/60 font-serif text-[10px] font-bold tracking-[0.15em] uppercase">
               Current Streak
             </p>
             <p className="text-foreground mt-1 text-3xl font-bold tracking-tighter">
@@ -117,10 +117,10 @@ export function InsightsDashboard({
         {/* Longest Streak */}
         <Card className="border-border/60 flex flex-col justify-between p-6 transition-all duration-300 hover:shadow-sm">
           <div>
-            <div className="mb-4 flex h-9 w-9 items-center justify-center rounded-xl border border-amber-500/20 bg-amber-500/10 text-amber-500">
+            <div className="mb-4 flex h-9 w-9 items-center justify-center rounded-xl border border-accent/20 bg-accent/10 text-accent">
               <Sparkles className="h-5 w-5" />
             </div>
-            <p className="text-muted-foreground/60 font-mono text-[10px] font-bold tracking-wider uppercase">
+            <p className="text-muted-foreground/60 font-serif text-[10px] font-bold tracking-[0.15em] uppercase">
               Longest Streak
             </p>
             <p className="text-foreground mt-1 text-3xl font-bold tracking-tighter">
@@ -135,10 +135,10 @@ export function InsightsDashboard({
         {/* Total Words */}
         <Card className="border-border/60 flex flex-col justify-between p-6 transition-all duration-300 hover:shadow-sm">
           <div>
-            <div className="mb-4 flex h-9 w-9 items-center justify-center rounded-xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-500">
+            <div className="mb-4 flex h-9 w-9 items-center justify-center rounded-xl border border-accent/20 bg-accent/10 text-accent">
               <Type className="h-5 w-5" />
             </div>
-            <p className="text-muted-foreground/60 font-mono text-[10px] font-bold tracking-wider uppercase">
+            <p className="text-muted-foreground/60 font-serif text-[10px] font-bold tracking-[0.15em] uppercase">
               Total Words
             </p>
             <p className="text-foreground mt-1 text-3xl font-bold tracking-tighter">
@@ -153,10 +153,10 @@ export function InsightsDashboard({
         {/* Entries */}
         <Card className="border-border/60 flex flex-col justify-between p-6 transition-all duration-300 hover:shadow-sm">
           <div>
-            <div className="mb-4 flex h-9 w-9 items-center justify-center rounded-xl border border-teal-500/20 bg-teal-500/10 text-teal-500">
+            <div className="mb-4 flex h-9 w-9 items-center justify-center rounded-xl border border-accent/20 bg-accent/10 text-accent">
               <BarChart3 className="h-5 w-5" />
             </div>
-            <p className="text-muted-foreground/60 font-mono text-[10px] font-bold tracking-wider uppercase">
+            <p className="text-muted-foreground/60 font-serif text-[10px] font-bold tracking-[0.15em] uppercase">
               Total Entries
             </p>
             <p className="text-foreground mt-1 text-3xl font-bold tracking-tighter">

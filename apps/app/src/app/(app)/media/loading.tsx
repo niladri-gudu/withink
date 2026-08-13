@@ -10,7 +10,7 @@ export default function MediaLoading() {
   return (
     <PageLoadingShell>
       <PageLoadingHeader
-        eyebrow="Attachment Library • Photos"
+        eyebrow="keepsakes pressed between the pages"
         title="Memory"
         accent="gallery."
         description="Revisit and manage all pictures attached to your entries"

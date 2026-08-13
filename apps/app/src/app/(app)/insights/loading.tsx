@@ -10,7 +10,7 @@ export default function InsightsLoading() {
   return (
     <PageLoadingShell>
       <PageLoadingHeader
-        eyebrow="System Analysis • Private Stats"
+        eyebrow="a quiet look at your year"
         title="Private"
         accent="insights."
         description="A calm, private analysis of your writing patterns and moods. These statistics remain entirely local to your account."

@@ -117,7 +117,7 @@ export function MonthlyOverview({ monthlyOverview }: MonthlyOverviewProps) {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h4 className="text-muted-foreground/60 mb-1 font-mono text-sm tracking-wider uppercase">
+          <h4 className="text-muted-foreground/60 mb-1 font-serif text-sm tracking-[0.15em] uppercase">
             Monthly Review
           </h4>
           <p className="text-body-small text-muted-foreground">
@@ -143,17 +143,17 @@ export function MonthlyOverview({ monthlyOverview }: MonthlyOverviewProps) {
       <div className="grid gap-4 sm:grid-cols-3">
         {/* Entries written */}
         <Card className="border-border/60 flex items-center gap-4 p-5">
-          <div className="bg-primary/10 border-primary/20 text-primary flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border">
+          <div className="bg-accent/10 border-accent/20 text-accent flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border">
             <Calendar className="h-5 w-5" />
           </div>
           <div>
-            <p className="text-muted-foreground/60 font-mono text-[10px] tracking-wider uppercase">
+            <p className="text-muted-foreground/60 font-serif text-[10px] tracking-[0.15em] uppercase">
               Reflections
             </p>
             <p className="text-foreground font-serif text-2xl font-bold">
               {stat.entryCount}
             </p>
-            <p className="text-muted-foreground mt-0.5 font-mono text-[10px]">
+            <p className="text-muted-foreground mt-0.5 font-serif text-[10px]">
               days written
             </p>
           </div>
@@ -161,17 +161,17 @@ export function MonthlyOverview({ monthlyOverview }: MonthlyOverviewProps) {
 
         {/* Words written */}
         <Card className="border-border/60 flex items-center gap-4 p-5">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-amber-500/20 bg-amber-500/10 text-amber-500">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-accent/20 bg-accent/10 text-accent">
             <Type className="h-5 w-5" />
           </div>
           <div>
-            <p className="text-muted-foreground/60 font-mono text-[10px] tracking-wider uppercase">
+            <p className="text-muted-foreground/60 font-serif text-[10px] tracking-[0.15em] uppercase">
               Words
             </p>
             <p className="text-foreground font-serif text-2xl font-bold">
               {stat.totalWords.toLocaleString()}
             </p>
-            <p className="text-muted-foreground mt-0.5 font-mono text-[10px]">
+            <p className="text-muted-foreground mt-0.5 font-serif text-[10px]">
               {stat.averageWords} avg / entry
             </p>
           </div>
@@ -179,17 +179,17 @@ export function MonthlyOverview({ monthlyOverview }: MonthlyOverviewProps) {
 
         {/* Average mood */}
         <Card className="border-border/60 flex items-center gap-4 p-5">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-500">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-accent/20 bg-accent/10 text-accent">
             <Sparkles className="h-5 w-5" />
           </div>
           <div>
-            <p className="text-muted-foreground/60 font-mono text-[10px] tracking-wider uppercase">
+            <p className="text-muted-foreground/60 font-serif text-[10px] tracking-[0.15em] uppercase">
               Average Mood
             </p>
             <p className="text-foreground font-serif text-2xl font-bold">
               {stat.averageMood !== null ? stat.averageMood : "—"}
             </p>
-            <p className="text-muted-foreground mt-0.5 font-mono text-[10px]">
+            <p className="text-muted-foreground mt-0.5 font-serif text-[10px]">
               {totalMoodsInMonth} moods logged
             </p>
           </div>
@@ -199,7 +199,7 @@ export function MonthlyOverview({ monthlyOverview }: MonthlyOverviewProps) {
       {/* Monthly Mood Distribution */}
       {totalMoodsInMonth > 0 && (
         <Card className="border-border/60 p-6">
-          <h5 className="text-muted-foreground/60 mb-4 font-mono text-[10px] tracking-wider uppercase">
+          <h5 className="text-muted-foreground/60 mb-4 font-serif text-[10px] tracking-[0.15em] uppercase">
             Mood Distribution in {formatMonthTitle(selectedMonth)}
           </h5>
           <div className="grid gap-3 sm:grid-cols-5">
@@ -223,13 +223,13 @@ export function MonthlyOverview({ monthlyOverview }: MonthlyOverviewProps) {
                   >
                     <Icon className="h-5 w-5" />
                   </div>
-                  <span className="text-muted-foreground/60 font-mono text-[10px] uppercase">
+                  <span className="text-muted-foreground/60 font-serif text-[10px] tracking-[0.12em] uppercase">
                     {config.label}
                   </span>
                   <span className="text-foreground mt-1 font-serif text-base font-bold">
                     {pct}%
                   </span>
-                  <span className="text-muted-foreground/40 mt-0.5 font-mono text-[9px] uppercase">
+                  <span className="text-muted-foreground/40 mt-0.5 font-serif text-[9px] uppercase">
                     {count} days
                   </span>
                 </div>

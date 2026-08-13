@@ -29,7 +29,7 @@ export default function SettingsLoading() {
   return (
     <PageLoadingShell>
       <PageLoadingHeader
-        eyebrow="Sanctuary Configuration • Preferences"
+        eyebrow="tune the desk to suit the writer"
         title="Sanctuary"
         accent="settings."
         description="Adjust your writing experience and preferences"

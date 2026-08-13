@@ -330,7 +330,7 @@ export function AppShell({
         className="bg-background flex h-screen w-full overflow-hidden"
         style={
           {
-            "--sidebar-width": isCollapsed ? "64px" : "256px",
+            "--sidebar-width": isCollapsed ? "88px" : "288px",
           } as React.CSSProperties
         }
       >

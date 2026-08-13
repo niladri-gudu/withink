@@ -11,9 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@withink/ui/card";
-import { cn } from "@withink/utils";
 import { Calendar, Flame } from "lucide-react";
-
 import { ROUTES } from "@/constants/routes";
 import { getRequestSession } from "@/lib/request-cache";
 import {
@@ -71,18 +69,18 @@ export default async function DashboardPage() {
 
   return (
     <div className="animate-in fade-in mx-auto w-full max-w-5xl flex-grow space-y-8 p-6 duration-300 md:p-10">
-      <header className="space-y-1">
-        <span className="text-muted-foreground/60 block font-mono text-[10px] tracking-[0.25em] uppercase">
+      <header className="space-y-2">
+        <p className="text-muted-foreground/70 font-hand text-xl">
           {todayFormatted}
-        </span>
+        </p>
         <h1 className="text-foreground font-serif text-3xl leading-none font-bold tracking-tight sm:text-4xl">
           Good morning,{" "}
-          <span className="text-primary pl-1 text-4xl font-light italic sm:text-5xl">
+          <span className="text-accent pl-1 text-4xl font-normal italic sm:text-5xl">
             {firstName}.
           </span>
         </h1>
         <p className="text-body-small text-muted-foreground mt-1">
-          Welcome back to your private writing sanctuary
+          A fresh page for today&apos;s reflection
         </p>
       </header>
 
@@ -134,21 +132,14 @@ export default async function DashboardPage() {
             <CardDescription>Consistency tracking</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-grow flex-col items-center justify-center space-y-2 py-6">
-            <div className="relative flex items-center justify-center">
-              {currentStreak > 0 && (
-                <div className="absolute inset-0 scale-150 animate-pulse rounded-full bg-orange-500/10 blur-xl" />
-              )}
-              <Flame
-                className={cn(
-                  "relative z-10 h-16 w-16 text-orange-500",
-                  currentStreak > 0 && "animate-bounce",
-                )}
-              />
+            <div className="border-accent/30 bg-accent/10 relative flex h-24 w-24 items-center justify-center rounded-full border-2 border-dashed">
+              <div className="absolute inset-2 rounded-full border border-accent/20" />
+              <Flame className="text-accent relative z-10 h-9 w-9" />
             </div>
             <span className="text-foreground font-serif text-4xl font-bold">
               {currentStreak}
             </span>
-            <span className="text-muted-foreground font-mono text-[10px] tracking-wider uppercase">
+            <span className="text-muted-foreground font-serif text-[10px] tracking-[0.2em] uppercase">
               Day Streak
             </span>
           </CardContent>

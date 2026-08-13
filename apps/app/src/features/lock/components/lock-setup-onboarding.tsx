@@ -146,9 +146,9 @@ export function LockSetupOnboarding({
           {/* Logo / Header */}
           <div className="mb-6 flex flex-col items-center">
             <span className="text-foreground mb-2 font-serif text-3xl font-bold tracking-tight">
-              withink.
+              withink<span className="text-accent">.</span>
             </span>
-            <div className="text-muted-foreground bg-secondary/80 border-border flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs">
+            <div className="text-muted-foreground bg-secondary/80 border-border flex items-center gap-1.5 rounded-full border px-3 py-1 font-serif text-xs">
               <ShieldAlert className="text-accent h-3.5 w-3.5" />
               <span>Sanctuary Security</span>
             </div>

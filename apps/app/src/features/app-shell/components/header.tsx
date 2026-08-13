@@ -20,9 +20,7 @@ export function Header({ onOpenMobile }: HeaderProps) {
   // Parse path segments to generate dynamic breadcrumbs
   const getBreadcrumbs = () => {
     const paths = pathname.split("/").filter(Boolean);
-    const breadcrumbs: Array<{ label: string; href: string }> = [
-      { label: "Sanctuary", href: ROUTES.APP.DASHBOARD },
-    ];
+    const breadcrumbs: Array<{ label: string; href: string }> = [];
 
     paths.forEach((segment, index) => {
       const href = "/" + paths.slice(0, index + 1).join("/");
@@ -61,15 +59,20 @@ export function Header({ onOpenMobile }: HeaderProps) {
       }
     });
 
+    // Root route reads as "Today" — the open page
+    if (breadcrumbs.length === 0) {
+      breadcrumbs.push({ label: "Today", href: ROUTES.APP.DASHBOARD });
+    }
+
     return breadcrumbs;
   };
 
   const breadcrumbs = getBreadcrumbs();
 
   return (
-    <header className="border-border/60 bg-background/95 sticky top-0 z-20 flex h-16 items-center justify-between border-b px-6 backdrop-blur-md select-none">
-      {/* Left side: Hamburger (mobile) + Breadcrumbs */}
-      <div className="flex items-center space-x-4">
+    <header className="border-border/60 bg-background/90 sticky top-0 z-20 flex h-14 items-center justify-between border-b px-4 backdrop-blur-md select-none sm:px-6">
+      {/* Left side: Hamburger (mobile) + Running head */}
+      <div className="flex items-center space-x-3">
         <Button
           variant="ghost"
           size="icon"
@@ -82,17 +85,17 @@ export function Header({ onOpenMobile }: HeaderProps) {
 
         <nav
           aria-label="Breadcrumb"
-          className="flex items-center space-x-1.5 text-xs font-medium sm:text-sm"
+          className="flex items-center space-x-1.5 font-serif text-sm"
         >
           {breadcrumbs.map((crumb, idx) => {
             const isLast = idx === breadcrumbs.length - 1;
             return (
               <React.Fragment key={crumb.href + idx}>
                 {idx > 0 && (
-                  <ChevronRight className="text-muted-foreground/45 h-3 w-3 shrink-0" />
+                  <ChevronRight className="text-muted-foreground/45 h-3.5 w-3.5 shrink-0" />
                 )}
                 {isLast ? (
-                  <span className="text-foreground max-w-[150px] truncate font-semibold sm:max-w-[300px]">
+                  <span className="text-foreground max-w-[150px] truncate font-medium sm:max-w-[300px]">
                     {crumb.label}
                   </span>
                 ) : (

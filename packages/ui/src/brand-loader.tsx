@@ -23,7 +23,7 @@ export function BrandLoader({ message }: BrandLoaderProps) {
       />
       <div className="flex flex-col items-center gap-5 px-6 text-center">
         <span className="text-foreground animate-pulse font-serif text-4xl font-bold tracking-tight duration-[2500ms] select-none sm:text-5xl">
-          withink.
+          withink<span className="text-accent">.</span>
         </span>
 
         <div className="flex flex-col items-center gap-3">

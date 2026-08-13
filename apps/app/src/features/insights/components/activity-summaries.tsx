@@ -31,32 +31,32 @@ const timeConfig: Record<
     description:
       "You prefer reflecting as the day begins, capturing thoughts with a fresh mind.",
     icon: Sun,
-    color: "text-amber-500",
-    bgColor: "bg-amber-500/10 border-amber-500/20",
+    color: "text-accent",
+    bgColor: "bg-accent/10 border-accent/20",
   },
   afternoon: {
     title: "Midday Pause",
     description:
       "You find time in the afternoon to check in and write down reflections.",
     icon: Coffee,
-    color: "text-orange-500",
-    bgColor: "bg-orange-500/10 border-orange-500/20",
+    color: "text-accent",
+    bgColor: "bg-accent/10 border-accent/20",
   },
   evening: {
     title: "Twilight Reflection",
     description:
       "Writing during sunset or twilight helps you close your day and wind down.",
     icon: Sunset,
-    color: "text-indigo-500",
-    bgColor: "bg-indigo-500/10 border-indigo-500/20",
+    color: "text-accent",
+    bgColor: "bg-accent/10 border-accent/20",
   },
   night: {
     title: "Late Night Thoughts",
     description:
       "You are a night owl, letting thoughts flow freely onto the page late in the evening.",
     icon: Moon,
-    color: "text-purple-500",
-    bgColor: "bg-purple-500/10 border-purple-500/20",
+    color: "text-accent",
+    bgColor: "bg-accent/10 border-accent/20",
   },
 };
 
@@ -73,7 +73,7 @@ export function ActivitySummaries({
       {/* Day of Week Card */}
       <Card className="border-border/60">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-muted-foreground/60 font-mono text-xs tracking-wider uppercase">
+          <CardTitle className="text-muted-foreground/60 font-serif text-xs tracking-[0.15em] uppercase">
             Active Writing Day
           </CardTitle>
           <CalendarDays className="text-muted-foreground/60 h-4 w-4" />
@@ -82,14 +82,14 @@ export function ActivitySummaries({
           {mostActiveDayOfWeek ? (
             <>
               <div className="flex items-center gap-2">
-                <div className="bg-primary/10 text-primary border-primary/20 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border">
+                <div className="bg-accent/10 text-accent border-accent/20 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border">
                   <Sparkles className="h-5 w-5" />
                 </div>
                 <div>
                   <h5 className="text-foreground font-serif text-xl font-bold">
                     {mostActiveDayOfWeek.day}s
                   </h5>
-                  <p className="text-muted-foreground/60 font-mono text-[10px] uppercase">
+                  <p className="text-muted-foreground/60 font-serif text-[10px] tracking-[0.12em] uppercase">
                     {mostActiveDayOfWeek.count} entries written
                   </p>
                 </div>
@@ -112,7 +112,7 @@ export function ActivitySummaries({
       {/* Time of Day Card */}
       <Card className="border-border/60">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-muted-foreground/60 font-mono text-xs tracking-wider uppercase">
+          <CardTitle className="text-muted-foreground/60 font-serif text-xs tracking-[0.15em] uppercase">
             Typical Writing Time
           </CardTitle>
           {timeDetails ? (
@@ -134,7 +134,7 @@ export function ActivitySummaries({
                   <h5 className="text-foreground font-serif text-xl font-bold">
                     {timeDetails.title}
                   </h5>
-                  <p className="text-muted-foreground/60 font-mono text-[10px] uppercase">
+                  <p className="text-muted-foreground/60 font-serif text-[10px] tracking-[0.12em] uppercase">
                     {mostActiveTimeOfDay.count} entries written
                   </p>
                 </div>

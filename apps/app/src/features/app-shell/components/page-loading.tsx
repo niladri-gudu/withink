@@ -31,13 +31,13 @@ export function PageLoadingHeader({
 }) {
   return (
     <header className="flex items-start justify-between gap-4">
-      <div className="space-y-1">
-        <span className="text-muted-foreground/60 block font-mono text-[10px] tracking-[0.25em] uppercase">
+      <div className="space-y-2">
+        <span className="text-muted-foreground/70 block font-hand text-lg">
           {eyebrow}
         </span>
         <h1 className="text-foreground font-serif text-3xl leading-none font-bold tracking-tight sm:text-4xl">
           {title}{" "}
-          <span className="text-primary mt-1 block pl-1 text-4xl font-light italic sm:mt-0 sm:inline sm:text-5xl">
+          <span className="text-accent mt-1 block pl-1 text-4xl font-normal italic sm:mt-0 sm:inline sm:text-5xl">
             {accent}
           </span>
         </h1>

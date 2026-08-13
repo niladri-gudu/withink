@@ -129,11 +129,11 @@ export function MediaGallery() {
       <Card className="border-border/60 bg-card/40 overflow-hidden rounded-2xl border shadow-sm backdrop-blur-md">
         <CardContent className="flex flex-col justify-between gap-5 p-5 select-none md:flex-row md:items-center">
           <div className="flex items-start gap-4">
-            <div className="bg-secondary text-primary mt-1 rounded-xl p-3 md:mt-0">
+            <div className="bg-accent/10 text-accent mt-1 rounded-xl p-3 md:mt-0">
               <HardDrive className="h-5 w-5" />
             </div>
             <div className="space-y-1">
-              <p className="text-muted-foreground text-xs font-semibold tracking-widest uppercase">
+              <p className="text-muted-foreground font-serif text-[11px] tracking-[0.18em] uppercase">
                 Sanctuary Archives
               </p>
               <div className="flex items-baseline gap-2">
@@ -363,7 +363,7 @@ export function MediaGallery() {
                 </div>
 
                 <div className="text-muted-foreground flex shrink-0 items-center gap-4 text-xs">
-                  <span className="bg-secondary/65 text-foreground/80 rounded-md px-2 py-1 font-mono text-[10px]">
+                  <span className="bg-secondary/65 text-foreground/80 rounded-md px-2 py-1 font-serif text-[10px]">
                     {sizeKB} KB
                   </span>
                   <ChevronRight className="text-muted-foreground h-4 w-4 transition-transform group-hover:translate-x-0.5" />

@@ -94,20 +94,20 @@ export function RegisterForm() {
             <h2 className="text-h2 text-foreground font-serif font-bold">
               Check your ink.
             </h2>
-            <p className="text-caption font-mono tracking-[0.16em] uppercase">
+            <p className="text-caption font-serif tracking-[0.16em] uppercase">
               Identity pending • Action required
             </p>
           </div>
           <p className="text-muted-foreground font-serif text-sm leading-relaxed">
             A verification link has been dispatched to:
-            <span className="text-foreground decoration-accent/40 mt-2 block font-mono text-xs break-all underline underline-offset-4">
+            <span className="text-foreground decoration-accent/40 mt-2 block font-serif text-xs break-all underline underline-offset-4">
               {registeredEmail}
             </span>
           </p>
           <Button
             variant="ghost"
             onClick={() => setVerifyPending(false)}
-            className="text-muted-foreground/60 hover:text-foreground h-auto cursor-pointer p-0 font-mono text-xs tracking-wider uppercase"
+            className="text-muted-foreground/60 hover:text-foreground h-auto cursor-pointer p-0 font-serif text-xs tracking-wider uppercase"
           >
             <span className="border-muted-foreground/20 hover:border-foreground border-b pb-0.5">
               Edit Identity
@@ -120,8 +120,8 @@ export function RegisterForm() {
             <h1 className="text-h2 text-foreground font-serif font-bold">
               New journey.
             </h1>
-            <p className="text-caption font-mono tracking-[0.16em] uppercase">
-              Trace your mind • Encrypted by default
+            <p className="text-caption font-serif tracking-[0.16em] uppercase">
+              A fresh notebook, ready for your first page
             </p>
           </div>
 
@@ -130,16 +130,15 @@ export function RegisterForm() {
               <div className="flex items-end justify-between">
                 <label
                   htmlFor="name"
-                  className="text-helper text-muted-foreground/80 ml-1 font-mono tracking-wider"
+                  className="text-helper text-muted-foreground/80 ml-1 font-serif tracking-wider"
                 >
-                  Identity Name
+                  Name
                 </label>
                 {errors.name?.message && (
                   <span
                     id="name-error"
-                    className="text-destructive animate-in fade-in font-mono text-[10px] tracking-tight uppercase"
+                    className="text-destructive animate-in fade-in font-serif text-[10px] tracking-tight uppercase"
                   >
-                    {"// "}
                     {errors.name.message}
                   </span>
                 )}
@@ -162,16 +161,15 @@ export function RegisterForm() {
               <div className="flex items-end justify-between">
                 <label
                   htmlFor="email"
-                  className="text-helper text-muted-foreground/80 ml-1 font-mono tracking-wider"
+                  className="text-helper text-muted-foreground/80 ml-1 font-serif tracking-wider"
                 >
-                  Secure Email
+                  Email
                 </label>
                 {errors.email?.message && (
                   <span
                     id="email-error"
-                    className="text-destructive animate-in fade-in font-mono text-[10px] tracking-tight uppercase"
+                    className="text-destructive animate-in fade-in font-serif text-[10px] tracking-tight uppercase"
                   >
-                    {"// "}
                     {errors.email.message}
                   </span>
                 )}
@@ -195,16 +193,15 @@ export function RegisterForm() {
               <div className="flex items-end justify-between">
                 <label
                   htmlFor="password"
-                  className="text-helper text-muted-foreground/80 ml-1 font-mono tracking-wider"
+                  className="text-helper text-muted-foreground/80 ml-1 font-serif tracking-wider"
                 >
                   Secret Key
                 </label>
                 {errors.password?.message && (
                   <span
                     id="password-error"
-                    className="text-destructive animate-in fade-in font-mono text-[10px] tracking-tight uppercase"
+                    className="text-destructive animate-in fade-in font-serif text-[10px] tracking-tight uppercase"
                   >
-                    {"// "}
                     {errors.password.message}
                   </span>
                 )}
@@ -232,7 +229,7 @@ export function RegisterForm() {
                     showPassword ? "Hide secret key" : "Show secret key"
                   }
                   aria-pressed={showPassword}
-                  className="text-muted-foreground/60 hover:text-foreground focus-visible:ring-ring absolute top-1/2 right-3 -translate-y-1/2 cursor-pointer p-1 font-mono text-xs tracking-wider uppercase transition-colors focus-visible:rounded focus-visible:ring-2 focus-visible:outline-none"
+                  className="text-muted-foreground/60 hover:text-foreground focus-visible:ring-ring absolute top-1/2 right-3 -translate-y-1/2 cursor-pointer p-1 font-serif text-xs tracking-wider uppercase transition-colors focus-visible:rounded focus-visible:ring-2 focus-visible:outline-none"
                 >
                   {showPassword ? "Hide" : "Show"}
                 </button>
@@ -242,14 +239,14 @@ export function RegisterForm() {
             <div className="space-y-3 pt-2">
               <Button
                 type="submit"
-                className="relative h-11 w-full cursor-pointer overflow-hidden rounded-lg text-base font-medium transition-transform hover:scale-[1.01] active:scale-[0.99]"
+                className="relative h-11 w-full cursor-pointer overflow-hidden rounded-lg font-serif text-sm font-medium uppercase tracking-[0.15em] transition-transform hover:scale-[1.01] active:scale-[0.99]"
                 disabled={isLoading}
               >
                 <div className="flex w-full items-center justify-center gap-2 transition-all duration-200">
                   {isLoading && (
                     <div className="bg-primary absolute inset-0 flex items-center justify-center gap-2">
                       <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
-                      <span>Inking...</span>
+                      <span>Inking…</span>
                     </div>
                   )}
                   <div
@@ -266,7 +263,7 @@ export function RegisterForm() {
               <Button
                 type="button"
                 variant="outline"
-                className="text-muted-foreground hover:bg-muted/40 hover:text-foreground h-11 w-full cursor-pointer rounded-lg font-mono text-[10px] tracking-widest uppercase transition-transform hover:scale-[1.01] active:scale-[0.99]"
+                className="text-muted-foreground hover:bg-muted/40 hover:text-foreground h-11 w-full cursor-pointer rounded-lg font-serif text-xs uppercase transition-transform hover:scale-[1.01] active:scale-[0.99]"
                 onClick={handleGoogleSignIn}
               >
                 <GoogleIcon />

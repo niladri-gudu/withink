@@ -72,7 +72,7 @@ export function WordCountCharts({
     <div className="space-y-6">
       <div className="flex items-end justify-between">
         <div className="space-y-1">
-          <h4 className="text-muted-foreground/60 font-mono text-sm tracking-wider uppercase">
+          <h4 className="text-muted-foreground/60 font-serif text-sm tracking-wider uppercase">
             Writing Volume
           </h4>
           <p className="text-body-small text-muted-foreground">
@@ -117,7 +117,7 @@ export function WordCountCharts({
                     x={paddingX - 10}
                     y={y + 3}
                     textAnchor="end"
-                    className="font-mono text-[9px] font-semibold"
+                    className="font-serif text-[9px] font-semibold"
                     fill="currentColor"
                   >
                     {value}
@@ -129,11 +129,11 @@ export function WordCountCharts({
             {/* Definitions for Gradients */}
             <defs>
               <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="rgb(245, 158, 11)" />
+                <stop offset="0%" stopColor="var(--color-accent, #c39553)" />
                 <stop
                   offset="100%"
-                  stopColor="rgb(245, 158, 11)"
-                  stopOpacity="0.2"
+                  stopColor="var(--color-accent, #c39553)"
+                  stopOpacity="0.25"
                 />
               </linearGradient>
             </defs>
@@ -148,7 +148,7 @@ export function WordCountCharts({
                         x={p.x + barWidth / 2}
                         y={svgHeight - 4}
                         textAnchor="middle"
-                        className="fill-muted-foreground/40 font-mono text-[9px] uppercase"
+                        className="fill-muted-foreground/40 font-serif text-[9px] uppercase"
                       >
                         {formatMonthLabel(p.month)}
                       </text>
@@ -170,7 +170,7 @@ export function WordCountCharts({
                           className="cursor-help transition-opacity hover:opacity-85"
                         />
                       </TooltipTrigger>
-                      <TooltipContent className="font-mono text-[10px]">
+                      <TooltipContent className="font-serif text-[10px]">
                         <strong>{formatMonthLabel(p.month)}</strong>
                         <br />
                         Average: {p.averageWords} words
@@ -185,7 +185,7 @@ export function WordCountCharts({
                       x={p.x + barWidth / 2}
                       y={svgHeight - 4}
                       textAnchor="middle"
-                      className="fill-muted-foreground/60 font-mono text-[9px] uppercase"
+                      className="fill-muted-foreground/60 font-serif text-[9px] uppercase"
                     >
                       {formatMonthLabel(p.month)}
                     </text>

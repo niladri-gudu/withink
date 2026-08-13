@@ -10,7 +10,7 @@ export default function FlashbacksLoading() {
   return (
     <PageLoadingShell>
       <PageLoadingHeader
-        eyebrow="Memory Resurfacing • Flashbacks"
+        eyebrow="memories find their way back"
         title="Past"
         accent="flashbacks."
         description="Reconnect with your past reflections"

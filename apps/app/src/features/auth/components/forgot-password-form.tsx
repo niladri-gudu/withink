@@ -71,20 +71,20 @@ export function ForgotPasswordForm() {
             <h2 className="text-h2 text-foreground font-serif font-bold">
               Check your inbox.
             </h2>
-            <p className="text-caption font-mono tracking-[0.16em] uppercase">
+            <p className="text-caption font-serif tracking-[0.16em] uppercase">
               Instructions dispatched • Action required
             </p>
           </div>
           <p className="text-muted-foreground font-serif text-sm leading-relaxed">
             Recovery instructions have been sent to:
-            <span className="text-foreground decoration-accent/40 mt-2 block font-mono text-xs break-all underline underline-offset-4">
+            <span className="text-foreground decoration-accent/40 mt-2 block font-serif text-xs break-all underline underline-offset-4">
               {registeredEmail}
             </span>
           </p>
           <div className="pt-2">
             <Link
               href={ROUTES.AUTH.LOGIN}
-              className="text-muted-foreground/60 hover:text-foreground border-muted-foreground/20 hover:border-foreground border-b pb-0.5 font-mono text-xs tracking-widest uppercase italic transition-colors"
+              className="text-muted-foreground/60 hover:text-foreground border-muted-foreground/20 hover:border-foreground border-b pb-0.5 font-serif text-xs tracking-widest uppercase italic transition-colors"
             >
               Return to Sign In
             </Link>
@@ -96,8 +96,8 @@ export function ForgotPasswordForm() {
             <h1 className="text-h2 text-foreground font-serif font-bold">
               Forgot secret.
             </h1>
-            <p className="text-caption font-mono tracking-[0.16em] uppercase">
-              Initiating recovery • Identity verification
+            <p className="text-caption font-serif tracking-[0.16em] uppercase">
+              We&apos;ll send recovery instructions to your email
             </p>
           </div>
 
@@ -106,16 +106,15 @@ export function ForgotPasswordForm() {
               <div className="flex items-end justify-between">
                 <label
                   htmlFor="email"
-                  className="text-helper text-muted-foreground/80 ml-1 font-mono tracking-wider"
+                  className="text-helper text-muted-foreground/80 ml-1 font-serif tracking-wider"
                 >
-                  Registered Email
+                  Email
                 </label>
                 {errors.email?.message && (
                   <span
                     id="email-error"
-                    className="text-destructive animate-in fade-in font-mono text-[10px] tracking-tight uppercase"
+                    className="text-destructive animate-in fade-in font-serif text-[10px] tracking-tight uppercase"
                   >
-                    {"// "}
                     {errors.email.message}
                   </span>
                 )}
@@ -138,13 +137,13 @@ export function ForgotPasswordForm() {
             <div className="space-y-3 pt-2 text-center">
               <Button
                 type="submit"
-                className="relative h-11 w-full cursor-pointer overflow-hidden rounded-lg text-base font-medium transition-transform hover:scale-[1.01] active:scale-[0.99]"
+                className="relative h-11 w-full cursor-pointer overflow-hidden rounded-lg font-serif text-sm font-medium uppercase tracking-[0.15em] transition-transform hover:scale-[1.01] active:scale-[0.99]"
                 disabled={isLoading}
               >
                 {isLoading ? (
                   <div className="bg-primary absolute inset-0 flex items-center justify-center gap-2">
                     <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
-                    <span>Dispatching...</span>
+                    <span>Dispatching…</span>
                   </div>
                 ) : (
                   "Send Reset Link"
@@ -153,7 +152,7 @@ export function ForgotPasswordForm() {
 
               <Link
                 href={ROUTES.AUTH.LOGIN}
-                className="text-muted-foreground/60 hover:text-foreground border-muted-foreground/20 hover:border-foreground inline-block border-b pt-2 pb-0.5 font-mono text-xs tracking-widest uppercase italic transition-colors"
+                className="text-muted-foreground/60 hover:text-foreground border-muted-foreground/20 hover:border-foreground inline-block border-b pt-2 pb-0.5 font-serif text-xs tracking-widest uppercase italic transition-colors"
               >
                 Back to Sign In
               </Link>

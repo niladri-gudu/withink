@@ -107,7 +107,7 @@ function Highlight({ text, query }: { text: string; query: string }) {
         part.toLowerCase() === trimmedQuery.toLowerCase() ? (
           <mark
             key={i}
-            className="bg-primary/20 text-foreground rounded px-0.5 font-medium"
+            className="bg-accent/20 text-foreground rounded px-0.5 font-medium"
           >
             {part}
           </mark>
@@ -385,8 +385,8 @@ export function EntriesTimeline({
 
       {/* Background Syncing Progress Indicator */}
       {isSyncing && syncProgress.total > 0 && (
-        <div className="text-primary/70 bg-primary/5 border-primary/10 flex animate-pulse items-center gap-2 rounded-xl border px-3 py-1.5 font-mono text-xs select-none">
-          <Loader2 className="text-primary h-3.5 w-3.5 shrink-0 animate-spin" />
+        <div className="text-accent border-accent/15 bg-accent/5 flex animate-pulse items-center gap-2 rounded-xl border px-3 py-1.5 font-serif text-xs select-none">
+          <Loader2 className="text-accent h-3.5 w-3.5 shrink-0 animate-spin" />
           <span>
             Syncing journal cache: {syncProgress.current} of{" "}
             {syncProgress.total} reflections...
@@ -414,7 +414,9 @@ export function EntriesTimeline({
 
         {entries.length === 0 ? (
           <Card className="border-border/80 bg-card/40 flex flex-col items-center justify-center border py-16 text-center">
-            <span className="mb-4 text-4xl opacity-60 select-none">📭</span>
+            <span className="border-border/40 bg-secondary/40 text-muted-foreground mb-4 flex h-14 w-14 items-center justify-center rounded-full border">
+              <FileText className="h-6 w-6" />
+            </span>
             <p className="text-serif text-foreground mb-1 text-lg font-semibold">
               No matching reflections
             </p>
@@ -445,7 +447,7 @@ export function EntriesTimeline({
                 >
                   {/* Visual side timeline node */}
                   <div className="bg-border/20 absolute top-7 left-[-16px] hidden h-full w-[2px] group-last:h-0 lg:block" />
-                  <div className="border-background bg-border/40 group-hover:bg-primary absolute top-6 left-[-22px] hidden h-3.5 w-3.5 rounded-full border-2 transition-all duration-300 lg:block" />
+                  <div className="border-background bg-accent absolute top-6 left-[-22px] hidden h-3.5 w-3.5 rounded-full border-2 transition-all duration-300 lg:block" />
 
                   <Card
                     className="border-border/60 hover:border-border overflow-hidden border transition-all duration-300 hover:shadow-md"
@@ -483,7 +485,7 @@ export function EntriesTimeline({
                                 )}
                               </h3>
                             </Link>
-                            <div className="text-muted-foreground/60 mt-0.5 flex items-center gap-2 font-mono text-xs uppercase">
+                            <div className="text-muted-foreground/60 mt-0.5 flex items-center gap-2 font-serif text-[11px] tracking-[0.12em] uppercase">
                               <span className="flex items-center gap-1">
                                 <Calendar className="h-3 w-3" />
                                 <Highlight
@@ -517,7 +519,7 @@ export function EntriesTimeline({
                         {confirmOpen ? (
                           <div className="bg-destructive/10 border-destructive/20 animate-in slide-in-from-right-2 flex items-center gap-1.5 rounded-xl border p-1 duration-200">
                             <AlertCircle className="text-destructive ml-1 h-4 w-4 shrink-0" />
-                            <span className="text-destructive font-mono text-[10px] font-semibold tracking-wider uppercase">
+                            <span className="text-destructive font-serif text-[10px] font-semibold tracking-[0.12em] uppercase">
                               Delete?
                             </span>
                             <Button
@@ -566,7 +568,7 @@ export function EntriesTimeline({
       {/* Pagination controls */}
       {totalPages > 1 && (
         <div className="border-border/10 flex items-center justify-between border-t pt-4">
-          <span className="text-muted-foreground/60 font-mono text-xs uppercase">
+          <span className="text-muted-foreground/60 font-serif text-[11px] tracking-[0.12em] uppercase">
             Showing Page {page} of {totalPages} ({total} total)
           </span>
           <div className="flex items-center gap-2">

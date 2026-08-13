@@ -126,7 +126,7 @@ export function MoodHistoryCharts({
       {/* Mood Distribution */}
       <div className="space-y-6">
         <div>
-          <h4 className="text-muted-foreground/60 mb-2 font-mono text-sm tracking-wider uppercase">
+          <h4 className="text-muted-foreground/60 mb-2 font-serif text-sm tracking-[0.15em] uppercase">
             Mood Distribution
           </h4>
           {average !== null ? (
@@ -174,7 +174,7 @@ export function MoodHistoryCharts({
                   />
                 </div>
 
-                <div className="text-muted-foreground w-12 text-right font-mono text-[10px]">
+                <div className="text-muted-foreground w-12 text-right font-serif text-[10px]">
                   {pct}% ({count})
                 </div>
               </div>
@@ -186,7 +186,7 @@ export function MoodHistoryCharts({
       {/* Mood Trend (6 Months) */}
       <div className="space-y-4">
         <div>
-          <h4 className="text-muted-foreground/60 mb-2 font-mono text-sm tracking-wider uppercase">
+          <h4 className="text-muted-foreground/60 mb-2 font-serif text-sm tracking-[0.15em] uppercase">
             6-Month Mood Trend
           </h4>
           <p className="text-body-small text-muted-foreground">
@@ -227,7 +227,7 @@ export function MoodHistoryCharts({
                       x={paddingX - 10}
                       y={y + 3}
                       textAnchor="end"
-                      className="font-mono text-[9px] font-semibold"
+                      className="font-serif text-[9px] font-semibold"
                       fill="currentColor"
                     >
                       {level}
@@ -254,7 +254,7 @@ export function MoodHistoryCharts({
                   strokeWidth={2}
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  className="text-emerald-500 dark:text-emerald-400"
+                  className="text-accent dark:text-accent"
                 />
               )}
 
@@ -263,12 +263,12 @@ export function MoodHistoryCharts({
                 <linearGradient id="moodGradient" x1="0" y1="0" x2="0" y2="1">
                   <stop
                     offset="0%"
-                    stopColor="rgb(16, 185, 129)"
+                    stopColor="var(--color-accent, #c39553)"
                     stopOpacity="0.4"
                   />
                   <stop
                     offset="100%"
-                    stopColor="rgb(16, 185, 129)"
+                    stopColor="var(--color-accent, #c39553)"
                     stopOpacity="0"
                   />
                 </linearGradient>
@@ -287,10 +287,10 @@ export function MoodHistoryCharts({
                             cx={p.x}
                             cy={p.y}
                             r={4}
-                            className="fill-background hover:r-6 cursor-help stroke-emerald-500 stroke-[2px] transition-all duration-200 dark:stroke-emerald-400"
+                            className="fill-background hover:r-6 cursor-help stroke-accent stroke-[2px] transition-all duration-200"
                           />
                         </TooltipTrigger>
-                        <TooltipContent className="font-mono text-[10px]">
+                        <TooltipContent className="font-serif text-[10px]">
                           <strong>{formatMonthLabel(p.month)}</strong>
                           <br />
                           Average: {p.averageMood} ({p.count} entries)
@@ -302,7 +302,7 @@ export function MoodHistoryCharts({
                         x={p.x}
                         y={svgHeight - 4}
                         textAnchor="middle"
-                        className="fill-muted-foreground/60 font-mono text-[9px] uppercase"
+                        className="fill-muted-foreground/60 font-serif text-[9px] uppercase"
                       >
                         {formatMonthLabel(p.month)}
                       </text>

@@ -7,6 +7,146 @@
 @source "../../../../packages/theme/src";
 @source "../../../../packages/config/src";
 
+/* The Field Ledger — the app surface's own visual world (see the direction
+   contract comment in layout.tsx). The docs site carries the same world;
+   these overrides re-theme the app into the inside of that notebook. */
+@theme {
+  --font-sans: var(--font-alegreya), Georgia, serif;
+  --font-serif: var(--font-alegreya), Georgia, serif;
+  --font-mono: var(--font-alegreya), Georgia, serif;
+  --font-hand: var(--font-caveat), cursive;
+}
+
+@layer base {
+  :root {
+    /* Manila desk, ledger-paper pages, iron-gall sepia ink, warm old-paper gold. */
+    --background: oklch(0.925 0.022 82);
+    --foreground: oklch(0.24 0.028 48);
+
+    --card: oklch(0.972 0.013 85);
+    --card-foreground: oklch(0.24 0.028 48);
+
+    --popover: oklch(0.972 0.013 85);
+    --popover-foreground: oklch(0.24 0.028 48);
+
+    --primary: oklch(0.24 0.028 48);
+    --primary-foreground: oklch(0.962 0.013 85);
+
+    --secondary: oklch(0.948 0.017 84);
+    --secondary-foreground: oklch(0.24 0.028 48);
+
+    --muted: oklch(0.948 0.017 84);
+    --muted-foreground: oklch(0.47 0.02 52);
+
+    --accent: oklch(0.7 0.1 75);
+    --accent-foreground: oklch(0.24 0.028 48);
+
+    --destructive: oklch(0.5 0.15 30);
+    --destructive-foreground: oklch(0.962 0.013 85);
+
+    --border: oklch(0.84 0.018 79);
+    --input: oklch(0.84 0.018 79);
+    --ring: oklch(0.7 0.1 75);
+
+    --radius: 0.75rem;
+
+    --sidebar: oklch(0.955 0.014 85);
+    --sidebar-foreground: oklch(0.24 0.028 48);
+    --sidebar-primary: oklch(0.24 0.028 48);
+    --sidebar-primary-foreground: oklch(0.962 0.013 85);
+    --sidebar-accent: oklch(0.93 0.02 82);
+    --sidebar-accent-foreground: oklch(0.24 0.028 48);
+    --sidebar-border: oklch(0.84 0.018 79);
+    --sidebar-ring: oklch(0.7 0.1 75);
+
+    --withink-paper-scale: 1;
+
+    /* Mood rating colors, tuned for manila paper. */
+    --mood-angry: oklch(0.42 0.16 25);
+    --mood-angry-bg: oklch(0.42 0.16 25 / 0.14);
+    --mood-angry-border: oklch(0.42 0.16 25 / 0.3);
+    --mood-sad: oklch(0.42 0.1 48);
+    --mood-sad-bg: oklch(0.42 0.1 48 / 0.14);
+    --mood-sad-border: oklch(0.42 0.1 48 / 0.3);
+    --mood-neutral: oklch(0.42 0.02 60);
+    --mood-neutral-bg: oklch(0.94 0.015 76);
+    --mood-neutral-border: oklch(0.9 0.015 76);
+    --mood-happy: oklch(0.42 0.12 145);
+    --mood-happy-bg: oklch(0.42 0.12 145 / 0.14);
+    --mood-happy-border: oklch(0.42 0.12 145 / 0.3);
+    --mood-radiant: oklch(0.46 0.12 75);
+    --mood-radiant-bg: oklch(0.46 0.12 75 / 0.16);
+    --mood-radiant-border: oklch(0.46 0.12 75 / 0.32);
+  }
+
+  .dark {
+    /* The desk after dusk: deep umber, parchment text, night gold. */
+    --background: oklch(0.21 0.018 70);
+    --foreground: oklch(0.92 0.015 80);
+
+    --card: oklch(0.265 0.018 70);
+    --card-foreground: oklch(0.92 0.015 80);
+
+    --popover: oklch(0.265 0.018 70);
+    --popover-foreground: oklch(0.92 0.015 80);
+
+    --primary: oklch(0.92 0.015 80);
+    --primary-foreground: oklch(0.21 0.018 70);
+
+    --secondary: oklch(0.315 0.016 70);
+    --secondary-foreground: oklch(0.92 0.015 80);
+
+    --muted: oklch(0.315 0.016 70);
+    --muted-foreground: oklch(0.68 0.018 75);
+
+    --accent: oklch(0.74 0.11 75);
+    --accent-foreground: oklch(0.21 0.018 70);
+
+    --destructive: oklch(0.62 0.13 30);
+    --destructive-foreground: oklch(0.92 0.015 80);
+
+    --border: oklch(0.34 0.016 70);
+    --input: oklch(0.34 0.016 70);
+    --ring: oklch(0.74 0.11 75);
+
+    --sidebar: oklch(0.25 0.018 70);
+    --sidebar-foreground: oklch(0.92 0.015 80);
+    --sidebar-primary: oklch(0.92 0.015 80);
+    --sidebar-primary-foreground: oklch(0.21 0.018 70);
+    --sidebar-accent: oklch(0.3 0.018 70);
+    --sidebar-accent-foreground: oklch(0.92 0.015 80);
+    --sidebar-border: oklch(0.3 0.018 70);
+    --sidebar-ring: oklch(0.74 0.11 75);
+
+    /* Mood rating colors, tuned for the desk after dusk. */
+    --mood-angry: oklch(0.82 0.09 25);
+    --mood-angry-bg: oklch(0.55 0.1 25 / 0.35);
+    --mood-angry-border: oklch(0.55 0.1 25 / 0.4);
+    --mood-sad: oklch(0.84 0.07 55);
+    --mood-sad-bg: oklch(0.6 0.08 50 / 0.35);
+    --mood-sad-border: oklch(0.6 0.08 50 / 0.4);
+    --mood-neutral: oklch(0.86 0.01 80);
+    --mood-neutral-bg: oklch(0.65 0.01 75 / 0.35);
+    --mood-neutral-border: oklch(0.65 0.01 75 / 0.4);
+    --mood-happy: oklch(0.82 0.1 145);
+    --mood-happy-bg: oklch(0.55 0.1 145 / 0.35);
+    --mood-happy-border: oklch(0.55 0.1 145 / 0.4);
+    --mood-radiant: oklch(0.85 0.09 80);
+    --mood-radiant-bg: oklch(0.7 0.1 75 / 0.35);
+    --mood-radiant-border: oklch(0.7 0.1 75 / 0.4);
+  }
+}
+
+/* Ledger-paper ruling behind writing surfaces: the open page, not a grid. */
+.ledger-rules {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    color-mix(in oklch, var(--border), transparent 62%) 0 1px,
+    transparent 1px 2.25rem
+  );
+  mask-image: linear-gradient(to bottom, black 8%, transparent 97%);
+}
+
 /* Tiptap Rich Text Editor Styling System */
 .tiptap {
   outline: none;
@@ -21,9 +161,7 @@
 
 .tiptap p:first-child {
   margin-top: 0;
-}
-
-/* Headings */
+}/* Headings */
 .tiptap h1 {
   font-family: var(--font-serif), Georgia, serif;
   font-size: 2.125rem;
@@ -153,7 +291,7 @@
 
 /* Blockquotes */
 .tiptap blockquote {
-  border-left: 3px solid var(--accent);
+  border-left: 2px solid color-mix(in oklch, var(--accent), transparent 40%);
   padding-left: 1.25rem;
   padding-top: 0.25rem;
   padding-bottom: 0.25rem;
@@ -169,9 +307,9 @@
   margin: 0.25em 0;
 }
 
-/* Code & Code Blocks */
+/* Code & Code Blocks — embedded code is content, so it keeps a true mono */
 .tiptap code {
-  font-family: var(--font-mono), monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 0.875em;
   padding: 0.15em 0.4em;
   border-radius: 0.375rem;
@@ -181,7 +319,7 @@
 }
 
 .tiptap pre {
-  font-family: var(--font-mono), monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 0.9em;
   padding: 1rem 1.25rem;
   border-radius: 0.75rem;
@@ -203,7 +341,7 @@
 
 /* Highlights */
 .tiptap mark {
-  background-color: oklch(0.88 0.12 85 / 0.5);
+  background-color: oklch(0.88 0.12 85 / 0.55);
   color: inherit;
   padding: 0.1em 0.3em;
   border-radius: 0.25rem;
@@ -211,9 +349,7 @@
 
 .dark .tiptap mark {
   background-color: oklch(0.45 0.1 85 / 0.5);
-}
-
-/* Placeholder */
+}/* Placeholder */
 @keyframes placeholderFadeIn {
   from {
     opacity: 0;

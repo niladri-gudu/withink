@@ -6,6 +6,7 @@ import { Button } from "@withink/ui/button";
 import { Plus } from "lucide-react";
 
 import { ROUTES } from "@/constants/routes";
+import { PageHeader } from "@/features/app-shell/components/page-header";
 
 import {
   getCalendarEntriesAction,
@@ -59,35 +60,29 @@ export function EntriesPageShell({
   return (
     <div className="animate-in fade-in mx-auto w-full max-w-5xl flex-1 space-y-8 p-6 duration-300 md:p-10">
       {/* Page Header */}
-      <header className="flex items-center justify-between gap-4">
-        <div className="space-y-1">
-          <span className="text-muted-foreground/60 block font-mono text-[10px] tracking-[0.25em] uppercase">
-            Archives Index • History
-          </span>
-          <h1 className="text-foreground font-serif text-3xl leading-none font-bold tracking-tight sm:text-4xl">
-            All{" "}
-            <span className="text-primary mt-1 block pl-1 text-4xl font-light italic sm:mt-0 sm:inline sm:text-5xl">
-              reflections.
-            </span>
-          </h1>
-          <p className="text-body-small text-muted-foreground mt-1">
-            Browse and search your journal history
-          </p>
-        </div>
-
-        <Button asChild className="cursor-pointer gap-2 rounded-full shadow-sm">
-          <Link
-            href={
-              `${ROUTES.APP.ENTRY(localToday)}?today=${localToday}` as unknown as ComponentPropsWithoutRef<
-                typeof Link
-              >["href"]
-            }
+      <PageHeader
+        note="the archive, kept in order"
+        title="All"
+        accent="reflections."
+        description="Browse and search your journal history"
+        action={
+          <Button
+            asChild
+            className="cursor-pointer gap-2 rounded-full shadow-sm"
           >
-            <Plus className="h-4 w-4" />
-            <span>New Entry</span>
-          </Link>
-        </Button>
-      </header>
+            <Link
+              href={
+                `${ROUTES.APP.ENTRY(localToday)}?today=${localToday}` as unknown as ComponentPropsWithoutRef<
+                  typeof Link
+                >["href"]
+              }
+            >
+              <Plus className="h-4 w-4" />
+              <span>New Entry</span>
+            </Link>
+          </Button>
+        }
+      />
 
       {/* Main Grid: Calendar & Timeline */}
       <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-3">

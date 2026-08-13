@@ -55,8 +55,11 @@ export function TodayReflectionCard({
     return (
       <Card className="border-border bg-card/60 relative flex flex-col overflow-hidden border backdrop-blur-sm md:col-span-2">
         <CardHeader>
-          <CardTitle className="text-foreground font-serif text-xl font-semibold">
+          <span className="text-accent font-serif text-[11px] font-semibold tracking-[0.2em] uppercase">
             Today&apos;s Reflection
+          </span>
+          <CardTitle className="text-foreground font-serif text-2xl font-bold">
+            A page waiting to be written
           </CardTitle>
           <CardDescription>
             Begin writing your reflection for today
@@ -93,10 +96,10 @@ export function TodayReflectionCard({
   return (
     <Card className="border-border bg-card/60 relative flex flex-col overflow-hidden border backdrop-blur-sm md:col-span-2">
       <div className="animate-in fade-in zoom-in absolute top-0 right-0 p-4 duration-300">
-        <CheckCircle2 className="text-primary h-6 w-6" />
+        <CheckCircle2 className="text-accent h-6 w-6" />
       </div>
       <CardHeader className="border-border/10 border-b pb-4">
-        <span className="text-primary mb-1 block font-mono text-[10px] font-semibold tracking-wider uppercase">
+        <span className="text-accent mb-1 font-serif text-[11px] font-semibold tracking-[0.2em] uppercase">
           Today&apos;s Reflection
         </span>
         <CardTitle className="text-foreground font-serif text-2xl font-bold">

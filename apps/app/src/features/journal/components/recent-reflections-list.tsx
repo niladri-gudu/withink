@@ -30,11 +30,11 @@ const moodIcons: Record<number, React.ComponentType<{ className?: string }>> = {
 };
 
 const moodColors: Record<number, string> = {
-  1: "text-red-500 bg-red-500/10 border-red-500/20",
-  2: "text-orange-500 bg-orange-500/10 border-orange-500/20",
-  3: "text-yellow-500 bg-yellow-500/10 border-yellow-500/20",
-  4: "text-emerald-500 bg-emerald-500/10 border-emerald-500/20",
-  5: "text-teal-500 bg-teal-500/10 border-teal-500/20",
+  1: "text-mood-1 bg-mood-1-bg border-mood-1-border",
+  2: "text-mood-2 bg-mood-2-bg border-mood-2-border",
+  3: "text-mood-3 bg-mood-3-bg border-mood-3-border",
+  4: "text-mood-4 bg-mood-4-bg border-mood-4-border",
+  5: "text-mood-5 bg-mood-5-bg border-mood-5-border",
 };
 
 interface RecentReflectionsListProps {
@@ -101,7 +101,7 @@ export function RecentReflectionsList({
                   <h4 className="text-foreground truncate font-serif text-sm font-bold">
                     {entry.title || "Untitled Entry"}
                   </h4>
-                  <span className="text-muted-foreground/60 font-mono text-[10px] uppercase">
+                  <span className="text-muted-foreground/60 font-serif text-[10px] tracking-[0.12em] uppercase">
                     {formatDisplayDate(entry.date)}
                   </span>
                 </div>
@@ -116,7 +116,7 @@ export function RecentReflectionsList({
           asChild
           variant="ghost"
           size="sm"
-          className="text-muted-foreground hover:text-foreground cursor-pointer gap-1.5 p-0 font-mono text-xs tracking-widest uppercase hover:bg-transparent"
+          className="text-muted-foreground hover:text-foreground cursor-pointer gap-1.5 p-0 font-serif text-xs tracking-[0.15em] uppercase hover:bg-transparent"
         >
           <Link href={ROUTES.APP.ENTRIES}>
             View Archive

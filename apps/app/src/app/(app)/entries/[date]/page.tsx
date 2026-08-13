@@ -80,14 +80,14 @@ export default async function EntryPage({
     return (
       <div className="animate-in fade-in mx-auto flex min-h-[75vh] max-w-md flex-1 flex-col items-center justify-center px-6 py-20 text-center duration-300 select-none">
         <div className="space-y-4">
-          <span className="text-muted-foreground/60 block font-mono text-[10px] tracking-[0.2em] uppercase">
+          <p className="text-muted-foreground/70 font-hand text-xl">
             {isFuture
-              ? "Time Lock // Access Denied"
-              : "Grace Period // Expired"}
-          </span>
+              ? "this day hasn't arrived yet"
+              : "the ink has dried on this page"}
+          </p>
           <h1 className="text-foreground font-serif text-4xl leading-none font-bold tracking-tight sm:text-5xl">
             {isFuture ? "The Future is" : "The Archive is"} <br />
-            <span className="text-primary mt-2 block text-5xl font-light italic sm:text-6xl">
+            <span className="text-accent mt-2 block text-5xl font-normal italic sm:text-6xl">
               {isFuture ? "unwritten." : "sealed."}
             </span>
           </h1>
@@ -109,7 +109,7 @@ export default async function EntryPage({
 
             <Link
               href={ROUTES.APP.DASHBOARD}
-              className="text-muted-foreground hover:text-foreground block cursor-pointer font-mono text-xs tracking-widest uppercase transition-colors"
+              className="text-muted-foreground hover:text-foreground block cursor-pointer font-serif text-xs tracking-[0.15em] uppercase transition-colors"
             >
               Back to Dashboard
             </Link>

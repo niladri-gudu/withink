@@ -61,15 +61,15 @@ export function CalendarHeatmap({ heatmap }: CalendarHeatmapProps) {
 
     const wc = dayData.wordCount;
     if (wc < 100) {
-      return "bg-emerald-500/20 border-emerald-500/10 dark:bg-emerald-500/15 dark:border-emerald-500/5 hover:bg-emerald-500/35";
+      return "bg-accent/25 border-accent/15 dark:bg-accent/20 dark:border-accent/10 hover:bg-accent/40";
     }
     if (wc < 300) {
-      return "bg-emerald-500/40 border-emerald-500/20 dark:bg-emerald-500/30 dark:border-emerald-500/10 hover:bg-emerald-500/55";
+      return "bg-accent/45 border-accent/25 dark:bg-accent/35 dark:border-accent/15 hover:bg-accent/60";
     }
     if (wc < 600) {
-      return "bg-emerald-500/70 border-emerald-500/35 dark:bg-emerald-500/55 dark:border-emerald-500/20 hover:bg-emerald-500/85";
+      return "bg-accent/70 border-accent/40 dark:bg-accent/55 dark:border-accent/25 hover:bg-accent/85";
     }
-    return "bg-emerald-500 border-emerald-600 dark:bg-emerald-600 dark:border-emerald-500 hover:scale-105";
+    return "bg-accent border-accent dark:bg-accent dark:border-accent hover:scale-105";
   };
 
   // 3. Extract monthly labels to show above the grid
@@ -98,7 +98,7 @@ export function CalendarHeatmap({ heatmap }: CalendarHeatmapProps) {
     <div className="no-scrollbar flex w-full flex-col overflow-x-auto py-2">
       <div className="min-w-[760px] select-none">
         {/* Months header */}
-        <div className="text-muted-foreground/60 relative mb-1 h-6 font-mono text-[10px] tracking-wider uppercase">
+        <div className="text-muted-foreground/60 relative mb-1 h-6 font-serif text-[10px] tracking-[0.15em] uppercase">
           {monthLabels.map((lbl, idx) => (
             <span
               key={`${lbl.label}-${idx}`}
@@ -113,7 +113,7 @@ export function CalendarHeatmap({ heatmap }: CalendarHeatmapProps) {
         {/* Heatmap Grid */}
         <div className="flex items-start gap-2">
           {/* Days of week labels */}
-          <div className="text-muted-foreground/40 grid w-6 grid-rows-7 gap-[3px] pt-1 font-mono text-[9px] uppercase">
+          <div className="text-muted-foreground/40 grid w-6 grid-rows-7 gap-[3px] pt-1 font-serif text-[9px] uppercase">
             <span>Sun</span>
             <span></span>
             <span>Tue</span>
@@ -153,7 +153,7 @@ export function CalendarHeatmap({ heatmap }: CalendarHeatmapProps) {
                     </TooltipTrigger>
                     <TooltipContent
                       side="top"
-                      className="font-mono text-[10px]"
+                      className="font-serif text-[10px]"
                     >
                       {hasEntry ? (
                         <span>
@@ -181,13 +181,13 @@ export function CalendarHeatmap({ heatmap }: CalendarHeatmapProps) {
         </div>
 
         {/* Legend */}
-        <div className="text-muted-foreground/60 mt-4 flex items-center justify-end gap-2 font-mono text-[10px] uppercase">
+        <div className="text-muted-foreground/60 mt-4 flex items-center justify-end gap-2 font-serif text-[10px] uppercase">
           <span>Less</span>
           <div className="bg-muted/15 h-[10px] w-[10px] rounded-[2px] border border-transparent" />
-          <div className="h-[10px] w-[10px] rounded-[2px] border border-emerald-500/10 bg-emerald-500/20 dark:bg-emerald-500/15" />
-          <div className="h-[10px] w-[10px] rounded-[2px] border border-emerald-500/20 bg-emerald-500/40 dark:bg-emerald-500/30" />
-          <div className="h-[10px] w-[10px] rounded-[2px] border border-emerald-500/35 bg-emerald-500/70 dark:bg-emerald-500/55" />
-          <div className="h-[10px] w-[10px] rounded-[2px] border border-emerald-600 bg-emerald-500 dark:bg-emerald-600" />
+          <div className="h-[10px] w-[10px] rounded-[2px] border border-accent/15 bg-accent/25 dark:bg-accent/20" />
+          <div className="h-[10px] w-[10px] rounded-[2px] border border-accent/25 bg-accent/45 dark:bg-accent/35" />
+          <div className="h-[10px] w-[10px] rounded-[2px] border border-accent/40 bg-accent/70 dark:bg-accent/55" />
+          <div className="h-[10px] w-[10px] rounded-[2px] border border-accent bg-accent" />
           <span>More</span>
         </div>
       </div>

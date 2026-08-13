@@ -30,6 +30,7 @@ import { toast } from "sonner";
 import { ROUTES } from "@/constants/routes";
 import { signOut } from "@/lib/auth-client";
 import { clearSwCaches } from "@/lib/sw-cache";
+import { formatDisplayDate, getLocalDateString } from "@/lib/utils/date";
 import { useFocusTrap } from "@/hooks/use-focus-trap";
 
 interface SidebarProps {
@@ -160,22 +161,27 @@ export function Sidebar({
         .slice(0, 2)
     : "W";
 
+  const todayNote = formatDisplayDate(getLocalDateString(), {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  });
+
   const sidebarContent = (
-    <div className="bg-sidebar text-sidebar-foreground border-sidebar-border flex h-full flex-col border-r select-none">
-      {/* Header / Brand Logo */}
-      <div className="border-sidebar-border relative flex h-16 shrink-0 items-center justify-between border-b p-6">
-        {!isCollapsed && (
-          <span className="text-foreground animate-in fade-in font-serif text-xl font-bold tracking-tight duration-200">
-            withink.
-          </span>
-        )}
+    <div className="bg-sidebar text-sidebar-foreground border-sidebar-border relative flex h-full flex-col border-r select-none">
+      {/* Wordmark + margin note */}
+      <div className="border-sidebar-border relative flex h-auto shrink-0 flex-col justify-between gap-3 border-b p-5 pt-6">
         <div
           className={cn(
-            "flex items-center gap-2",
-            isCollapsed && "absolute top-4 left-[16px]",
+            "flex items-center justify-between gap-2",
+            isCollapsed && "absolute top-4 left-4",
           )}
         >
-          {/* Collapse Button - only visible on desktop */}
+          {!isCollapsed && (
+            <span className="text-foreground animate-in fade-in font-serif text-xl font-bold tracking-tight duration-200">
+              withink<span className="text-accent">.</span>
+            </span>
+          )}
           <Button
             variant="ghost"
             size="icon"
@@ -190,12 +196,19 @@ export function Sidebar({
             )}
           </Button>
         </div>
+
+        {/* Field-note: today's date in the margin */}
+        {!isCollapsed && (
+          <p className="text-muted-foreground animate-in fade-in font-hand text-lg leading-snug duration-300">
+            {todayNote} — a fresh page.
+          </p>
+        )}
       </div>
 
-      {/* Navigation Area */}
+      {/* Section index */}
       <TooltipProvider delayDuration={0}>
         <nav
-          className="no-scrollbar flex-1 space-y-1 overflow-y-auto px-3 py-4"
+          className="no-scrollbar flex-1 space-y-0.5 overflow-y-auto px-3 py-4"
           aria-label="Sidebar navigation"
         >
           {navItems.map((item) => {
@@ -212,22 +225,24 @@ export function Sidebar({
                   if (isMobileOpen) onCloseMobile();
                 }}
                 className={cn(
-                  "focus-visible:ring-ring flex h-10 cursor-pointer items-center space-x-3 rounded-lg px-3 text-sm transition-all duration-200 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
+                  "focus-visible:ring-ring group relative flex h-10 cursor-pointer items-center space-x-3 rounded-lg px-3 text-sm transition-all duration-200 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
                   item.active
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground border-sidebar-border border font-semibold shadow-sm"
+                    ? "bg-sidebar-accent text-sidebar-accent-foreground border-sidebar-border border font-medium"
                     : "text-muted-foreground hover:bg-sidebar-accent/50 hover:text-foreground",
                 )}
               >
+                {/* Gold margin tick for the active page */}
+                {item.active && (
+                  <span className="bg-accent absolute top-2 bottom-2 left-0 w-0.5 rounded-full" />
+                )}
                 <Icon
                   className={cn(
                     "h-4 w-4 shrink-0 transition-transform duration-200",
-                    item.active
-                      ? "text-primary scale-110"
-                      : "text-muted-foreground",
+                    item.active ? "text-accent" : "text-muted-foreground",
                   )}
                 />
                 {!isCollapsed && (
-                  <span className="animate-in fade-in truncate duration-200">
+                  <span className="animate-in fade-in truncate font-serif text-sm font-medium tracking-wide duration-200">
                     {item.label}
                   </span>
                 )}
@@ -248,7 +263,7 @@ export function Sidebar({
         </nav>
       </TooltipProvider>
 
-      {/* User profile dropdown area */}
+      {/* User area */}
       <div
         className="border-sidebar-border bg-sidebar-accent/20 relative shrink-0 border-t p-4"
         ref={userMenuRef}
@@ -256,7 +271,7 @@ export function Sidebar({
         {userMenuOpen && (
           <div
             className={cn(
-              "bg-popover text-popover-foreground border-border animate-in slide-in-from-bottom-2 absolute right-4 bottom-16 left-4 z-50 rounded-lg border p-2 shadow-lg duration-150",
+              "bg-popover text-popover-foreground border-border animate-in slide-in-from-bottom-2 absolute right-4 bottom-16 left-4 z-50 rounded-xl border p-2 shadow-lg duration-150",
               isCollapsed && "bottom-16 left-2 w-48",
             )}
             role="menu"
@@ -322,11 +337,14 @@ export function Sidebar({
     <>
       {/* Desktop Sidebar (visible on md screens and up) */}
       <motion.aside
-        animate={{ width: isCollapsed ? 64 : 256 }}
+        animate={{ width: isCollapsed ? 88 : 288 }}
         transition={{ type: "spring", stiffness: 200, damping: 25 }}
         className="z-30 hidden h-screen shrink-0 flex-col overflow-hidden md:flex"
       >
-        <div className="flex h-full w-64 shrink-0 flex-col">
+        <div
+          className="flex h-full shrink-0 flex-col"
+          style={{ width: 288 }}
+        >
           {sidebarContent}
         </div>
       </motion.aside>
@@ -345,7 +363,7 @@ export function Sidebar({
             role="dialog"
             aria-modal="true"
             aria-label="Navigation menu"
-            className="bg-sidebar text-sidebar-foreground animate-in slide-in-from-left relative z-50 flex h-full w-64 max-w-xs flex-col duration-250"
+            className="bg-sidebar text-sidebar-foreground animate-in slide-in-from-left relative z-50 flex h-full w-72 max-w-xs flex-col duration-250"
           >
             {sidebarContent}
           </aside>

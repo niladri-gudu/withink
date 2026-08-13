@@ -41,7 +41,7 @@ export function MandatorySanctuarySetup({
   const [confirmPassword, setConfirmPassword] = React.useState("");
   const [pin, setPin] = React.useState("");
   const [pinConfirm, setPinConfirm] = React.useState("");
-  const [warningChecked, _setWarningChecked] = React.useState(false);
+  const [warningChecked, setWarningChecked] = React.useState(false);
   const [isMigrating, setIsMigrating] = React.useState(false);
   const [entryCount, setEntryCount] = React.useState<number | null>(null);
   const [loadingInitial, setLoadingInitial] = React.useState(true);
@@ -227,9 +227,9 @@ export function MandatorySanctuarySetup({
           {/* Logo / Header */}
           <div className="mb-6 flex flex-col items-center">
             <span className="text-foreground mb-2 font-serif text-3xl font-bold tracking-tight">
-              withink.
+              withink<span className="text-accent">.</span>
             </span>
-            <div className="text-muted-foreground bg-secondary/80 border-border flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs">
+            <div className="text-muted-foreground bg-secondary/80 border-border flex items-center gap-1.5 rounded-full border px-3 py-1 font-serif text-xs">
               <KeyRound className="text-primary h-3.5 w-3.5" />
               <span>Sanctuary Setup</span>
             </div>
@@ -247,20 +247,30 @@ export function MandatorySanctuarySetup({
         </div>
 
         {/* ⚠️ Zero-Knowledge Warning */}
-        <div className="border-destructive/20 bg-destructive/5 mb-4 flex items-start gap-3 rounded-2xl border p-4">
-          <span className="bg-destructive/15 text-destructive mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold">
-            !
-          </span>
-          <p className="text-muted-foreground text-[11px] leading-relaxed select-none">
-            This is a{" "}
-            <strong className="text-foreground">100% Zero-Knowledge</strong>{" "}
-            system. If you lose your Sanctuary Password, your data{" "}
-            <strong className="text-foreground">
-              cannot be recovered by anyone
-            </strong>{" "}
-            — not us, not you. There is no &quot;forgot password&quot; for this.
-            Store it in a password manager.
-          </p>
+        <div className="border-destructive/20 bg-destructive/5 mb-4 rounded-2xl border p-4 text-left">
+          <label
+            htmlFor="zk-setup-warning"
+            className="flex cursor-pointer items-start gap-3"
+          >
+            <input
+              type="checkbox"
+              id="zk-setup-warning"
+              checked={warningChecked}
+              onChange={(e) => setWarningChecked(e.target.checked)}
+              disabled={isMigrating}
+              className="border-border text-accent focus:ring-accent mt-1 h-4 w-4 rounded"
+            />
+            <span className="text-muted-foreground text-[11px] leading-relaxed select-none">
+              This is a{" "}
+              <strong className="text-foreground">100% Zero-Knowledge</strong>{" "}
+              system. If you lose your Sanctuary Password, your data{" "}
+              <strong className="text-foreground">
+                cannot be recovered by anyone
+              </strong>{" "}
+              — not us, not you. There is no &quot;forgot password&quot; for this.
+              Store it in a password manager.
+            </span>
+          </label>
         </div>
 
         <form onSubmit={handleSetupAndMigrate} className="space-y-5 text-left">
@@ -323,7 +333,7 @@ export function MandatorySanctuarySetup({
                     onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
                     disabled={isMigrating}
                     required
-                    className="bg-background border-border/60 focus:ring-ring h-11 rounded-xl border text-center font-mono text-lg tracking-widest focus:ring-2"
+                    className="bg-background border-border/60 focus:ring-ring h-11 rounded-xl border text-center font-serif text-lg tracking-widest focus:ring-2"
                   />
                   <p className="text-muted-foreground/80 text-[10px] leading-snug">
                     This PIN locks your local encrypted key on this device.
@@ -350,7 +360,7 @@ export function MandatorySanctuarySetup({
                     }
                     disabled={isMigrating}
                     required
-                    className="bg-background border-border/60 focus:ring-ring h-11 rounded-xl border text-center font-mono text-lg tracking-widest focus:ring-2"
+                    className="bg-background border-border/60 focus:ring-ring h-11 rounded-xl border text-center font-serif text-lg tracking-widest focus:ring-2"
                   />
                 </div>
               </>

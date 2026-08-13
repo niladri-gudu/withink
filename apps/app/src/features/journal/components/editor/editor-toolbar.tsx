@@ -205,10 +205,10 @@ export function EditorToolbar({
     onChangeAmbientSound(nextSound);
 
     const labels = {
-      none: "Ambient Sound: Off 🤫",
-      rain: "Ambient Sound: Soft Rain 🌧️",
-      library: "Ambient Sound: Library Whir 📚",
-      forest: "Ambient Sound: Forest Wind 🌲",
+      none: "Ambient Sound: Off",
+      rain: "Ambient Sound: Soft Rain",
+      library: "Ambient Sound: Library Whir",
+      forest: "Ambient Sound: Forest Wind",
     };
     toast.success(labels[nextSound]);
   };
@@ -510,7 +510,7 @@ export function EditorToolbar({
       <Divider />
 
       {/* Live Word Count & Reading Time Badge */}
-      <div className="text-muted-foreground/80 bg-muted/40 flex shrink-0 items-center gap-1.5 rounded-md px-2 py-1 font-mono text-xs select-none">
+      <div className="text-muted-foreground/80 bg-muted/40 flex shrink-0 items-center gap-1.5 rounded-md px-2 py-1 font-serif text-xs select-none">
         <span>
           {editorState.words} {editorState.words === 1 ? "word" : "words"}
         </span>

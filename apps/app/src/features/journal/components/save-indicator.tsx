@@ -40,11 +40,11 @@ export function SaveIndicator({ status }: { status: SaveStatus }) {
             status === "saving" &&
               "bg-background/90 text-muted-foreground border-border",
             status === "saved" &&
-              "bg-background/90 border-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+              "bg-background/90 border-accent/20 text-accent",
             status === "offline" &&
-              "bg-background/90 border-amber-500/10 text-amber-600 dark:text-amber-400",
+              "bg-background/90 border-accent/20 text-accent",
             status === "locked" &&
-              "bg-background/90 border-amber-500/10 text-amber-600 dark:text-amber-400",
+              "bg-background/90 border-accent/20 text-accent",
             status === "error" &&
               "bg-destructive/10 text-destructive border-destructive/20",
           )}
@@ -57,19 +57,19 @@ export function SaveIndicator({ status }: { status: SaveStatus }) {
           )}
           {status === "saved" && (
             <>
-              <CheckCheck className="h-3 w-3 text-emerald-500" />
+              <CheckCheck className="text-accent h-3 w-3" />
               <span>Saved & synced</span>
             </>
           )}
           {status === "offline" && (
             <>
-              <Save className="h-3 w-3 text-amber-500" />
+              <Save className="text-accent h-3 w-3" />
               <span>Saved locally — will sync</span>
             </>
           )}
           {status === "locked" && (
             <>
-              <Lock className="h-3 w-3 text-amber-500" />
+              <Lock className="text-accent h-3 w-3" />
               <span>Session locked — pending save</span>
             </>
           )}
@@ -90,7 +90,7 @@ export function SaveIndicator({ status }: { status: SaveStatus }) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.95 }}
             transition={{ type: "spring", stiffness: 380, damping: 26 }}
-            className="flex items-center gap-1.5 rounded-full border border-amber-500/20 bg-amber-500/5 px-3.5 py-1.5 text-xs font-medium text-amber-500 backdrop-blur-md"
+            className="flex items-center gap-1.5 rounded-full border border-accent/20 bg-accent/5 px-3.5 py-1.5 text-xs font-medium text-accent backdrop-blur-md"
           >
             <WifiOff className="h-3 w-3" />
             <span>Working offline</span>

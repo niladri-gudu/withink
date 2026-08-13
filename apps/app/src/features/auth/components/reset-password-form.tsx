@@ -81,14 +81,14 @@ function ResetPasswordFormContent() {
         <h1 className="text-h2 text-foreground font-serif font-bold">
           Reset access.
         </h1>
-        <p className="text-caption font-mono tracking-[0.2em] uppercase">
-          Restoring archives • Update security credentials
+        <p className="text-caption font-serif tracking-[0.2em] uppercase">
+          Set a new key for your notebook
         </p>
       </div>
 
       {globalError && (
         <div className="bg-destructive/5 border-destructive/20 animate-in fade-in slide-in-from-top-2 rounded-lg border p-3">
-          <p className="text-destructive text-center font-mono text-[10px] tracking-widest uppercase">
+          <p className="text-destructive text-center font-serif text-[10px] tracking-widest uppercase">
             Warning: {globalError}
           </p>
         </div>
@@ -99,16 +99,15 @@ function ResetPasswordFormContent() {
           <div className="flex items-end justify-between">
             <label
               htmlFor="password"
-              className="text-helper text-muted-foreground/80 ml-1 font-mono tracking-wider"
+              className="text-helper text-muted-foreground/80 ml-1 font-serif tracking-wider"
             >
               New Secret Key
             </label>
             {errors.password?.message && (
               <span
                 id="password-error"
-                className="text-destructive animate-in fade-in font-mono text-[10px] tracking-tight uppercase"
+                className="text-destructive animate-in fade-in font-serif text-[10px] tracking-tight uppercase"
               >
-                {"// "}
                 {errors.password.message}
               </span>
             )}
@@ -132,7 +131,7 @@ function ResetPasswordFormContent() {
               onClick={() => setShowPassword(!showPassword)}
               aria-label={showPassword ? "Hide secret key" : "Show secret key"}
               aria-pressed={showPassword}
-              className="text-muted-foreground/60 hover:text-foreground focus-visible:ring-ring absolute top-1/2 right-3 -translate-y-1/2 cursor-pointer p-1 font-mono text-xs tracking-wider uppercase transition-colors focus-visible:rounded focus-visible:ring-2 focus-visible:outline-none"
+              className="text-muted-foreground/60 hover:text-foreground focus-visible:ring-ring absolute top-1/2 right-3 -translate-y-1/2 cursor-pointer p-1 font-serif text-xs tracking-wider uppercase transition-colors focus-visible:rounded focus-visible:ring-2 focus-visible:outline-none"
             >
               {showPassword ? "Hide" : "Show"}
             </button>
@@ -143,16 +142,15 @@ function ResetPasswordFormContent() {
           <div className="flex items-end justify-between">
             <label
               htmlFor="confirmPassword"
-              className="text-helper text-muted-foreground/80 ml-1 font-mono tracking-wider"
+              className="text-helper text-muted-foreground/80 ml-1 font-serif tracking-wider"
             >
               Confirm Secret Key
             </label>
             {errors.confirmPassword?.message && (
               <span
                 id="confirm-password-error"
-                className="text-destructive animate-in fade-in font-mono text-[10px] tracking-tight uppercase"
+                className="text-destructive animate-in fade-in font-serif text-[10px] tracking-tight uppercase"
               >
-                {"// "}
                 {errors.confirmPassword.message}
               </span>
             )}
@@ -182,7 +180,7 @@ function ResetPasswordFormContent() {
                   : "Show confirm secret key"
               }
               aria-pressed={showConfirm}
-              className="text-muted-foreground/60 hover:text-foreground focus-visible:ring-ring absolute top-1/2 right-3 -translate-y-1/2 cursor-pointer p-1 font-mono text-xs tracking-wider uppercase transition-colors focus-visible:rounded focus-visible:ring-2 focus-visible:outline-none"
+              className="text-muted-foreground/60 hover:text-foreground focus-visible:ring-ring absolute top-1/2 right-3 -translate-y-1/2 cursor-pointer p-1 font-serif text-xs tracking-wider uppercase transition-colors focus-visible:rounded focus-visible:ring-2 focus-visible:outline-none"
             >
               {showConfirm ? "Hide" : "Show"}
             </button>
@@ -192,13 +190,13 @@ function ResetPasswordFormContent() {
         <div className="pt-2">
           <Button
             type="submit"
-            className="relative h-11 w-full cursor-pointer overflow-hidden rounded-lg text-base font-medium transition-transform hover:scale-[1.01] active:scale-[0.99]"
+            className="relative h-11 w-full cursor-pointer overflow-hidden rounded-lg font-serif text-sm font-medium uppercase tracking-[0.15em] transition-transform hover:scale-[1.01] active:scale-[0.99]"
             disabled={isLoading}
           >
             {isLoading ? (
               <div className="bg-primary absolute inset-0 flex items-center justify-center gap-2">
                 <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
-                <span>Updating...</span>
+                <span>Updating…</span>
               </div>
             ) : (
               "Update Secret"

@@ -284,6 +284,12 @@ export function JournalEditorShell({
         <div className="from-background via-background/80 pointer-events-none fixed top-0 right-0 left-0 z-20 h-20 bg-gradient-to-b to-transparent transition-opacity duration-300 sm:h-28" />
       )}
 
+      {/* Ruled ledger paper behind the writing */}
+      <div
+        aria-hidden="true"
+        className="ledger-rules pointer-events-none fixed top-0 right-0 bottom-0 left-0"
+      />
+
       <main
         className={`relative z-30 mx-auto w-full max-w-3xl flex-grow px-4 transition-all duration-300 sm:px-6 ${
           isFocusMode ? "pt-12 pb-[30vh] sm:pt-16" : "pt-16 pb-[40vh] sm:pt-24"
@@ -324,7 +330,7 @@ export function JournalEditorShell({
           {!isFocusMode && (
             <div className="border-border/10 flex flex-col justify-between gap-4 border-y py-4 transition-opacity duration-300 sm:flex-row sm:items-center">
               <div className="flex items-center gap-3">
-                <time className="text-muted-foreground/70 font-mono text-xs tracking-widest uppercase">
+                <time className="text-muted-foreground/70 font-hand text-lg">
                   {formatDisplayDate(date)}
                 </time>
               </div>
@@ -347,7 +353,7 @@ export function JournalEditorShell({
               />
             ) : (
               <div className="flex items-center justify-center py-20">
-                <Loader2 className="text-primary h-6 w-6 animate-spin" />
+                <Loader2 className="text-accent h-6 w-6 animate-spin" />
               </div>
             )}
           </div>
@@ -360,7 +366,7 @@ export function JournalEditorShell({
         style={{ bottom: toolbarBottom }}
       >
         {editorInstance && (
-          <div className="border-border/60 bg-background/90 pointer-events-auto flex w-full max-w-full items-center overflow-hidden rounded-2xl border p-1.5 shadow-lg backdrop-blur-md sm:w-auto">
+          <div className="border-border/60 bg-card/95 pointer-events-auto flex w-full max-w-full items-center overflow-hidden rounded-2xl border p-1.5 shadow-lg backdrop-blur-md sm:w-auto">
             <EditorToolbar
               editor={editorInstance}
               isFocusMode={isFocusMode}
