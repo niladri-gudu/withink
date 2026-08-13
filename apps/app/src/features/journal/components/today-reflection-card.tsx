@@ -54,9 +54,10 @@ export function TodayReflectionCard({
   if (!entry) {
     return (
       <Card className="border-border relative flex flex-col overflow-hidden border md:col-span-2">
+        <div className="from-accent/60 via-accent/25 to-transparent absolute top-0 right-0 left-0 h-[2px] bg-gradient-to-r" />
         <CardHeader>
-          <span className="text-accent font-serif text-[11px] font-semibold tracking-[0.16em] uppercase">
-            Today&apos;s Reflection
+          <span className="text-accent font-serif text-[11px] font-semibold tracking-[0.2em] uppercase">
+            Today&apos;s page
           </span>
           <CardTitle className="text-foreground font-serif text-2xl font-bold">
             A page waiting to be written
@@ -92,12 +93,13 @@ export function TodayReflectionCard({
 
   return (
     <Card className="border-border relative flex flex-col overflow-hidden border md:col-span-2">
+      <div className="from-accent/60 via-accent/25 to-transparent absolute top-0 right-0 left-0 h-[2px] bg-gradient-to-r" />
       <div className="animate-in fade-in zoom-in absolute top-0 right-0 p-4 duration-300">
         <CheckCircle2 className="text-accent h-6 w-6" />
       </div>
       <CardHeader className="border-border/10 border-b pb-4">
-        <span className="text-accent mb-1 font-serif text-[11px] font-semibold tracking-[0.16em] uppercase">
-          Today&apos;s Reflection
+        <span className="text-accent mb-1 font-serif text-[11px] font-semibold tracking-[0.2em] uppercase">
+          Today&apos;s page
         </span>
         <CardTitle className="text-foreground font-serif text-2xl font-bold">
           {isDecrypting ? (
@@ -107,7 +109,7 @@ export function TodayReflectionCard({
           )}
         </CardTitle>
         <CardDescription>
-          Your entry for today is secure in your sanctuary
+          Your entry for today is secure in your diary
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-1 flex-col justify-between space-y-6 pt-6">

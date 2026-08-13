@@ -36,7 +36,7 @@ export const auth = betterAuth({
               await resend.emails.send({
                 from: env.EMAIL_FROM,
                 to: user.email,
-                subject: "Welcome to your sanctuary - withink.",
+                subject: "Welcome to your diary - withink.",
                 react: WelcomeEmail({
                   userFirstname:
                     (user.name || "friend").split(" ")[0] || "friend",
@@ -109,7 +109,7 @@ export const auth = betterAuth({
         await resend.emails.send({
           from: env.EMAIL_FROM,
           to: user.email,
-          subject: "Welcome to your sanctuary - withink.",
+          subject: "Welcome to your diary - withink.",
           react: WelcomeEmail({
             userFirstname: (user.name || "friend").split(" ")[0] || "friend",
             baseUrl: env.BETTER_AUTH_URL,

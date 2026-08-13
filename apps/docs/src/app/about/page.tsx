@@ -6,7 +6,7 @@ import { Button } from "@withink/ui/button";
 export const metadata: Metadata = {
   title: "About Us - withink.",
   description:
-    "Learn about the mission, values, and story behind withink., your digital sanctuary.",
+    "Learn about the mission, values, and story behind withink., your digital diary.",
 };
 
 export default function AboutPage() {
@@ -17,7 +17,7 @@ export default function AboutPage() {
           href="/"
           className="text-muted-foreground/80 hover:text-foreground focus-visible:ring-ring inline-flex items-center rounded p-0.5 font-mono text-xs tracking-widest uppercase transition-colors focus-visible:ring-1"
         >
-          ← Back to Sanctuary
+          ← Back to Diary
         </Link>
         <h1 className="text-h1 text-foreground font-serif font-bold tracking-tight">
           Our Story
@@ -30,7 +30,7 @@ export default function AboutPage() {
       <div className="text-body-small text-muted-foreground space-y-6 font-sans leading-relaxed">
         <p>
           At <strong>withink.</strong>, we believe your personal reflections
-          deserve a sanctuary. In an era dominated by instant notifications,
+          deserve a diary. In an era dominated by instant notifications,
           data harvesting, and scrollable feeds, the simple act of taking a pen
           to paper (or fingers to keys) has been lost to the noise.
         </p>
@@ -77,7 +77,7 @@ export default function AboutPage() {
 
         <p className="pt-4">
           Thank you for choosing to write with us. Welcome to your digital
-          sanctuary.
+          diary.
         </p>
       </div>
 
@@ -87,7 +87,7 @@ export default function AboutPage() {
           asChild
           className="focus-visible:ring-ring focus-visible:ring-2"
         >
-          <Link href="/">Back to Sanctuary</Link>
+          <Link href="/">Back to Diary</Link>
         </Button>
       </div>
     </div>

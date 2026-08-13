@@ -20,7 +20,7 @@ import {
   getPlaintextEntriesForMigrationAction,
 } from "@/features/encryption/actions/encryption-actions";
 
-interface MandatorySanctuarySetupProps {
+interface MandatoryDiarySetupProps {
   diaryLockEnabled: boolean;
   diaryHasPasscode: boolean;
   onSetupSuccess: (
@@ -31,11 +31,11 @@ interface MandatorySanctuarySetupProps {
   ) => void;
 }
 
-export function MandatorySanctuarySetup({
+export function MandatoryDiarySetup({
   diaryLockEnabled,
   diaryHasPasscode,
   onSetupSuccess,
-}: MandatorySanctuarySetupProps) {
+}: MandatoryDiarySetupProps) {
   const { setEncryptionSettings, setMasterKey } = useEncryption();
   const [password, setPassword] = React.useState("");
   const [confirmPassword, setConfirmPassword] = React.useState("");
@@ -87,7 +87,7 @@ export function MandatorySanctuarySetup({
     const toastId = toast.loading(
       entryCount && entryCount > 0
         ? "Initializing zero-knowledge migration..."
-        : "Securing your sanctuary...",
+        : "Securing your diary...",
     );
 
     try {
@@ -194,7 +194,7 @@ export function MandatorySanctuarySetup({
       toast.success(
         entries.length > 0
           ? `Migration complete! ${entries.length} entries secured.`
-          : "Sanctuary Password set successfully!",
+          : "Diary Password set successfully!",
         { id: toastId },
       );
 
@@ -214,7 +214,7 @@ export function MandatorySanctuarySetup({
   };
 
   if (loadingInitial) {
-    return <BrandLoader message="preparing your private sanctuary..." />;
+    return <BrandLoader message="preparing your private diary..." />;
   }
 
   const isMigratingOldData = entryCount !== null && entryCount > 0;
@@ -231,18 +231,18 @@ export function MandatorySanctuarySetup({
             </span>
             <div className="text-muted-foreground bg-secondary/80 border-border flex items-center gap-1.5 rounded-full border px-3 py-1 font-serif text-xs">
               <KeyRound className="text-primary h-3.5 w-3.5" />
-              <span>Sanctuary Setup</span>
+              <span>Diary Setup</span>
             </div>
           </div>
           <h1 className="text-foreground mt-2 font-serif text-3xl font-bold tracking-tight">
             {isMigratingOldData
               ? "Secure & Migrate Your Journal"
-              : "Create Sanctuary Password"}
+              : "Create Diary Password"}
           </h1>
           <p className="text-body-small text-muted-foreground mt-2 max-w-md leading-relaxed">
             {isMigratingOldData
               ? `We are transitioning Withink to a 100% Zero-Knowledge architecture. Choose a password to encrypt and secure your existing ${entryCount} journal logs locally.`
-              : "Set up browser-native zero-knowledge encryption to protect your writing sanctuary. Your password is never sent to our servers."}
+              : "Set up browser-native zero-knowledge encryption to protect your writing diary. Your password is never sent to our servers."}
           </p>
         </div>
 
@@ -263,7 +263,7 @@ export function MandatorySanctuarySetup({
             <span className="text-muted-foreground text-[11px] leading-relaxed select-none">
               This is a{" "}
               <strong className="text-foreground">100% Zero-Knowledge</strong>{" "}
-              system. If you lose your Sanctuary Password, your data{" "}
+              system. If you lose your Diary Password, your data{" "}
               <strong className="text-foreground">
                 cannot be recovered by anyone
               </strong>{" "}
@@ -280,7 +280,7 @@ export function MandatorySanctuarySetup({
                 htmlFor="zk-setup-pwd"
                 className="text-body-small text-foreground font-semibold"
               >
-                Sanctuary Password
+                Diary Password
               </label>
               <Input
                 id="zk-setup-pwd"
@@ -384,7 +384,7 @@ export function MandatorySanctuarySetup({
                 <Loader2 className="h-5 w-5 animate-spin" />
                 {isMigratingOldData
                   ? `Encrypting & Migrating Journal...`
-                  : "Initializing Sanctuary..."}
+                  : "Initializing Diary..."}
               </>
             ) : (
               <>

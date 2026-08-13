@@ -45,7 +45,7 @@ export default function ContactPage() {
           href="/"
           className="text-muted-foreground/80 hover:text-foreground focus-visible:ring-ring inline-flex items-center gap-1.5 rounded pb-2 font-mono text-xs tracking-widest uppercase transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
         >
-          <ArrowLeft className="h-3 w-3" /> Back to Sanctuary
+          <ArrowLeft className="h-3 w-3" /> Back to Diary
         </Link>
         <h1 className="text-h1 text-foreground">Reach Out to Us</h1>
         <p className="text-subtitle">

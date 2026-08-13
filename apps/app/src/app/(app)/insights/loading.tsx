@@ -10,6 +10,7 @@ export default function InsightsLoading() {
   return (
     <PageLoadingShell>
       <PageLoadingHeader
+        runningHead="Insights"
         eyebrow="a quiet look at your year"
         title="Private"
         accent="insights."

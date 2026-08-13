@@ -134,7 +134,7 @@ export function MediaGallery() {
             </div>
             <div className="space-y-1">
               <p className="text-muted-foreground font-serif text-[11px] tracking-[0.16em] uppercase">
-                Sanctuary Archives
+                Diary Archives
               </p>
               <div className="flex items-baseline gap-2">
                 <span className="text-2xl font-semibold tracking-tight">

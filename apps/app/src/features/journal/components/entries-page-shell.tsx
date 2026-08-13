@@ -58,9 +58,10 @@ export function EntriesPageShell({
   };
 
   return (
-    <div className="animate-in fade-in mx-auto w-full max-w-5xl flex-1 space-y-8 p-6 duration-300 md:p-10">
+    <div className="animate-in fade-in w-full space-y-8 duration-300">
       {/* Page Header */}
       <PageHeader
+        runningHead="Entries"
         note="the archive, kept in order"
         title="All"
         accent="reflections."

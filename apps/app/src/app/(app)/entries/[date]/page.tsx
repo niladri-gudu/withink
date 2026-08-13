@@ -13,7 +13,7 @@ import { JournalService } from "@/features/journal/services/journal-service";
 
 export const metadata: Metadata = {
   title: "Journal Entry",
-  description: "Reflect on this day in your private digital sanctuary.",
+  description: "Reflect on this day in your private digital diary.",
 };
 
 // The Tiptap editor is the largest client graph on this route. Load it lazily
@@ -96,7 +96,7 @@ export default async function EntryPage({
         <div className="mt-8 space-y-8">
           <p className="text-muted-foreground font-serif text-sm leading-relaxed">
             {isFuture
-              ? "This day hasn't arrived in your sanctuary yet. Patience is a form of ink."
+              ? "This day hasn't arrived in your diary yet. Patience is a form of ink."
               : "The ink for this day has already dried. Historical creation protocol is disabled."}
           </p>
 

@@ -84,17 +84,17 @@ export function LockSetupOnboarding({
     // The master key must be in memory to bind it to this device with the PIN.
     // If it was cleared (e.g. an auto-lock/tab lock fired mid-setup), we must
     // not save a passcode that this device can't actually use — route the user
-    // back through the Sanctuary Password unlock instead.
+    // back through the Diary Password unlock instead.
     if (!masterKey || !encryptionSalt) {
       toast.error(
-        "Session locked. Please unlock your sanctuary and try again.",
+        "Session locked. Please unlock your diary and try again.",
       );
       onCancel?.();
       return;
     }
 
     setIsSubmitting(true);
-    const toastId = toast.loading("Securing your sanctuary…");
+    const toastId = toast.loading("Securing your diary…");
 
     const res = await saveLockSettingsAction({
       isLockEnabled: true,
@@ -122,7 +122,7 @@ export function LockSetupOnboarding({
           console.error("Failed to secure master key with passcode PIN:", err);
         }
       }
-      toast.success("Sanctuary passcode configured successfully!", {
+      toast.success("Diary passcode configured successfully!", {
         id: toastId,
       });
       onSetupSuccess("", "", "", pin);
@@ -150,12 +150,12 @@ export function LockSetupOnboarding({
             </span>
             <div className="text-muted-foreground bg-secondary/80 border-border flex items-center gap-1.5 rounded-full border px-3 py-1 font-serif text-xs">
               <ShieldAlert className="text-accent h-3.5 w-3.5" />
-              <span>Sanctuary Security</span>
+              <span>Diary Security</span>
             </div>
           </div>
 
           <h2 className="text-foreground mt-2 mb-2 font-serif text-2xl font-semibold">
-            Secure Your Sanctuary
+            Secure Your Diary
           </h2>
           <p className="text-body-small text-muted-foreground mb-6 max-w-sm">
             Protect your diary entries from local access when you switch tabs or

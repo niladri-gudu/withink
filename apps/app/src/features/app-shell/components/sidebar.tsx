@@ -5,6 +5,7 @@ import NextImage from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@withink/ui/button";
+import { ThemeToggle } from "@withink/ui/theme-toggle";
 import {
   Tooltip,
   TooltipContent,
@@ -95,7 +96,7 @@ export function Sidebar({
         return;
       }
       await clearSwCaches();
-      toast.success("Logged out of your sanctuary.");
+      toast.success("Logged out of your diary.");
       router.refresh();
       router.push(ROUTES.AUTH.LOGIN);
     } catch (err: unknown) {
@@ -107,45 +108,54 @@ export function Sidebar({
     }
   };
 
+  // The codex index: each section is a folio in the margin, numbered like a
+  // printed table of contents. The hand note dates the open page.
   const navItems = [
     {
       label: "Today",
+      folio: "01",
       href: ROUTES.APP.DASHBOARD,
       icon: Sun,
       active: pathname === ROUTES.APP.DASHBOARD,
     },
     {
       label: "Entries",
+      folio: "02",
       href: ROUTES.APP.ENTRIES,
       icon: History,
       active: pathname.startsWith(ROUTES.APP.ENTRIES),
     },
     {
       label: "Flashbacks",
+      folio: "03",
       href: ROUTES.APP.FLASHBACKS,
       icon: Sparkles,
       active: pathname === ROUTES.APP.FLASHBACKS,
     },
     {
       label: "Insights",
+      folio: "04",
       href: ROUTES.APP.INSIGHTS,
       icon: BarChart2,
       active: pathname === ROUTES.APP.INSIGHTS,
     },
     {
       label: "Media",
+      folio: "05",
       href: ROUTES.APP.MEDIA,
       icon: Image,
       active: pathname === ROUTES.APP.MEDIA,
     },
     {
       label: "Settings",
+      folio: "06",
       href: ROUTES.APP.SETTINGS,
       icon: Settings,
       active: pathname === ROUTES.APP.SETTINGS,
     },
     {
       label: "Feedback",
+      folio: "07",
       href: ROUTES.APP.FEEDBACK,
       icon: MessageSquare,
       active: pathname === ROUTES.APP.FEEDBACK,
@@ -167,185 +177,242 @@ export function Sidebar({
     day: "numeric",
   });
 
-  const sidebarContent = (
-    <div className="bg-sidebar text-sidebar-foreground border-sidebar-border relative flex h-full flex-col border-r select-none">
-      {/* Wordmark + margin note */}
-      <div className="border-sidebar-border relative flex h-auto shrink-0 flex-col justify-between gap-3 border-b p-5 pt-6">
-        <div
-          className={cn(
-            "flex items-center justify-between gap-2",
-            isCollapsed && "absolute top-4 left-4",
-          )}
-        >
-          {!isCollapsed && (
-            <span className="text-foreground animate-in fade-in font-serif text-xl font-bold tracking-tight duration-200">
-              withink<span className="text-accent">.</span>
-            </span>
-          )}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onToggleCollapse}
-            className="text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hidden h-8 w-8 md:flex"
-            aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-          >
-            {isCollapsed ? (
-              <ChevronRight className="h-4 w-4" />
-            ) : (
-              <ChevronLeft className="h-4 w-4" />
-            )}
-          </Button>
-        </div>
-
-        {/* Field-note: today's date in the margin */}
-        {!isCollapsed && (
-          <p className="text-muted-foreground animate-in fade-in font-hand text-lg leading-snug duration-300">
-            {todayNote} — a fresh page.
-          </p>
-        )}
-      </div>
-
-      {/* Section index */}
-      <TooltipProvider delayDuration={0}>
-        <nav
-          className="no-scrollbar flex-1 space-y-0.5 overflow-y-auto px-3 py-4"
-          aria-label="Sidebar navigation"
-        >
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const content = (
-              <Link
-                key={item.label}
-                href={
-                  item.href as unknown as React.ComponentPropsWithoutRef<
-                    typeof Link
-                  >["href"]
-                }
-                onClick={() => {
-                  if (isMobileOpen) onCloseMobile();
-                }}
-                className={cn(
-                  "focus-visible:ring-ring group relative flex h-10 cursor-pointer items-center space-x-3 rounded-lg px-3 text-sm transition-all duration-200 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
-                  item.active
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground border-sidebar-border border font-medium"
-                    : "text-muted-foreground hover:bg-sidebar-accent/50 hover:text-foreground",
-                )}
-              >
-                {/* Gold margin tick for the active page */}
-                {item.active && (
-                  <span className="bg-accent absolute top-2 bottom-2 left-0 w-0.5 rounded-full" />
-                )}
-                <Icon
-                  className={cn(
-                    "h-4 w-4 shrink-0 transition-transform duration-200",
-                    item.active ? "text-accent" : "text-muted-foreground",
-                  )}
-                />
-                {!isCollapsed && (
-                  <span className="animate-in fade-in truncate font-serif text-sm font-medium tracking-wide duration-200">
-                    {item.label}
-                  </span>
-                )}
-              </Link>
-            );
-
-            if (isCollapsed) {
-              return (
-                <Tooltip key={item.label}>
-                  <TooltipTrigger asChild>{content}</TooltipTrigger>
-                  <TooltipContent side="right">{item.label}</TooltipContent>
-                </Tooltip>
-              );
-            }
-
-            return content;
-          })}
-        </nav>
-      </TooltipProvider>
-
-      {/* User area */}
-      <div
-        className="border-sidebar-border bg-sidebar-accent/20 relative shrink-0 border-t p-4"
-        ref={userMenuRef}
-      >
-        {userMenuOpen && (
+  const renderSidebarContent = (collapsed: boolean) => {
+    return (
+      <div className="bg-sidebar text-sidebar-foreground border-sidebar-border relative flex h-full flex-col border-r select-none">
+        <div className="border-sidebar-border relative flex shrink-0 flex-col border-b px-5 pt-6 pb-5">
           <div
             className={cn(
-              "bg-popover text-popover-foreground border-border animate-in slide-in-from-bottom-2 absolute right-4 bottom-16 left-4 z-50 rounded-xl border p-2 shadow-lg duration-150",
-              isCollapsed && "bottom-16 left-2 w-48",
+              "flex items-center justify-between gap-2",
+              collapsed && "justify-center",
             )}
-            role="menu"
           >
-            <div className="border-border/50 border-b px-3 py-2">
-              <p className="text-foreground truncate text-xs font-semibold">
-                {user?.name || "Writer"}
-              </p>
-              <p className="text-muted-foreground truncate text-[10px]">
-                {user?.email || "sanctuary@withink.me"}
-              </p>
+            {!collapsed && (
+              <span className="text-foreground animate-in fade-in font-serif text-xl font-bold tracking-tight duration-200">
+                withink<span className="text-accent">.</span>
+              </span>
+            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onToggleCollapse}
+              className="text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hidden h-8 w-8 shrink-0 md:flex"
+              aria-label={collapsed ? "Expand margin" : "Collapse margin"}
+            >
+              {collapsed ? (
+                <ChevronRight className="h-4 w-4" />
+              ) : (
+                <ChevronLeft className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
+
+          {!collapsed && (
+            <p className="text-muted-foreground animate-in fade-in font-hand text-lg leading-snug duration-300">
+              {todayNote}
+            </p>
+          )}
+        </div>
+
+        {/* The folio index */}
+        <TooltipProvider delayDuration={0}>
+          <nav
+            className="no-scrollbar flex-1 overflow-x-hidden overflow-y-auto px-3 py-5"
+            aria-label="Sidebar navigation"
+          >
+            <ul className="space-y-0.5">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                const content = (
+                  <li key={item.label} className="list-none">
+                    <Link
+                      href={
+                        item.href as unknown as React.ComponentPropsWithoutRef<
+                          typeof Link
+                        >["href"]
+                      }
+                      onClick={() => {
+                        if (isMobileOpen) onCloseMobile();
+                      }}
+                      className={cn(
+                        "focus-visible:ring-ring group relative flex h-10 items-center gap-3 rounded-lg px-3 transition-all duration-200 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
+                        collapsed && "justify-center px-0",
+                        item.active
+                          ? "text-sidebar-foreground"
+                          : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-foreground",
+                      )}
+                    >
+                      {/* Gold margin tick for the open folio */}
+                      {item.active && (
+                        <span className="bg-accent absolute top-2 bottom-2 left-0 w-0.5 rounded-full" />
+                      )}
+
+                      {collapsed ? (
+                        <Icon
+                          className={cn(
+                            "h-4 w-4 shrink-0",
+                            item.active
+                              ? "text-accent"
+                              : "text-muted-foreground",
+                          )}
+                        />
+                      ) : (
+                        <>
+                          <span
+                            className={cn(
+                              "w-5 shrink-0 text-right font-serif text-[11px] tracking-[0.1em] tabular-nums",
+                              item.active
+                                ? "text-accent"
+                                : "text-muted-foreground/50",
+                            )}
+                          >
+                            {item.folio}
+                          </span>
+                          <span
+                            className={cn(
+                              "animate-in fade-in truncate font-serif text-sm tracking-[0.08em] uppercase duration-200",
+                              item.active ? "font-semibold" : "font-medium",
+                            )}
+                          >
+                            {item.label}
+                          </span>
+                        </>
+                      )}
+                    </Link>
+                  </li>
+                );
+
+                if (collapsed) {
+                  return (
+                    <Tooltip key={item.label}>
+                      <TooltipTrigger asChild>{content}</TooltipTrigger>
+                      <TooltipContent side="right">{item.label}</TooltipContent>
+                    </Tooltip>
+                  );
+                }
+
+                return content;
+              })}
+            </ul>
+          </nav>
+        </TooltipProvider>
+
+        {/* Colophon: theme + user */}
+        <div
+          className="border-sidebar-border bg-sidebar-accent/20 relative shrink-0 border-t px-3 py-4"
+          ref={userMenuRef}
+        >
+          {userMenuOpen && (
+            <div
+              className={cn(
+                "bg-popover text-popover-foreground border-border animate-in slide-in-from-bottom-2 absolute right-4 bottom-16 left-4 z-50 rounded-xl border p-2 shadow-lg duration-150",
+                collapsed && "bottom-16 left-2 w-48",
+              )}
+              role="menu"
+            >
+              <div className="border-border/50 border-b px-3 py-2">
+                <p className="text-foreground truncate text-xs font-semibold">
+                  {user?.name || "Writer"}
+                </p>
+                <p className="text-muted-foreground truncate text-[10px]">
+                  {user?.email || "diary@withink.me"}
+                </p>
+              </div>
+              <div className="pt-1.5">
+                <button
+                  onClick={handleLogout}
+                  role="menuitem"
+                  className="text-destructive hover:bg-destructive/10 focus-visible:ring-destructive flex w-full cursor-pointer items-center space-x-2 rounded-md px-3 py-2 text-left text-xs transition-colors focus-visible:ring-2 focus-visible:outline-none"
+                >
+                  <LogOut className="h-3.5 w-3.5" />
+                  <span>Log Out</span>
+                </button>
+              </div>
             </div>
-            <div className="pt-1.5">
+          )}
+
+          {collapsed ? (
+            <div className="flex flex-col items-center gap-3">
+              <ThemeToggle />
               <button
-                onClick={handleLogout}
-                role="menuitem"
-                className="text-destructive hover:bg-destructive/10 focus-visible:ring-destructive flex w-full cursor-pointer items-center space-x-2 rounded-md px-3 py-2 text-left text-xs transition-colors focus-visible:ring-2 focus-visible:outline-none"
+                onClick={() => setUserMenuOpen(!userMenuOpen)}
+                className="hover:bg-sidebar-accent focus-visible:ring-ring flex w-full cursor-pointer items-center justify-center rounded-lg p-1 transition-all focus-visible:ring-2 focus-visible:outline-none"
+                aria-haspopup="menu"
+                aria-expanded={userMenuOpen}
+                aria-label="User menu"
               >
-                <LogOut className="h-3.5 w-3.5" />
-                <span>Log Out</span>
+                {user?.image ? (
+                  <NextImage
+                    src={user.image}
+                    alt={user.name || "User Avatar"}
+                    width={32}
+                    height={32}
+                    className="border-sidebar-border h-8 w-8 rounded-full border object-cover"
+                  />
+                ) : (
+                  <div className="bg-accent text-accent-foreground border-sidebar-border flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-xs font-bold shadow-sm">
+                    {userInitials}
+                  </div>
+                )}
               </button>
             </div>
-          </div>
-        )}
-
-        <button
-          onClick={() => setUserMenuOpen(!userMenuOpen)}
-          className="hover:bg-sidebar-accent focus-visible:ring-ring flex w-full cursor-pointer items-center gap-3 rounded-lg p-2 text-left transition-all focus-visible:ring-2 focus-visible:outline-none"
-          aria-haspopup="menu"
-          aria-expanded={userMenuOpen}
-          aria-label="User menu"
-        >
-          {user?.image ? (
-            <NextImage
-              src={user.image}
-              alt={user.name || "User Avatar"}
-              width={32}
-              height={32}
-              className="border-sidebar-border h-8 w-8 rounded-full border object-cover"
-            />
           ) : (
-            <div className="bg-accent text-accent-foreground border-sidebar-border flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-xs font-bold shadow-sm">
-              {userInitials}
-            </div>
-          )}
+            <>
+              <div className="mb-2 flex items-center justify-between px-1">
+                <span className="text-muted-foreground/60 font-serif text-[11px] tracking-[0.16em] uppercase">
+                  Colophon
+                </span>
+                <ThemeToggle />
+              </div>
+              <button
+                onClick={() => setUserMenuOpen(!userMenuOpen)}
+                className="hover:bg-sidebar-accent focus-visible:ring-ring flex w-full cursor-pointer items-center gap-3 rounded-lg p-2 text-left transition-all focus-visible:ring-2 focus-visible:outline-none"
+                aria-haspopup="menu"
+                aria-expanded={userMenuOpen}
+                aria-label="User menu"
+              >
+                {user?.image ? (
+                  <NextImage
+                    src={user.image}
+                    alt={user.name || "User Avatar"}
+                    width={32}
+                    height={32}
+                    className="border-sidebar-border h-8 w-8 rounded-full border object-cover"
+                  />
+                ) : (
+                  <div className="bg-accent text-accent-foreground border-sidebar-border flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-xs font-bold shadow-sm">
+                    {userInitials}
+                  </div>
+                )}
 
-          {!isCollapsed && (
-            <div className="animate-in fade-in min-w-0 flex-1 duration-200">
-              <p className="text-foreground truncate text-xs font-medium">
-                {user?.name || "Writer"}
-              </p>
-              <p className="text-muted-foreground truncate text-[10px]">
-                Free Account
-              </p>
-            </div>
+                <div className="animate-in fade-in min-w-0 flex-1 duration-200">
+                  <p className="text-foreground truncate text-xs font-medium">
+                    {user?.name || "Writer"}
+                  </p>
+                  <p className="text-muted-foreground truncate text-[10px]">
+                    Free Account
+                  </p>
+                </div>
+              </button>
+            </>
           )}
-        </button>
+        </div>
       </div>
-    </div>
-  );
-
+    );
+  };
   return (
     <>
-      {/* Desktop Sidebar (visible on md screens and up) */}
+      {/* Desktop margin rail (visible on md screens and up) */}
       <motion.aside
-        animate={{ width: isCollapsed ? 88 : 288 }}
+        animate={{ width: isCollapsed ? 76 : 264 }}
         transition={{ type: "spring", stiffness: 200, damping: 25 }}
         className="z-30 hidden h-screen shrink-0 flex-col overflow-hidden md:flex"
       >
         <div
           className="flex h-full shrink-0 flex-col"
-          style={{ width: 288 }}
+          style={{ width: isCollapsed ? 76 : 264 }}
         >
-          {sidebarContent}
+          {renderSidebarContent(isCollapsed)}
         </div>
       </motion.aside>
 
@@ -365,7 +432,7 @@ export function Sidebar({
             aria-label="Navigation menu"
             className="bg-sidebar text-sidebar-foreground animate-in slide-in-from-left relative z-50 flex h-full w-72 max-w-xs flex-col duration-250"
           >
-            {sidebarContent}
+            {renderSidebarContent(false)}
           </aside>
         </div>
       )}

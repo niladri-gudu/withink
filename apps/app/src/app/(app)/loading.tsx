@@ -10,10 +10,11 @@ export default function DashboardLoading() {
   return (
     <PageLoadingShell>
       <PageLoadingHeader
+        runningHead="Today"
         eyebrow="a fresh page for today"
         title="Good morning,"
         accent="writer."
-        description="Welcome back to your private writing sanctuary"
+        description="Welcome back to your private writing diary"
       />
 
       {/* Dashboard Grid */}

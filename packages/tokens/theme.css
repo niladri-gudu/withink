@@ -110,22 +110,23 @@
 
     --withink-paper-scale: 1;
 
-    /* Mood rating custom variables */
-    --mood-angry: oklch(0.6 0.14 25);
-    --mood-angry-bg: oklch(0.6 0.14 25 / 0.1);
-    --mood-angry-border: oklch(0.6 0.14 25 / 0.2);
-    --mood-sad: oklch(0.65 0.12 50);
-    --mood-sad-bg: oklch(0.65 0.12 50 / 0.1);
-    --mood-sad-border: oklch(0.65 0.12 50 / 0.2);
-    --mood-neutral: oklch(0.45 0.02 60);
-    --mood-neutral-bg: oklch(0.94 0.015 76);
-    --mood-neutral-border: oklch(0.9 0.015 76);
-    --mood-happy: oklch(0.6 0.12 145);
-    --mood-happy-bg: oklch(0.6 0.12 145 / 0.1);
-    --mood-happy-border: oklch(0.6 0.12 145 / 0.2);
-    --mood-radiant: oklch(0.78 0.12 75);
-    --mood-radiant-bg: oklch(0.78 0.12 75 / 0.2);
-    --mood-radiant-border: oklch(0.78 0.12 75 / 0.3);
+    /* Mood rating custom variables — one warm gold ramp, dark umber to bright
+       old-paper gold. Mood never leaves the archival band (One Accent Rule). */
+    --mood-angry: oklch(0.38 0.08 55);
+    --mood-angry-bg: oklch(0.38 0.08 55 / 0.1);
+    --mood-angry-border: oklch(0.38 0.08 55 / 0.2);
+    --mood-sad: oklch(0.43 0.075 62);
+    --mood-sad-bg: oklch(0.43 0.075 62 / 0.1);
+    --mood-sad-border: oklch(0.43 0.075 62 / 0.2);
+    --mood-neutral: oklch(0.48 0.07 70);
+    --mood-neutral-bg: oklch(0.48 0.07 70 / 0.12);
+    --mood-neutral-border: oklch(0.48 0.07 70 / 0.24);
+    --mood-happy: oklch(0.54 0.075 75);
+    --mood-happy-bg: oklch(0.54 0.075 75 / 0.12);
+    --mood-happy-border: oklch(0.54 0.075 75 / 0.24);
+    --mood-radiant: oklch(0.7 0.1 75);
+    --mood-radiant-bg: oklch(0.7 0.1 75 / 0.16);
+    --mood-radiant-border: oklch(0.7 0.1 75 / 0.3);
   }
 
   .dark {
@@ -167,22 +168,22 @@
     --sidebar-border: oklch(0.2 0.01 70);
     --sidebar-ring: oklch(0.92 0.01 75);
 
-    /* Mood rating custom variables */
-    --mood-angry: oklch(0.55 0.1 25);
-    --mood-angry-bg: oklch(0.55 0.1 25 / 0.1);
-    --mood-angry-border: oklch(0.55 0.1 25 / 0.2);
-    --mood-sad: oklch(0.6 0.08 50);
-    --mood-sad-bg: oklch(0.6 0.08 50 / 0.2);
-    --mood-sad-border: oklch(0.6 0.08 50 / 0.2);
-    --mood-neutral: oklch(0.65 0.01 75);
-    --mood-neutral-bg: oklch(0.25 0.01 70);
-    --mood-neutral-border: oklch(0.28 0.01 70);
-    --mood-happy: oklch(0.55 0.1 145);
-    --mood-happy-bg: oklch(0.55 0.1 145 / 0.2);
-    --mood-happy-border: oklch(0.55 0.1 145 / 0.2);
-    --mood-radiant: oklch(0.7 0.1 75);
-    --mood-radiant-bg: oklch(0.7 0.1 75 / 0.3);
-    --mood-radiant-border: oklch(0.7 0.1 75 / 0.3);
+    /* Mood rating custom variables — gold ramp tuned for the dark desk */
+    --mood-angry: oklch(0.72 0.06 60);
+    --mood-angry-bg: oklch(0.72 0.06 60 / 0.14);
+    --mood-angry-border: oklch(0.72 0.06 60 / 0.28);
+    --mood-sad: oklch(0.76 0.065 65);
+    --mood-sad-bg: oklch(0.76 0.065 65 / 0.14);
+    --mood-sad-border: oklch(0.76 0.065 65 / 0.28);
+    --mood-neutral: oklch(0.8 0.07 70);
+    --mood-neutral-bg: oklch(0.8 0.07 70 / 0.15);
+    --mood-neutral-border: oklch(0.8 0.07 70 / 0.3);
+    --mood-happy: oklch(0.84 0.085 73);
+    --mood-happy-bg: oklch(0.84 0.085 73 / 0.16);
+    --mood-happy-border: oklch(0.84 0.085 73 / 0.32);
+    --mood-radiant: oklch(0.9 0.09 76);
+    --mood-radiant-bg: oklch(0.9 0.09 76 / 0.2);
+    --mood-radiant-border: oklch(0.9 0.09 76 / 0.4);
   }
 }
 

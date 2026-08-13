@@ -392,6 +392,17 @@ Note: MongoDB (`mongodb+srv://`) now connects. The earlier `querySrv ECONNREFUSE
 
 # Recent Decisions
 
+2026-08-13
+
+- Shipped the Annotated Codex surface redesign for `apps/app` (theming intact):
+  - New shell: chrome becomes marginalia. A narrow left margin rail (wordmark + Caveat date + folio-numeral index 01 Today → 07 Feedback in tracked uppercase + colophon with ThemeToggle and user) is ruled from the text block by a 1px hairline, replacing the old sidebar-panel + breadcrumb-bar + card-grid app shell. Desktop breadcrumb bar removed; a slim mobile-only header (menu + wordmark + theme) replaces it, with the full folio rail sliding in as a drawer.
+  - Page headers: every surface now opens with a printed running head (folio name in tracked caps, hand-set date) ruled above the serif title + gold italic accent. New `PageHeader` `runningHead`/`description` API; loading skeletons mirror it.
+  - Surfaces as pages: dashboard is "today's page" (2px gold gradient hairline on the reflection sheet; streak becomes a flat "Margin note" with hand caption); insights' four icon-tile stat cards became one hairline-separated at-a-glance passage; entries calendar metrics flattened to a folio row.
+  - Primitives: `@withink/ui/card` now rests flat (no `shadow-sm` at rest; interactive cards still lift); labels normalized to the 0.2em running-head / 0.16em label voices.
+  - Direction: surface-structure roll (seed `be2a53bd`, candidate 4 — The Annotated Codex) inside the pinned Field Ledger world; contract comment written into `apps/app/src/app/layout.tsx` and verified to survive the production build.
+  - Verification: `tsc --noEmit` clean, eslint clean on all touched files, Impeccable detector clean, production build succeeds (21 routes), desktop + mobile visual pass on dashboard/entries/insights/settings/media/flashbacks/editor.
+  - Branch: `redesign/field-ledger-app` (polish commit `a48c0af`; redesign work uncommitted at write time).
+
 2026-08-10
 
 - Migrated the repository to a proper Turborepo monorepo:
@@ -408,7 +419,7 @@ Note: MongoDB (`mongodb+srv://`) now connects. The earlier `querySrv ECONNREFUSE
 - Completed Production-Grade Security & Housekeeping Remediation (Tiers 0–6):
   - Autosave & Offline Reliability: Rewrote `use-auto-save` with single-flight saves, retry, offline queue, and convergence dedupe; added 8 unit tests; offline edits re-sync on unlock. Service worker (`sw.js`) now handles offline navigation with a branded `offline.html`.
   - Zero-Knowledge Server: Removed all server-side decryption of user entry content; encryption keys live only in the browser. Server retains `safeDecrypt`/`decrypt` solely for the lock session token and legacy plaintext migration. Media list/lightbox scrub user content client-side.
-  - Sanctuary Lock Hardening: Single SSR lock gate in `(app)/layout.tsx` (`SanctuaryLockGate`) covers all nested pages; `getAllEntriesAction` and `/api/media/upload` return locked errors/403 when locked. Passcode verification uses `timingSafeEqual`; reset codes use `crypto.randomInt`; reset-email requests rate-limited (3/15 min); hex validation added to crypto client and worker.
+  - Diary Lock Hardening: Single SSR lock gate in `(app)/layout.tsx` (`DiaryLockGate`) covers all nested pages; `getAllEntriesAction` and `/api/media/upload` return locked errors/403 when locked. Passcode verification uses `timingSafeEqual`; reset codes use `crypto.randomInt`; reset-email requests rate-limited (3/15 min); hex validation added to crypto client and worker.
   - CSP Hardening (both apps): `script-src 'unsafe-eval'` dev-only, added `script-src-attr 'none'` and `object-src 'none'`.
   - App Shell & UX Fixes: Fixed `app-shell` ref-during-render (state-adjust-during-render pattern), `save-indicator` setState-in-effect, `media-lightbox` stale-cache-on-open, `journal-editor-shell` cross-date stale content, and removed `as any` casts in theme/audio files. Lint now 0 errors / 1 warning (intentional EB Garamond font link).
   - Dependency Hygiene: Removed bogus `save-dev` (0.0.1-security) placeholder from `app/` and `docs/` package.json; declared `server-only` (used by 14+ server files) as an explicit dependency; pruned ~20 unused app-only dependencies from `docs/package.json` (docs site now installs only its ~10 real packages).
@@ -426,10 +437,10 @@ Note: MongoDB (`mongodb+srv://`) now connects. The earlier `querySrv ECONNREFUSE
 
 2026-07-10
 
-- Shipped Sanctuary Lock (Diary Passcode Lock):
+- Shipped Diary Lock (Diary Passcode Lock):
   - Secondary Security Layer: Designed and implemented a local passcode (PIN) lock that intercepts client-side UI and server-side actions, protecting entries, media, flashbacks, insights, and ZIP downloads even if login credentials are known.
   - Tactile Keypad Overlay: Built a fullscreen backdrop-blurred PIN keypad overlay with tactile animations, automatic submission, keyboard listeners, error shaking, and multi-path lock recoveries (login credentials check and Resend email codes).
-  - Onboarding Flow: Added a passcode setup onboarding dialog prompting users on login to secure their sanctuary if they haven't set up a passcode.
+  - Onboarding Flow: Added a passcode setup onboarding dialog prompting users on login to secure their diary if they haven't set up a passcode.
   - Configuration Settings: Integrated a Diary Lock section card in Settings to allow toggling locks, changing PINs, customizing auto-lock timeouts, and setting tab-switching locks.
   - Test Suite Expansion: Expanded the Vitest suite with 12 new unit tests covering lock settings, cookie verification, recovers, and setting validations. All 91 unit tests are passing cleanly.
 
@@ -438,7 +449,7 @@ Note: MongoDB (`mongodb+srv://`) now connects. The earlier `querySrv ECONNREFUSE
 - Completed Phase 18 Final Polish:
   - Typography Polish: Replaced heavy `font-black` headings with design-system standard `font-bold` (700) for display/hero headings and `font-semibold` (600) for card titles, improving readability and editorial warmth.
   - Theme Toggle Relocation: Placed the `ThemeToggle` component in the main top header for all viewports, ensuring theme switching is always accessible even when the sidebar is collapsed on desktop. Removed redundant toggle elements from the sidebar.
-  - Landing Page Copy: Replaced "Begin Rebuilding" CTA with "Get Started". Updated the tactile mockup preview card with warm, poetic journal entry descriptions of tea/rain/nature and a "Calm 😌" mood tag to align with emotional sanctuary goals.
+  - Landing Page Copy: Replaced "Begin Rebuilding" CTA with "Get Started". Updated the tactile mockup preview card with warm, poetic journal entry descriptions of tea/rain/nature and a "Calm 😌" mood tag to align with emotional diary goals.
   - Legal Pages Styling: Aligned Terms of Service and Privacy Philosophy pages to use standard design-system typography classes (`text-h1`, `text-title`, `text-body-small`).
   - Baseline Test Fixes: Resolved a failing unit test in `entry-actions.test.ts` where MongoDB `_id` was being asserted instead of client-mapped decrypted entry `id`.
 
@@ -470,7 +481,7 @@ Note: MongoDB (`mongodb+srv://`) now connects. The earlier `querySrv ECONNREFUSE
 2026-07-06
 
 - Feedback and Journal Autosave Reliability Fixes:
-  - Feedback Page Width: Aligned the feedback page width from `max-w-3xl` to `max-w-5xl` in [page.tsx](file:///d:/code/saas/temp/withink.me/src/app/(app)/feedback/page.tsx), standardizing layout dimensions across all sanctuary dashboard routes.
+  - Feedback Page Width: Aligned the feedback page width from `max-w-3xl` to `max-w-5xl` in [page.tsx](file:///d:/code/saas/temp/withink.me/src/app/(app)/feedback/page.tsx), standardizing layout dimensions across all diary dashboard routes.
   - Journal Autosave Bug: Resolved the "Save failed" issue in red. First, implemented client-side date-synchronization via `withink-local-date` cookie in [app-shell.tsx](file:///d:/code/saas/temp/withink.me/src/features/app-shell/components/app-shell.tsx) to keep Server Components and Server Actions aligned on the user's actual browser local date. Second, modified the `useAutoSave` hook in [use-auto-save.ts](file:///d:/code/saas/temp/withink.me/src/features/journal/hooks/use-auto-save.ts) to reset baseline states synchronously when the date changes, preventing dirty state race conditions and incorrect expired/future grace period evaluations.
   - Editor Toolbar TypeError: Fixed a transient runtime `TypeError` (`Cannot read properties of null (reading 'can')`) in [editor-toolbar.tsx](file:///d:/code/saas/temp/withink.me/src/features/journal/components/editor/editor-toolbar.tsx) by adding a defensive guard clause checking for editor presence inside the `useEditorState` selector before reading capabilities.
 
@@ -480,7 +491,7 @@ Note: MongoDB (`mongodb+srv://`) now connects. The earlier `querySrv ECONNREFUSE
 - Focus Management: Created a reusable `useFocusTrap` hook to wrap focus inside modal dialogs and sliding panels (Media Lightbox, Delete Account Modal, and Mobile Sidebar drawer), and added `Escape` key close handlers to them. Added a visually hidden-until-focused "Skip to content" link at the top of the App Layout page targeting the main body.
 - ARIA semantics and labels: Added `role="dialog" aria-modal="true"` to lightbox, mobile sidebar, and settings delete account modal. Associated error message elements to inputs via `aria-describedby` in all auth and feedback forms. Added descriptive `aria-label`s to show/hide password buttons, the journal editor title/back actions, entries search/filters/pagination inputs, and month calendar buttons/day cells.
 - Visual Focus Indicators: Added focus-visible outline indicators (`focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2`) to custom buttons and cards in settings (theme selects, avatar upload) and feedback form categories, ensuring keyboard navigability is visually traceable.
-- Layout Alignment: Standardized the Feedback page width constraint from `max-w-3xl` to `max-w-5xl` in `feedback/page.tsx`, bringing visual symmetry with all other sanctuary dashboard pages.
+- Layout Alignment: Standardized the Feedback page width constraint from `max-w-3xl` to `max-w-5xl` in `feedback/page.tsx`, bringing visual symmetry with all other diary dashboard pages.
 - Verification: TypeScript typecheck clean, ESLint linting clean (zero errors/warnings), Vitest unit test suite (43/43 tests passing), and production next build (22 routes with PPR stream support) successfully completed.
 
 2026-07-06
@@ -493,7 +504,7 @@ Note: MongoDB (`mongodb+srv://`) now connects. The earlier `querySrv ECONNREFUSE
 - Query optimization: added a compound index `{ userId: 1, date: -1 }` to the `Entry` schema alongside the existing `{ userId: 1, date: 1 } unique` index. The hot sorted-read paths (`getEntriesPage`, `getEntryDates`, and any `sort({ date: -1 })` listing) now hit the index instead of an in-memory sort. Kept the asc index for ascending reads (insights full scan, export). Deliberately did **not** add a `{ userId, mood }` index — mood-filtered search decrypts in-app in `JournalService.getInsights`, so DB-side mood selectivity doesn't pay off (architecture: "Only optimize proven bottlenecks").
 - Cache review: the version-based invalidation (`entries:{userId}:version` incremented on save/delete, with `:v{version}:` keyed entries/pages/stats/dates) and the hot/archive TTL split are correct and degrade gracefully when Redis is absent — no changes. Noted one maintainability nit (see Technical Debt): `CACHE_KEYS` constants are declared but the repository uses ad-hoc string keys; left untouched because consolidating key builders risks churning working invalidation for no perf gain.
 - Core Web Vitals / rerender review: React Compiler is on (`reactCompiler: true`) and handles memoization; spot-checked `MediaGallery` (inline filter/sort acceptable at this dataset size, React Compiler memoizes downstream; the real win was the lightbox split), `InsightsDashboard` (the single client-side timezone re-fetch via `getInsightsAction` is correct and runs once), and confirmed no `Date.now()`/`Math.random()` in component render paths. No rerender bugs found — "reviewed, no action."
-- Verification: TypeScript clean, ESLint clean (zero warnings), all 43 unit tests pass. Production build (`pnpm build` → `node scripts/build.mjs`) completes clean: 22 routes generated, all sanctuary routes (`/dashboard`, `/entries`, `/entries/[date]`, `/feedback`, `/flashbacks`, `/insights`, `/media`, `/settings`) registered as Partial Prerender (`◐`), page-data collection finished in 6.4s with no OOM.
+- Verification: TypeScript clean, ESLint clean (zero warnings), all 43 unit tests pass. Production build (`pnpm build` → `node scripts/build.mjs`) completes clean: 22 routes generated, all diary routes (`/dashboard`, `/entries`, `/entries/[date]`, `/feedback`, `/flashbacks`, `/insights`, `/media`, `/settings`) registered as Partial Prerender (`◐`), page-data collection finished in 6.4s with no OOM.
 
 2026-07-05
 
@@ -515,7 +526,7 @@ Note: MongoDB (`mongodb+srv://`) now connects. The earlier `querySrv ECONNREFUSE
 - Improved on the V1 export: images are retrieved securely from R2 by deriving the object key from `R2_PUBLIC_URL` and calling `GetObjectCommand` (first-party assets only — no arbitrary URL fetching / SSRF), images are deduped, and a single unreadable image never fails the whole export.
 - Delivered the download via a streaming route handler `GET /api/export` (auth-guarded, 401 when unauthenticated, `Content-Disposition` attachment with a dated filename). Binary downloads belong in a route handler, not a Server Action.
 - Added data-access helpers reused from the journal feature: `EntryRepository.getAllEntries` (uncached, complete, chronological) and `JournalService.getAllEntriesForExport` (decrypts via the existing private `decryptEntry`, keeping decryption centralized).
-- Surfaced the entry point as a self-contained "Your data" section (`DataExportCard`) inside the redesigned Settings page, matching the sanctuary section-card styling; the design-system sidebar lists no Export item and the old app also placed export under Settings.
+- Surfaced the entry point as a self-contained "Your data" section (`DataExportCard`) inside the redesigned Settings page, matching the diary section-card styling; the design-system sidebar lists no Export item and the old app also placed export under Settings.
 - Added 5 unit tests (32 total passing) covering archive structure, clean metadata, first-party-only image capture, dedupe, the empty-journal case, and graceful handling of an unreadable image. TypeScript, ESLint, and the production build are all clean; `/api/export` is registered.
 
 2026-07-03
@@ -530,7 +541,7 @@ Note: MongoDB (`mongodb+srv://`) now connects. The earlier `querySrv ECONNREFUSE
 
 - Redesigned the Phase 11 Settings interface. The first build had inadvertently reproduced Version 1's cramped visual language (7–10px mono uppercase micro-labels, `font-black tracking-tighter` headings, dense two-column "binder spread"), so the page looked identical to the old app and violated the Design System's calls for warmth, calm, and generous spacing.
 - Rebuilt `SettingsShell` as a single, calm centered column of paper-like section cards (Profile, Appearance, Paper Feel, Security, Connected Accounts, Sign out, Delete account). Adopted the semantic type scale (`text-h3`, `text-title`, `text-body-small`, `text-caption`) and design tokens instead of hardcoded hex colors and pixel font sizes.
-- Each section now leads with an icon + serif title + quiet description, with comfortable spacing between controls. Theme selection uses larger Sand/Moon cards with sun/moon glyphs; Paper Feel keeps the scale slider, auto-detect, PPI calculator, and credit-card calibration but with roomier, gentler styling; Connected Accounts uses a clean list with Connected/Not connected badges; the delete confirmation modal was softened to match the sanctuary aesthetic.
+- Each section now leads with an icon + serif title + quiet description, with comfortable spacing between controls. Theme selection uses larger Sand/Moon cards with sun/moon glyphs; Paper Feel keeps the scale slider, auto-detect, PPI calculator, and credit-card calibration but with roomier, gentler styling; Connected Accounts uses a clean list with Connected/Not connected badges; the delete confirmation modal was softened to match the diary aesthetic.
 - Preserved all existing behavior and server logic unchanged: `deleteAccountAction`, avatar upload flow, `changePassword`, paper-scale persistence, and the type-to-confirm "DELETE" deletion. All 27 unit tests still pass; TypeScript, ESLint, and the production build are clean.
 
 2026-07-02
@@ -562,7 +573,7 @@ Note: MongoDB (`mongodb+srv://`) now connects. The earlier `querySrv ECONNREFUSE
 - Added Redis caching (24-hour TTL) of the day's chosen flashback to ensure perfect consistency across the dashboard and flashbacks pages.
 - Built a robust history-tracking mechanism in Redis to store the last 10 unique shown flashback dates, avoiding repetitive flashbacks.
 - Created a refresh action to force-select a new flashback and update the cache seamlessly.
-- Crafted a premium client UI using the Sanctuary design system, with concentric circular outline backgrounds, detailed mood tone styling, and action triggers for responding or re-reading.
+- Crafted a premium client UI using the Diary design system, with concentric circular outline backgrounds, detailed mood tone styling, and action triggers for responding or re-reading.
 - Developed comprehensive unit tests verifying anniversary priorities, random exclusions, cache checks, and refresh operations, ensuring clean TypeScript compiler and ESLint audits.
 
 2026-07-02
@@ -587,7 +598,7 @@ Note: MongoDB (`mongodb+srv://`) now connects. The earlier `querySrv ECONNREFUSE
 2026-07-01
 
 - Implemented the complete Journal Entries timeline index view supporting real-time debounced title search, mood and time-range filters, and standard pagination.
-- Designed a beautiful, responsive monthly calendar component matching the dark/light sanctuary theme, highlighting written dates and supporting visual navigation.
+- Designed a beautiful, responsive monthly calendar component matching the dark/light diary theme, highlighting written dates and supporting visual navigation.
 - Created Server Actions for entries pagination, consistency statistics, calendar highlights, and secure entry deletion.
 - Integrated consistency metrics (total reflections count, current daily streak, average words) dynamically updating when journal logs are deleted.
 - Connected the V2 app dashboard to live data loaders replacing static placeholders, including recent reflections list and dynamic flashbacks (prioritizing 1-year anniversaries).

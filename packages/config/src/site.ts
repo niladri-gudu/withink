@@ -1,7 +1,7 @@
 export const siteConfig = {
   name: "withink.",
   description:
-    "A private, encrypted digital sanctuary for your thoughts and reflections. Built for focus and calmness.",
+    "A private, encrypted digital diary for your thoughts and reflections. Built for focus and calmness.",
   url:
     process.env.IS_PROD === "true"
       ? "https://app.withink.me"

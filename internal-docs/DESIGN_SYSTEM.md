@@ -10,7 +10,7 @@ Version: 2.0
 
 Withink is not simply a journaling application.
 
-It is a calm digital sanctuary.
+It is a calm digital diary.
 
 The interface should disappear into the background and allow writing to become the primary experience.
 

@@ -64,7 +64,7 @@ export function RegisterForm() {
 
       setRegisteredEmail(data.email);
       setVerifyPending(true);
-      toast.success("sanctuary pending. Check your ink.");
+      toast.success("diary pending. Check your ink.");
     } catch (err: unknown) {
       setIsLoading(false);
       const errorMessage =

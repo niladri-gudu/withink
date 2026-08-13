@@ -11,7 +11,7 @@ import { InsightsService } from "@/features/insights/services/insights-service";
 export const metadata: Metadata = {
   title: "Private Insights - Withink",
   description:
-    "Observe long-term habits, writing streaks, and emotional baseline trends in your digital journal sanctuary.",
+    "Observe long-term habits, writing streaks, and emotional baseline trends in your digital journal diary.",
 };
 
 export default async function InsightsPage() {

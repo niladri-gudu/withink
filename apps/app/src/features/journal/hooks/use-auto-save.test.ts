@@ -14,8 +14,8 @@ const { encryptionState } = vi.hoisted(() => ({
   },
 }));
 
-const { sanctuaryCacheMock } = vi.hoisted(() => ({
-  sanctuaryCacheMock: {
+const { diaryCacheMock } = vi.hoisted(() => ({
+  diaryCacheMock: {
     saveLocalDocument: vi.fn().mockResolvedValue(undefined),
     saveLocalMetadata: vi.fn().mockResolvedValue(undefined),
     enqueueOfflineSync: vi.fn().mockResolvedValue(undefined),
@@ -35,8 +35,8 @@ vi.mock("@/providers/encryption-provider", () => ({
   }),
 }));
 
-vi.mock("../services/sanctuary-cache-service", () => ({
-  sanctuaryCacheService: sanctuaryCacheMock,
+vi.mock("../services/diary-cache-service", () => ({
+  diaryCacheService: diaryCacheMock,
 }));
 
 vi.mock("@/lib/crypto-client", () => ({
@@ -76,9 +76,9 @@ describe("useAutoSave", () => {
     encryptionState.isClientEncrypted = false;
     encryptionState.masterKey = null;
     saveEntryActionMock.mockReset();
-    sanctuaryCacheMock.saveLocalDocument.mockClear();
-    sanctuaryCacheMock.saveLocalMetadata.mockClear();
-    sanctuaryCacheMock.enqueueOfflineSync.mockClear();
+    diaryCacheMock.saveLocalDocument.mockClear();
+    diaryCacheMock.saveLocalMetadata.mockClear();
+    diaryCacheMock.enqueueOfflineSync.mockClear();
   });
 
   afterEach(() => {
@@ -190,7 +190,7 @@ describe("useAutoSave", () => {
     });
 
     expect(saveEntryActionMock).toHaveBeenCalledTimes(1);
-    expect(sanctuaryCacheMock.enqueueOfflineSync).toHaveBeenCalledTimes(1);
+    expect(diaryCacheMock.enqueueOfflineSync).toHaveBeenCalledTimes(1);
     expect(result.current).toBe("offline");
   });
 

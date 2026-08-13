@@ -180,7 +180,7 @@ export function FeedbackForm() {
         </div>
         <h2 className="text-h3 text-foreground mt-6">Thank you.</h2>
         <p className="text-body-small text-muted-foreground mx-auto mt-2 max-w-sm">
-          Your note is on its way to us. Every message helps make your sanctuary
+          Your note is on its way to us. Every message helps make your diary
           calmer and more thoughtful.
         </p>
         <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">

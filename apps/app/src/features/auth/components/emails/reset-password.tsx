@@ -15,7 +15,7 @@ export function ResetPassword({ name, url }: ResetPasswordProps) {
 
         <h1 style={h1}>Reset your password</h1>
         <p style={text}>
-          Hey {name}, we received a request to access your sanctuary. Click the
+          Hey {name}, we received a request to access your diary. Click the
           button below to choose a new password.
         </p>
 

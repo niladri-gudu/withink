@@ -4,7 +4,7 @@ import { ForgotPasswordForm } from "@/features/auth/components/forgot-password-f
 
 export const metadata: Metadata = {
   title: "Forgot Password",
-  description: "Recover access to your private digital sanctuary.",
+  description: "Recover access to your private digital diary.",
 };
 
 export default function ForgotPasswordPage() {

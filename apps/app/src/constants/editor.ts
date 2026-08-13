@@ -8,7 +8,7 @@ export const EDITOR_CONFIG = {
   ] as const,
   AUTOSAVE_INDICATORS: {
     SAVING: "Saving changes...",
-    SAVED: "Saved to your sanctuary",
+    SAVED: "Saved to your diary",
     ERROR: "Failed to save. Retrying...",
     OFFLINE: "Offline. Saving locally...",
   } as const,

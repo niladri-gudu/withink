@@ -10,6 +10,7 @@ export default function MediaLoading() {
   return (
     <PageLoadingShell>
       <PageLoadingHeader
+        runningHead="Media"
         eyebrow="keepsakes pressed between the pages"
         title="Memory"
         accent="gallery."

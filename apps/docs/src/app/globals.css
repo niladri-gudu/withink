@@ -1,4 +1,4 @@
-﻿@import "tailwindcss";
+@import "tailwindcss";
 @import "@withink/tokens/theme.css";
 
 /* Tailwind v4 scans each app dir automatically; add workspace package source
@@ -8,7 +8,7 @@
 @source "../../../../packages/config/src";
 
 /* The Field Ledger â€” the docs surface's own visual world (see the direction
-   contract comment in layout.tsx). The app keeps The Quiet Sanctuary tokens;
+   contract comment in layout.tsx). The app keeps The Quiet Diary tokens;
    these overrides re-theme the marketing site only. */
 @theme {
   --font-sans: var(--font-alegreya);

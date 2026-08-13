@@ -5,7 +5,7 @@
  */
 export function PageLoadingShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="animate-in fade-in mx-auto w-full max-w-5xl flex-grow space-y-8 p-6 duration-300 md:p-10">
+    <div className="animate-in fade-in w-full space-y-8 duration-300">
       {children}
     </div>
   );
@@ -17,12 +17,14 @@ export function PageLoadingShell({ children }: { children: React.ReactNode }) {
  * mirror the two-tone headline pattern shared across the app.
  */
 export function PageLoadingHeader({
+  runningHead,
   eyebrow,
   title,
   accent,
   description,
   action,
 }: {
+  runningHead: string;
   eyebrow: string;
   title: string;
   accent: string;
@@ -30,22 +32,32 @@ export function PageLoadingHeader({
   action?: React.ReactNode;
 }) {
   return (
-    <header className="flex items-start justify-between gap-4">
-      <div className="space-y-2">
-        <span className="text-muted-foreground/70 block font-hand text-lg">
-          {eyebrow}
+    <header>
+      <div className="border-border/70 flex items-baseline justify-between gap-4 border-b pb-3">
+        <span className="text-muted-foreground/70 font-serif text-[11px] font-semibold tracking-[0.2em] uppercase">
+          {runningHead}
         </span>
-        <h1 className="text-foreground font-serif text-3xl leading-none font-bold tracking-tight sm:text-4xl">
-          {title}{" "}
-          <span className="text-accent mt-1 block pl-1 text-4xl font-normal italic sm:mt-0 sm:inline sm:text-5xl">
-            {accent}
-          </span>
-        </h1>
-        <p className="text-body-small text-muted-foreground mt-1">
-          {description}
-        </p>
+        <span className="text-muted-foreground/50 font-hand text-base leading-none">
+          opening the page…
+        </span>
       </div>
-      {action}
+      <div className="mt-6 flex items-start justify-between gap-4">
+        <div className="space-y-2">
+          <span className="text-muted-foreground/70 block font-hand text-lg">
+            {eyebrow}
+          </span>
+          <h1 className="text-foreground font-serif text-3xl leading-none font-bold tracking-tight sm:text-4xl">
+            {title}{" "}
+            <span className="text-accent mt-1 block pl-1 text-4xl font-normal italic sm:mt-0 sm:inline sm:text-5xl">
+              {accent}
+            </span>
+          </h1>
+          <p className="text-body-small text-muted-foreground mt-1">
+            {description}
+          </p>
+        </div>
+        {action}
+      </div>
     </header>
   );
 }

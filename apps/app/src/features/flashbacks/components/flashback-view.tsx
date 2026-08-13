@@ -117,8 +117,9 @@ export function FlashbackView({
 
   if (!entry) {
     return (
-      <div className="animate-in fade-in mx-auto w-full max-w-5xl flex-1 space-y-6 p-6 duration-300 md:p-10">
+      <div className="animate-in fade-in w-full space-y-6 duration-300">
         <PageHeader
+          runningHead="Flashbacks"
           note="memories find their way back"
           title="Past"
           accent="flashbacks."
@@ -179,9 +180,10 @@ export function FlashbackView({
   const moodText = entry.mood ? moodLabels[entry.mood] : "Unmooded";
 
   return (
-    <div className="animate-in fade-in mx-auto w-full max-w-5xl flex-grow space-y-8 p-6 duration-300 md:p-10">
+    <div className="animate-in fade-in w-full space-y-8 duration-300">
       {/* Unified Page Header */}
       <PageHeader
+        runningHead="Flashbacks"
         note={label ? `this date, one year past — ${label}` : "this date, one year past"}
         title="Past"
         accent="flashbacks."

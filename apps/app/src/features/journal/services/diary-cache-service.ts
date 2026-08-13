@@ -1,5 +1,5 @@
 import { decryptText, encryptText } from "@/lib/crypto-client";
-import { sanctuaryCacheDB } from "@/lib/sanctuary-cache-db";
+import { diaryCacheDB } from "@/lib/diary-cache-db";
 
 import {
   getEntryAction,
@@ -27,7 +27,7 @@ function createSnippet(text: string, maxLength = 240): string {
     : cleaned;
 }
 
-export const sanctuaryCacheService = {
+export const diaryCacheService = {
   /**
    * Encrypts and saves a metadata record locally in IndexedDB
    */
@@ -55,7 +55,7 @@ export const sanctuaryCacheService = {
       };
 
       const encrypted = await encryptText(JSON.stringify(payload), masterKey);
-      await sanctuaryCacheDB.set(date, encrypted);
+      await diaryCacheDB.set(date, encrypted);
     } catch (err) {
       console.error(`Failed to save local metadata cache for ${date}:`, err);
     }
@@ -66,7 +66,7 @@ export const sanctuaryCacheService = {
    */
   async getLocalCacheTimeline(masterKey: CryptoKey): Promise<CachedMetadata[]> {
     try {
-      const entries = await sanctuaryCacheDB.getAllEntries();
+      const entries = await diaryCacheDB.getAllEntries();
       const decrypted = await Promise.all(
         entries.map(async (entry) => {
           try {
@@ -97,13 +97,13 @@ export const sanctuaryCacheService = {
    * Deletes a record from the local cache
    */
   async deleteLocalMetadata(date: string): Promise<void> {
-    await sanctuaryCacheDB.delete(date);
+    await diaryCacheDB.delete(date);
   },
 
   /**
    * Background sync local cache with the server database
    */
-  async syncSanctuaryCache(
+  async syncDiaryCache(
     masterKey: CryptoKey,
     localToday: string,
     onProgress?: (current: number, total: number) => void,
@@ -118,7 +118,7 @@ export const sanctuaryCacheService = {
       const serverEntries = res.data; // array of { date: string, updatedAt: string }
 
       // 2. Fetch all local entries and decrypt to build a local map
-      const localEntriesRaw = await sanctuaryCacheDB.getAllEntries();
+      const localEntriesRaw = await diaryCacheDB.getAllEntries();
       const localMap: Record<string, string> = {};
 
       await Promise.all(
@@ -140,7 +140,7 @@ export const sanctuaryCacheService = {
         (date) => !serverDates.has(date),
       );
       for (const date of pruneKeys) {
-        await sanctuaryCacheDB.delete(date);
+        await diaryCacheDB.delete(date);
       }
 
       // 4. Identify entries to fetch (missing or updated on server)
@@ -254,7 +254,7 @@ export const sanctuaryCacheService = {
         contentJson,
       };
       const encrypted = await encryptText(JSON.stringify(payload), masterKey);
-      await sanctuaryCacheDB.setDocument(date, encrypted);
+      await diaryCacheDB.setDocument(date, encrypted);
     } catch (err) {
       console.error(`Failed to save local document cache for ${date}:`, err);
     }
@@ -275,7 +275,7 @@ export const sanctuaryCacheService = {
     contentJson: any; // eslint-disable-line @typescript-eslint/no-explicit-any
   } | null> {
     try {
-      const encrypted = await sanctuaryCacheDB.getDocument(date);
+      const encrypted = await diaryCacheDB.getDocument(date);
       if (!encrypted) return null;
       const decryptedStr = await decryptText(encrypted, masterKey);
       return JSON.parse(decryptedStr);
@@ -306,7 +306,7 @@ export const sanctuaryCacheService = {
   ): Promise<void> {
     try {
       const encrypted = await encryptText(JSON.stringify(payload), masterKey);
-      await sanctuaryCacheDB.setSyncItem(date, encrypted);
+      await diaryCacheDB.setSyncItem(date, encrypted);
     } catch (err) {
       console.error(`Failed to queue offline sync for ${date}:`, err);
     }
@@ -317,7 +317,7 @@ export const sanctuaryCacheService = {
    */
   async removeOfflineSync(date: string): Promise<void> {
     try {
-      await sanctuaryCacheDB.deleteSyncItem(date);
+      await diaryCacheDB.deleteSyncItem(date);
     } catch (err) {
       console.error(`Failed to remove offline sync item for ${date}:`, err);
     }
@@ -331,7 +331,7 @@ export const sanctuaryCacheService = {
     localToday: string,
   ): Promise<void> {
     try {
-      const queuedItems = await sanctuaryCacheDB.getAllSyncItems();
+      const queuedItems = await diaryCacheDB.getAllSyncItems();
       if (queuedItems.length === 0) return;
 
       console.info(`Flushing ${queuedItems.length} offline sync items...`);

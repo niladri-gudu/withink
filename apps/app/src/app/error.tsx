@@ -40,7 +40,7 @@ export default function Error({ error, reset }: ErrorProps) {
           Something went astray
         </h2>
         <p className="text-muted-foreground text-sm leading-relaxed">
-          The sanctuary encountered an unexpected ripple. Don&apos;t worry, your
+          The diary encountered an unexpected ripple. Don&apos;t worry, your
           journal is safe. We can try loading it again.
         </p>
       </div>

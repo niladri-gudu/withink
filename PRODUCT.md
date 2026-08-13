@@ -14,7 +14,7 @@ Secondary audiences (confirmed in PRD): the Busy Professional (fast, short refle
 
 ## Product Purpose
 
-Withink is a private digital sanctuary for thoughtful reflection and lifelong journaling. It helps people build a durable daily writing habit in a calm, beautiful, trustworthy space — explicitly the opposite of note-taking or productivity software. Success means a user thinks "this feels like my personal sanctuary" and keeps returning for years, not "this app has many features."
+Withink is a private digital diary for thoughtful reflection and lifelong journaling. It helps people build a durable daily writing habit in a calm, beautiful, trustworthy space — explicitly the opposite of note-taking or productivity software. Success means a user thinks "this feels like my personal diary" and keeps returning for years, not "this app has many features."
 
 ## Positioning
 
@@ -25,13 +25,13 @@ A neighboring journaling product could not truthfully copy Withink's combined po
 - Daily ritual: write today's single entry in a focused editor; autosave is invisible and offline-resilient; a quiet save indicator is the only feedback.
 - Memory layer: **Flashbacks** surface historical entries, prioritizing entries written exactly one year ago; **Insights** show streaks, yearly heatmap, moods, and patterns without judgment.
 - Content: rich text (Tiptap), mood per entry, images attached to entries and browsed in a media library; full-text search with highlighted matches.
-- Security ritual: optional **Sanctuary Lock** (local passcode PIN) as a second layer beyond login; auto-lock timeouts and tab-switch locking.
+- Security ritual: optional **Diary Lock** (local passcode PIN) as a second layer beyond login; auto-lock timeouts and tab-switch locking.
 - Data ownership: ZIP export (plain text, HTML, images, metadata) via `GET /api/export`; account deletion purges all data.
 - Two surfaces share one product: the app at `app.withink.me` and the marketing/legal site at `withink.me`. Sessions span subdomains via wildcard cookies.
 
 ## Capabilities and Constraints
 
-Confirmed capabilities: email+password and Google sign-in; one-entry-per-day journal with grace-period writing window; rich-text editor with autosave and offline queue; search; flashbacks (anniversary-prioritized, Redis-cached, refreshable); media upload to R2 with deep reference scrubbing on delete; insights; settings (themes, paper-feel scale, security); feedback submission; ZIP export; Sanctuary Lock.
+Confirmed capabilities: email+password and Google sign-in; one-entry-per-day journal with grace-period writing window; rich-text editor with autosave and offline queue; search; flashbacks (anniversary-prioritized, Redis-cached, refreshable); media upload to R2 with deep reference scrubbing on delete; insights; settings (themes, paper-feel scale, security); feedback submission; ZIP export; Diary Lock.
 
 Confirmed constraints and business rules: entries are encrypted client-side and the server never decrypts user content (zero-knowledge); only the lock-session token and legacy migration use server decryption; one entry per day (no backfilling outside the grace window, no future entries); strict per-user ownership on every action; media ownership with broken-reference cleanup; rate-limited feedback/auth flows; client input is never trusted.
 
@@ -40,8 +40,8 @@ Explicitly undecided: the details of a future paid tier (what it charges for, pr
 ## Brand Commitments
 
 - Name: "withink." (lowercase, trailing period).
-- Identity: a private, calm "sanctuary" for thoughts and reflections — the word sanctuary and the calm/privacy framing are central and binding.
-- Tagline: "A private, encrypted digital sanctuary for your thoughts and reflections. Built for focus and calmness."
+- Identity: a private, calm "diary" for thoughts and reflections — the word diary and the calm/privacy framing are central and binding.
+- Tagline: "A private, encrypted digital diary for your thoughts and reflections. Built for focus and calmness."
 - Voice: calm, warm, editorial, reassuring — never gamified, judgmental, or pushy.
 - Products: Withink is a product of the withinkme handle on Twitter/X and GitHub; contact email is niladrigudu@gmail.com.
 

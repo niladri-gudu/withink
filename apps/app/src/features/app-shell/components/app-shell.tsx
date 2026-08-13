@@ -6,8 +6,8 @@ import { useRouter } from "next/navigation";
 import { getLocalDateString } from "@/lib/utils/date";
 import { useEncryption } from "@/providers/encryption-provider";
 
-import { MandatorySanctuarySetup } from "../../encryption/components/mandatory-sanctuary-setup";
-import { SanctuaryPasswordUnlockScreen } from "../../encryption/components/sanctuary-password-unlock-screen";
+import { MandatoryDiarySetup } from "../../encryption/components/mandatory-diary-setup";
+import { DiaryPasswordUnlockScreen } from "../../encryption/components/diary-password-unlock-screen";
 import { getLockSettingsAction, lockAction } from "../../lock/actions/lock-actions";
 import { LockScreen } from "../../lock/components/lock-screen";
 import { LockSetupOnboarding } from "../../lock/components/lock-setup-onboarding";
@@ -158,7 +158,7 @@ export function AppShell({
 
   const [showPinSetup, setShowPinSetup] = React.useState(false);
   const [pendingPin, setPendingPin] = React.useState("");
-  // True when this device unlocked with the Sanctuary Password but has no
+  // True when this device unlocked with the Diary Password but has no
   // locally-encrypted master key, even though the account has a PIN set. The
   // PIN encrypts the master key per-device, so a new device must bind its own.
   const [showPinRebind, setShowPinRebind] = React.useState(false);
@@ -185,13 +185,13 @@ export function AppShell({
     setShowPinRebind(false);
     // The rebind path doesn't run through handleSetupSuccess, so make sure the
     // lock config flags reflect the completed PIN binding (avoids a stale
-    // "no passcode" state that would route to the Sanctuary Password screen).
+    // "no passcode" state that would route to the Diary Password screen).
     setIsLockEnabled(true);
     setHasPasscode(true);
   };
 
   // Per-device PIN binding: after the master key is in memory (unlocked via the
-  // Sanctuary Password) but there is no local PIN key, prompt the user to set a
+  // Diary Password) but there is no local PIN key, prompt the user to set a
   // PIN on this device so the fast-unlock PIN works here too.
   React.useEffect(() => {
     if (typeof window === "undefined") return;
@@ -241,7 +241,7 @@ export function AppShell({
       document.cookie = `withink-local-date=${localDateStr}; path=/; max-age=31536000; SameSite=Lax`;
       // Use a soft refresh (not a full reload) so in-memory client state such as
       // the decrypted master key survives. A hard reload on a new device would
-      // re-prompt for the Sanctuary Password immediately after unlocking.
+      // re-prompt for the Diary Password immediately after unlocking.
       router.refresh();
     }
   }, [router]);
@@ -273,7 +273,7 @@ export function AppShell({
 
   if (user && !isClientEncrypted) {
     return (
-      <MandatorySanctuarySetup
+      <MandatoryDiarySetup
         diaryLockEnabled={isLockEnabled}
         diaryHasPasscode={hasPasscode}
         onSetupSuccess={handleSetupSuccess}
@@ -313,7 +313,7 @@ export function AppShell({
       )}
 
       {user && showPasswordUnlockPrompt && (
-        <SanctuaryPasswordUnlockScreen
+        <DiaryPasswordUnlockScreen
           userEmail={user.email}
           onUnlockSuccess={handleUnlockSuccess}
         />
@@ -330,7 +330,7 @@ export function AppShell({
         className="bg-background flex h-screen w-full overflow-hidden"
         style={
           {
-            "--sidebar-width": isCollapsed ? "88px" : "288px",
+            "--sidebar-width": isCollapsed ? "76px" : "264px",
           } as React.CSSProperties
         }
       >
@@ -356,7 +356,11 @@ export function AppShell({
             id="main-content"
             className="no-scrollbar flex min-w-0 flex-1 flex-col overflow-y-auto focus:outline-none"
           >
-            {children}
+            <div className="flex w-full flex-1 flex-col items-center">
+              <div className="w-full max-w-4xl flex-1 px-6 py-8 md:py-12 lg:px-8">
+                {children}
+              </div>
+            </div>
           </main>
         </div>
       </div>

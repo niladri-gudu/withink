@@ -151,7 +151,7 @@ Each layer has a clear responsibility.
 Withink V2 enforces strict environment separation via subdomains:
 
 - withink.me (Root Domain): Serves the static marketing landing page, Contact Us, Privacy Policy, and Terms & Conditions. Managed inside the `apps/docs` repository scope.
-- app.withink.me (App Subdomain): Houses the secure, authenticated sanctuary journal dashboard, editor, media gallery, insights, and settings. Managed inside the `apps/app` repository scope.
+- app.withink.me (App Subdomain): Houses the secure, authenticated diary journal dashboard, editor, media gallery, insights, and settings. Managed inside the `apps/app` repository scope.
 
 ---
 

@@ -20,14 +20,14 @@ const caveat = Caveat({
 
 export const metadata: Metadata = {
   title: {
-    default: "withink. - Your Digital Sanctuary",
+    default: "withink. - Your Digital Diary",
     template: "%s | withink.",
   },
   description:
     "A private, encrypted, and minimal space for your digital thoughts. Built for focus.",
   keywords: [
     "journal",
-    "digital sanctuary",
+    "digital diary",
     "encrypted journal",
     "private writing",
     "calm writing",
@@ -80,7 +80,7 @@ export const metadata: Metadata = {
     },
   },
   openGraph: {
-    title: "withink. - Your Digital Sanctuary",
+    title: "withink. - Your Digital Diary",
     description:
       "A private, encrypted, and minimal space for your digital thoughts. Built for focus.",
     url: "https://withink.me",
@@ -92,13 +92,13 @@ export const metadata: Metadata = {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "withink. - Your Digital Sanctuary",
+        alt: "withink. - Your Digital Diary",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "withink. - Your Digital Sanctuary",
+    title: "withink. - Your Digital Diary",
     description:
       "A private, encrypted, and minimal space for your digital thoughts. Built for focus.",
     creator: "@withinkme",
@@ -157,12 +157,12 @@ export default function RootLayout({ children }: RootLayoutProps) {
         <div
           aria-hidden="true"
           dangerouslySetInnerHTML={{
-            __html: `<!-- withink app world · The Field Ledger, kept as a diary
-THESIS: The app is the inside of the notebook the docs invite you into — a private field ledger you write in daily, one page at a time. Calm over productivity, marginalia instead of dashboards.
-OWN-WORLD: manila kraft desk, ledger-paper pages, iron-gall sepia ink, one old-paper gold accent (oklch 0.70 0.10 75); rounded 0.75rem corners, hairline borders over soft shadows; two type voices only — Alegreya for everything printed, Caveat for field-note annotations. Margin Rail navigation: the sidebar is the book's margin.
-STORY: A writer opens their diary, writes today's page, and trusts it is private, durable, and theirs. The interface is a calm desk, not a productivity suite.
-FIRST VIEWPORT: The open page — today's greeting set in serif with an italic accent, today's date as a margin note, and the writing surface leading; the section index sits in the left margin.
-FORM: Margin Rail structural candidate (roll 4, seed 8ae8057f) inside the inherited Field Ledger world.
+            __html: `<!-- withink app world · The Annotated Codex (surface redesign, Field Ledger theming intact)
+THESIS: The journal is one open manuscript page; chrome becomes marginalia. This surface refuses the sidebar-panel + breadcrumb-bar + card-grid app shell the Field Ledger world was dressed in.
+OWN-WORLD: Same manila/umber desk, ledger-paper sheets, iron-gall ink, one old-paper gold accent; Alegreya for all printed text, Caveat for margin notes. A 1px hairline rules a narrow left margin (the folio index: 01 Today … 07 Feedback, tracked uppercase) from the text block; a printed running head (folio name + hand date) rules the top of every page; cards rest flat on hairlines.
+STORY: A writer opens their diary and finds the index in the margin, the day's page open before them, and every control either marginalia or a printed rule. The interface is a book, not a dashboard.
+FIRST VIEWPORT: The margin rail (wordmark + folio index + colophon) at left; the open page centered at a manuscript measure — running head ruled above, hand note + serif title with italic gold accent, then the writing surface with its 2px gold hairline.
+FORM: The Annotated Codex, candidate 4 of the grounded surface list (seed be2a53bd), assigned by the surface roll.
 FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md -->`,
           }}
         />

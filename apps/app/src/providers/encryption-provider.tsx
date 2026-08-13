@@ -4,7 +4,7 @@ import * as React from "react";
 
 import { decryptText, importKeyFromHex } from "@/lib/crypto-client";
 import { deriveKeyFromPasswordAsync } from "@/lib/crypto-worker-client";
-import { sanctuaryCacheService } from "@/features/journal/services/sanctuary-cache-service";
+import { diaryCacheService } from "@/features/journal/services/diary-cache-service";
 
 // Memory-only cache of derived wrapper keys keyed by `${iterations}:${saltHex}:${password}`.
 // The derived key alone cannot decrypt journal content — it only unwraps the
@@ -99,7 +99,7 @@ export function EncryptionProvider({
       try {
         const { getLocalDateString } = await import("@/lib/utils/date");
         const localToday = getLocalDateString();
-        await sanctuaryCacheService.flushOfflineSyncQueue(
+        await diaryCacheService.flushOfflineSyncQueue(
           masterKey,
           localToday,
         );
@@ -153,7 +153,7 @@ export function EncryptionProvider({
       }
 
       try {
-        // 1. Derive the temporary key from the Sanctuary Password + Salt
+        // 1. Derive the temporary key from the Diary Password + Salt
         const passwordKey = await deriveCachedKey(
           password,
           encryptionSalt,
@@ -183,7 +183,7 @@ export function EncryptionProvider({
         setPromptOpen(false);
         return true;
       } catch (err) {
-        console.error("Incorrect Sanctuary Password", err);
+        console.error("Incorrect Diary Password", err);
         return false;
       }
     },

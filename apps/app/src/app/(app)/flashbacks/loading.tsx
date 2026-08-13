@@ -10,6 +10,7 @@ export default function FlashbacksLoading() {
   return (
     <PageLoadingShell>
       <PageLoadingHeader
+        runningHead="Flashbacks"
         eyebrow="memories find their way back"
         title="Past"
         accent="flashbacks."

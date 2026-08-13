@@ -1,7 +1,7 @@
 // Browser-compatible native IndexedDB wrapper for Withink cache storage
 // Version 2: Added document_cache and sync_queue stores for full offline support
 
-const DB_NAME = "sanctuary_cache";
+const DB_NAME = "diary_cache";
 const STORE_NAME = "metadata_cache";
 const DOCUMENT_STORE = "document_cache";
 const SYNC_STORE = "sync_queue";
@@ -33,7 +33,7 @@ function getDB(): Promise<IDBDatabase> {
   });
 }
 
-export const sanctuaryCacheDB = {
+export const diaryCacheDB = {
   // Metadata Store Helpers
   async get(key: string): Promise<string | null> {
     try {

@@ -9,15 +9,15 @@ import { toast } from "sonner";
 
 import { useEncryption } from "@/providers/encryption-provider";
 
-interface SanctuaryPasswordUnlockScreenProps {
+interface DiaryPasswordUnlockScreenProps {
   userEmail?: string | null;
   onUnlockSuccess?: () => void;
 }
 
-export function SanctuaryPasswordUnlockScreen({
+export function DiaryPasswordUnlockScreen({
   userEmail: _userEmail,
   onUnlockSuccess,
-}: SanctuaryPasswordUnlockScreenProps) {
+}: DiaryPasswordUnlockScreenProps) {
   const [password, setPassword] = React.useState("");
   const [isVerifying, setIsVerifying] = React.useState(false);
   const [shake, setShake] = React.useState(false);
@@ -33,7 +33,7 @@ export function SanctuaryPasswordUnlockScreen({
     if (success) {
       onUnlockSuccess?.();
     } else {
-      toast.error("Incorrect Sanctuary Password. Please try again.");
+      toast.error("Incorrect Diary Password. Please try again.");
       setPassword("");
       setShake(true);
       setTimeout(() => setShake(false), 500);
@@ -60,13 +60,13 @@ export function SanctuaryPasswordUnlockScreen({
             </span>
             <div className="text-muted-foreground bg-secondary/80 border-border flex items-center gap-1.5 rounded-full border px-3 py-1 font-serif text-xs">
               <Lock className="text-accent h-3.5 w-3.5" />
-              <span>Sanctuary Encrypted</span>
+              <span>Diary Encrypted</span>
             </div>
           </div>
 
           <p className="text-body-small text-muted-foreground mb-6 max-w-xs">
             Your diary is protected with client-side zero-knowledge encryption.
-            Enter your Sanctuary Password to unlock.
+            Enter your Diary Password to unlock.
           </p>
 
           <form onSubmit={handleSubmit} className="w-full space-y-4">
@@ -79,9 +79,9 @@ export function SanctuaryPasswordUnlockScreen({
             >
               <Input
                 ref={inputRef}
-                id="sanctuary-password"
+                id="diary-password"
                 type="password"
-                placeholder="Enter Sanctuary Password"
+                placeholder="Enter Diary Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="h-12 rounded-xl text-center"
@@ -102,7 +102,7 @@ export function SanctuaryPasswordUnlockScreen({
               ) : (
                 <KeyRound className="h-5 w-5" />
               )}
-              Unlock Sanctuary
+              Unlock Diary
             </Button>
           </form>
         </motion.div>

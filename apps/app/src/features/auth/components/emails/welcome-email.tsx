@@ -13,7 +13,7 @@ export function WelcomeEmail({ userFirstname, baseUrl }: WelcomeEmailProps) {
         <p style={text}>Hi {userFirstname},</p>
         <p style={text}>
           Welcome to <strong>withink.</strong>—a private, minimal space designed
-          for your mind to breathe. Your sanctuary is now ready.
+          for your mind to breathe. Your diary is now ready.
         </p>
         <div style={buttonContainer}>
           <a href={`${baseUrl}/dashboard`} style={button}>

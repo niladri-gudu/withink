@@ -84,7 +84,7 @@ export function LockChangeModal({ onClose, onSuccess }: LockChangeModalProps) {
     // device (the old local key would become unusable and force a password
     // unlock on every lock).
     if (!masterKey || !encryptionSalt) {
-      toast.error("Session locked. Please unlock your sanctuary and try again.");
+      toast.error("Session locked. Please unlock your diary and try again.");
       onClose();
       return;
     }

@@ -29,8 +29,9 @@ export default function SettingsLoading() {
   return (
     <PageLoadingShell>
       <PageLoadingHeader
+        runningHead="Settings"
         eyebrow="tune the desk to suit the writer"
-        title="Sanctuary"
+        title="Diary"
         accent="settings."
         description="Adjust your writing experience and preferences"
       />

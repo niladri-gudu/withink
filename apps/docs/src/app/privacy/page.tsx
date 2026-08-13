@@ -19,7 +19,7 @@ export default function PrivacyPage() {
       <div className="text-body-small text-muted-foreground space-y-6 leading-relaxed">
         <p>
           At <strong>withink.</strong>, privacy is not a compliance check box.
-          It is the cornerstone of why we built this sanctuary. Your journal
+          It is the cornerstone of why we built this diary. Your journal
           entries are your private thoughts, dreams, and reflections. They
           belong entirely to you.
         </p>
@@ -36,14 +36,14 @@ export default function PrivacyPage() {
         </h2>
         <p>
           We do not sell, rent, or share your journal entries or personal data
-          with any third-party advertising networks. Your sanctuary remains free
+          with any third-party advertising networks. Your diary remains free
           of trackers and visual noise.
         </p>
       </div>
 
       <div className="border-border flex items-center justify-between border-t pt-6">
         <Button variant="ghost" asChild>
-          <Link href="/">Back to Sanctuary</Link>
+          <Link href="/">Back to Diary</Link>
         </Button>
       </div>
     </div>

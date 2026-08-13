@@ -4,7 +4,7 @@ import { LoginForm } from "@/features/auth/components/login-form";
 
 export const metadata: Metadata = {
   title: "Sign In",
-  description: "Access your private journal and digital sanctuary.",
+  description: "Access your private journal and digital diary.",
 };
 
 export default function LoginPage() {

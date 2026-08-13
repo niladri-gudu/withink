@@ -6,19 +6,11 @@ import { Button } from "@withink/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@withink/ui/card";
 import { cn } from "@withink/utils";
-import {
-  Book,
-  ChevronLeft,
-  ChevronRight,
-  Flame,
-  Scale,
-  Sparkles,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { ROUTES } from "@/constants/routes";
 import { addDays } from "@/lib/utils/date";
@@ -138,46 +130,34 @@ export function EntriesCalendar({
 
   return (
     <div className="space-y-6">
-      {/* Consistency Metrics Card */}
-      <Card className="border-border relative overflow-hidden border">
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Sparkles className="text-accent h-4 w-4" />
-            Sanctuary Metrics
-          </CardTitle>
-          <CardDescription>Your alignment and consistency</CardDescription>
-        </CardHeader>
-        <CardContent className="grid grid-cols-3 gap-4 pt-2">
-          <div className="bg-muted/20 border-border/10 flex flex-col items-center rounded-xl border p-3 text-center">
-            <Flame className="text-accent mb-1 h-6 w-6" />
-            <span className="text-foreground font-serif text-2xl font-bold">
+      {/* At-a-glance folio row */}
+      <Card className="border-border overflow-hidden rounded-xl border">
+        <div className="grid grid-cols-3">
+          <div className="border-border/70 p-4 text-center">
+            <span className="text-foreground font-serif text-3xl font-bold">
               {streakData.currentStreak}
             </span>
-            <span className="text-muted-foreground mt-0.5 font-serif text-[11px] tracking-[0.16em] uppercase">
+            <p className="text-muted-foreground/70 mt-1 font-serif text-[11px] font-semibold tracking-[0.16em] uppercase">
               Streak
-            </span>
+            </p>
           </div>
-
-          <div className="bg-muted/20 border-border/10 flex flex-col items-center rounded-xl border p-3 text-center">
-            <Book className="text-accent mb-1 h-6 w-6" />
-            <span className="text-foreground font-serif text-2xl font-bold">
+          <div className="border-border/70 border-l p-4 text-center">
+            <span className="text-foreground font-serif text-3xl font-bold">
               {streakData.totalEntries}
             </span>
-            <span className="text-muted-foreground mt-0.5 font-serif text-[11px] tracking-[0.16em] uppercase">
-              Logs
-            </span>
+            <p className="text-muted-foreground/70 mt-1 font-serif text-[11px] font-semibold tracking-[0.16em] uppercase">
+              Entries
+            </p>
           </div>
-
-          <div className="bg-muted/20 border-border/10 flex flex-col items-center rounded-xl border p-3 text-center">
-            <Scale className="text-accent mb-1 h-6 w-6" />
-            <span className="text-foreground font-serif text-2xl font-bold">
+          <div className="border-border/70 border-l p-4 text-center">
+            <span className="text-foreground font-serif text-3xl font-bold">
               {streakData.averageWords}
             </span>
-            <span className="text-muted-foreground mt-0.5 font-serif text-[11px] tracking-[0.16em] uppercase">
-              Avg Words
-            </span>
+            <p className="text-muted-foreground/70 mt-1 font-serif text-[11px] font-semibold tracking-[0.16em] uppercase">
+              Avg words
+            </p>
           </div>
-        </CardContent>
+        </div>
       </Card>
 
       {/* Calendar Card */}
@@ -188,7 +168,7 @@ export function EntriesCalendar({
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <div className="flex flex-col">
             <span className="text-muted-foreground/60 font-serif text-[11px] tracking-[0.16em] uppercase">
-              Sanctuary Calendar
+              The year, kept in order
             </span>
             <CardTitle className="text-foreground font-serif text-xl font-semibold">
               {MONTH_NAMES[currentMonth]} {currentYear}

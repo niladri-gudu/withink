@@ -1,7 +1,7 @@
 {
   "name": "Withink - Private Encrypted Journal",
   "short_name": "Withink",
-  "description": "Zero-Knowledge private writing sanctuary.",
+  "description": "Zero-Knowledge private writing diary.",
   "start_url": "/entries",
   "display": "standalone",
   "background_color": "#FAF7F2",

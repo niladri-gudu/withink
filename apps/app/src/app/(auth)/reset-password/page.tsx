@@ -4,7 +4,7 @@ import { ResetPasswordForm } from "@/features/auth/components/reset-password-for
 
 export const metadata: Metadata = {
   title: "Reset Password",
-  description: "Set a new password for your private digital sanctuary.",
+  description: "Set a new password for your private digital diary.",
 };
 
 export default function ResetPasswordPage() {

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { Card } from "@withink/ui/card";
-import { BarChart3, Flame, Loader2, Sparkles, Type } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 import { getInsightsAction } from "../actions/insights-actions";
 import type { InsightsPayload } from "../services/insights-service";
@@ -63,7 +63,7 @@ export function InsightsDashboard({
   const { streaks, heatmap, wordCountStats } = data;
 
   return (
-    <div className="relative mx-auto max-w-5xl flex-1 space-y-10 p-6 md:p-10">
+    <div className="relative w-full space-y-10">
       {isLoading && (
         <div className="text-muted-foreground/60 absolute top-6 right-10 flex items-center gap-2 font-serif text-xs uppercase">
           <Loader2 className="text-accent h-3 w-3 animate-spin" />
@@ -71,97 +71,87 @@ export function InsightsDashboard({
         </div>
       )}
 
-      {/* Header */}
-      <header className="space-y-2">
-        <p className="text-muted-foreground/70 font-hand text-lg">
-          a quiet look at your year
-        </p>
-        <h1 className="text-foreground font-serif text-3xl leading-none font-bold tracking-tight sm:text-4xl">
-          Private{" "}
-          <span className="text-accent mt-1 block pl-1 text-4xl font-normal italic sm:mt-0 sm:inline sm:text-5xl">
-            insights.
+      {/* Running head + page title */}
+      <header>
+        <div className="border-border/70 flex items-baseline justify-between gap-4 border-b pb-3">
+          <span className="text-muted-foreground/70 font-serif text-[11px] font-semibold tracking-[0.2em] uppercase">
+            Insights
           </span>
-        </h1>
-        <p className="text-body-small text-muted-foreground mt-1">
-          A calm, private analysis of your writing patterns and moods. These
-          statistics remain entirely local to your account.
-        </p>
+          <span className="text-muted-foreground/50 font-hand text-base leading-none">
+            {new Date().toLocaleDateString("en-US", {
+              weekday: "long",
+              month: "long",
+              day: "numeric",
+              year: "numeric",
+            })}
+          </span>
+        </div>
+        <div className="mt-6 space-y-2">
+          <p className="text-muted-foreground/70 font-hand text-lg leading-snug">
+            a quiet look at your year
+          </p>
+          <h1 className="text-foreground font-serif text-3xl leading-none font-bold tracking-tight sm:text-4xl">
+            Private{" "}
+            <span className="text-accent mt-1 block pl-1 text-4xl font-normal italic sm:mt-0 sm:inline sm:text-5xl">
+              insights.
+            </span>
+          </h1>
+          <p className="text-body-small text-muted-foreground mt-1">
+            A calm, private analysis of your writing patterns and moods. These
+            statistics remain entirely local to your account.
+          </p>
+        </div>
       </header>
 
-      {/* Top Cards Grid */}
-      <section className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        {/* Current Streak */}
-        <Card className="border-border/60 flex flex-col justify-between p-6 transition-all duration-300 hover:shadow-sm">
-          <div>
-            <div className="mb-4 flex h-9 w-9 items-center justify-center rounded-xl border border-accent/20 bg-accent/10 text-accent">
-              <Flame className="h-5 w-5" />
-            </div>
-            <p className="text-muted-foreground/60 font-serif text-[11px] font-bold tracking-[0.16em] uppercase">
-              Current Streak
+      {/* At a glance — one ruled passage, four entries */}
+      <Card className="border-border overflow-hidden rounded-xl border">
+        <div className="grid grid-cols-2 md:grid-cols-4">
+          <div className="border-border/70 p-6">
+            <p className="text-muted-foreground/70 font-serif text-[11px] font-semibold tracking-[0.2em] uppercase">
+              Current streak
             </p>
-            <p className="text-foreground mt-1 text-3xl font-bold tracking-tight">
+            <p className="text-foreground mt-2 font-serif text-4xl font-bold tracking-tight">
               {streaks.currentStreak}
             </p>
-          </div>
-          <p className="text-muted-foreground/60 mt-2 text-[11px] uppercase">
-            days in a row
-          </p>
-        </Card>
-
-        {/* Longest Streak */}
-        <Card className="border-border/60 flex flex-col justify-between p-6 transition-all duration-300 hover:shadow-sm">
-          <div>
-            <div className="mb-4 flex h-9 w-9 items-center justify-center rounded-xl border border-accent/20 bg-accent/10 text-accent">
-              <Sparkles className="h-5 w-5" />
-            </div>
-            <p className="text-muted-foreground/60 font-serif text-[11px] font-bold tracking-[0.16em] uppercase">
-              Longest Streak
+            <p className="text-muted-foreground/60 mt-1 font-hand text-base">
+              days in a row
             </p>
-            <p className="text-foreground mt-1 text-3xl font-bold tracking-tight">
+          </div>
+          <div className="border-border/70 border-t p-6 md:border-t-0 md:border-l">
+            <p className="text-muted-foreground/70 font-serif text-[11px] font-semibold tracking-[0.2em] uppercase">
+              Longest streak
+            </p>
+            <p className="text-foreground mt-2 font-serif text-4xl font-bold tracking-tight">
               {streaks.longestStreak}
             </p>
-          </div>
-          <p className="text-muted-foreground/60 mt-2 text-[11px] uppercase">
-            consecutive days max
-          </p>
-        </Card>
-
-        {/* Total Words */}
-        <Card className="border-border/60 flex flex-col justify-between p-6 transition-all duration-300 hover:shadow-sm">
-          <div>
-            <div className="mb-4 flex h-9 w-9 items-center justify-center rounded-xl border border-accent/20 bg-accent/10 text-accent">
-              <Type className="h-5 w-5" />
-            </div>
-            <p className="text-muted-foreground/60 font-serif text-[11px] font-bold tracking-[0.16em] uppercase">
-              Total Words
+            <p className="text-muted-foreground/60 mt-1 font-hand text-base">
+              consecutive days max
             </p>
-            <p className="text-foreground mt-1 text-3xl font-bold tracking-tight">
+          </div>
+          <div className="border-border/70 border-t p-6 md:border-l md:border-t-0">
+            <p className="text-muted-foreground/70 font-serif text-[11px] font-semibold tracking-[0.2em] uppercase">
+              Total words
+            </p>
+            <p className="text-foreground mt-2 font-serif text-4xl font-bold tracking-tight">
               {wordCountStats.total.toLocaleString()}
             </p>
-          </div>
-          <p className="text-muted-foreground/60 mt-2 text-[11px] uppercase">
-            written in total
-          </p>
-        </Card>
-
-        {/* Entries */}
-        <Card className="border-border/60 flex flex-col justify-between p-6 transition-all duration-300 hover:shadow-sm">
-          <div>
-            <div className="mb-4 flex h-9 w-9 items-center justify-center rounded-xl border border-accent/20 bg-accent/10 text-accent">
-              <BarChart3 className="h-5 w-5" />
-            </div>
-            <p className="text-muted-foreground/60 font-serif text-[11px] font-bold tracking-[0.16em] uppercase">
-              Total Entries
+            <p className="text-muted-foreground/60 mt-1 font-hand text-base">
+              written in total
             </p>
-            <p className="text-foreground mt-1 text-3xl font-bold tracking-tight">
+          </div>
+          <div className="border-border/70 border-t p-6 md:border-l md:border-t-0">
+            <p className="text-muted-foreground/70 font-serif text-[11px] font-semibold tracking-[0.2em] uppercase">
+              Entries
+            </p>
+            <p className="text-foreground mt-2 font-serif text-4xl font-bold tracking-tight">
               {heatmap.filter((d) => d.count > 0).length}
             </p>
+            <p className="text-muted-foreground/60 mt-1 font-hand text-base">
+              saved reflections
+            </p>
           </div>
-          <p className="text-muted-foreground/60 mt-2 text-[11px] uppercase">
-            saved reflections
-          </p>
-        </Card>
-      </section>
+        </div>
+      </Card>
 
       {/* Below-fold visualizations: heatmap, mood/word charts, activity, monthly.
           Lazy-loaded as one async chunk so the header + stat cards render first. */}

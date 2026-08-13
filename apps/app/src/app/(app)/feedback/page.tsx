@@ -20,8 +20,9 @@ export default async function FeedbackPage() {
   }
 
   return (
-    <div className="animate-in fade-in mx-auto w-full max-w-5xl flex-grow space-y-8 p-6 duration-300 md:p-10">
+    <div className="animate-in fade-in w-full space-y-8 duration-300">
       <PageHeader
+        runningHead="Feedback"
         note="a note for the hands that built it"
         title="Share your"
         accent="thoughts."

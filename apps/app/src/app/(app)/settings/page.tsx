@@ -27,10 +27,11 @@ export default async function SettingsPage() {
   };
 
   return (
-    <div className="animate-in fade-in mx-auto w-full max-w-5xl flex-grow space-y-8 p-6 duration-300 md:p-10">
+    <div className="animate-in fade-in w-full space-y-8 duration-300">
       <PageHeader
+        runningHead="Settings"
         note="tune the desk to suit the writer"
-        title="Sanctuary"
+        title="Diary"
         accent="settings."
         description="Adjust your writing experience and preferences"
       />

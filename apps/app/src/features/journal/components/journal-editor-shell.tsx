@@ -14,7 +14,7 @@ import { zenAudioService } from "@/lib/zen-audio";
 import { useEncryption } from "@/providers/encryption-provider";
 
 import { useAutoSave } from "../hooks/use-auto-save";
-import { sanctuaryCacheService } from "../services/sanctuary-cache-service";
+import { diaryCacheService } from "../services/diary-cache-service";
 import { EditorToolbar } from "./editor/editor-toolbar";
 import { MoodSelector } from "./mood-selector";
 import { SaveIndicator } from "./save-indicator";
@@ -156,7 +156,7 @@ export function JournalEditorShell({
         }
 
         // Try to load from local document cache first if available (works offline)
-        const cachedDoc = await sanctuaryCacheService.getLocalDocument(
+        const cachedDoc = await diaryCacheService.getLocalDocument(
           date,
           masterKey,
         );

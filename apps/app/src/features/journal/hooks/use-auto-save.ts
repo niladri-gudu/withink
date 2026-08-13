@@ -6,7 +6,7 @@ import { getLocalDateString } from "@/lib/utils/date";
 import { useEncryption } from "@/providers/encryption-provider";
 
 import { saveEntryAction } from "../actions/entry-actions";
-import { sanctuaryCacheService } from "../services/sanctuary-cache-service";
+import { diaryCacheService } from "../services/diary-cache-service";
 
 export type SaveStatus =
   | "idle"
@@ -143,7 +143,7 @@ export function useAutoSave(
   ) => {
     if (!isClientEncrypted || !masterKey) return;
     try {
-      await sanctuaryCacheService.saveLocalDocument(
+      await diaryCacheService.saveLocalDocument(
         payload.date,
         payload.title,
         payload.mood,
@@ -152,7 +152,7 @@ export function useAutoSave(
         payload.contentJson,
         masterKey,
       );
-      await sanctuaryCacheService.saveLocalMetadata(
+      await diaryCacheService.saveLocalMetadata(
         payload.date,
         payload.title,
         payload.contentText,
@@ -169,7 +169,7 @@ export function useAutoSave(
   const queueOffline = async (payload: AutoSaveData, wordCount: number) => {
     if (!isClientEncrypted || !masterKey) return;
     try {
-      await sanctuaryCacheService.enqueueOfflineSync(
+      await diaryCacheService.enqueueOfflineSync(
         payload.date,
         {
           date: payload.date,

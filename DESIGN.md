@@ -189,7 +189,7 @@ The wordmark, the theme toggle, and one short primary button — **"Sign In"** w
 
 ### The diary apparatus (the demos)
 - **Today's page** — the editor + mood selector (lucide icons; never emoji). Status reads **"Saving… / Saved"**. Prompt: **"How are you feeling today?"**
-- **Sanctuary Lock** — the PIN pad (the product's real feature name). Reads **"Enter your PIN"**.
+- **Diary Lock** — the PIN pad (the product's real feature name). Reads **"Enter your PIN"**.
 - **This date, one year past** — the flashback page with a reflection note.
 - **Memory pages** — the media library as pinned keepsakes with hand-written captions.
 - **Export anytime** — the ZIP export.

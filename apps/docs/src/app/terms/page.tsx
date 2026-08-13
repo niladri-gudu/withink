@@ -41,7 +41,7 @@ export default function TermsPage() {
 
       <div className="border-border flex items-center justify-between border-t pt-6">
         <Button variant="ghost" asChild>
-          <Link href="/">Back to Sanctuary</Link>
+          <Link href="/">Back to Diary</Link>
         </Button>
       </div>
     </div>

@@ -46,7 +46,7 @@ import { useEncryption } from "@/providers/encryption-provider";
 import {
   enableClientEncryptionAction,
   getPlaintextEntriesForMigrationAction,
-  updateSanctuaryPasswordAction,
+  updateDiaryPasswordAction,
 } from "@/features/encryption/actions/encryption-actions";
 import { DataExportCard } from "@/features/export/components/data-export-card";
 import {
@@ -630,7 +630,7 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
       });
       setMasterKey(newMasterKey);
 
-      toast.success("Sanctuary Zero-Knowledge Encryption activated!", {
+      toast.success("Diary Zero-Knowledge Encryption activated!", {
         id: toastId,
       });
       setShowZKSetupModal(false);
@@ -654,7 +654,7 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
     }
 
     setIsChangingZKPassword(true);
-    const toastId = toast.loading("Updating Sanctuary Password...");
+    const toastId = toast.loading("Updating Diary Password...");
 
     try {
       // 1. Derive key from old password
@@ -671,7 +671,7 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
           oldPasswordKey,
         );
       } catch {
-        throw new Error("Incorrect current Sanctuary Password");
+        throw new Error("Incorrect current Diary Password");
       }
 
       // 3. Derive key from new password using the same salt
@@ -687,7 +687,7 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
       );
 
       // 5. Update server
-      const res = await updateSanctuaryPasswordAction(
+      const res = await updateDiaryPasswordAction(
         newVerificationCiphertext,
       );
       if (!res.success) {
@@ -704,7 +704,7 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
       // Invalidate local encrypted master key on all other devices
       clearLocalMasterKey();
 
-      toast.success("Sanctuary Password updated successfully!", {
+      toast.success("Diary Password updated successfully!", {
         id: toastId,
       });
       setShowZKChangeModal(false);
@@ -742,7 +742,7 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
     }
 
     setIsDeletingAccount(true);
-    const toastId = toast.loading("Deconstructing your sanctuary...");
+    const toastId = toast.loading("Deconstructing your diary...");
 
     try {
       const res = await deleteAccountAction();
@@ -750,7 +750,7 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
         throw new Error(res.error || "Failed to delete account");
       }
 
-      toast.success("Sanctuary dissolved successfully", { id: toastId });
+      toast.success("Diary dissolved successfully", { id: toastId });
       await clearSwCaches();
       await authClient.signOut();
       window.location.href = "/login";
@@ -766,7 +766,7 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
     try {
       await authClient.signOut();
       await clearSwCaches();
-      toast.success("Logged out of your sanctuary");
+      toast.success("Logged out of your diary");
       window.location.href = "/login";
     } catch {
       toast.error("Sign out failed");
@@ -812,7 +812,7 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
       <SettingsSection
         icon={User}
         title="Profile"
-        description="Your name and photo, as they appear across your sanctuary."
+        description="Your name and photo, as they appear across your diary."
       >
         <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-start">
           <div className="relative shrink-0">
@@ -1205,10 +1205,10 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
         )}
       </SettingsSection>
 
-      {/* ==================== Sanctuary Encryption ==================== */}
+      {/* ==================== Diary Encryption ==================== */}
       <SettingsSection
         icon={Shield}
-        title="Sanctuary encryption (Zero-knowledge)"
+        title="Diary encryption (Zero-knowledge)"
         description="Secure your diary entries with client-side zero-knowledge encryption. Your data is encrypted before it leaves your device."
       >
         {isClientEncrypted ? (
@@ -1236,14 +1236,14 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
                 onClick={() => setShowZKChangeModal(true)}
                 className="px-6"
               >
-                Change Sanctuary Password
+                Change Diary Password
               </Button>
             </div>
           </div>
         ) : (
           <div className="space-y-4">
             <p className="text-body-small text-muted-foreground">
-              By default, entries are encrypted on our servers. Enable Sanctuary
+              By default, entries are encrypted on our servers. Enable Diary
               Encryption to derive a unique decryption key in your browser. This
               will migrate all your existing entries to zero-knowledge.
             </p>
@@ -1398,7 +1398,7 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
       <SettingsSection
         icon={LinkIcon}
         title="Connected accounts"
-        description="The ways you can sign in to your sanctuary."
+        description="The ways you can sign in to your diary."
       >
         {accountsLoading ? (
           <div className="flex items-center justify-center py-6">
@@ -1599,7 +1599,7 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
         />
       )}
 
-      {/* ==================== Sanctuary Zero-Knowledge Setup Modal ==================== */}
+      {/* ==================== Diary Zero-Knowledge Setup Modal ==================== */}
       {showZKSetupModal && (
         <div className="bg-foreground/50 animate-in fade-in fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm duration-200">
           <div
@@ -1608,7 +1608,7 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
           />
           <Card className="animate-in zoom-in-95 relative z-10 w-full max-w-md p-6 shadow-lg duration-200 sm:p-8">
             <h2 className="text-h3 text-foreground mb-4 font-serif">
-              Set up Sanctuary Password
+              Set up Diary Password
             </h2>
             <p className="text-caption text-muted-foreground mb-6">
               Establish a client-side decryption password. Your entries will be
@@ -1617,7 +1617,7 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
             <div className="space-y-4">
               <div className="space-y-2">
                 <label className="text-body-small text-foreground font-medium">
-                  Sanctuary Password
+                  Diary Password
                 </label>
                 <Input
                   type="password"
@@ -1676,7 +1676,7 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
                   className="text-muted-foreground cursor-pointer text-[11px] leading-relaxed select-none"
                 >
                   I understand my journal is 100% zero-knowledge. If I lose my
-                  Sanctuary Password, my data cannot be recovered by anyone.
+                  Diary Password, my data cannot be recovered by anyone.
                 </label>
               </div>
 
@@ -1715,7 +1715,7 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
         </div>
       )}
 
-      {/* ==================== Sanctuary Zero-Knowledge Password Change Modal ==================== */}
+      {/* ==================== Diary Zero-Knowledge Password Change Modal ==================== */}
       {showZKChangeModal && (
         <div className="bg-foreground/50 animate-in fade-in fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm duration-200">
           <div
@@ -1724,12 +1724,12 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
           />
           <Card className="animate-in zoom-in-95 relative z-10 w-full max-w-md p-6 shadow-lg duration-200 sm:p-8">
             <h2 className="text-h3 text-foreground mb-4 font-serif">
-              Change Sanctuary Password
+              Change Diary Password
             </h2>
             <div className="space-y-4">
               <div className="space-y-2">
                 <label className="text-body-small text-foreground font-medium">
-                  Current Sanctuary Password
+                  Current Diary Password
                 </label>
                 <Input
                   type="password"
@@ -1741,7 +1741,7 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
               </div>
               <div className="space-y-2">
                 <label className="text-body-small text-foreground font-medium">
-                  New Sanctuary Password
+                  New Diary Password
                 </label>
                 <Input
                   type="password"

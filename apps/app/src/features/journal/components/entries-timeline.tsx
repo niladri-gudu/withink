@@ -38,7 +38,7 @@ import {
   getEntriesListAction,
 } from "../actions/entry-actions";
 import type { DecryptedEntry } from "../services/journal-service";
-import { sanctuaryCacheService } from "../services/sanctuary-cache-service";
+import { diaryCacheService } from "../services/diary-cache-service";
 
 interface EntriesTimelineProps {
   initialEntries: DecryptedEntry[];
@@ -160,7 +160,7 @@ export function EntriesTimeline({
     const runSync = async () => {
       setIsSyncing(true);
       try {
-        await sanctuaryCacheService.syncSanctuaryCache(
+        await diaryCacheService.syncDiaryCache(
           masterKey,
           localToday,
           (curr, tot) => {
@@ -197,7 +197,7 @@ export function EntriesTimeline({
       if (isClientEncrypted && masterKey) {
         // Fetch and decrypt metadata directly from browser cache (no network overhead!)
         const cached =
-          await sanctuaryCacheService.getLocalCacheTimeline(masterKey);
+          await diaryCacheService.getLocalCacheTimeline(masterKey);
 
         let filtered = cached.map((item) => ({
           ...item,
@@ -293,7 +293,7 @@ export function EntriesTimeline({
     onSuccess: async (res, date) => {
       if (res.success) {
         if (isClientEncrypted) {
-          await sanctuaryCacheService.deleteLocalMetadata(date);
+          await diaryCacheService.deleteLocalMetadata(date);
         }
         toast.success(`Entry for ${formatDisplayDate(date)} deleted.`);
         setDeleteDateConfirm(null);

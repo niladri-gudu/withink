@@ -19,7 +19,7 @@ export function LogoutButton() {
         return;
       }
       await clearSwCaches();
-      toast.success("Logged out of your sanctuary.");
+      toast.success("Logged out of your diary.");
       router.refresh();
       router.push(ROUTES.AUTH.LOGIN);
     } catch (err: unknown) {

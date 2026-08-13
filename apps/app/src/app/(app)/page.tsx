@@ -4,13 +4,6 @@ import { cookies } from "next/headers";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Button } from "@withink/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@withink/ui/card";
 import { Calendar, Flame } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
 import { getRequestSession } from "@/lib/request-cache";
@@ -28,7 +21,7 @@ import { TodayReflectionCard } from "@/features/journal/components/today-reflect
 import { JournalService } from "@/features/journal/services/journal-service";
 
 export const metadata: Metadata = {
-  title: "Sanctuary Dashboard",
+  title: "Diary Dashboard",
   description: "Your daily writing stats, history, and insights at a glance.",
 };
 
@@ -68,20 +61,31 @@ export default async function DashboardPage() {
   const yesterdayWritten = !!yesterdayEntry;
 
   return (
-    <div className="animate-in fade-in mx-auto w-full max-w-5xl flex-grow space-y-8 p-6 duration-300 md:p-10">
-      <header className="space-y-2">
-        <p className="text-muted-foreground/70 font-hand text-xl">
-          {todayFormatted}
-        </p>
-        <h1 className="text-foreground font-serif text-3xl leading-none font-bold tracking-tight sm:text-4xl">
-          Good morning,{" "}
-          <span className="text-accent pl-1 text-4xl font-normal italic sm:text-5xl">
-            {firstName}.
+    <div className="animate-in fade-in w-full space-y-8 duration-300">
+      {/* Running head + today's page title */}
+      <header>
+        <div className="border-border/70 flex items-baseline justify-between gap-4 border-b pb-3">
+          <span className="text-muted-foreground/70 font-serif text-[11px] font-semibold tracking-[0.2em] uppercase">
+            Today
           </span>
-        </h1>
-        <p className="text-body-small text-muted-foreground mt-1">
-          A fresh page for today&apos;s reflection
-        </p>
+          <span className="text-muted-foreground/50 font-hand text-base leading-none">
+            {todayFormatted}
+          </span>
+        </div>
+        <div className="mt-6 space-y-2">
+          <p className="text-muted-foreground/70 font-hand text-lg leading-snug">
+            {firstName}&apos;s page, one day at a time
+          </p>
+          <h1 className="text-foreground font-serif text-3xl leading-none font-bold tracking-tight sm:text-4xl">
+            Good morning,{" "}
+            <span className="text-accent pl-1 text-4xl font-normal italic sm:text-5xl">
+              {firstName}.
+            </span>
+          </h1>
+          <p className="text-body-small text-muted-foreground mt-1">
+            A fresh page for today&apos;s reflection
+          </p>
+        </div>
       </header>
 
       {/* Yesterday's Missed Reflection Alert Banner */}
@@ -115,32 +119,30 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      {/* Dashboard Grid */}
+      {/* Today's page + margin note */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
         {/* Today's Entry card */}
         <TodayReflectionCard entry={todayEntry} today={today} />
 
-        {/* Quick stats/streak */}
-        <Card className="border-border flex flex-col justify-between border">
-          <CardHeader>
-            <CardTitle className="text-foreground font-serif text-xl font-semibold">
-              Sanctuary Stats
-            </CardTitle>
-            <CardDescription>Consistency tracking</CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-grow flex-col items-center justify-center space-y-2 py-6">
-            <div className="border-accent/30 bg-accent/10 relative flex h-24 w-24 items-center justify-center rounded-full border-2 border-dashed">
-              <div className="absolute inset-2 rounded-full border border-accent/20" />
-              <Flame className="text-accent relative z-10 h-9 w-9" />
-            </div>
-            <span className="text-foreground font-serif text-4xl font-bold">
+        {/* Day-streak margin note */}
+        <div className="border-border flex flex-col justify-between rounded-xl border p-6">
+          <p className="text-muted-foreground/70 font-serif text-[11px] font-semibold tracking-[0.2em] uppercase">
+            Margin note
+          </p>
+          <div className="my-6 flex items-end gap-3">
+            <Flame className="text-accent h-6 w-6" />
+            <span className="text-foreground font-serif text-5xl leading-none font-bold">
               {currentStreak}
             </span>
-            <span className="text-muted-foreground font-serif text-[10px] tracking-[0.2em] uppercase">
-              Day Streak
+            <span className="text-muted-foreground/70 pb-1 font-hand text-lg leading-none">
+              day{currentStreak === 1 ? "" : "s"} in a row
             </span>
-          </CardContent>
-        </Card>
+          </div>
+          <p className="text-muted-foreground border-border/60 border-t pt-3 font-serif text-xs leading-relaxed">
+            Keep the page open and the ink flowing. Streaks are a quiet record,
+            never a demand.
+          </p>
+        </div>
       </div>
 
       {/* Bottom sections */}

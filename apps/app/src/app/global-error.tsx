@@ -37,7 +37,7 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
             A critical error occurred
           </h2>
           <p className="text-muted-foreground text-sm leading-relaxed">
-            The sanctuary has encountered a critical system error. Please
+            The diary has encountered a critical system error. Please
             restart or try reloading the application.
           </p>
         </div>

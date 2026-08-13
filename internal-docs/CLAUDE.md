@@ -44,7 +44,7 @@ Always prioritize:
 
 ## apps/app
 
-This directory contains the main development repository representing the sanctuary dashboard application running on `app.withink.me`. All dashboard UI components, database operations, auth routes, and services are implemented here.
+This directory contains the main development repository representing the diary dashboard application running on `app.withink.me`. All dashboard UI components, database operations, auth routes, and services are implemented here.
 
 ---
 

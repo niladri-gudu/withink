@@ -102,7 +102,7 @@ export function LockScreen({ onUnlockSuccess }: LockScreenProps) {
                   setIsDecrypting(false);
                   setPin("");
                   toast.error(
-                    "Passcode is out of sync. Use your Sanctuary Password to unlock.",
+                    "Passcode is out of sync. Use your Diary Password to unlock.",
                   );
                   setIsVerifying(false);
                   setView("password-verify");
@@ -144,12 +144,12 @@ export function LockScreen({ onUnlockSuccess }: LockScreenProps) {
     if (!loginPassword) return;
 
     setIsSubmittingPassword(true);
-    const toastId = toast.loading("Verifying your Sanctuary Password…");
+    const toastId = toast.loading("Verifying your Diary Password…");
     const success = await unlockWithPassword(loginPassword);
 
     if (success) {
       localStorage.removeItem("withink_encrypted_master_key");
-      toast.success("Sanctuary Lock disabled successfully", { id: toastId });
+      toast.success("Diary Lock disabled successfully", { id: toastId });
       onUnlockSuccess();
       if (isMounted.current) {
         setIsSubmittingPassword(false);
@@ -157,7 +157,7 @@ export function LockScreen({ onUnlockSuccess }: LockScreenProps) {
       return;
     }
     if (isMounted.current) {
-      toast.error("Incorrect Sanctuary Password", { id: toastId });
+      toast.error("Incorrect Diary Password", { id: toastId });
       setIsSubmittingPassword(false);
     }
   };
@@ -185,7 +185,7 @@ export function LockScreen({ onUnlockSuccess }: LockScreenProps) {
                 </span>
                 <div className="text-muted-foreground bg-secondary/80 border-border flex items-center gap-1.5 rounded-full border px-3 py-1 font-serif text-xs">
                   <Lock className="text-accent h-3.5 w-3.5" />
-                  <span>Sanctuary Lock</span>
+                  <span>Diary Lock</span>
                 </div>
               </div>
 
@@ -199,7 +199,7 @@ export function LockScreen({ onUnlockSuccess }: LockScreenProps) {
                 >
                   <Loader2 className="text-accent h-6 w-6 animate-spin" />
                   <span className="text-muted-foreground font-serif text-xs tracking-wider uppercase">
-                    Decrypting your sanctuary…
+                    Decrypting your diary…
                   </span>
                 </motion.div>
               ) : (
@@ -272,13 +272,13 @@ export function LockScreen({ onUnlockSuccess }: LockScreenProps) {
                 </div>
               )}
 
-              {/* Use Sanctuary Password fallback */}
+              {/* Use Diary Password fallback */}
               {!isDecrypting && (
                 <button
                   onClick={() => setView("password-verify")}
                   className="text-body-small text-muted-foreground hover:text-accent font-medium transition-colors"
                 >
-                  Use Sanctuary Password instead
+                  Use Diary Password instead
                 </button>
               )}
             </motion.div>
@@ -294,10 +294,10 @@ export function LockScreen({ onUnlockSuccess }: LockScreenProps) {
               className="flex flex-col items-center"
             >
               <h2 className="text-foreground mb-2 font-serif text-2xl font-semibold">
-                Verify Sanctuary Password
+                Verify Diary Password
               </h2>
               <p className="text-body-small text-muted-foreground mb-6 max-w-xs">
-                Enter your Sanctuary Password to disable the PIN lock and access
+                Enter your Diary Password to disable the PIN lock and access
                 your diary.
               </p>
 
@@ -308,7 +308,7 @@ export function LockScreen({ onUnlockSuccess }: LockScreenProps) {
                 <Input
                   id="login-password"
                   type="password"
-                  placeholder="Enter Sanctuary Password"
+                  placeholder="Enter Diary Password"
                   value={loginPassword}
                   onChange={(e) => setLoginPassword(e.target.value)}
                   className="h-12 rounded-xl"

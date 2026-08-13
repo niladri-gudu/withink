@@ -18,7 +18,7 @@ export class EncryptionSettingsRepository {
    * Reads the user's client-encryption settings straight from MongoDB.
    *
    * Deliberately NOT cached: a stale verificationCiphertext would make the
-   * Sanctuary Password verification fail, and local dev + the dev deployment
+   * Diary Password verification fail, and local dev + the dev deployment
    * share the same Redis, so a poisoned value breaks both. This is a single
    * indexed document lookup, so caching adds risk for negligible gain.
    */

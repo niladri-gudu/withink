@@ -10,6 +10,7 @@ export default function EntriesLoading() {
   return (
     <PageLoadingShell>
       <PageLoadingHeader
+        runningHead="Entries"
         eyebrow="the archive, kept in order"
         title="All"
         accent="reflections."

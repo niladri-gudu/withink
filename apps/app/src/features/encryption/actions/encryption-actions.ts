@@ -245,7 +245,7 @@ export async function enableClientEncryptionAction(
   }
 }
 
-export async function updateSanctuaryPasswordAction(
+export async function updateDiaryPasswordAction(
   verificationCiphertext: string,
 ): Promise<{ success: boolean; error?: string }> {
   try {

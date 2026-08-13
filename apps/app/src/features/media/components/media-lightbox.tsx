@@ -310,7 +310,7 @@ export function MediaLightbox({
       const res = await deleteMediaFileAction(file.key);
       if (res.success) {
         onDeleted(file.key);
-        toast.success("Memory removed from sanctuary");
+        toast.success("Memory removed from diary");
       } else {
         toast.error(res.error || "Failed to delete file.");
       }

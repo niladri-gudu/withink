@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import * as React from "react";
 import Link from "next/link";
@@ -463,7 +463,7 @@ export function LandingPageContent({
                   asChild
                   className="focus-visible:ring-ring w-full rounded-xl px-8 font-serif text-xs uppercase tracking-[0.2em] shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 sm:w-auto"
                 >
-                  <a href={APP_URL}>Open Sanctuary</a>
+                  <a href={APP_URL}>Open Diary</a>
                 </Button>
               ) : (
                 <Button
@@ -708,7 +708,7 @@ export function LandingPageContent({
                 </div>
               </motion.div>
 
-              {/* Plate 2: Sanctuary Lock (PIN) */}
+              {/* Plate 2: Diary Lock (PIN) */}
               <motion.div
                 variants={fadeInVariants}
                 custom={1}
@@ -717,7 +717,7 @@ export function LandingPageContent({
                 <div className="p-6 md:p-7">
                   <div className="border-border/70 flex items-center justify-between border-b pb-3">
                     <span className="text-muted-foreground flex items-center gap-1.5 font-serif text-xs uppercase tracking-[0.16em]">
-                      <Lock className="h-3 w-3" /> Sanctuary Lock
+                      <Lock className="h-3 w-3" /> Diary Lock
                     </span>
                     <span className="bg-accent text-accent-foreground rounded-full border border-transparent px-2 py-0.5 font-serif text-xs uppercase tracking-[0.14em]">
                       Demo

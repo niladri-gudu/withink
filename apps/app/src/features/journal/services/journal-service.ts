@@ -237,7 +237,7 @@ export class JournalService {
   }
 
   /**
-   * Retrieves consistency metrics for the user's sanctuary.
+   * Retrieves consistency metrics for the user's diary.
    */
   static async getEntryStats(userId: string): Promise<{
     totalEntries: number;

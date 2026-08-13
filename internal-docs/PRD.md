@@ -12,7 +12,7 @@ Owner: Product Team
 
 # 1. Executive Summary
 
-Withink is a private digital sanctuary built for thoughtful reflection, long-term memory, and intentional writing.
+Withink is a private digital diary built for thoughtful reflection, long-term memory, and intentional writing.
 
 Unlike traditional note-taking applications or productivity tools, Withink is designed around a single purpose:
 
@@ -1382,7 +1382,7 @@ Version 2 should preserve everything that made Version 1 valuable while signific
 
 If users describe Withink as:
 
-"It feels like my personal sanctuary."
+"It feels like my personal diary."
 
 then the product has achieved its purpose.
 

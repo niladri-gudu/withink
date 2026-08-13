@@ -13,7 +13,7 @@ export function VerifyEmail({ name, url }: VerifyEmailProps) {
           <span style={logo}>withink.</span>
         </div>
 
-        <h1 style={h1}>Initialize your sanctuary</h1>
+        <h1 style={h1}>Initialize your diary</h1>
         <p style={text}>
           Hey {name}, thanks for joining. Click the button below to verify your
           email address and start journaling.
