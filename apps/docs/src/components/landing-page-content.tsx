@@ -424,7 +424,7 @@ export function LandingPageContent({
           <motion.div
             initial="hidden"
             animate="visible"
-            className="mx-auto flex w-full max-w-3xl flex-col items-center text-center"
+            className="relative mx-auto flex w-full max-w-3xl flex-col items-center text-center"
           >
             <motion.h1
               variants={fadeInVariants}
