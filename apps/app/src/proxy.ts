@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { ROUTES } from "@/constants/routes";
 
-// Define protected and guest route prefixes
+// Define protected route prefixes
 const PROTECTED_ROUTES = [
   "/",
   "/entries",
@@ -11,14 +11,6 @@ const PROTECTED_ROUTES = [
   "/media",
   "/settings",
   "/feedback",
-];
-
-const GUEST_ROUTES = [
-  ROUTES.AUTH.LOGIN,
-  ROUTES.AUTH.REGISTER,
-  ROUTES.AUTH.FORGOT_PASSWORD,
-  ROUTES.AUTH.RESET_PASSWORD,
-  ROUTES.AUTH.VERIFIED,
 ];
 
 export async function proxy(request: NextRequest) {
@@ -35,9 +27,6 @@ export async function proxy(request: NextRequest) {
     route === "/" ? pathname === "/" : pathname.startsWith(route),
   );
 
-  // Check if user is trying to access a guest/auth route
-  const isGuestRoute = GUEST_ROUTES.some((route) => pathname.startsWith(route));
-
   if (isProtectedRoute && !hasSession) {
     // Redirect unauthenticated users to login
     const loginUrl = new URL(ROUTES.AUTH.LOGIN, request.url);
@@ -46,10 +35,12 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  if (isGuestRoute && hasSession) {
-    // Redirect authenticated users to dashboard
-    return NextResponse.redirect(new URL(ROUTES.APP.DASHBOARD, request.url));
-  }
+  // NOTE: guest routes (login/register/etc.) are intentionally NOT redirected
+  // away based on cookie *presence*. A cookie can outlive a session (HttpOnly
+  // cookies are only cleared by the server's Set-Cookie; one can linger or be
+  // stale), and bouncing /login → / while the page's real session check says
+  // "no session" (redirect back to /login) produces an infinite reload loop.
+  // Each page already enforces authentication via getRequestSession().
 
   return NextResponse.next();
 }

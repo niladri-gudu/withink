@@ -5,11 +5,13 @@ import { Button } from "@withink/ui/button";
 import { toast } from "sonner";
 
 import { ROUTES } from "@/constants/routes";
-import { signOut } from "@/lib/auth-client";
+import { clearSessionCookies, signOut } from "@/lib/auth-client";
 import { clearSwCaches } from "@/lib/sw-cache";
+import { useEncryption } from "@/providers/encryption-provider";
 
 export function LogoutButton() {
   const router = useRouter();
+  const { lock } = useEncryption();
 
   const handleLogout = async () => {
     try {
@@ -18,9 +20,10 @@ export function LogoutButton() {
         toast.error(res.error.message || "Failed to sign out.");
         return;
       }
+      clearSessionCookies();
+      lock();
       await clearSwCaches();
       toast.success("Logged out of your diary.");
-      router.refresh();
       router.push(ROUTES.AUTH.LOGIN);
     } catch (err: unknown) {
       const message =

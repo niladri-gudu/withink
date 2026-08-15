@@ -28,10 +28,11 @@ import {
 import { toast } from "sonner";
 
 import { ROUTES } from "@/constants/routes";
-import { signOut } from "@/lib/auth-client";
+import { clearSessionCookies, signOut } from "@/lib/auth-client";
 import { clearSwCaches } from "@/lib/sw-cache";
 import { formatDisplayDate, getLocalDateString } from "@/lib/utils/date";
 import { useFocusTrap } from "@/hooks/use-focus-trap";
+import { useEncryption } from "@/providers/encryption-provider";
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -87,6 +88,8 @@ export function Sidebar({
     };
   }, []);
 
+  const { lock } = useEncryption();
+
   const handleLogout = async () => {
     try {
       const res = await signOut();
@@ -94,9 +97,14 @@ export function Sidebar({
         toast.error(res.error.message || "Failed to sign out.");
         return;
       }
+      // Best-effort cookie purge + drop the in-memory master key / decrypted
+      // timeline cache before navigating. No router.refresh() here: after
+      // signOut the current route's session is gone and refresh would fire a
+      // server re-render that can race with the navigation.
+      clearSessionCookies();
+      lock();
       await clearSwCaches();
       toast.success("Logged out of your diary.");
-      router.refresh();
       router.push(ROUTES.AUTH.LOGIN);
     } catch (err: unknown) {
       const message =

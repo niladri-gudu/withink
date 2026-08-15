@@ -31,7 +31,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-import { authClient } from "@/lib/auth-client";
+import { authClient, clearSessionCookies } from "@/lib/auth-client";
 import {
   decryptText,
   encryptText,
@@ -752,6 +752,7 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
 
       toast.success("Diary dissolved successfully", { id: toastId });
       await clearSwCaches();
+      clearSessionCookies();
       await authClient.signOut();
       window.location.href = "/login";
     } catch (err: any) {
@@ -765,6 +766,7 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
   const handleLogout = async () => {
     try {
       await authClient.signOut();
+      clearSessionCookies();
       await clearSwCaches();
       toast.success("Logged out of your diary");
       window.location.href = "/login";
