@@ -100,7 +100,7 @@ export function LockSetupOnboarding({
       isLockEnabled: true,
       passcode: pin,
       autoLockTimeout: 300, // 5 minutes default
-      lockOnTabHide: true,
+      lockOnTabHide: false,
     });
 
     if (res.success) {

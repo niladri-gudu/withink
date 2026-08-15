@@ -5,7 +5,7 @@ export interface ILockSettings extends Document {
   isLockEnabled: boolean;
   passcodeHash: string; // bcrypt hash of the passcode
   autoLockTimeout: number; // in seconds (e.g. 0 = immediately, 60 = 1m, 300 = 5m, etc.)
-  lockOnTabHide: boolean; // default true
+  lockOnTabHide: boolean; // default false
   createdAt: Date;
   updatedAt: Date;
 }
@@ -16,7 +16,7 @@ const LockSettingsSchema = new Schema<ILockSettings>(
     isLockEnabled: { type: Boolean, default: false },
     passcodeHash: { type: String, default: "" },
     autoLockTimeout: { type: Number, default: 300 }, // 5 minutes default
-    lockOnTabHide: { type: Boolean, default: true },
+    lockOnTabHide: { type: Boolean, default: false },
   },
   { timestamps: true },
 );

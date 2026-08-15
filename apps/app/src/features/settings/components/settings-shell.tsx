@@ -184,7 +184,7 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
   // Diary Lock States
   const [diaryLockEnabled, setDiaryLockEnabled] = React.useState(false);
   const [diaryLockTimeout, setDiaryLockTimeout] = React.useState(300);
-  const [diaryLockOnTabHide, setDiaryLockOnTabHide] = React.useState(true);
+  const [diaryLockOnTabHide, setDiaryLockOnTabHide] = React.useState(false);
   const [diaryHasPasscode, setDiaryHasPasscode] = React.useState(false);
   const [isSavingLockSettings, setIsSavingLockSettings] = React.useState(false);
   const [lockSettingsLoading, setLockSettingsLoading] = React.useState(true);

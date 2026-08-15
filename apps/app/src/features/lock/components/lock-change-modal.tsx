@@ -96,7 +96,7 @@ export function LockChangeModal({ onClose, onSuccess }: LockChangeModalProps) {
       isLockEnabled: true,
       passcode: newPin,
       autoLockTimeout: 300,
-      lockOnTabHide: true,
+      lockOnTabHide: false,
     });
 
     if (res.success) {

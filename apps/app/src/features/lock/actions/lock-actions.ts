@@ -47,7 +47,7 @@ export async function getLockSettingsAction(): Promise<{
         isLockEnabled: settings?.isLockEnabled ?? false,
         hasPasscode: !!settings?.passcodeHash,
         autoLockTimeout: settings?.autoLockTimeout ?? 300,
-        lockOnTabHide: settings?.lockOnTabHide ?? true,
+        lockOnTabHide: settings?.lockOnTabHide ?? false,
         isUnlocked,
       },
     };

@@ -72,7 +72,7 @@ export function AppShell({
     () => initialLockSettings?.autoLockTimeout ?? 300,
   );
   const [lockOnTabHide] = React.useState(
-    () => initialLockSettings?.lockOnTabHide ?? true,
+    () => initialLockSettings?.lockOnTabHide ?? false,
   );
   const [showSetupPrompt, setShowSetupPrompt] = React.useState(false);
 
