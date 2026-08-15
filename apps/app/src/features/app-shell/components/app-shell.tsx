@@ -244,6 +244,13 @@ export function AppShell({
       // re-prompt for the Diary Password immediately after unlocking.
       router.refresh();
     }
+
+    // Persist the client timezone offset so SSR can render timezone-correct
+    // insights (and avoid a client-side recompute) on the next navigation.
+    const tzOffset = new Date().getTimezoneOffset();
+    if (getCookie("withink-tz-offset") !== String(tzOffset)) {
+      document.cookie = `withink-tz-offset=${tzOffset}; path=/; max-age=31536000; SameSite=Lax`;
+    }
   }, [router]);
 
   const handleToggleCollapse = () => {

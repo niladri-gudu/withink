@@ -35,13 +35,15 @@ const RETRY_MAX_MS = 60_000;
 const LOCKED_RETRY_MS = 30_000;
 
 function isDataDirty(a: AutoSaveData, b: AutoSaveData): boolean {
+  // Compare the serialized string fields only — they change on every edit
+  // (html even for pure formatting changes) and are far cheaper than a full
+  // JSON.stringify of the ProseMirror tree on every keystroke.
   return (
     a.date !== b.date ||
     a.title !== b.title ||
     a.mood !== b.mood ||
     a.contentHtml !== b.contentHtml ||
-    a.contentText !== b.contentText ||
-    JSON.stringify(a.contentJson) !== JSON.stringify(b.contentJson)
+    a.contentText !== b.contentText
   );
 }
 

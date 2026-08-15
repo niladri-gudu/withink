@@ -76,25 +76,33 @@ describe("JournalService Search tests", () => {
     expect(result.entries[0]?.title).toBe("Walk in the Garden");
   });
 
-  it("should match by title (case-insensitive)", async () => {
+  it("should forward search filters to the repository and map results", async () => {
+    const matching = [mockEntries[1]!] as unknown as IEntry[];
     vi.mocked(EntryRepository.getEntriesPage).mockResolvedValue({
-      entries: mockEntries as unknown as IEntry[],
-      total: 3,
+      entries: matching,
+      total: 1,
     });
 
     const result = await JournalService.getEntriesPage("user1", 1, 10, {
       search: "rainy",
     });
 
+    expect(EntryRepository.getEntriesPage).toHaveBeenCalledWith(
+      "user1",
+      1,
+      10,
+      { search: "rainy" },
+    );
     expect(result.entries).toHaveLength(1);
     expect(result.total).toBe(1);
     expect(result.entries[0]?.title).toBe("Quiet Rainy Afternoon");
   });
 
-  it("should match by decrypted contentText (case-insensitive)", async () => {
+  it("should map decrypted contentText from repository search results", async () => {
+    const matching = [mockEntries[0]!] as unknown as IEntry[];
     vi.mocked(EntryRepository.getEntriesPage).mockResolvedValue({
-      entries: mockEntries as unknown as IEntry[],
-      total: 3,
+      entries: matching,
+      total: 1,
     });
 
     const result = await JournalService.getEntriesPage("user1", 1, 10, {
@@ -102,14 +110,16 @@ describe("JournalService Search tests", () => {
     });
 
     expect(result.entries).toHaveLength(1);
-    expect(result.total).toBe(1);
-    expect(result.entries[0]?.title).toBe("Walk in the Garden");
+    expect(result.entries[0]?.contentText).toBe(
+      "Today I saw a beautiful monarch butterfly and some roses.",
+    );
   });
 
-  it("should match by ISO date string", async () => {
+  it("should match by ISO date string via repository filter", async () => {
+    const matching = [mockEntries[2]!] as unknown as IEntry[];
     vi.mocked(EntryRepository.getEntriesPage).mockResolvedValue({
-      entries: mockEntries as unknown as IEntry[],
-      total: 3,
+      entries: matching,
+      total: 1,
     });
 
     const result = await JournalService.getEntriesPage("user1", 1, 10, {
@@ -121,41 +131,17 @@ describe("JournalService Search tests", () => {
     expect(result.entries[0]?.title).toBe("Productive Tuesday");
   });
 
-  it("should match by formatted date string (long/short representation)", async () => {
+  it("should preserve repository-supplied pagination and totals", async () => {
     vi.mocked(EntryRepository.getEntriesPage).mockResolvedValue({
-      entries: mockEntries as unknown as IEntry[],
+      entries: [mockEntries[0]!] as unknown as IEntry[],
       total: 3,
     });
 
-    // "Jul 1" matches 2026-07-01
-    const result1 = await JournalService.getEntriesPage("user1", 1, 10, {
-      search: "Jul 1",
-    });
-    expect(result1.entries).toHaveLength(1);
-    expect(result1.entries[0]?.title).toBe("Quiet Rainy Afternoon");
-
-    // "June" matches 2026-06-30
-    const result2 = await JournalService.getEntriesPage("user1", 1, 10, {
-      search: "June",
-    });
-    expect(result2.entries).toHaveLength(1);
-    expect(result2.entries[0]?.title).toBe("Productive Tuesday");
-  });
-
-  it("should slice results correctly based on page and limit in memory", async () => {
-    vi.mocked(EntryRepository.getEntriesPage).mockResolvedValue({
-      entries: mockEntries as unknown as IEntry[],
-      total: 3,
-    });
-
-    // Search query that matches everything (e.g. "a" or "e")
     const result = await JournalService.getEntriesPage("user1", 2, 1, {
       search: "e",
     });
 
     expect(result.entries).toHaveLength(1);
-    // Page 2, Limit 1 should return the second matching item (Quiet Rainy Afternoon)
-    expect(result.entries[0]?.title).toBe("Quiet Rainy Afternoon");
-    expect(result.total).toBe(3); // All 3 contain "e"
+    expect(result.total).toBe(3);
   });
 });

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@withink/ui/button";
 import {
@@ -60,11 +60,15 @@ export function EntriesCalendar({
 }: EntriesCalendarProps) {
   const router = useRouter();
 
-  const entryMap = new Map<string, CalendarEntry>();
-  calendarEntries.forEach((entry) => {
-    entryMap.set(entry.date, entry);
-  });
-  const dateSet = new Set(calendarEntries.map((e) => e.date));
+  // Rebuild lookup maps only when the underlying data changes (month navigation
+  // re-renders many cells; we don't want to rebuild these per cell per render).
+  const { entryMap, dateSet } = useMemo(() => {
+    const map = new Map<string, CalendarEntry>();
+    calendarEntries.forEach((entry) => {
+      map.set(entry.date, entry);
+    });
+    return { entryMap: map, dateSet: new Set(calendarEntries.map((e) => e.date)) };
+  }, [calendarEntries]);
 
   const [todayYear, todayMonth] = localToday.split("-").map(Number);
   const [currentYear, setCurrentYear] = useState(

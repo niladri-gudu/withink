@@ -24,8 +24,7 @@ import { toast } from "sonner";
 import { ROUTES } from "@/constants/routes";
 
 import {
-  getFullMediaLibraryAction,
-  getStorageStatsAction,
+  getMediaLibraryAndStatsAction,
   type MediaFile,
   type StorageStats,
 } from "../actions/media-actions";
@@ -37,11 +36,17 @@ const MediaLightbox = dynamic(
   { ssr: false },
 );
 
-export function MediaGallery() {
-  const [files, setFiles] = React.useState<MediaFile[]>([]);
-  const [stats, setStats] = React.useState<StorageStats | null>(null);
-  const [loading, setLoading] = React.useState(true);
-  const [statsLoading, setStatsLoading] = React.useState(true);
+interface MediaGalleryProps {
+  /** Server-fetched library so the page doesn't wait on client round trips. */
+  initialFiles: MediaFile[];
+  initialStats: StorageStats;
+}
+
+export function MediaGallery({ initialFiles, initialStats }: MediaGalleryProps) {
+  const [files, setFiles] = React.useState<MediaFile[]>(initialFiles);
+  const [stats, setStats] = React.useState<StorageStats>(initialStats);
+  const [loading, setLoading] = React.useState(false);
+  const [statsLoading, setStatsLoading] = React.useState(false);
   const [viewMode, setViewMode] = React.useState<"grid" | "list">("grid");
   const [searchQuery, setSearchQuery] = React.useState("");
   const [sortBy, setSortBy] = React.useState<
@@ -49,63 +54,52 @@ export function MediaGallery() {
   >("date-desc");
   const [lightboxIndex, setLightboxIndex] = React.useState<number | null>(null);
 
-  const fetchLibrary = React.useCallback(async () => {
+  const refresh = React.useCallback(async () => {
     setLoading(true);
-    const res = await getFullMediaLibraryAction();
+    setStatsLoading(true);
+    const res = await getMediaLibraryAndStatsAction();
     if (res.success && res.data) {
-      setFiles(res.data);
+      setFiles(res.data.files);
+      setStats(res.data.stats);
     } else {
-      toast.error(res.error || "Failed to load media files.");
+      toast.error(res.error || "Failed to refresh media files.");
     }
     setLoading(false);
-  }, []);
-
-  const fetchStats = React.useCallback(async () => {
-    setStatsLoading(true);
-    const res = await getStorageStatsAction();
-    if (res.success && res.data) {
-      setStats(res.data);
-    }
     setStatsLoading(false);
   }, []);
 
-  React.useEffect(() => {
-    queueMicrotask(() => {
-      fetchLibrary();
-      fetchStats();
+  // Filter & Sort, memoized so typing in the search box doesn't re-sort the
+  // whole library on every keystroke for the entire component.
+  const filteredFiles = React.useMemo(() => {
+    let list = files;
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      list = list.filter((file) => {
+        const filename = file.key.split("/").pop() || "";
+        return filename.toLowerCase().includes(query);
+      });
+    }
+
+    return [...list].sort((a, b) => {
+      if (sortBy === "date-desc") {
+        const timeA = a.lastModified ? new Date(a.lastModified).getTime() : 0;
+        const timeB = b.lastModified ? new Date(b.lastModified).getTime() : 0;
+        return timeB - timeA;
+      }
+      if (sortBy === "date-asc") {
+        const timeA = a.lastModified ? new Date(a.lastModified).getTime() : 0;
+        const timeB = b.lastModified ? new Date(b.lastModified).getTime() : 0;
+        return timeA - timeB;
+      }
+      if (sortBy === "size-desc") {
+        return b.size - a.size;
+      }
+      if (sortBy === "size-asc") {
+        return a.size - b.size;
+      }
+      return 0;
     });
-  }, [fetchLibrary, fetchStats]);
-
-  // Filter & Sort logic computed inline to let React Compiler handle optimization
-  let filteredFiles = [...files];
-
-  if (searchQuery.trim()) {
-    const query = searchQuery.toLowerCase();
-    filteredFiles = filteredFiles.filter((file) => {
-      const filename = file.key.split("/").pop() || "";
-      return filename.toLowerCase().includes(query);
-    });
-  }
-
-  filteredFiles.sort((a, b) => {
-    if (sortBy === "date-desc") {
-      const timeA = a.lastModified ? new Date(a.lastModified).getTime() : 0;
-      const timeB = b.lastModified ? new Date(b.lastModified).getTime() : 0;
-      return timeB - timeA;
-    }
-    if (sortBy === "date-asc") {
-      const timeA = a.lastModified ? new Date(a.lastModified).getTime() : 0;
-      const timeB = b.lastModified ? new Date(b.lastModified).getTime() : 0;
-      return timeA - timeB;
-    }
-    if (sortBy === "size-desc") {
-      return b.size - a.size;
-    }
-    if (sortBy === "size-asc") {
-      return a.size - b.size;
-    }
-    return 0;
-  });
+  }, [files, searchQuery, sortBy]);
 
   // Lightbox navigation callbacks. Defined after `filteredFiles` is computed so
   // they close over the live, sorted/filtered list.
@@ -120,7 +114,7 @@ export function MediaGallery() {
   const handleLightboxDeleted = (key: string) => {
     setFiles((prev) => prev.filter((f) => f.key !== key));
     setLightboxIndex(null); // matches the original close-on-delete behavior
-    fetchStats();
+    void refresh();
   };
 
   return (
@@ -170,8 +164,7 @@ export function MediaGallery() {
             variant="ghost"
             size="icon"
             onClick={() => {
-              fetchLibrary();
-              fetchStats();
+              void refresh();
               toast.success("Refreshed gallery");
             }}
             disabled={loading || statsLoading}

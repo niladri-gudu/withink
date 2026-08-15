@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { diaryCacheService } from "./diary-cache-service";
+import type { CachedMetadata } from "./diary-cache-service";
+import { diaryCacheService, filterLocalTimeline } from "./diary-cache-service";
 
 const { dbMock } = vi.hoisted(() => ({
   dbMock: {
@@ -47,9 +48,11 @@ const localEntry = {
   date: "2026-01-01",
   title: "Local title",
   snippet: "Local snippet",
+  contentText: "Local full text used for searching beyond the preview snippet.",
   wordCount: 3,
   mood: null,
   updatedAt: "2026-01-01T00:00:00.000Z",
+  v: 2,
 };
 
 function localEntryValue(overrides: Partial<typeof localEntry> = {}) {
@@ -67,6 +70,8 @@ describe("diaryCacheService.syncDiaryCache", () => {
 
     Object.values(dbMock).forEach((fn) => fn.mockReset());
     Object.values(actionsMock).forEach((fn) => fn.mockReset());
+
+    diaryCacheService.clearTimelineCache();
 
     dbMock.getAllEntries.mockResolvedValue([]);
     dbMock.getAllSyncItems.mockResolvedValue([]);
@@ -171,5 +176,120 @@ describe("diaryCacheService.syncDiaryCache", () => {
     expect(ok).toBe(true);
     expect(actionsMock.getEntryAction).not.toHaveBeenCalled();
     expect(dbMock.delete).not.toHaveBeenCalled();
+  });
+});
+
+describe("filterLocalTimeline", () => {
+  const entry = (overrides: Partial<CachedMetadata> = {}): CachedMetadata => ({
+    date: "2026-01-01",
+    title: "Quiet Rainy Afternoon",
+    snippet: "Short preview",
+    contentText: `It has been raining all day. ${"x".repeat(300)} END_MARKER`,
+    wordCount: 12,
+    mood: 3,
+    updatedAt: "2026-01-01T14:00:00.000Z",
+    v: 2,
+    ...overrides,
+  });
+
+  it("matches words beyond the 240-char snippet (full-text search)", () => {
+    const items = [entry()];
+    const result = filterLocalTimeline(items, {
+      search: "END_MARKER",
+      localToday: "2026-01-02",
+    });
+    expect(result).toHaveLength(1);
+  });
+
+  it("matches the title case-insensitively", () => {
+    const items = [entry()];
+    expect(
+      filterLocalTimeline(items, { search: "rainy", localToday: "2026-01-02" }),
+    ).toHaveLength(1);
+    expect(
+      filterLocalTimeline(items, {
+        search: "garden",
+        localToday: "2026-01-02",
+      }),
+    ).toHaveLength(0);
+  });
+
+  it("matches ISO date fragments", () => {
+    const items = [entry()];
+    expect(
+      filterLocalTimeline(items, {
+        search: "2026-01-01",
+        localToday: "2026-01-02",
+      }),
+    ).toHaveLength(1);
+    expect(
+      filterLocalTimeline(items, { search: "2025", localToday: "2026-01-02" }),
+    ).toHaveLength(0);
+  });
+
+  it("matches human-readable dates ('Jan 1', 'January 1, 2026')", () => {
+    const items = [entry()];
+    expect(
+      filterLocalTimeline(items, { search: "Jan 1", localToday: "2026-01-02" }),
+    ).toHaveLength(1);
+    expect(
+      filterLocalTimeline(items, {
+        search: "january 1, 2026",
+        localToday: "2026-01-02",
+      }),
+    ).toHaveLength(1);
+    expect(
+      filterLocalTimeline(items, { search: "jul", localToday: "2026-01-02" }),
+    ).toHaveLength(0);
+  });
+
+  it("falls back to the snippet for records without full text", () => {
+    const items = [entry({ contentText: "" })];
+    expect(
+      filterLocalTimeline(items, {
+        search: "preview",
+        localToday: "2026-01-02",
+      }),
+    ).toHaveLength(1);
+    expect(
+      filterLocalTimeline(items, {
+        search: "END_MARKER",
+        localToday: "2026-01-02",
+      }),
+    ).toHaveLength(0);
+  });
+
+  it("filters by mood", () => {
+    const items = [entry(), entry({ date: "2026-01-02", mood: 5 })];
+    const result = filterLocalTimeline(items, {
+      moodFilter: 5,
+      localToday: "2026-01-03",
+    });
+    expect(result).toHaveLength(1);
+    expect(result[0]?.date).toBe("2026-01-02");
+  });
+
+  it("filters by week time range", () => {
+    const items = [entry(), entry({ date: "2025-12-01" })];
+    const result = filterLocalTimeline(items, {
+      timeFilter: "week",
+      localToday: "2026-01-03",
+    });
+    expect(result).toHaveLength(1);
+    expect(result[0]?.date).toBe("2026-01-01");
+  });
+
+  it("combines mood + search", () => {
+    const items = [
+      entry({ date: "2026-01-01", mood: 3, title: "Rain" }),
+      entry({ date: "2026-01-02", mood: 5, title: "Sun" }),
+    ];
+    const result = filterLocalTimeline(items, {
+      moodFilter: 3,
+      search: "rain",
+      localToday: "2026-01-03",
+    });
+    expect(result).toHaveLength(1);
+    expect(result[0]?.date).toBe("2026-01-01");
   });
 });

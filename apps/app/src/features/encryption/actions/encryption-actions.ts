@@ -210,22 +210,29 @@ export async function enableClientEncryptionAction(
       verificationCiphertext,
     });
 
-    // Save newly encrypted entry blobs in database
+    // Save newly encrypted entry blobs in database. Batched with bulkWrite so
+    // the migration is a handful of round trips instead of one per entry (N+1).
+    const BATCH_SIZE = 500;
     let migratedCount = 0;
-    for (const entry of encryptedEntries) {
-      const res = await (EntryModel as Model<IEntry>).updateOne(
-        { _id: entry.id, userId: session.user.id },
-        {
-          $set: {
-            title: entry.title,
-            contentHtml: entry.contentHtml,
-            contentText: entry.contentText,
-            contentJson: entry.contentJson,
-            wordCount: entry.wordCount,
+    for (let i = 0; i < encryptedEntries.length; i += BATCH_SIZE) {
+      const batch = encryptedEntries.slice(i, i + BATCH_SIZE);
+      const result = await (EntryModel as Model<IEntry>).bulkWrite(
+        batch.map((entry) => ({
+          updateOne: {
+            filter: { _id: entry.id, userId: session.user.id },
+            update: {
+              $set: {
+                title: entry.title,
+                contentHtml: entry.contentHtml,
+                contentText: entry.contentText,
+                contentJson: entry.contentJson,
+                wordCount: entry.wordCount,
+              },
+            },
           },
-        },
+        })),
       );
-      if (res.matchedCount > 0) migratedCount++;
+      migratedCount += result.matchedCount || 0;
     }
 
     if (migratedCount !== totalEntries) {

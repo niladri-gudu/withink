@@ -71,6 +71,10 @@ export function MediaLightbox({
   const [cachedEntries, setCachedEntries] = React.useState<
     DecryptedEntry[] | null
   >(null);
+  // Memoized plaintext per entry date so prev/next navigation doesn't re-decrypt
+  // every entry's HTML from scratch each time (O(N) AES-GCM per image change).
+  // A ref (not state) because it's a pure cache — nothing to re-render on.
+  const decryptedHtmlByDateRef = React.useRef<Map<string, string>>(new Map());
 
   // Load entries once per open/close transition, resetting on each change.
   const isOpen = index !== null;
@@ -79,6 +83,12 @@ export function MediaLightbox({
     setPrevOpen(isOpen);
     setCachedEntries(null);
   }
+
+  // Reset the decryption memo each time the lightbox opens/closes. Kept in an
+  // effect (not during render) so we never mutate a ref while rendering.
+  React.useEffect(() => {
+    decryptedHtmlByDateRef.current = new Map();
+  }, [isOpen]);
 
   React.useEffect(() => {
     if (!isOpen) return;
@@ -127,12 +137,14 @@ export function MediaLightbox({
             return;
           }
           let foundDate: string | null = null;
+          const decrypted = decryptedHtmlByDateRef.current;
           for (const entry of cachedEntries) {
-            const decryptedHtml = await safeDecryptText(
-              entry.contentHtml || "",
-              masterKey,
-            );
-            if (decryptedHtml.includes(file.url)) {
+            let html = decrypted.get(entry.date);
+            if (html === undefined) {
+              html = await safeDecryptText(entry.contentHtml || "", masterKey);
+              decrypted.set(entry.date, html);
+            }
+            if (html.includes(file.url)) {
               foundDate = entry.date;
               break;
             }

@@ -1,5 +1,6 @@
 import { decryptText, encryptText } from "@/lib/crypto-client";
 import { diaryCacheDB } from "@/lib/diary-cache-db";
+import { addDays } from "@/lib/utils/date";
 
 import {
   getEntryAction,
@@ -10,11 +11,18 @@ import {
 export interface CachedMetadata {
   date: string;
   title: string;
+  /** Short preview shown in timeline cards. */
   snippet: string;
+  /** Full plaintext of the entry, used for local search. */
+  contentText: string;
   wordCount: number;
   mood: number | null;
   updatedAt: string;
+  /** Schema version so `syncDiaryCache` can re-fetch records written by older code. */
+  v: number;
 }
+
+const METADATA_VERSION = 2;
 
 /**
  * Extracts a clean text snippet from content text
@@ -25,6 +33,101 @@ function createSnippet(text: string, maxLength = 240): string {
   return cleaned.length > maxLength
     ? cleaned.substring(0, maxLength) + "…"
     : cleaned;
+}
+
+// In-memory cache of the decrypted timeline, keyed by the unlocked CryptoKey
+// reference. Decrypting every record on every search is O(N) crypto work that
+// gets slow as a journal grows; caching the decrypted list makes searches
+// instant after the first one, and is invalidated on any write. Keyed by the
+// key object so a new unlock (new key) automatically rebuilds it, and it is
+// cleared on lock to release plaintext from memory.
+let timelineCache: { key: CryptoKey; entries: CachedMetadata[] } | null = null;
+
+function invalidateTimelineCache(): void {
+  timelineCache = null;
+}
+
+export interface LocalTimelineFilters {
+  moodFilter?: number | "all";
+  timeFilter?: "all" | "week" | "month";
+  search?: string;
+  localToday: string;
+}
+
+/**
+ * Pure filter over a decrypted local timeline. Extracted from the timeline
+ * component so the search/filter behavior is unit-testable.
+ *
+ * Search matches the FULL entry text (falling back to the snippet for records
+ * not yet re-synced to the full-text format), the title, the ISO date, and
+ * human-readable date forms ("Jul 1", "July 4, 2026").
+ */
+export function filterLocalTimeline(
+  cached: CachedMetadata[],
+  filters: LocalTimelineFilters,
+): CachedMetadata[] {
+  const {
+    moodFilter = "all",
+    timeFilter = "all",
+    search = "",
+    localToday,
+  } = filters;
+
+  let filtered = cached;
+
+  if (moodFilter !== "all") {
+    const m = Number(moodFilter);
+    filtered = filtered.filter((item) => item.mood === m);
+  }
+
+  if (timeFilter !== "all") {
+    filtered = filtered.filter((item) => {
+      if (timeFilter === "week") {
+        return item.date >= addDays(localToday, -7) && item.date <= localToday;
+      }
+      if (timeFilter === "month") {
+        return item.date >= addDays(localToday, -30) && item.date <= localToday;
+      }
+      return true;
+    });
+  }
+
+  if (search.trim()) {
+    const queryLower = search.trim().toLowerCase();
+    filtered = filtered.filter((item) => {
+      const searchText = item.contentText || item.snippet;
+      if (item.title.toLowerCase().includes(queryLower)) return true;
+      if (searchText.toLowerCase().includes(queryLower)) return true;
+      if (item.date.includes(queryLower)) return true;
+
+      // Human-readable date matching ("Jul 1", "January 2025", "jul 1, 2025")
+      const [year, month, day] = item.date.split("-").map(Number);
+      if (year !== undefined && month !== undefined && day !== undefined) {
+        const dateObj = new Date(year, month - 1, day);
+        const shortDate = dateObj
+          .toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+          })
+          .toLowerCase();
+        const longDate = dateObj
+          .toLocaleDateString("en-US", {
+            month: "long",
+            day: "numeric",
+            year: "numeric",
+          })
+          .toLowerCase();
+        if (shortDate.includes(queryLower) || longDate.includes(queryLower)) {
+          return true;
+        }
+      }
+
+      return false;
+    });
+  }
+
+  return filtered;
 }
 
 export const diaryCacheService = {
@@ -48,19 +151,28 @@ export const diaryCacheService = {
       date,
       title: title || "",
       snippet,
+      contentText,
       wordCount: wordCount || 0,
       mood,
       updatedAt: updatedAtStr,
+      v: METADATA_VERSION,
     };
 
     const encrypted = await encryptText(JSON.stringify(payload), masterKey);
     await diaryCacheDB.set(date, encrypted);
+    invalidateTimelineCache();
   },
 
   /**
-   * Reads and decrypts all cached metadata records
+   * Reads and decrypts all cached metadata records. Results are cached in
+   * memory per unlock so repeated searches filter an array instead of
+   * re-decrypting every record each time.
    */
   async getLocalCacheTimeline(masterKey: CryptoKey): Promise<CachedMetadata[]> {
+    if (timelineCache && timelineCache.key === masterKey) {
+      return timelineCache.entries;
+    }
+
     try {
       const entries = await diaryCacheDB.getAllEntries();
       const decrypted = await Promise.all(
@@ -80,9 +192,11 @@ export const diaryCacheService = {
       );
 
       // Filter out failures and sort descending by date
-      return (decrypted.filter(Boolean) as CachedMetadata[]).sort((a, b) =>
+      const result = (decrypted.filter(Boolean) as CachedMetadata[]).sort((a, b) =>
         b.date.localeCompare(a.date),
       );
+      timelineCache = { key: masterKey, entries: result };
+      return result;
     } catch (err) {
       console.error("Failed to load local cache timeline:", err);
       return [];
@@ -90,10 +204,20 @@ export const diaryCacheService = {
   },
 
   /**
+   * Drops the in-memory decrypted timeline. Called on lock so plaintext entry
+   * text is released from memory, and safe to call after any external cache
+   * mutation.
+   */
+  clearTimelineCache(): void {
+    invalidateTimelineCache();
+  },
+
+  /**
    * Deletes a record from the local cache
    */
   async deleteLocalMetadata(date: string): Promise<void> {
     await diaryCacheDB.delete(date);
+    invalidateTimelineCache();
   },
 
   /**
@@ -117,6 +241,9 @@ export const diaryCacheService = {
       const serverEntries = res.data; // array of { date: string, updatedAt: string }
       const pendingDates = new Set(syncItems.map((item) => item.key));
 
+      // In-memory timeline is now stale (metadata will change during this sync).
+      invalidateTimelineCache();
+
       // 2. Fetch all local entries and decrypt to build a local map
       const localEntriesRaw = await diaryCacheDB.getAllEntries();
       const localMap: Record<string, string> = {};
@@ -126,7 +253,9 @@ export const diaryCacheService = {
           try {
             const decryptedStr = await decryptText(entry.value, masterKey);
             const parsed = JSON.parse(decryptedStr) as CachedMetadata;
-            localMap[entry.key] = parsed.updatedAt;
+            // Records written by older code (before full-text metadata) have no
+            // `v: 2` marker; treat them as stale so they are re-fetched once.
+            localMap[entry.key] = parsed.v === METADATA_VERSION ? parsed.updatedAt : "";
           } catch {
             // If decryption fails, mark it as empty so it gets re-fetched
             localMap[entry.key] = "";

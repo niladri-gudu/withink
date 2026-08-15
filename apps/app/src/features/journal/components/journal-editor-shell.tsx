@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { Button } from "@withink/ui/button";
@@ -88,22 +88,35 @@ export function JournalEditorShell({
     localStorage.setItem("withink-ambient-sound", ambientSound);
   }, [ambientSound]);
 
-  // Track window scroll progress
+  // Track window scroll progress, rAF-throttled so we only re-render when the
+  // value actually changes (scroll fires at up to 60Hz+).
   useEffect(() => {
+    let rafId: number | null = null;
+    let lastProgress = -1;
+
     const handleScroll = () => {
-      const totalHeight =
-        document.documentElement.scrollHeight - window.innerHeight;
-      if (totalHeight <= 0) {
-        setScrollProgress(0);
-        return;
-      }
-      const progress = (window.scrollY / totalHeight) * 100;
-      setScrollProgress(Math.min(progress, 100));
+      if (rafId !== null) return;
+      rafId = requestAnimationFrame(() => {
+        rafId = null;
+        const totalHeight =
+          document.documentElement.scrollHeight - window.innerHeight;
+        const progress =
+          totalHeight <= 0
+            ? 0
+            : Math.min((window.scrollY / totalHeight) * 100, 100);
+        if (progress !== lastProgress) {
+          lastProgress = progress;
+          setScrollProgress(progress);
+        }
+      });
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
     handleScroll();
-    return () => window.removeEventListener("scroll", handleScroll);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      if (rafId !== null) cancelAnimationFrame(rafId);
+    };
   }, []);
 
   // Ambient sound management
@@ -213,38 +226,61 @@ export function JournalEditorShell({
     loadContent();
   }, [initialTitle, initialContent, isClientEncrypted, masterKey, date]);
 
-  // Setup scroll-padding for visual viewport (keyboard avoidance on mobile/Safari)
+  // Setup scroll-padding for visual viewport (keyboard avoidance on mobile/Safari).
+  // The <style> element is created once and mutated in place instead of being
+  // appended/removed on every toolbar/viewport change.
+  const scrollPaddingStyleRef = useRef<HTMLStyleElement | null>(null);
   useEffect(() => {
     const topBuffer = isFocusMode ? 40 : 120;
     const bottomBuffer = toolbarBottom + 120;
     document.documentElement.style.scrollPaddingTop = `${topBuffer}px`;
     document.documentElement.style.scrollPaddingBottom = `${bottomBuffer}px`;
 
-    const style = document.createElement("style");
-    style.innerHTML = `
+    if (!scrollPaddingStyleRef.current) {
+      const style = document.createElement("style");
+      style.dataset.withinkScrollPadding = "true";
+      scrollPaddingStyleRef.current = style;
+    }
+    scrollPaddingStyleRef.current.innerHTML = `
       .prose-container p, .prose-container div[contenteditable] > * {
         scroll-margin-top: ${topBuffer}px;
         scroll-margin-bottom: ${bottomBuffer}px;
       }
     `;
-    document.head.appendChild(style);
+    if (!scrollPaddingStyleRef.current.isConnected) {
+      document.head.appendChild(scrollPaddingStyleRef.current);
+    }
 
     return () => {
       document.documentElement.style.scrollPaddingTop = "0px";
       document.documentElement.style.scrollPaddingBottom = "0px";
-      if (document.head.contains(style)) {
-        document.head.removeChild(style);
+      if (
+        scrollPaddingStyleRef.current &&
+        document.head.contains(scrollPaddingStyleRef.current)
+      ) {
+        document.head.removeChild(scrollPaddingStyleRef.current);
       }
+      scrollPaddingStyleRef.current = null;
     };
   }, [toolbarBottom, isFocusMode]);
 
   useEffect(() => {
     const viewport = window.visualViewport;
     if (!viewport) return;
+    let rafId: number | null = null;
+    let lastBottom = -1;
     const update = () => {
-      const fromBottom =
-        window.innerHeight - viewport.height - viewport.offsetTop;
-      setToolbarBottom(Math.max(fromBottom, 0) + 16);
+      if (rafId !== null) return;
+      rafId = requestAnimationFrame(() => {
+        rafId = null;
+        const fromBottom =
+          window.innerHeight - viewport.height - viewport.offsetTop;
+        const bottom = Math.max(fromBottom, 0) + 16;
+        if (bottom !== lastBottom) {
+          lastBottom = bottom;
+          setToolbarBottom(bottom);
+        }
+      });
     };
     viewport.addEventListener("resize", update);
     viewport.addEventListener("scroll", update);
@@ -252,11 +288,20 @@ export function JournalEditorShell({
     return () => {
       viewport.removeEventListener("resize", update);
       viewport.removeEventListener("scroll", update);
+      if (rafId !== null) cancelAnimationFrame(rafId);
     };
   }, []);
 
   const isUnlocked = editorReady && decryptedContent !== null;
   const canEncrypt = isClientEncrypted ? !!masterKey : true;
+
+  // Stable callbacks so the memoized TiptapEditor doesn't re-render when the
+  // shell updates (e.g. title/mood/scroll changes).
+  const handleEditorReady = useCallback((editor: any) => {
+    setEditorInstance(editor);
+    setEditorReady(true);
+  }, []);
+
   const saveStatus = useAutoSave(
     {
       date,
@@ -348,10 +393,7 @@ export function JournalEditorShell({
                 key={date}
                 content={decryptedContent}
                 onChange={setEditorContent}
-                onEditorReady={(editor) => {
-                  setEditorInstance(editor);
-                  setEditorReady(true);
-                }}
+                onEditorReady={handleEditorReady}
               />
             ) : (
               <div className="flex items-center justify-center py-20">

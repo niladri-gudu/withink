@@ -2,7 +2,7 @@
 
 # Project State
 
-Last Updated: 2026-08-13
+Last Updated: 2026-08-15
 
 Current Phase: Production Hardening
 
@@ -391,6 +391,17 @@ Note: MongoDB (`mongodb+srv://`) now connects. The earlier `querySrv ECONNREFUSE
 ---
 
 # Recent Decisions
+
+2026-08-15
+
+- Completed a full performance sweep of `apps/app` (interaction latency + navigation latency) and fixed a zero-knowledge local-search bug. All changes verified: `tsc --noEmit` clean, eslint 0 errors (3 pre-existing `clearAllTimers` exhaustive-deps warnings, unchanged), 112/112 Vitest tests passing, production build clean. `/insights`, `/media`, `/entries`, `/settings` now render as Partial Prerender (`◐`) instead of fully dynamic.
+  - Writing path (instant typing): `tiptap-editor` now debounces the full-document snapshot (getHTML/getText/getJSON) to a 400ms trailing flush (was 3 serializations per keystroke) with flush-on-blur, and is `memo`-wrapped; `use-auto-save` drops the per-keystroke `JSON.stringify` dirty-check (compares string fields instead); editor-shell scroll + visualViewport handlers are rAF-throttled and the scroll-padding `<style>` element is created once; the toolbar's word-count subscription is split from the button grid.
+  - Navigation / server hot paths: `(app)/layout.tsx` dedupes the lock-settings read (passes pre-fetched settings into `isSessionUnlocked`) and parallelizes the encryption-settings read, which is now Redis-cached (60s TTL + invalidation on save). Insights are cached via `use cache` + `cacheTag("insights:{userId}")` (`insights-cache.ts`), invalidated by `revalidateTag` on every entry write; SSR reads the client timezone cookie so the timezone-adjusted client recompute is a rare fallback. The entries page derives its date list from one calendar call.
+  - Search: the legacy (non-encrypted) search path is pushed down to Mongo (`$regex` on title/contentText/ISO date with projection + pagination) instead of pulling the whole collection to filter in JS. Zero-knowledge search now matches the FULL entry text: the local IndexedDB metadata cache stores full `contentText` (was a 240-char snippet) with a `v: 2` marker and a one-time re-sync trigger for existing browsers; human-readable date matching ("Jul 1") restored in `filterLocalTimeline` (new pure, unit-tested helper); the decrypted timeline is cached in memory per unlock and cleared on lock, so searches are instant after the first.
+  - Media: R2 listings are paginated past the 1,000-object cap (`lib/r2-list.ts` — gallery, stats, account deletion); the media page server-feeds the gallery (single R2 listing + combined refresh action); the lightbox memoizes per-entry decryption (no O(N) decrypt per prev/next) and `findEntryForMediaAction` is bounded to the 200 most recent entries.
+  - Data layer: `saveEntry` uses the `INCR` return value (one fewer Redis round trip); the client-encryption migration uses `bulkWrite` (was N+1 `updateOne`); the feedback email is fire-and-forget after the DB write (record is the source of truth); flashback history/selection cache writes are non-blocking.
+  - Bundle/client: `jszip` is dynamic-imported (was eager on the settings page), ReactQueryDevtools is dev-only, the sidebar collapse animates width via native CSS (no JS spring), the insights heatmap replaces ~365 Radix tooltips with native `title` attributes, `EncryptionProvider` context value is memoized and its 30s background sync pauses when the tab is hidden, and the timeline's background-sync progress is throttled with the per-item `layout` animation removed.
+  - Dashboard: the above-the-fold hero (yesterday banner, today's card, streak note) now streams behind its own Suspense boundary (`DashboardHero`) so the page header paints instantly.
 
 2026-08-13
 

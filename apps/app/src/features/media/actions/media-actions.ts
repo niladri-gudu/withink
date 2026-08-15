@@ -1,6 +1,6 @@
 "use server";
 
-import { DeleteObjectCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand } from "@aws-sdk/client-s3";
 
 import { env } from "@/config/env";
 import { connectDB } from "@/lib/db/mongoose";
@@ -11,23 +11,13 @@ import { handleError } from "@/server/errors";
 import { EntryModel } from "@/features/journal/repositories/entry-model";
 import { LockService } from "@/features/lock/services/lock-service";
 
-const isProduction = env.IS_PROD;
-const envPrefix = isProduction ? "" : "dev-";
-const STORAGE_LIMIT_MB = 50;
+import {
+  getMediaLibraryAndStats,
+  type MediaFile,
+  type StorageStats,
+} from "../services/media-service";
 
-export interface MediaFile {
-  key: string;
-  url: string;
-  size: number;
-  lastModified: string | null;
-}
-
-export interface StorageStats {
-  usedMB: number;
-  fileCount: number;
-  limitMB: number;
-  percentUsed: number;
-}
+export type { MediaFile, StorageStats } from "../services/media-service";
 
 /**
  * Fetches storage statistics for the Media Library
@@ -48,31 +38,11 @@ export async function getStorageStatsAction(): Promise<{
       return { success: false, error: "Locked" };
     }
 
-    const prefix = `${envPrefix}journal/${session.user.id}/`;
-
-    const command = new ListObjectsV2Command({
-      Bucket: env.R2_BUCKET_NAME,
-      Prefix: prefix,
-    });
-
-    const response = await r2.send(command);
-
-    const totalSizeBytes =
-      response.Contents?.reduce((acc, obj) => acc + (obj.Size || 0), 0) || 0;
-    const fileCount = response.Contents?.length || 0;
-    const totalSizeMB = Number((totalSizeBytes / (1024 * 1024)).toFixed(2));
-    const percentUsed = Number(
-      Math.min((totalSizeMB / STORAGE_LIMIT_MB) * 100, 100).toFixed(1),
-    );
+    const { stats } = await getMediaLibraryAndStats(session.user.id);
 
     return {
       success: true,
-      data: {
-        usedMB: totalSizeMB,
-        fileCount,
-        limitMB: STORAGE_LIMIT_MB,
-        percentUsed,
-      },
+      data: stats,
     };
   } catch (err) {
     const appError = handleError(err);
@@ -99,30 +69,37 @@ export async function getFullMediaLibraryAction(): Promise<{
       return { success: false, error: "Locked" };
     }
 
-    const prefix = `${envPrefix}journal/${session.user.id}/`;
-    const response = await r2.send(
-      new ListObjectsV2Command({
-        Bucket: env.R2_BUCKET_NAME,
-        Prefix: prefix,
-      }),
-    );
-
-    const files: MediaFile[] =
-      response.Contents?.map((file) => ({
-        key: file.Key!,
-        url: `${env.R2_PUBLIC_URL}/${file.Key}`,
-        size: file.Size || 0,
-        lastModified: file.LastModified?.toISOString() || null,
-      })) || [];
-
-    // Sort by last modified descending (most recent first)
-    files.sort((a, b) => {
-      const timeA = a.lastModified ? new Date(a.lastModified).getTime() : 0;
-      const timeB = b.lastModified ? new Date(b.lastModified).getTime() : 0;
-      return timeB - timeA;
-    });
+    const { files } = await getMediaLibraryAndStats(session.user.id);
 
     return { success: true, data: files };
+  } catch (err) {
+    const appError = handleError(err);
+    return { success: false, error: appError.safeMessage };
+  }
+}
+
+/**
+ * Fetches the media library and storage stats in a single round trip (one
+ * session/lock check + one R2 listing).
+ */
+export async function getMediaLibraryAndStatsAction(): Promise<{
+  success: boolean;
+  data?: { files: MediaFile[]; stats: StorageStats };
+  error?: string;
+}> {
+  try {
+    const session = await getRequestSession();
+    if (!session) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const unlocked = await LockService.isSessionUnlocked(session.user.id);
+    if (!unlocked) {
+      return { success: false, error: "Locked" };
+    }
+
+    const data = await getMediaLibraryAndStats(session.user.id);
+    return { success: true, data };
   } catch (err) {
     const appError = handleError(err);
     return { success: false, error: appError.safeMessage };
@@ -193,9 +170,15 @@ export async function findEntryForMediaAction(
     }
 
     await connectDB();
+    // Scan only the most recent entries rather than the entire journal. Media
+    // is overwhelmingly referenced by recent entries, and a bounded window
+    // keeps this interactive lightbox action fast for long-term users.
+    const MAX_ENTRIES_SCANNED = 200;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const entries = await (EntryModel as any)
       .find({ userId: session.user.id }, { date: 1, contentHtml: 1 })
+      .sort({ date: -1 })
+      .limit(MAX_ENTRIES_SCANNED)
       .lean();
 
     for (const entry of entries) {

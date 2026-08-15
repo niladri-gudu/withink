@@ -1,12 +1,6 @@
 "use client";
 
 import React from "react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@withink/ui/tooltip";
 import { cn } from "@withink/utils";
 
 interface HeatmapDay {
@@ -123,61 +117,41 @@ export function CalendarHeatmap({ heatmap }: CalendarHeatmapProps) {
             <span>Sat</span>
           </div>
 
-          <TooltipProvider>
-            <div className="grid flex-grow grid-flow-col grid-rows-7 gap-[3px]">
-              {gridItems.map((item, index) => {
-                if (!item) {
-                  return (
-                    <div
-                      key={`spacer-${index}`}
-                      className="h-[11px] w-[11px] bg-transparent"
-                    />
-                  );
-                }
-
-                const intensity = getIntensityClass(item);
-                const hasEntry = item.count > 0;
-                const moodLabel = item.mood
-                  ? ` • Mood: ${moodLabels[item.mood]}`
-                  : "";
-
+          <div className="grid flex-grow grid-flow-col grid-rows-7 gap-[3px]">
+            {gridItems.map((item, index) => {
+              if (!item) {
                 return (
-                  <Tooltip key={item.date} delayDuration={150}>
-                    <TooltipTrigger asChild>
-                      <div
-                        className={cn(
-                          "h-[11px] w-[11px] cursor-help rounded-[2.5px] border transition-all duration-300",
-                          intensity,
-                        )}
-                      />
-                    </TooltipTrigger>
-                    <TooltipContent
-                      side="top"
-                      className="font-serif text-[10px]"
-                    >
-                      {hasEntry ? (
-                        <span>
-                          <strong className="text-foreground">
-                            {formatDateLabel(item.date)}
-                          </strong>
-                          <br />
-                          {item.wordCount} words{moodLabel}
-                        </span>
-                      ) : (
-                        <span>
-                          <strong className="text-muted-foreground">
-                            {formatDateLabel(item.date)}
-                          </strong>
-                          <br />
-                          No reflection
-                        </span>
-                      )}
-                    </TooltipContent>
-                  </Tooltip>
+                  <div
+                    key={`spacer-${index}`}
+                    className="h-[11px] w-[11px] bg-transparent"
+                  />
                 );
-              })}
-            </div>
-          </TooltipProvider>
+              }
+
+              const intensity = getIntensityClass(item);
+              const hasEntry = item.count > 0;
+              const moodLabel = item.mood
+                ? ` · Mood: ${moodLabels[item.mood]}`
+                : "";
+              // Native title tooltip instead of ~365 mounted Radix Tooltips —
+              // the one-time mount/portal/positioning cost of a tooltip per
+              // heatmap cell is the heaviest part of the insights bundle.
+              const cellTitle = `${formatDateLabel(item.date)} · ${
+                hasEntry ? `${item.wordCount} words${moodLabel}` : "No reflection"
+              }`;
+
+              return (
+                <div
+                  key={item.date}
+                  title={cellTitle}
+                  className={cn(
+                    "h-[11px] w-[11px] cursor-help rounded-[2.5px] border transition-all duration-300",
+                    intensity,
+                  )}
+                />
+              );
+            })}
+          </div>
         </div>
 
         {/* Legend */}

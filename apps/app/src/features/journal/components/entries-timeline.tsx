@@ -30,7 +30,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { toast } from "sonner";
 
 import { ROUTES } from "@/constants/routes";
-import { addDays, formatDisplayDate } from "@/lib/utils/date";
+import { formatDisplayDate } from "@/lib/utils/date";
 import { useEncryption } from "@/providers/encryption-provider";
 
 import {
@@ -38,7 +38,7 @@ import {
   getEntriesListAction,
 } from "../actions/entry-actions";
 import type { DecryptedEntry } from "../services/journal-service";
-import { diaryCacheService } from "../services/diary-cache-service";
+import { diaryCacheService, filterLocalTimeline } from "../services/diary-cache-service";
 
 interface EntriesTimelineProps {
   initialEntries: DecryptedEntry[];
@@ -159,11 +159,17 @@ export function EntriesTimeline({
 
     const runSync = async () => {
       setIsSyncing(true);
+      // Throttle progress updates to ~2/sec so background cache sync doesn't
+      // re-render the whole (animated) timeline list on every completed chunk.
+      let lastUpdate = 0;
       try {
         await diaryCacheService.syncDiaryCache(
           masterKey,
           localToday,
           (curr, tot) => {
+            const now = Date.now();
+            if (now - lastUpdate < 500 && curr < tot) return;
+            lastUpdate = now;
             setSyncProgress({ current: curr, total: tot });
           },
         );
@@ -199,57 +205,31 @@ export function EntriesTimeline({
         const cached =
           await diaryCacheService.getLocalCacheTimeline(masterKey);
 
-        let filtered = cached.map((item) => ({
-          ...item,
-          id: item.date,
-          userId: "",
-          contentHtml: "",
-          contentText: item.snippet,
-          contentJson: {},
-          createdAt: new Date(item.updatedAt),
-          updatedAt: new Date(item.updatedAt),
-        }));
-
-        // Filter by mood
-        if (moodFilter !== "all") {
-          const m = Number(moodFilter);
-          filtered = filtered.filter((item) => item.mood === m);
-        }
-
-        // Filter by time range
-        if (timeFilter !== "all") {
-          filtered = filtered.filter((item) => {
-            if (timeFilter === "week") {
-              return (
-                item.date >= addDays(localToday, -7) && item.date <= localToday
-              );
-            } else if (timeFilter === "month") {
-              return (
-                item.date >= addDays(localToday, -30) && item.date <= localToday
-              );
-            }
-            return true;
-          });
-        }
-
-        // Filter by search query
-        if (debouncedSearch) {
-          const queryLower = debouncedSearch.trim().toLowerCase();
-          filtered = filtered.filter((item) => {
-            return (
-              item.title.toLowerCase().includes(queryLower) ||
-              item.contentText.toLowerCase().includes(queryLower) ||
-              item.date.includes(queryLower)
-            );
-          });
-        }
+        // Filter against the FULL decrypted text so search matches words
+        // anywhere in an entry, not just the 240-char preview snippet, plus
+        // human-readable date forms ("Jul 1", "July 4, 2026").
+        const filtered = filterLocalTimeline(cached, {
+          moodFilter: moodFilter === "all" ? "all" : Number(moodFilter),
+          timeFilter,
+          search: debouncedSearch,
+          localToday,
+        });
 
         // Paginate locally
         const startIndex = (page - 1) * LIMIT;
         const paginated = filtered.slice(startIndex, startIndex + LIMIT);
 
         return {
-          entries: paginated as unknown as DecryptedEntry[],
+          entries: paginated.map((item) => ({
+            ...item,
+            id: item.date,
+            userId: "",
+            contentHtml: "",
+            contentText: item.snippet,
+            contentJson: {},
+            createdAt: new Date(item.updatedAt),
+            updatedAt: new Date(item.updatedAt),
+          })) as unknown as DecryptedEntry[],
           total: filtered.length,
         };
       }
@@ -438,11 +418,10 @@ export function EntriesTimeline({
               return (
                 <motion.div
                   key={entry.date}
-                  layout
                   initial={{ opacity: 0, y: 16 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95, y: -8 }}
-                  transition={{ type: "spring", stiffness: 350, damping: 25 }}
+                  transition={{ duration: 0.25, ease: "easeOut" }}
                   className="group relative"
                 >
                   {/* Visual side timeline node */}

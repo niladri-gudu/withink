@@ -124,8 +124,6 @@ export function EditorToolbar({
             isLink: false,
             canUndo: false,
             canRedo: false,
-            words: 0,
-            chars: 0,
           };
         }
         return {
@@ -148,8 +146,6 @@ export function EditorToolbar({
             typeof ed.can === "function" && ed.can()?.undo() ? true : false,
           canRedo:
             typeof ed.can === "function" && ed.can()?.redo() ? true : false,
-          words: ed.storage.characterCount?.words() ?? 0,
-          chars: ed.storage.characterCount?.characters() ?? 0,
         };
       } catch (err) {
         console.error("Tiptap selector error:", err);
@@ -171,9 +167,28 @@ export function EditorToolbar({
           isLink: false,
           canUndo: false,
           canRedo: false,
-          words: 0,
-          chars: 0,
         };
+      }
+    },
+  });
+
+  // Word/character count lives in its own subscription so the button grid does
+  // not re-render purely because the count changed on every keystroke.
+  const wordCount = useEditorState({
+    editor,
+    selector: (ctx) => {
+      try {
+        const ed = ctx?.editor;
+        if (!ed || ed.isDestroyed) {
+          return { words: 0, chars: 0 };
+        }
+        return {
+          words: ed.storage.characterCount?.words() ?? 0,
+          chars: ed.storage.characterCount?.characters() ?? 0,
+        };
+      } catch (err) {
+        console.error("Tiptap word-count selector error:", err);
+        return { words: 0, chars: 0 };
       }
     },
   });
@@ -297,7 +312,7 @@ export function EditorToolbar({
     });
   }
 
-  const readingTime = Math.max(1, Math.ceil(editorState.words / 200));
+  const readingTime = Math.max(1, Math.ceil(wordCount.words / 200));
 
   return (
     <div
@@ -512,7 +527,7 @@ export function EditorToolbar({
       {/* Live Word Count & Reading Time Badge */}
       <div className="text-muted-foreground/80 bg-muted/40 flex shrink-0 items-center gap-1.5 rounded-md px-2 py-1 font-serif text-xs select-none">
         <span>
-          {editorState.words} {editorState.words === 1 ? "word" : "words"}
+          {wordCount.words} {wordCount.words === 1 ? "word" : "words"}
         </span>
         <span className="opacity-40">•</span>
         <span>{readingTime}m read</span>

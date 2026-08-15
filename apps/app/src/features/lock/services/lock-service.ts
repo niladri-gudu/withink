@@ -52,14 +52,20 @@ export class LockService {
 
   /**
    * Checks if the user's session is currently unlocked by verifying the unlock cookie.
+   *
+   * @param settings Optional pre-fetched lock settings. Callers that already
+   *   read the settings (e.g. the app layout) pass them in to avoid a second
+   *   Redis round trip; the value comes from a per-request cache.
    */
   static async isSessionUnlocked(
     userId: string,
     readonly = false,
+    settings?: Awaited<ReturnType<typeof LockRepository.getSettings>>,
   ): Promise<boolean> {
-    const settings = await LockRepository.getSettings(userId);
+    const resolvedSettings =
+      settings ?? (await LockRepository.getSettings(userId));
     // If lock is disabled, user is unlocked by default
-    if (!settings || !settings.isLockEnabled) {
+    if (!resolvedSettings || !resolvedSettings.isLockEnabled) {
       return true;
     }
 
@@ -80,7 +86,9 @@ export class LockService {
       if (!readonly) {
         try {
           const timeout =
-            settings.autoLockTimeout > 0 ? settings.autoLockTimeout : 28800;
+            resolvedSettings.autoLockTimeout > 0
+              ? resolvedSettings.autoLockTimeout
+              : 28800;
           await this.setUnlockCookie(userId, timeout);
         } catch (cookieErr) {
           // Safe fallback if called in a read-only request context (e.g. Server Component renders)

@@ -4,6 +4,7 @@ import * as React from "react";
 
 import { decryptText, importKeyFromHex } from "@/lib/crypto-client";
 import { deriveKeyFromPasswordAsync } from "@/lib/crypto-worker-client";
+import { diaryCacheService } from "@/features/journal/services/diary-cache-service";
 import { journalSyncService } from "@/features/journal/services/journal-sync-service";
 
 // Memory-only cache of derived wrapper keys keyed by `${iterations}:${saltHex}:${password}`.
@@ -109,7 +110,12 @@ export function EncryptionProvider({
       }
     };
 
-    const interval = setInterval(runSync, 30_000);
+    const interval = setInterval(() => {
+      // Skip background sync while the tab is hidden — the visibilitychange
+      // handler above runs it when the tab becomes visible again.
+      if (document.hidden) return;
+      runSync();
+    }, 30_000);
 
     window.addEventListener("online", handleOnline);
     document.addEventListener("visibilitychange", handleVisibilityChange);
@@ -210,6 +216,8 @@ export function EncryptionProvider({
 
   const lock = React.useCallback(() => {
     setMasterKey(null);
+    // Release decrypted timeline plaintext held for instant local search.
+    diaryCacheService.clearTimelineCache();
     if (typeof window !== "undefined") {
       sessionStorage.removeItem("withink_master_key");
       localStorage.removeItem("withink_master_key");
@@ -224,24 +232,44 @@ export function EncryptionProvider({
     }
   }, []);
 
+  // Memoize the context value so consumers (the app shell, sidebar, editor,
+  // save indicator, media lightbox, settings) don't re-render on every provider
+  // render. Without this, toggling the unlock prompt or the master key would
+  // cascade re-renders through the whole consumer tree.
+  const contextValue = React.useMemo<EncryptionContextType>(
+    () => ({
+      masterKey,
+      setMasterKey,
+      isClientEncrypted,
+      encryptionSalt,
+      verificationCiphertext,
+      isUnlocked,
+      isPromptOpen,
+      setPromptOpen,
+      setEncryptionSettings,
+      unlockWithPassword,
+      unlockWithPin,
+      lock,
+      clearLocalMasterKey,
+    }),
+    [
+      masterKey,
+      isClientEncrypted,
+      encryptionSalt,
+      verificationCiphertext,
+      isUnlocked,
+      isPromptOpen,
+      setPromptOpen,
+      setEncryptionSettings,
+      unlockWithPassword,
+      unlockWithPin,
+      lock,
+      clearLocalMasterKey,
+    ],
+  );
+
   return (
-    <EncryptionContext.Provider
-      value={{
-        masterKey,
-        setMasterKey,
-        isClientEncrypted,
-        encryptionSalt,
-        verificationCiphertext,
-        isUnlocked,
-        isPromptOpen,
-        setPromptOpen,
-        setEncryptionSettings,
-        unlockWithPassword,
-        unlockWithPin,
-        lock,
-        clearLocalMasterKey,
-      }}
-    >
+    <EncryptionContext.Provider value={contextValue}>
       {children}
     </EncryptionContext.Provider>
   );

@@ -35,12 +35,14 @@ export async function setCachedValue(
   }
 }
 
-export async function incrementCachedValue(key: string): Promise<void> {
-  if (!redis) return;
+export async function incrementCachedValue(key: string): Promise<number | null> {
+  if (!redis) return null;
 
   try {
-    await redis.incr(key);
+    // INCR returns the new value, so callers can skip a follow-up GET.
+    return await redis.incr(key);
   } catch (error) {
     logger.error("Redis increment failed", error as Error, { key });
+    return null;
   }
 }

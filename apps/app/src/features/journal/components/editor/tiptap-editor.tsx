@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
+import { useCallback, useEffect, useRef, memo } from "react";
 import CharacterCount from "@tiptap/extension-character-count";
 import Highlight from "@tiptap/extension-highlight";
 import ImageExt from "@tiptap/extension-image";
@@ -19,25 +20,81 @@ function generateTempId(): string {
   return `upload-${uploadCounter}`;
 }
 
+// Serializing the whole document (getHTML/getText/getJSON) is O(doc) work that
+// must not run on every keystroke. Emit snapshots on a trailing debounce; the
+// autosave hook already debounces by 1500ms, so nothing is ever lost, and we
+// flush on blur so navigation always carries the latest content.
+const SNAPSHOT_DEBOUNCE_MS = 400;
+
 interface EditorProps {
   content?: any;
   onChange?: (data: { html: string; text: string; json: any }) => void;
   onEditorReady?: (editor: any) => void;
 }
 
-export default function TiptapEditor({
+function getEditorSnapshot(editorInstance: any) {
+  const html = editorInstance.getHTML();
+  return {
+    html: html === "<p></p>" ? "" : html,
+    text: editorInstance.getText().trim(),
+    json: editorInstance.getJSON(),
+  };
+}
+
+function TiptapEditor({
   content = "",
   onChange,
   onEditorReady,
 }: EditorProps) {
-  function getEditorSnapshot(editorInstance: any) {
-    const html = editorInstance.getHTML();
-    return {
-      html: html === "<p></p>" ? "" : html,
-      text: editorInstance.getText().trim(),
-      json: editorInstance.getJSON(),
+  const onChangeRef = useRef(onChange);
+  const onEditorReadyRef = useRef(onEditorReady);
+  const editorRef = useRef<any>(null);
+  const snapshotTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    onChangeRef.current = onChange;
+    onEditorReadyRef.current = onEditorReady;
+  });
+
+  const flushSnapshot = useCallback(() => {
+    if (snapshotTimerRef.current) {
+      clearTimeout(snapshotTimerRef.current);
+      snapshotTimerRef.current = null;
+    }
+    if (editorRef.current) {
+      onChangeRef.current?.(getEditorSnapshot(editorRef.current));
+    }
+  }, []);
+
+  const scheduleSnapshot = useCallback(() => {
+    if (snapshotTimerRef.current) {
+      clearTimeout(snapshotTimerRef.current);
+    }
+    snapshotTimerRef.current = setTimeout(() => {
+      snapshotTimerRef.current = null;
+      if (editorRef.current) {
+        onChangeRef.current?.(getEditorSnapshot(editorRef.current));
+      }
+    }, SNAPSHOT_DEBOUNCE_MS);
+  }, []);
+
+  // Flush a pending snapshot when the tab hides so a debounced save never runs
+  // from stale content. Also clears any pending timer on unmount.
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        flushSnapshot();
+      }
     };
-  }
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      if (snapshotTimerRef.current) {
+        clearTimeout(snapshotTimerRef.current);
+        snapshotTimerRef.current = null;
+      }
+    };
+  }, [flushSnapshot]);
 
   const editor = useEditor({
     extensions: [
@@ -100,11 +157,15 @@ export default function TiptapEditor({
       },
     },
     onCreate({ editor: createdEditor }) {
-      onChange?.(getEditorSnapshot(createdEditor));
-      onEditorReady?.(createdEditor);
+      editorRef.current = createdEditor;
+      onChangeRef.current?.(getEditorSnapshot(createdEditor));
+      onEditorReadyRef.current?.(createdEditor);
     },
-    onUpdate({ editor: updatedEditor }) {
-      onChange?.(getEditorSnapshot(updatedEditor));
+    onUpdate() {
+      scheduleSnapshot();
+    },
+    onBlur() {
+      flushSnapshot();
     },
     immediatelyRender: false,
   });
@@ -212,3 +273,5 @@ export default function TiptapEditor({
     </div>
   );
 }
+
+export default memo(TiptapEditor);

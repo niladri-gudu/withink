@@ -3,7 +3,6 @@
 import * as React from "react";
 import { Button } from "@withink/ui/button";
 import { Card } from "@withink/ui/card";
-import JSZip from "jszip";
 import { Archive, Download, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -26,7 +25,9 @@ export function DataExportCard() {
 
     try {
       if (isClientEncrypted && masterKey) {
-        // Zero-knowledge client-side export
+        // Zero-knowledge client-side export. JSZip (~90KB gz) is only loaded on
+        // click so the Settings page doesn't ship it in the initial bundle.
+        const { default: JSZip } = await import("jszip");
         const entriesRes = await getAllEntriesAction();
         if (!entriesRes.success || !entriesRes.data) {
           throw new Error(entriesRes.error || "Failed to fetch entries");

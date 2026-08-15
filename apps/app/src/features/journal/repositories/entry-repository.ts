@@ -1,3 +1,5 @@
+import { revalidateTag } from "next/cache";
+
 import { connectDB } from "@/lib/db/mongoose";
 import {
   getCachedValue,
@@ -37,8 +39,19 @@ export class EntryRepository {
     return 1;
   }
 
-  static async invalidateUserEntryCache(userId: string): Promise<void> {
-    await incrementCachedValue(`entries:${userId}:version`);
+  /**
+   * Bumps the user's cache version so all version-keyed structures (entry
+   * reads, page lists, stats, dates) are re-read from Mongo on their next
+   * access. Returns the new version so callers can write hot entries under it
+   * without an extra Redis GET.
+   */
+  static async invalidateUserEntryCache(userId: string): Promise<number | null> {
+    const newVersion = await incrementCachedValue(`entries:${userId}:version`);
+    // Invalidate any cached derived views (e.g. insights) for this user. The
+    // profile arg is required by Next 16's revalidateTag signature; the
+    // re-fetched entry re-applies its own cacheLife on the next render.
+    revalidateTag(`insights:${userId}`, "default");
+    return newVersion;
   }
 
   static async getEntry(
@@ -88,12 +101,13 @@ export class EntryRepository {
 
     const serializedEntry = serialize(entry);
 
-    // 2. Invalidate old cached structures by incrementing the version
-    await this.invalidateUserEntryCache(userId);
+    // 2. Invalidate old cached structures by incrementing the version. The
+    //    INCR return value is the new version — no follow-up GET round trip.
+    const newVersion = await this.invalidateUserEntryCache(userId);
 
     // 3. Eagerly write the newly saved entry to hot cache under the new version
-    const newVersion = await this.getUserEntryVersion(userId);
-    const newCacheKey = `entries:${userId}:v${newVersion}:entry:${date}`;
+    const resolvedVersion = newVersion ?? 1;
+    const newCacheKey = `entries:${userId}:v${resolvedVersion}:entry:${date}`;
     const ttl = getEntryCacheTtlSeconds(date, localToday);
     await setCachedValue(newCacheKey, serializedEntry, ttl);
 
@@ -135,12 +149,30 @@ export class EntryRepository {
     );
 
     if (filters?.search) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const entries = await (EntryModel as any)
-        .find(query)
-        .sort({ date: -1 })
-        .lean();
-      return serialize({ entries, total: entries.length });
+      // Search is pushed down to Mongo (title / plaintext content / ISO date)
+      // so we never load the user's entire collection — including the large
+      // contentHtml/contentJson blobs — into memory per keystroke. Zero-knowledge
+      // users don't reach this path (their search runs client-side over the
+      // IndexedDB cache); their ciphertext never matches a server regex anyway.
+      const q = filters.search.trim();
+      if (q) {
+        query.$or = [
+          { title: { $regex: q, $options: "i" } },
+          { contentText: { $regex: q, $options: "i" } },
+          { date: { $regex: q, $options: "i" } },
+        ];
+      }
+      const [entries, total] = await Promise.all([
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (EntryModel as any)
+          .find(query, { userId: 0, contentHtml: 0, contentJson: 0 })
+          .sort({ date: -1 })
+          .skip((page - 1) * limit)
+          .limit(limit)
+          .lean(),
+        (EntryModel as any).countDocuments(query), // eslint-disable-line @typescript-eslint/no-explicit-any
+      ]);
+      return serialize({ entries, total });
     }
 
     if (!hasFilters) {

@@ -25,7 +25,6 @@ import {
   Sparkles,
   Sun,
 } from "lucide-react";
-import { motion } from "motion/react";
 import { toast } from "sonner";
 
 import { ROUTES } from "@/constants/routes";
@@ -402,11 +401,13 @@ export function Sidebar({
   };
   return (
     <>
-      {/* Desktop margin rail (visible on md screens and up) */}
-      <motion.aside
-        animate={{ width: isCollapsed ? 76 : 264 }}
-        transition={{ type: "spring", stiffness: 200, damping: 25 }}
-        className="z-30 hidden h-screen shrink-0 flex-col overflow-hidden md:flex"
+      {/* Desktop margin rail (visible on md screens and up). Animates width via
+          a native CSS transition instead of a JS spring — width is a layout
+          property, so per-frame JS writes (motion) cause layout thrash across
+          the whole main column and the floating editor toolbar. */}
+      <aside
+        style={{ width: isCollapsed ? 76 : 264 }}
+        className="z-30 hidden h-screen shrink-0 flex-col overflow-hidden transition-[width] duration-300 ease-in-out md:flex"
       >
         <div
           className="flex h-full shrink-0 flex-col"
@@ -414,7 +415,7 @@ export function Sidebar({
         >
           {renderSidebarContent(isCollapsed)}
         </div>
-      </motion.aside>
+      </aside>
 
       {/* Mobile Sidebar overlay / drawer (visible only on mobile) */}
       {isMobileOpen && (

@@ -11,6 +11,8 @@ import type { InsightsPayload } from "../services/insights-service";
 interface InsightsDashboardProps {
   initialData: InsightsPayload;
   localToday: string;
+  /** Timezone offset used for the server-rendered (cached) computation. */
+  ssrTzOffset?: number;
 }
 
 // The below-fold visualizations (heatmap, mood/word charts, activity summaries,
@@ -35,14 +37,16 @@ const InsightsChartsSkeleton = dynamic(
 export function InsightsDashboard({
   initialData,
   localToday,
+  ssrTzOffset = 0,
 }: InsightsDashboardProps) {
   const [data, setData] = useState<InsightsPayload>(initialData);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Check client timezone offset and refresh if it differs from UTC (0)
+  // Refresh only when the client timezone differs from the one used at SSR
+  // (e.g. first visit before the tz cookie is set, or a tz change mid-session).
   useEffect(() => {
     const tzOffset = new Date().getTimezoneOffset();
-    if (tzOffset !== 0) {
+    if (tzOffset !== ssrTzOffset) {
       async function adjustTimezone() {
         setIsLoading(true);
         try {
@@ -58,7 +62,7 @@ export function InsightsDashboard({
       }
       adjustTimezone();
     }
-  }, [localToday]);
+  }, [localToday, ssrTzOffset]);
 
   const { streaks, heatmap, wordCountStats } = data;
 

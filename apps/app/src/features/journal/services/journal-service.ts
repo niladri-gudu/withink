@@ -177,53 +177,17 @@ export class JournalService {
     },
   ): Promise<{ entries: DecryptedEntry[]; total: number }> {
     if (filters?.search) {
-      const { entries } = await EntryRepository.getEntriesPage(
+      // Search is executed by the repository (Mongo regex on title /
+      // plaintext content / ISO date) with projection + pagination, so we
+      // never pull the whole collection into memory to filter in JS.
+      const { entries, total } = await EntryRepository.getEntriesPage(
         userId,
         page,
         limit,
         filters,
       );
       const decrypted = entries.map((entry) => this.decryptEntry(entry));
-      const searchLower = filters.search.trim().toLowerCase();
-
-      const filtered = decrypted.filter((entry) => {
-        // A. Title check
-        if (entry.title.toLowerCase().includes(searchLower)) return true;
-
-        // B. Content text check
-        if (entry.contentText.toLowerCase().includes(searchLower)) return true;
-
-        // C. Date checks
-        if (entry.date.includes(searchLower)) return true;
-
-        const [year, month, day] = entry.date.split("-").map(Number);
-        if (year !== undefined && month !== undefined && day !== undefined) {
-          const dateObj = new Date(year, month - 1, day);
-          const shortDate = dateObj
-            .toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-              year: "numeric",
-            })
-            .toLowerCase();
-          const longDate = dateObj
-            .toLocaleDateString("en-US", {
-              month: "long",
-              day: "numeric",
-              year: "numeric",
-            })
-            .toLowerCase();
-
-          if (shortDate.includes(searchLower) || longDate.includes(searchLower))
-            return true;
-        }
-
-        return false;
-      });
-
-      const totalCount = filtered.length;
-      const paginated = filtered.slice((page - 1) * limit, page * limit);
-      return { entries: paginated, total: totalCount };
+      return { entries: decrypted, total };
     }
 
     const { entries, total } = await EntryRepository.getEntriesPage(

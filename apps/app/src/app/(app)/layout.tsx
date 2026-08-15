@@ -1,8 +1,7 @@
 import { AppShell } from "@/features/app-shell/components/app-shell";
 import { EncryptionSettingsRepository } from "@/features/encryption/repositories/encryption-settings-repository";
-import { LockRepository } from "@/features/lock/repositories/lock-repository";
 import { LockService } from "@/features/lock/services/lock-service";
-import { getRequestSession } from "@/lib/request-cache";
+import { getRequestLockSettings, getRequestSession } from "@/lib/request-cache";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -19,11 +18,10 @@ export default async function AppLayout({ children }: AppLayoutProps) {
   let encryptionSettings = null;
   if (session?.user) {
     const userId = session.user.id;
-    sessionUnlocked = await LockService.isSessionUnlocked(userId, true);
-    const [lock, encryption] = await Promise.all([
-      LockRepository.getSettings(userId),
-      EncryptionSettingsRepository.getSettings(userId),
-    ]);
+
+    // Read lock settings once (per-request cache) and hand them to
+    // isSessionUnlocked so the layout doesn't hit Redis twice.
+    const lock = await getRequestLockSettings(userId);
     lockSettings = lock
       ? {
           isLockEnabled: lock.isLockEnabled,
@@ -32,6 +30,12 @@ export default async function AppLayout({ children }: AppLayoutProps) {
           lockOnTabHide: lock.lockOnTabHide,
         }
       : null;
+
+    const [unlocked, encryption] = await Promise.all([
+      LockService.isSessionUnlocked(userId, true, lock),
+      EncryptionSettingsRepository.getSettings(userId),
+    ]);
+    sessionUnlocked = unlocked;
     encryptionSettings = encryption;
   }
 

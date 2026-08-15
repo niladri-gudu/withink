@@ -41,7 +41,11 @@ export class FeedbackService {
       imageUrl: input.imageUrl || undefined,
     });
 
-    await this.notifyTeam(input, String(record._id));
+    // Fire-and-forget: the DB record is the source of truth and the email is a
+    // best-effort notification. Not awaiting it means the user's "Send feedback"
+    // action returns instantly instead of hanging on the Resend round trip.
+    // notifyTeam never throws (it catches and logs), so no unhandled rejection.
+    void this.notifyTeam(input, String(record._id));
   }
 
   private static async notifyTeam(

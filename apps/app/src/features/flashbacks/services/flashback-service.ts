@@ -116,12 +116,14 @@ export class FlashbackService {
         ...history.filter((d) => d !== selectedDate),
       ].slice(0, 10);
 
-      // Save history with a 30-day TTL (2592000 seconds)
-      await setCachedValue(historyKey, updatedHistory, 2592000);
+      // Save history with a 30-day TTL (2592000 seconds). Fire-and-forget:
+      // the selection is already made, so this write must not add latency.
+      void setCachedValue(historyKey, updatedHistory, 2592000);
     }
 
-    // 4. Cache today's flashback choice for 24 hours (86400 seconds)
-    await setCachedValue(cacheKey, { entryDate: selectedDate, label }, 86400);
+    // 4. Cache today's flashback choice for 24 hours (86400 seconds). The
+    //    entry is returned immediately; the write is best-effort.
+    void setCachedValue(cacheKey, { entryDate: selectedDate, label }, 86400);
 
     const entry = await JournalService.getEntryForDate(
       userId,
@@ -184,10 +186,10 @@ export class FlashbackService {
       ...history.filter((d) => d !== selectedDate),
     ].slice(0, 10);
 
-    await setCachedValue(historyKey, updatedHistory, 2592000);
+    void setCachedValue(historyKey, updatedHistory, 2592000);
 
     // Cache today's flashback choice
-    await setCachedValue(cacheKey, { entryDate: selectedDate, label }, 86400);
+    void setCachedValue(cacheKey, { entryDate: selectedDate, label }, 86400);
 
     const entry = await JournalService.getEntryForDate(
       userId,

@@ -28,15 +28,17 @@ export default async function EntriesPage() {
   const cookieToday = cookieStore.get("withink-local-date")?.value;
   const today = isDateString(cookieToday) ? cookieToday : getLocalDateString();
 
-  // 2. Fetch data in parallel on the server
-  const [entriesData, stats, dates, calendarEntries] = await Promise.all([
+  // 2. Fetch data in parallel on the server. The calendar entries already
+  //    contain the full date list, so derive it from them instead of issuing a
+  //    duplicate getEntryDates round trip.
+  const [entriesData, stats, calendarEntries] = await Promise.all([
     JournalService.getEntriesPage(session.user.id, 1, 5, { today }),
     JournalService.getEntryStats(session.user.id),
-    JournalService.getEntryDates(session.user.id),
     JournalService.getCalendarEntries(session.user.id),
   ]);
 
-  // 3. Compute current streak
+  // 3. Compute current streak from the calendar's date list (sorted desc).
+  const dates = calendarEntries.map((entry) => entry.date);
   const currentStreak = computeCurrentStreak(dates, today);
 
   const streakData = {

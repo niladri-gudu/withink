@@ -1,12 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use server";
 
-import { DeleteObjectsCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
+import { DeleteObjectsCommand } from "@aws-sdk/client-s3";
 
 import { env } from "@/config/env";
 import { client } from "@/lib/db";
 import { connectDB } from "@/lib/db/mongoose";
 import { r2 } from "@/lib/r2";
+import { listAllObjects } from "@/lib/r2-list";
 import { getRequestSession } from "@/lib/request-cache";
 import { handleError } from "@/server/errors";
 import { logger } from "@/server/logger";
@@ -39,7 +40,8 @@ export async function deleteAccountAction(): Promise<{
     // 2. Invalidate cache in Redis
     await EntryRepository.invalidateUserEntryCache(userId);
 
-    // 3. Purge files from Cloudflare R2 bucket
+    // 3. Purge files from Cloudflare R2 bucket (paginated listing so >1,000
+    //    objects are fully removed, not silently left orphaned)
     // We clean up two paths: journal files and avatar files
     const prefixes = [
       `${envPrefix}journal/${userId}/`,
@@ -47,26 +49,18 @@ export async function deleteAccountAction(): Promise<{
     ];
 
     for (const prefix of prefixes) {
-      const listCommand = new ListObjectsV2Command({
-        Bucket: env.R2_BUCKET_NAME,
-        Prefix: prefix,
-      });
+      const objects = await listAllObjects(env.R2_BUCKET_NAME, prefix);
 
-      const listResponse = await r2.send(listCommand);
-      const objects = listResponse.Contents;
-
-      if (objects && objects.length > 0) {
-        const deleteKeys = objects
-          .map((obj) => (obj.Key ? { Key: obj.Key } : null))
-          .filter((item): item is { Key: string } => item !== null);
-
-        if (deleteKeys.length > 0) {
-          const deleteCommand = new DeleteObjectsCommand({
-            Bucket: env.R2_BUCKET_NAME,
-            Delete: { Objects: deleteKeys },
-          });
-          await r2.send(deleteCommand);
-        }
+      // Delete in batches of 1,000 (S3 DeleteObjects limit)
+      for (let i = 0; i < objects.length; i += 1000) {
+        const batch = objects.slice(i, i + 1000);
+        const deleteKeys = batch.map((obj) => ({ Key: obj.key }));
+        if (deleteKeys.length === 0) continue;
+        const deleteCommand = new DeleteObjectsCommand({
+          Bucket: env.R2_BUCKET_NAME,
+          Delete: { Objects: deleteKeys },
+        });
+        await r2.send(deleteCommand);
       }
     }
 

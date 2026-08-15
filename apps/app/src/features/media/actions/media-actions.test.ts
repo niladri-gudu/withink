@@ -39,9 +39,10 @@ vi.mock("@/lib/db/mongoose", () => ({
 
 // Mock EntryModel Mongoose model
 vi.mock("@/features/journal/repositories/entry-model", () => {
-  const findMock = {
-    lean: vi.fn().mockReturnThis(),
-  };
+  const leanMock = vi.fn();
+  const limitMock = { lean: leanMock };
+  const sortMock = { limit: vi.fn().mockReturnValue(limitMock) };
+  const findMock = { sort: vi.fn().mockReturnValue(sortMock) };
   return {
     EntryModel: {
       find: vi.fn().mockReturnValue(findMock),
@@ -183,7 +184,7 @@ describe("media-actions", () => {
           contentHtml: "No photo here.",
         },
       ];
-      const leanMock = (EntryModel.find as any)().lean;
+      const leanMock = (EntryModel.find as any)().sort().limit().lean;
       leanMock.mockResolvedValue(mockEntries);
 
       const res = await findEntryForMediaAction(
