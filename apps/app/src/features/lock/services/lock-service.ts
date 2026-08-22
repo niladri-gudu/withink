@@ -82,14 +82,21 @@ export class LockService {
       if (token.userId !== userId) return false;
       if (Date.now() > token.expiresAt) return false;
 
-      // Sliding session window: renew the cookie expiration on active verify check
+      // Sliding session window: renew the cookie expiration on active verify
+      // check, but only once more than half the window has elapsed. Hot read
+      // paths (every autosave / list fetch) call this on each request; re-setting
+      // the cookie each time means needless response-cookie writes on a tight
+      // loop. Half-window granularity keeps the session alive without the churn.
       if (!readonly) {
         try {
           const timeout =
             resolvedSettings.autoLockTimeout > 0
               ? resolvedSettings.autoLockTimeout
               : 28800;
-          await this.setUnlockCookie(userId, timeout);
+          const remaining = token.expiresAt - Date.now();
+          if (remaining <= (timeout * 1000) / 2) {
+            await this.setUnlockCookie(userId, timeout);
+          }
         } catch (cookieErr) {
           // Safe fallback if called in a read-only request context (e.g. Server Component renders)
           logger.warn(

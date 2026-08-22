@@ -6,6 +6,7 @@ import { decryptText, importKeyFromHex } from "@/lib/crypto-client";
 import { deriveKeyFromPasswordAsync } from "@/lib/crypto-worker-client";
 import { diaryCacheService } from "@/features/journal/services/diary-cache-service";
 import { journalSyncService } from "@/features/journal/services/journal-sync-service";
+import { clearMediaEntryCache } from "@/features/media/lib/media-entry-cache";
 
 // Memory-only cache of derived wrapper keys keyed by `${iterations}:${saltHex}:${password}`.
 // The derived key alone cannot decrypt journal content — it only unwraps the
@@ -112,10 +113,13 @@ export function EncryptionProvider({
 
     const interval = setInterval(() => {
       // Skip background sync while the tab is hidden — the visibilitychange
-      // handler above runs it when the tab becomes visible again.
+      // handler above runs it when the tab becomes visible again. The interval
+      // is intentionally long: the pull path bails out when the server sync
+      // list is unchanged, so frequent ticks would only re-run the cheap
+      // fingerprint check.
       if (document.hidden) return;
       runSync();
-    }, 30_000);
+    }, 120_000);
 
     window.addEventListener("online", handleOnline);
     document.addEventListener("visibilitychange", handleVisibilityChange);
@@ -216,8 +220,10 @@ export function EncryptionProvider({
 
   const lock = React.useCallback(() => {
     setMasterKey(null);
-    // Release decrypted timeline plaintext held for instant local search.
+    // Release decrypted plaintext held for instant local search and the media
+    // lightbox.
     diaryCacheService.clearTimelineCache();
+    clearMediaEntryCache();
     if (typeof window !== "undefined") {
       sessionStorage.removeItem("withink_master_key");
       localStorage.removeItem("withink_master_key");

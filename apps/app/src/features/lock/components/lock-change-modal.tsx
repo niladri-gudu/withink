@@ -27,7 +27,8 @@ export function LockChangeModal({ onClose, onSuccess }: LockChangeModalProps) {
   const [step, setStep] = React.useState<ChangeStep>("verify-current");
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [shake, setShake] = React.useState(false);
-  const { isClientEncrypted, masterKey, encryptionSalt } = useEncryption();
+  const { isClientEncrypted, masterKey, encryptionSalt, unlockWithPin } =
+    useEncryption();
 
   const currentRef = React.useRef<HTMLInputElement>(null);
   const newRef = React.useRef<HTMLInputElement>(null);
@@ -42,6 +43,29 @@ export function LockChangeModal({ onClose, onSuccess }: LockChangeModalProps) {
     if (currentPin.length === 4 && step === "verify-current") {
       const verifyCurrent = async () => {
         setIsSubmitting(true);
+
+        // Fast path: verify the PIN locally by unwrapping the per-device master
+        // key (no network round-trip), then confirm server-side in the background.
+        const encryptedMasterKey = isClientEncrypted
+          ? localStorage.getItem("withink_encrypted_master_key")
+          : null;
+        if (encryptedMasterKey) {
+          const decrypted = await unlockWithPin(currentPin, encryptedMasterKey);
+          if (decrypted) {
+            setStep("new-pin");
+            setIsSubmitting(false);
+            void unlockAction(currentPin).then((res) => {
+              if (!res.success) {
+                toast.error(
+                  "Passcode is out of sync. Use your Diary Password to unlock.",
+                );
+              }
+            });
+            return;
+          }
+        }
+
+        // Local verification failed — let the server decide.
         const res = await unlockAction(currentPin);
         if (res.success) {
           setStep("new-pin");
@@ -55,7 +79,7 @@ export function LockChangeModal({ onClose, onSuccess }: LockChangeModalProps) {
       };
       verifyCurrent();
     }
-  }, [currentPin, step]);
+  }, [currentPin, step, isClientEncrypted, unlockWithPin]);
 
   const handleNextToConfirm = (e: React.FormEvent) => {
     e.preventDefault();

@@ -20,9 +20,45 @@ export interface CachedMetadata {
   updatedAt: string;
   /** Schema version so `syncDiaryCache` can re-fetch records written by older code. */
   v: number;
+  /** Precomputed lowercase search blob (title + full text + date forms) so
+   *  filtering never re-lowercases/re-locale-formats every record per keystroke.
+   *  Absent on records written before this field was added; `filterLocalTimeline`
+   *  falls back to computing it on the fly for those. */
+  searchText?: string;
 }
 
 const METADATA_VERSION = 2;
+
+/**
+ * Builds the lowercase search blob used by `filterLocalTimeline`. Computed once
+ * at save time (not per keystroke) so searching a large journal stays cheap.
+ */
+function buildSearchText(
+  date: string,
+  title: string,
+  contentText: string,
+): string {
+  const [year, month, day] = date.split("-").map(Number);
+  let dateForms = "";
+  if (year !== undefined && month !== undefined && day !== undefined) {
+    const dateObj = new Date(year, month - 1, day);
+    dateForms = [
+      dateObj.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      }),
+      dateObj.toLocaleDateString("en-US", {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      }),
+    ]
+      .join(" ")
+      .toLowerCase();
+  }
+  return [title, contentText, date, dateForms].join(" ").toLowerCase();
+}
 
 /**
  * Extracts a clean text snippet from content text
@@ -45,6 +81,19 @@ let timelineCache: { key: CryptoKey; entries: CachedMetadata[] } | null = null;
 
 function invalidateTimelineCache(): void {
   timelineCache = null;
+}
+
+// Fingerprint of the server sync list from the last full pull, keyed by the
+// master key. When the fingerprint is unchanged (and there are no pending local
+// edits) the pull has nothing to do, so we skip the O(N) IndexedDB read +
+// decrypt that `syncDiaryCache` would otherwise run every background tick.
+let lastServerSyncFingerprint: { key: CryptoKey; fingerprint: string } | null =
+  null;
+
+function syncListFingerprint(
+  entries: { date: string; updatedAt: string }[],
+): string {
+  return entries.map((e) => `${e.date}:${e.updatedAt}`).join("|");
 }
 
 export interface LocalTimelineFilters {
@@ -95,35 +144,13 @@ export function filterLocalTimeline(
   if (search.trim()) {
     const queryLower = search.trim().toLowerCase();
     filtered = filtered.filter((item) => {
-      const searchText = item.contentText || item.snippet;
-      if (item.title.toLowerCase().includes(queryLower)) return true;
-      if (searchText.toLowerCase().includes(queryLower)) return true;
-      if (item.date.includes(queryLower)) return true;
-
-      // Human-readable date matching ("Jul 1", "January 2025", "jul 1, 2025")
-      const [year, month, day] = item.date.split("-").map(Number);
-      if (year !== undefined && month !== undefined && day !== undefined) {
-        const dateObj = new Date(year, month - 1, day);
-        const shortDate = dateObj
-          .toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric",
-            year: "numeric",
-          })
-          .toLowerCase();
-        const longDate = dateObj
-          .toLocaleDateString("en-US", {
-            month: "long",
-            day: "numeric",
-            year: "numeric",
-          })
-          .toLowerCase();
-        if (shortDate.includes(queryLower) || longDate.includes(queryLower)) {
-          return true;
-        }
-      }
-
-      return false;
+      // Fast path: precomputed lowercase blob written at save time. Records
+      // written before that field existed fall back to computing it inline.
+      const searchText = (
+        item.searchText ||
+        buildSearchText(item.date, item.title, item.contentText || item.snippet)
+      ).toLowerCase();
+      return searchText.includes(queryLower);
     });
   }
 
@@ -156,6 +183,7 @@ export const diaryCacheService = {
       mood,
       updatedAt: updatedAtStr,
       v: METADATA_VERSION,
+      searchText: buildSearchText(date, title || "", contentText),
     };
 
     const encrypted = await encryptText(JSON.stringify(payload), masterKey);
@@ -210,6 +238,7 @@ export const diaryCacheService = {
    */
   clearTimelineCache(): void {
     invalidateTimelineCache();
+    lastServerSyncFingerprint = null;
   },
 
   /**
@@ -240,6 +269,20 @@ export const diaryCacheService = {
       }
       const serverEntries = res.data; // array of { date: string, updatedAt: string }
       const pendingDates = new Set(syncItems.map((item) => item.key));
+
+      // Fast path: the server sync list is unchanged since the last full pull
+      // and there are no pending local edits — skip the O(N) local decrypt and
+      // per-entry fetch entirely. The sync list is version-keyed server-side,
+      // so an identical fingerprint means there is genuinely nothing to do.
+      const fingerprint = syncListFingerprint(serverEntries);
+      if (
+        lastServerSyncFingerprint &&
+        lastServerSyncFingerprint.key === masterKey &&
+        lastServerSyncFingerprint.fingerprint === fingerprint &&
+        pendingDates.size === 0
+      ) {
+        return true;
+      }
 
       // In-memory timeline is now stale (metadata will change during this sync).
       invalidateTimelineCache();
@@ -286,6 +329,7 @@ export const diaryCacheService = {
       });
 
       if (fetchList.length === 0) {
+        lastServerSyncFingerprint = { key: masterKey, fingerprint };
         return true; // No sync needed
       }
 
@@ -356,6 +400,7 @@ export const diaryCacheService = {
         );
       }
 
+      lastServerSyncFingerprint = { key: masterKey, fingerprint };
       return true;
     } catch (err) {
       console.error("Cache synchronization failed:", err);
