@@ -392,6 +392,19 @@ Note: MongoDB (`mongodb+srv://`) now connects. The earlier `querySrv ECONNREFUSE
 
 # Recent Decisions
 
+2026-08-22
+
+- Diary lock is now **per-device and off by default**:
+  - `app-shell.tsx` drives `isLockEnabled`/`hasPasscode` from the device (`withink_lock_enabled` localStorage flag + presence of `withink_encrypted_master_key`), defaulting OFF on a new device; the `showPinRebind` auto-bind flow was removed (a fresh device no longer auto-prompts/enables a PIN — it just uses the Diary Password).
+  - `settings-shell.tsx` defaults the Diary Lock toggle from the device flag (not the account server value), so returning users' account lock state no longer flips a fresh device on. Enabling the lock now ALWAYS opens the PIN **setup** modal when this device has no bound PIN, and the "Change PIN" card only renders when a PIN actually exists on this device (was previously keyed off the account's `hasPasscode`, producing "Change PIN" with no PIN set).
+  - `saveLockSettingsAction` no longer clears the account `passcodeHash` when disabling — disabling is per-device (the device removes its own PIN key locally), so other devices that still have the lock enabled keep working. Updated the lock-actions test to match.
+  - Verified in the browser: fresh-device toggle is OFF, no "Change PIN" card, enabling opens the setup modal, and a fresh device gates behind the Diary Password screen (not the PIN). typecheck clean, lint 0 errors (3 pre-existing warnings), 120/120 tests, production build clean.
+
+2026-08-22
+
+- UI consistency: all four gate screens (`LockScreen`, `DiaryPasswordUnlockScreen`, `LockSetupOnboarding`, `MandatoryDiarySetup`) now render inside a shared `GateLayout` (`src/components/gate-layout.tsx`) that mirrors the auth pages — solid background, ruled ledger paper, `withink.` wordmark + tagline header above a login-style card (`bg-card`, `max-w-md`, `rounded-xl border p-6 sm:p-8`, `shadow-sm`). The screens' internal wordmark/pill headers were moved out of the card into the page header, and titles use the auth voice (`text-h2` + `text-caption uppercase`). `GateLayout` is `overflow-y-auto` with `m-auto` centering, so on short phone viewports the setup/lock screens scroll instead of clipping. Verified: typecheck clean, lint 0 errors (3 pre-existing warnings), lock tests 12/12, production build clean, visual pass on the lock gate in the browser.
+- Note: re-seeded the `test@test.com` perf user (its lock settings had been flipped on by the device-bind flow during testing); the seed is now back to `isLockEnabled: false` so the account unlocks with the Diary Password only.
+
 2026-08-19
 
 - Shipped a performance pass across `apps/app` and `apps/docs`. All changes verified: `tsc --noEmit` clean, eslint 0 errors (3 pre-existing `clearAllTimers` warnings, unchanged), 120/120 Vitest tests passing, production builds clean for both apps.

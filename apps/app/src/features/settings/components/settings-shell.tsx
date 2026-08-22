@@ -181,8 +181,15 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
 
   const deleteModalRef = useFocusTrap(showDeleteModal);
 
-  // Diary Lock States
-  const [diaryLockEnabled, setDiaryLockEnabled] = React.useState(false);
+  // Diary Lock States. The lock is per-device and defaults to OFF on a new
+  // device: the device's own `withink_lock_enabled` flag (falling back to the
+  // presence of a bound PIN key) is the source of truth, not the account state.
+  const [diaryLockEnabled, setDiaryLockEnabled] = React.useState(() => {
+    if (typeof window === "undefined") return false;
+    const flag = localStorage.getItem("withink_lock_enabled");
+    if (flag !== null) return flag === "true";
+    return !!localStorage.getItem("withink_encrypted_master_key");
+  });
   const [diaryLockTimeout, setDiaryLockTimeout] = React.useState(300);
   const [diaryLockOnTabHide, setDiaryLockOnTabHide] = React.useState(false);
   const [diaryHasPasscode, setDiaryHasPasscode] = React.useState(false);
@@ -190,6 +197,13 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
   const [lockSettingsLoading, setLockSettingsLoading] = React.useState(true);
   const [showSetupModal, setShowSetupModal] = React.useState(false);
   const [showChangeModal, setShowChangeModal] = React.useState(false);
+
+  // Whether THIS device has a PIN bound (a locally-encrypted master key exists).
+  // "Change PIN" and direct toggling only make sense once a device PIN is set.
+  const deviceHasPin =
+    typeof window !== "undefined"
+      ? !!localStorage.getItem("withink_encrypted_master_key")
+      : false;
 
   // Zero-Knowledge Encryption States
   const {
@@ -218,7 +232,9 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
     getLockSettingsAction()
       .then((res) => {
         if (res.success && res.data) {
-          setDiaryLockEnabled(res.data.isLockEnabled);
+          // `diaryLockEnabled` intentionally comes from the device flag (it
+          // defaults OFF on a new device), not the account-level value — so a
+          // returning user's account lock state doesn't flip a fresh device on.
           setDiaryLockTimeout(res.data.autoLockTimeout);
           setDiaryLockOnTabHide(res.data.lockOnTabHide);
           setDiaryHasPasscode(res.data.hasPasscode);
@@ -231,7 +247,10 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
   }, []);
 
   const handleToggleDiaryLock = (enabled: boolean) => {
-    if (enabled && !diaryHasPasscode) {
+    // Enabling the lock always requires a PIN: open the setup modal unless a
+    // PIN is already bound on THIS device (otherwise the user would "enable"
+    // the lock and be shown "Change PIN" with no PIN set).
+    if (enabled && !deviceHasPin) {
       setShowSetupModal(true);
     } else {
       setDiaryLockEnabled(enabled);
@@ -1303,8 +1322,8 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
 
             {diaryLockEnabled && (
               <div className="animate-in slide-in-from-top-4 space-y-5 duration-200">
-                {/* PIN Configuration Trigger */}
-                {diaryHasPasscode && (
+                {/* PIN Configuration Trigger — only when this device actually has a PIN bound */}
+                {deviceHasPin && (
                   <div className="border-border bg-secondary/10 flex items-center justify-between gap-4 rounded-xl border p-4">
                     <div>
                       <p className="text-body-small text-foreground font-medium">

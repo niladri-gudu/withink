@@ -3,10 +3,11 @@
 import * as React from "react";
 import { Button } from "@withink/ui/button";
 import { Input } from "@withink/ui/input";
-import { KeyRound, Loader2, Lock } from "lucide-react";
+import { KeyRound, Loader2 } from "lucide-react";
 import { motion } from "motion/react";
 import { toast } from "sonner";
 
+import { GateLayout } from "@/components/gate-layout";
 import { useEncryption } from "@/providers/encryption-provider";
 
 interface DiaryPasswordUnlockScreenProps {
@@ -45,29 +46,26 @@ export function DiaryPasswordUnlockScreen({
   };
 
   return (
-    <div className="bg-background/95 fixed inset-0 z-[9999] flex flex-col items-center justify-center backdrop-blur-md select-none">
-      <div className="w-full max-w-sm px-6 text-center">
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="flex flex-col items-center"
-        >
-          {/* Logo / Header */}
-          <div className="mb-6 flex flex-col items-center">
-            <span className="text-foreground mb-2 font-serif text-3xl font-bold tracking-tight">
-              withink<span className="text-accent">.</span>
-            </span>
-            <div className="text-muted-foreground bg-secondary/80 border-border flex items-center gap-1.5 rounded-full border px-3 py-1 font-serif text-xs">
-              <Lock className="text-accent h-3.5 w-3.5" />
-              <span>Diary Encrypted</span>
-            </div>
-          </div>
-
-          <p className="text-body-small text-muted-foreground mb-6 max-w-xs">
-            Your diary is protected with client-side zero-knowledge encryption.
-            Enter your Diary Password to unlock.
+    <GateLayout>
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="flex w-full flex-col items-center"
+      >
+        <div className="space-y-1.5 text-center">
+          <h1 className="text-h2 text-foreground font-serif font-bold">
+            Unlock Your Diary
+          </h1>
+          <p className="text-caption font-serif tracking-[0.16em] uppercase">
+            Diary Encrypted
           </p>
+        </div>
+
+        <p className="text-body-small text-muted-foreground mt-2 mb-6 max-w-xs">
+          Your diary is protected with client-side zero-knowledge encryption.
+          Enter your Diary Password to unlock.
+        </p>
 
           <form onSubmit={handleSubmit} className="w-full space-y-4">
             <motion.div
@@ -105,8 +103,7 @@ export function DiaryPasswordUnlockScreen({
               Unlock Diary
             </Button>
           </form>
-        </motion.div>
-      </div>
-    </div>
+      </motion.div>
+    </GateLayout>
   );
 }

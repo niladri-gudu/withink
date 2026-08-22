@@ -4,9 +4,10 @@ import * as React from "react";
 import { BrandLoader } from "@withink/ui/brand-loader";
 import { Button } from "@withink/ui/button";
 import { Input } from "@withink/ui/input";
-import { CheckCircle2, KeyRound, Loader2 } from "lucide-react";
+import { CheckCircle2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
+import { GateLayout } from "@/components/gate-layout";
 import {
   encryptText,
   exportKeyToHex,
@@ -221,30 +222,24 @@ export function MandatoryDiarySetup({
   const needsPin = diaryLockEnabled && diaryHasPasscode;
 
   return (
-    <div className="bg-background/95 animate-in fade-in fixed inset-0 z-[9995] flex items-center justify-center p-4 backdrop-blur-md duration-300">
-      <div className="animate-in zoom-in-95 w-full max-w-md px-6 text-center duration-200 select-none">
-        <div className="mb-6 flex flex-col items-center text-center">
-          {/* Logo / Header */}
-          <div className="mb-6 flex flex-col items-center">
-            <span className="text-foreground mb-2 font-serif text-3xl font-bold tracking-tight">
-              withink<span className="text-accent">.</span>
-            </span>
-            <div className="text-muted-foreground bg-secondary/80 border-border flex items-center gap-1.5 rounded-full border px-3 py-1 font-serif text-xs">
-              <KeyRound className="text-primary h-3.5 w-3.5" />
-              <span>Diary Setup</span>
-            </div>
-          </div>
-          <h1 className="text-foreground mt-2 font-serif text-3xl font-bold tracking-tight">
+    <GateLayout>
+      <div className="flex flex-col items-center text-center">
+        <div className="space-y-1.5 text-center">
+          <h1 className="text-h2 text-foreground font-serif font-bold">
             {isMigratingOldData
               ? "Secure & Migrate Your Journal"
               : "Create Diary Password"}
           </h1>
-          <p className="text-body-small text-muted-foreground mt-2 max-w-md leading-relaxed">
-            {isMigratingOldData
-              ? `We are transitioning Withink to a 100% Zero-Knowledge architecture. Choose a password to encrypt and secure your existing ${entryCount} journal logs locally.`
-              : "Set up browser-native zero-knowledge encryption to protect your writing diary. Your password is never sent to our servers."}
+          <p className="text-caption font-serif tracking-[0.16em] uppercase">
+            Diary Setup
           </p>
         </div>
+        <p className="text-body-small text-muted-foreground mt-2 max-w-md leading-relaxed">
+          {isMigratingOldData
+            ? `We are transitioning Withink to a 100% Zero-Knowledge architecture. Choose a password to encrypt and secure your existing ${entryCount} journal logs locally.`
+            : "Set up browser-native zero-knowledge encryption to protect your writing diary. Your password is never sent to our servers."}
+        </p>
+      </div>
 
         {/* ⚠️ Zero-Knowledge Warning */}
         <div className="border-destructive/20 bg-destructive/5 mb-4 rounded-2xl border p-4 text-left">
@@ -395,8 +390,7 @@ export function MandatoryDiarySetup({
               </>
             )}
           </Button>
-        </form>
-      </div>
-    </div>
+      </form>
+    </GateLayout>
   );
 }

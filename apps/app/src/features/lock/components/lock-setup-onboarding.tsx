@@ -3,10 +3,11 @@
 import * as React from "react";
 import { Button } from "@withink/ui/button";
 import { cn } from "@withink/utils";
-import { Check, Loader2, ShieldAlert } from "lucide-react";
+import { Check, Loader2 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { toast } from "sonner";
 
+import { GateLayout } from "@/components/gate-layout";
 import { encryptText, exportKeyToHex } from "@/lib/crypto-client";
 import { deriveKeyFromPasswordAsync } from "@/lib/crypto-worker-client";
 import { useFocusTrap } from "@/hooks/use-focus-trap";
@@ -133,34 +134,20 @@ export function LockSetupOnboarding({
   };
 
   return (
-    <div className="bg-background/80 animate-in fade-in fixed inset-0 z-[9990] flex items-center justify-center backdrop-blur-sm duration-200">
-      <motion.div
-        ref={onboardingContainerRef as React.RefObject<HTMLDivElement>}
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.95 }}
-        transition={{ type: "spring", stiffness: 200, damping: 22 }}
-        className="border-border bg-card relative w-full max-w-md rounded-xl border p-6 shadow-xl sm:p-8"
-      >
-        <div className="flex flex-col items-center text-center">
-          {/* Logo / Header */}
-          <div className="mb-6 flex flex-col items-center">
-            <span className="text-foreground mb-2 font-serif text-3xl font-bold tracking-tight">
-              withink<span className="text-accent">.</span>
-            </span>
-            <div className="text-muted-foreground bg-secondary/80 border-border flex items-center gap-1.5 rounded-full border px-3 py-1 font-serif text-xs">
-              <ShieldAlert className="text-accent h-3.5 w-3.5" />
-              <span>Diary Security</span>
-            </div>
-          </div>
-
-          <h2 className="text-foreground mt-2 mb-2 font-serif text-2xl font-semibold">
+    <GateLayout containerRef={onboardingContainerRef}>
+      <div className="flex w-full flex-col items-center text-center">
+        <div className="space-y-1.5 text-center sm:text-left">
+          <h2 className="text-h2 text-foreground font-serif font-bold">
             Secure Your Diary
           </h2>
-          <p className="text-body-small text-muted-foreground mb-6 max-w-sm">
-            Protect your diary entries from local access when you switch tabs or
-            leave your screen.
+          <p className="text-caption font-serif tracking-[0.16em] uppercase">
+            Protect your private pages
           </p>
+        </div>
+        <p className="text-body-small text-muted-foreground mt-2 mb-6 max-w-sm">
+          Protect your diary entries from local access when you switch tabs or
+          leave your screen.
+        </p>
 
           <AnimatePresence mode="wait">
             {step === 1 && (
@@ -321,8 +308,7 @@ export function LockSetupOnboarding({
               </motion.form>
             )}
           </AnimatePresence>
-        </div>
-      </motion.div>
-    </div>
+      </div>
+    </GateLayout>
   );
 }

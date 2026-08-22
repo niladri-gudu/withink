@@ -174,10 +174,10 @@ export async function saveLockSettingsAction(
           error: "A passcode is required to enable diary lock",
         };
       }
-    } else {
-      // Disabling lock, clean up passcode hash
-      updatePayload.passcodeHash = "";
     }
+    // Disabling the lock is per-device: the account's passcode hash is kept so
+    // other devices that still have the lock enabled keep working. A device
+    // that disables removes its own PIN key locally in Settings.
 
     await LockRepository.saveSettings(session.user.id, updatePayload);
 

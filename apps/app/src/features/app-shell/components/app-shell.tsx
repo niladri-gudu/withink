@@ -9,7 +9,7 @@ import { useEncryption } from "@/providers/encryption-provider";
 
 import { MandatoryDiarySetup } from "../../encryption/components/mandatory-diary-setup";
 import { DiaryPasswordUnlockScreen } from "../../encryption/components/diary-password-unlock-screen";
-import { getLockSettingsAction, lockAction } from "../../lock/actions/lock-actions";
+import { lockAction } from "../../lock/actions/lock-actions";
 import { LockScreen } from "../../lock/components/lock-screen";
 import { LockSetupOnboarding } from "../../lock/components/lock-setup-onboarding";
 import { useLockTimer } from "../../lock/hooks/use-lock-timer";
@@ -63,11 +63,19 @@ export function AppShell({
     lock: lockEncryption,
   } = useEncryption();
 
+  // Per-device diary lock: each device keeps its own "lock on/off" flag (and
+  // its own PIN-bound key), defaulting to OFF on a new device. The server's
+  // account-level lock settings are synced when saving, but the device flag is
+  // the source of truth for whether this device gates behind the PIN screen.
   const [isLockEnabled, setIsLockEnabled] = React.useState(
-    () => initialLockSettings?.isLockEnabled ?? false,
+    () =>
+      typeof window !== "undefined" &&
+      localStorage.getItem("withink_lock_enabled") === "true",
   );
   const [hasPasscode, setHasPasscode] = React.useState(
-    () => initialLockSettings?.hasPasscode ?? true,
+    () =>
+      typeof window !== "undefined" &&
+      !!localStorage.getItem("withink_encrypted_master_key"),
   );
   const [autoLockTimeout] = React.useState(
     () => initialLockSettings?.autoLockTimeout ?? 300,
@@ -107,19 +115,6 @@ export function AppShell({
     setIsUnlocked(false);
     lockEncryption();
     await lockAction();
-
-    // Re-sync the authoritative lock config so the unlock screen shown on the
-    // next render isn't based on stale one-shot state (e.g. the lock was just
-    // enabled or the PIN just set in this session).
-    try {
-      const res = await getLockSettingsAction();
-      if (res.success && res.data) {
-        setIsLockEnabled(res.data.isLockEnabled);
-        setHasPasscode(res.data.hasPasscode);
-      }
-    } catch {
-      // Best-effort; fall back to current client state.
-    }
   }, [lockEncryption]);
 
   // PIN lock requires the master key in memory; re-lock if the cookie is valid but the key was cleared (refresh).
@@ -173,11 +168,6 @@ export function AppShell({
     toast.error("Passcode is out of sync. Use your Diary Password to unlock.");
   }, [lockEncryption]);
 
-  // True when this device unlocked with the Diary Password but has no
-  // locally-encrypted master key, even though the account has a PIN set. The
-  // PIN encrypts the master key per-device, so a new device must bind its own.
-  const [showPinRebind, setShowPinRebind] = React.useState(false);
-
   const handleSetupSuccess = (
     _masterKeyHex?: string,
     _salt?: string,
@@ -188,52 +178,18 @@ export function AppShell({
     setIsUnlocked(true);
     // Only mark the passcode lock as active when a PIN was actually provided. A
     // password-only setup (e.g. a brand-new user) leaves the lock off until they
-    // set a passcode via the first-launch prompt; otherwise `showPinRebind` would
-    // fire alongside `showSetupPrompt` and ask for the passcode twice.
+    // set a passcode via the first-launch prompt.
     setIsLockEnabled(!!pin);
     setHasPasscode(!!pin);
+    if (pin && typeof window !== "undefined") {
+      localStorage.setItem("withink_lock_enabled", "true");
+    }
   };
-
-  const handlePinSetupSuccess = () => {
-    setShowPinRebind(false);
-    // The rebind path doesn't run through handleSetupSuccess, so make sure the
-    // lock config flags and unlocked state reflect the completed PIN binding
-    // (avoids a stale "no passcode" state that would route to the Diary
-    // Password screen).
-    setIsLockEnabled(true);
-    setHasPasscode(true);
-    setIsUnlocked(true);
-  };
-
-  // Per-device PIN binding: after the master key is in memory (unlocked via the
-  // Diary Password) but there is no local PIN key, prompt the user to set a
-  // PIN on this device so the fast-unlock PIN works here too. Mutually exclusive
-  // with the first-launch `showSetupPrompt` so the passcode is never asked twice.
-  React.useEffect(() => {
-    if (typeof window === "undefined") return;
-    const needsRebind =
-      !showSetupPrompt &&
-      isClientEncrypted &&
-      !!masterKey &&
-      isLockEnabled &&
-      hasPasscode &&
-      !localStorage.getItem("withink_encrypted_master_key");
-    // Schedule outside the effect to avoid synchronous setState in an effect.
-    const timer = setTimeout(() => setShowPinRebind(needsRebind), 0);
-    return () => clearTimeout(timer);
-  }, [
-    isClientEncrypted,
-    masterKey,
-    isLockEnabled,
-    hasPasscode,
-    showSetupPrompt,
-  ]);
 
   useLockTimer({
-    // Pause auto/tab lock while a PIN setup or rebind flow is open so the
+    // Pause auto/tab lock while the first-launch PIN setup is open so the
     // in-memory master key can't be wiped mid-binding.
-    isLockEnabled:
-      isLockEnabled && hasPasscode && !(showPinRebind || showSetupPrompt),
+    isLockEnabled: isLockEnabled && hasPasscode && !showSetupPrompt,
     timeoutMs: autoLockTimeout * 1000,
     lockOnTabHide,
     isLocked: !isUnlocked,
@@ -307,15 +263,6 @@ export function AppShell({
         diaryLockEnabled={isLockEnabled}
         diaryHasPasscode={hasPasscode}
         onSetupSuccess={handleSetupSuccess}
-      />
-    );
-  }
-
-  if (user && showPinRebind) {
-    return (
-      <LockSetupOnboarding
-        onSetupSuccess={handlePinSetupSuccess}
-        onCancel={() => setShowPinRebind(false)}
       />
     );
   }

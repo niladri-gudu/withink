@@ -247,7 +247,7 @@ describe("Lock Actions Suite", () => {
       spyCookie.mockRestore();
     });
 
-    it("should clear unlock cookie when disabling", async () => {
+    it("should clear unlock cookie when disabling (keep passcode hash for other devices)", async () => {
       vi.mocked(getRequestSession).mockResolvedValue(mockSession as any);
       const spyClear = vi
         .spyOn(LockService, "clearUnlockCookie")
@@ -260,9 +260,10 @@ describe("Lock Actions Suite", () => {
       });
 
       expect(res.success).toBe(true);
+      // Disabling is per-device: the account passcode hash is preserved so
+      // other devices that still have the lock enabled keep working.
       expect(LockRepository.saveSettings).toHaveBeenCalledWith(mockUserId, {
         isLockEnabled: false,
-        passcodeHash: "",
         autoLockTimeout: 300,
         lockOnTabHide: true,
       });
