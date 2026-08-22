@@ -23,10 +23,15 @@ import { useFocusTrap } from "@/hooks/use-focus-trap";
 import { useEncryption } from "@/providers/encryption-provider";
 import {
   getAllEntriesAction,
+  getMediaEntriesAction,
   saveEntryAction,
 } from "@/features/journal/actions/entry-actions";
 import type { DecryptedEntry } from "@/features/journal/services/journal-service";
 
+import {
+  getMediaEntryCache,
+  setMediaEntryCache,
+} from "../lib/media-entry-cache";
 import {
   deleteMediaFileAction,
   findEntryForMediaAction,
@@ -73,22 +78,14 @@ export function MediaLightbox({
   >(null);
   // Memoized plaintext per entry date so prev/next navigation doesn't re-decrypt
   // every entry's HTML from scratch each time (O(N) AES-GCM per image change).
-  // A ref (not state) because it's a pure cache — nothing to re-render on.
+  // The map lives in the session-scoped module cache so it survives close/open,
+  // and a ref (not state) because it's a pure cache — nothing to re-render on.
   const decryptedHtmlByDateRef = React.useRef<Map<string, string>>(new Map());
 
-  // Load entries once per open/close transition, resetting on each change.
+  // Load entries once per session, reusing the module cache across opens so we
+  // never re-download or re-decrypt the whole journal every time the lightbox
+  // opens. Only refetch when the cache is absent or stale.
   const isOpen = index !== null;
-  const [prevOpen, setPrevOpen] = React.useState(isOpen);
-  if (isOpen !== prevOpen) {
-    setPrevOpen(isOpen);
-    setCachedEntries(null);
-  }
-
-  // Reset the decryption memo each time the lightbox opens/closes. Kept in an
-  // effect (not during render) so we never mutate a ref while rendering.
-  React.useEffect(() => {
-    decryptedHtmlByDateRef.current = new Map();
-  }, [isOpen]);
 
   React.useEffect(() => {
     if (!isOpen) return;
@@ -96,8 +93,20 @@ export function MediaLightbox({
     let cancelled = false;
     const loadEntries = async () => {
       try {
-        const res = await getAllEntriesAction();
+        if (masterKey) {
+          const cached = getMediaEntryCache(masterKey);
+          if (cached) {
+            decryptedHtmlByDateRef.current = cached.htmlByDate;
+            if (!cancelled) setCachedEntries(cached.entries);
+            return;
+          }
+        }
+        const res = await getMediaEntriesAction();
         if (res.success && res.data && !cancelled) {
+          if (masterKey) {
+            const fresh = setMediaEntryCache(masterKey, res.data);
+            decryptedHtmlByDateRef.current = fresh.htmlByDate;
+          }
           setCachedEntries(res.data);
         }
       } catch (err) {
@@ -109,7 +118,7 @@ export function MediaLightbox({
     return () => {
       cancelled = true;
     };
-  }, [isOpen]);
+  }, [isOpen, masterKey]);
 
   // When the shown image changes, look up which entry it belongs to.
   React.useEffect(() => {
@@ -308,9 +317,16 @@ export function MediaLightbox({
     setDeleting(file.key);
     try {
       // Zero-knowledge: scrub affected entries BEFORE removing the file, since
-      // the server cannot decrypt client-encrypted content.
-      if (isClientEncrypted && masterKey && cachedEntries) {
-        for (const entry of cachedEntries) {
+      // the server cannot decrypt client-encrypted content. The lightbox cache
+      // omits contentJson to keep opens fast, so deletes (rare) fetch the full
+      // documents on demand.
+      if (isClientEncrypted && masterKey) {
+        const fullRes = await getAllEntriesAction();
+        if (!fullRes.success || !fullRes.data) {
+          toast.error("Could not update entries. The file was not deleted.");
+          return;
+        }
+        for (const entry of fullRes.data) {
           const outcome = await scrubEntryFromMedia(entry, file.url);
           if (outcome === "error") {
             toast.error("Could not update entries. The file was not deleted.");

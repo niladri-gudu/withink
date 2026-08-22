@@ -2,7 +2,7 @@
 
 # Project State
 
-Last Updated: 2026-08-15
+Last Updated: 2026-08-19
 
 Current Phase: Production Hardening
 
@@ -391,6 +391,19 @@ Note: MongoDB (`mongodb+srv://`) now connects. The earlier `querySrv ECONNREFUSE
 ---
 
 # Recent Decisions
+
+2026-08-19
+
+- Shipped a performance pass across `apps/app` and `apps/docs`. All changes verified: `tsc --noEmit` clean, eslint 0 errors (3 pre-existing `clearAllTimers` warnings, unchanged), 120/120 Vitest tests passing, production builds clean for both apps.
+  - Instant PIN unlock: the 4-digit PIN path now verifies locally first by decrypting the per-device master key (Web Worker PBKDF2 + cached key, ~100-300ms) and reveals the diary immediately, then verifies the PIN against the server in the background. If the server rejects (PIN rotated on another device), `AppShell` rolls the session back via a new `onServerReject` path and routes to the Diary Password recovery view. Previously the unlock awaited a server round-trip (auth + lock-settings read + cookie set) before doing anything. `lock-change-modal`'s "verify current passcode" step uses the same local-first pattern.
+  - Background sync is now incremental instead of a full scan on every tick: the 30s provider interval backed off to 120s, `getSyncList` is Redis-cached under the entries version key (was an uncached full Mongo scan), `syncDiaryCache` bails out early when the server sync-list fingerprint is unchanged and nothing is pending (skips the O(N) IndexedDB read + decrypt), and the entries page defers its mount sync with `requestIdleCallback` + a 5-minute session throttle.
+  - Media lightbox no longer re-downloads and re-decrypts the whole journal on every open: entries are held in a session-scoped cache keyed by master key (5-min freshness) shared with the decrypted-HTML memo, and the fetch uses a new `getAllEntriesForMedia` projection that omits the bulky `contentJson` blob (deletes re-fetch full entries on demand). The cache is cleared on lock.
+  - Insights client timezone refetch is now Redis-cached (`insights:action:{userId}:{today}:{tz}`, 300s) instead of recomputing the full O(N) aggregation on every call; the SSR `use cache` path is unchanged.
+  - App-wide small wins: `use-lock-timer` replaced per-event timer re-arming (mousemove/scroll fire at 60Hz+) with a single 1s idle poll; the four lock/onboarding gate screens are `next/dynamic` (still SSR'd so the lock overlay stays in the initial HTML) so their motion/sonner/lucide JS leaves the shell bundle for everyone who doesn't need them; the unlock cookie is only re-slid once more than half the window has elapsed (was re-written on every autosave/list fetch); `filterLocalTimeline` searches a precomputed lowercase blob written at save time instead of lowercasing full text + building locale date strings per keystroke; ReactQueryDevtools is a dev-only dynamic import; the focus trap computes focusables once per activation instead of on every Tab.
+  - Docs site: the hero now starts visible (`initial={false}`) so the LCP headline isn't blank until ~620KB of JS hydrates; Unsplash polaroids + lightbox converted from raw `<img>` to `next/image` (fill + lazy); the unused sonner `Toaster` was removed from the docs root (no docs page toasts). The `React.Suspense` boundaries around `AnimatePresence` were left in place — they are **required** by Next (AnimatePresence uses `Math.random()`, which needs a Suspense boundary above it during prerender; removing them fails the build).
+  - Deferred (documented, not regressions): splitting the 1,376-line docs landing page into a server shell + client islands (high regression risk on a marketing page), forcing `/` to fully static (the `better-auth` session cookie is httpOnly, so the CTA can't detect the session client-side; PPR already bounds it), and font preloading (next/font already preloads by default).
+  - Follow-up bug fix: the "Secure Your Diary" passcode screen could show the success toast and stay stuck after setting a passcode. Root cause: the four gate screens had been converted to `next/dynamic(..., { ssr: true })` in this sweep, and the dynamically-wrapped component could fail to unmount after the success handler flipped the parent state. Reverted those four gate screens (`LockSetupOnboarding`, `LockScreen`, `MandatoryDiarySetup`, `DiaryPasswordUnlockScreen`) to static imports in `app-shell.tsx`. Also removed the redundant second passcode screen (the `showPinSetup`/`pendingPin` re-prompt that appeared right after a successful first-time setup) and made `handlePinSetupSuccess` set `setIsUnlocked(true)`. Re-verified: typecheck clean, lint 0 errors (3 pre-existing warnings), 120/120 tests, production build clean.
+  - Follow-up bug fix: the app asked for the passcode twice on first launch ("set → confirm → success → asked again"). Root cause: `handleSetupSuccess` set `hasPasscode`/`isLockEnabled` to `true` unconditionally, which made the `showPinRebind` effect fire at the same time as the first-launch `showSetupPrompt`; because `showPinRebind` is an early return it showed first, and after it dismissed the still-true `showSetupPrompt` rendered a second screen. Fix: `handleSetupSuccess` now sets `setIsLockEnabled(!!pin)` / `setHasPasscode(!!pin)`, and the `showPinRebind` computation is gated on `!showSetupPrompt` (with `showSetupPrompt` added to its deps) so the two first-setup prompts are mutually exclusive. Re-verified: typecheck clean, lint 0 errors (3 pre-existing warnings), lock tests 12/12, production build clean.
 
 2026-08-15
 

@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 import { getLocalDateString } from "@/lib/utils/date";
 import { useEncryption } from "@/providers/encryption-provider";
@@ -152,50 +153,66 @@ export function AppShell({
     lockEncryption,
   ]);
 
+  // Which screen the lock overlay boots into (reset on every normal unlock).
+  const [lockView, setLockView] = React.useState<"pin" | "password-verify">(
+    "pin",
+  );
+
   const handleUnlockSuccess = React.useCallback(() => {
     setIsUnlocked(true);
+    setLockView("pin");
   }, []);
 
-  const [showPinSetup, setShowPinSetup] = React.useState(false);
-  const [pendingPin, setPendingPin] = React.useState("");
+  // The unlock is verified locally first and the server check runs in the
+  // background. If the server rejects the PIN (rotated on another device), roll
+  // the session back and route the user to the Diary Password recovery flow.
+  const handleServerReject = React.useCallback(() => {
+    lockEncryption();
+    setIsUnlocked(false);
+    setLockView("password-verify");
+    toast.error("Passcode is out of sync. Use your Diary Password to unlock.");
+  }, [lockEncryption]);
+
   // True when this device unlocked with the Diary Password but has no
   // locally-encrypted master key, even though the account has a PIN set. The
   // PIN encrypts the master key per-device, so a new device must bind its own.
   const [showPinRebind, setShowPinRebind] = React.useState(false);
 
   const handleSetupSuccess = (
-    masterKeyHex?: string,
-    salt?: string,
-    verificationCiphertext?: string,
+    _masterKeyHex?: string,
+    _salt?: string,
+    _verificationCiphertext?: string,
     pin?: string,
   ) => {
     setShowSetupPrompt(false);
-    setIsLockEnabled(true);
-    setHasPasscode(true);
     setIsUnlocked(true);
-    if (pin) {
-      setPendingPin(pin);
-      setShowPinSetup(true);
-    }
+    // Only mark the passcode lock as active when a PIN was actually provided. A
+    // password-only setup (e.g. a brand-new user) leaves the lock off until they
+    // set a passcode via the first-launch prompt; otherwise `showPinRebind` would
+    // fire alongside `showSetupPrompt` and ask for the passcode twice.
+    setIsLockEnabled(!!pin);
+    setHasPasscode(!!pin);
   };
 
   const handlePinSetupSuccess = () => {
-    setShowPinSetup(false);
-    setPendingPin("");
     setShowPinRebind(false);
     // The rebind path doesn't run through handleSetupSuccess, so make sure the
-    // lock config flags reflect the completed PIN binding (avoids a stale
-    // "no passcode" state that would route to the Diary Password screen).
+    // lock config flags and unlocked state reflect the completed PIN binding
+    // (avoids a stale "no passcode" state that would route to the Diary
+    // Password screen).
     setIsLockEnabled(true);
     setHasPasscode(true);
+    setIsUnlocked(true);
   };
 
   // Per-device PIN binding: after the master key is in memory (unlocked via the
   // Diary Password) but there is no local PIN key, prompt the user to set a
-  // PIN on this device so the fast-unlock PIN works here too.
+  // PIN on this device so the fast-unlock PIN works here too. Mutually exclusive
+  // with the first-launch `showSetupPrompt` so the passcode is never asked twice.
   React.useEffect(() => {
     if (typeof window === "undefined") return;
     const needsRebind =
+      !showSetupPrompt &&
       isClientEncrypted &&
       !!masterKey &&
       isLockEnabled &&
@@ -204,13 +221,19 @@ export function AppShell({
     // Schedule outside the effect to avoid synchronous setState in an effect.
     const timer = setTimeout(() => setShowPinRebind(needsRebind), 0);
     return () => clearTimeout(timer);
-  }, [isClientEncrypted, masterKey, isLockEnabled, hasPasscode]);
+  }, [
+    isClientEncrypted,
+    masterKey,
+    isLockEnabled,
+    hasPasscode,
+    showSetupPrompt,
+  ]);
 
   useLockTimer({
     // Pause auto/tab lock while a PIN setup or rebind flow is open so the
     // in-memory master key can't be wiped mid-binding.
     isLockEnabled:
-      isLockEnabled && hasPasscode && !(showPinSetup || showPinRebind || showSetupPrompt),
+      isLockEnabled && hasPasscode && !(showPinRebind || showSetupPrompt),
     timeoutMs: autoLockTimeout * 1000,
     lockOnTabHide,
     isLocked: !isUnlocked,
@@ -288,19 +311,6 @@ export function AppShell({
     );
   }
 
-  if (user && showPinSetup && pendingPin) {
-    return (
-      <LockSetupOnboarding
-        pin={pendingPin}
-        onSetupSuccess={handlePinSetupSuccess}
-        onCancel={() => {
-          setShowPinSetup(false);
-          setPendingPin("");
-        }}
-      />
-    );
-  }
-
   if (user && showPinRebind) {
     return (
       <LockSetupOnboarding
@@ -315,6 +325,8 @@ export function AppShell({
       {user && !isUnlocked && !masterKey && !showPasswordUnlockPrompt && (
         <LockScreen
           onUnlockSuccess={handleUnlockSuccess}
+          onServerReject={handleServerReject}
+          initialView={lockView}
           userEmail={user.email}
         />
       )}

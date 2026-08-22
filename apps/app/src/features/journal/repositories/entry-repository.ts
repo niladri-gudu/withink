@@ -305,15 +305,47 @@ export class EntryRepository {
     return serialize(entries);
   }
 
+  /**
+   * Returns every entry WITHOUT the bulky Tiptap `contentJson` blob. Used by the
+   * media lightbox, which only scans `contentHtml` for image URLs — shipping the
+   * JSON ciphertext for the whole journal on every lightbox open is wasted
+   * bandwidth. Deletes re-fetch the full entry on demand.
+   */
+  static async getAllEntriesForMedia(userId: string): Promise<IEntry[]> {
+    await connectDB();
+    const entries = await (EntryModel as any) // eslint-disable-line @typescript-eslint/no-explicit-any
+      .find(
+        { userId },
+        { date: 1, title: 1, mood: 1, wordCount: 1, contentHtml: 1, contentText: 1, updatedAt: 1 },
+      )
+      .sort({ date: 1 })
+      .lean();
+    return serialize(entries);
+  }
+
   static async getSyncList(
     userId: string,
   ): Promise<{ date: string; updatedAt: Date }[]> {
+    // Version-keyed like every other list read, so any save/delete invalidates
+    // it automatically. This is on the background-sync hot path (called on
+    // every pull), so a stale short-TTL read beats a full Mongo scan.
+    const version = await this.getUserEntryVersion(userId);
+    const cacheKey = `entries:${userId}:v${version}:sync-list`;
+    const cached = await getCachedValue<{ date: string; updatedAt: string }[]>(
+      cacheKey,
+    );
+    if (cached !== null) {
+      return cached as unknown as { date: string; updatedAt: Date }[];
+    }
+
     await connectDB();
     const entries = await (EntryModel as any) // eslint-disable-line @typescript-eslint/no-explicit-any
       .find({ userId }, { date: 1, updatedAt: 1 })
       .sort({ date: -1 })
       .lean();
-    return serialize(entries);
+    const serializedResult = serialize(entries);
+    await setCachedValue(cacheKey, serializedResult, LIST_CACHE_TTL_SECONDS);
+    return serializedResult;
   }
 
   static async deleteEntry(userId: string, date: string): Promise<boolean> {

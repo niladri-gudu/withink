@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ComponentPropsWithoutRef } from "react";
+import { useEffect, useRef, useState, type ComponentPropsWithoutRef } from "react";
 import Link from "next/link";
 import {
   keepPreviousData,
@@ -154,6 +154,11 @@ export function EntriesTimeline({
   }, [search]);
 
   // Background Cache Sync Hook
+  // Deferred to idle time (requestIdleCallback with a timeout fallback) so it
+  // never competes with the page's first paint / search, throttled to at most
+  // once per 5 minutes per session, and only runs for encrypted (ZK) users.
+  const syncRanAtRef = useRef(0);
+  const syncScheduledRef = useRef(false);
   useEffect(() => {
     if (!isClientEncrypted || !masterKey) return;
 
@@ -182,7 +187,24 @@ export function EntriesTimeline({
       }
     };
 
-    runSync();
+    const schedule = () => {
+      const now = Date.now();
+      if (now - syncRanAtRef.current < 5 * 60 * 1000) {
+        syncScheduledRef.current = false;
+        return;
+      }
+      syncRanAtRef.current = now;
+      syncScheduledRef.current = false;
+      void runSync();
+    };
+
+    if (syncScheduledRef.current) return;
+    syncScheduledRef.current = true;
+    if (typeof window !== "undefined" && "requestIdleCallback" in window) {
+      window.requestIdleCallback(() => schedule(), { timeout: 3000 });
+    } else {
+      setTimeout(schedule, 2000);
+    }
   }, [isClientEncrypted, masterKey, localToday, queryClient]);
 
   // Fetch updated page list using react-query (supporting fast local search for ZK mode)

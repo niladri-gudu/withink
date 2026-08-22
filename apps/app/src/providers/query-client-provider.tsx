@@ -1,11 +1,21 @@
 "use client";
 
 import * as React from "react";
+import dynamic from "next/dynamic";
 import {
   QueryClientProvider as BaseQueryClientProvider,
   QueryClient,
 } from "@tanstack/react-query";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+
+// Devtools is dev-only; a dynamic (ssr:false) import ensures the chunk never
+// ships in production builds (where the NODE_ENV guard below is eliminated).
+const ReactQueryDevtools = dynamic(
+  () =>
+    import("@tanstack/react-query-devtools").then(
+      (m) => m.ReactQueryDevtools,
+    ),
+  { ssr: false },
+);
 
 function makeQueryClient() {
   return new QueryClient({

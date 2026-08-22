@@ -290,6 +290,37 @@ export async function getAllEntriesAction(): Promise<{
   }
 }
 
+/**
+ * Lightweight variant of `getAllEntriesAction` for the media lightbox: returns
+ * every entry WITHOUT the bulky `contentJson` blob, since the lightbox only
+ * scans `contentHtml` for image URLs.
+ */
+export async function getMediaEntriesAction(): Promise<{
+  success: boolean;
+  data?: DecryptedEntry[];
+  error?: string;
+}> {
+  try {
+    const session = await getRequestSession();
+    if (!session) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const unlocked = await LockService.isSessionUnlocked(session.user.id);
+    if (!unlocked) {
+      return { success: false, error: "Locked" };
+    }
+
+    const entries = await JournalService.getAllEntriesForMedia(
+      session.user.id,
+    );
+    return { success: true, data: entries };
+  } catch (err) {
+    const appError = handleError(err);
+    return { success: false, error: appError.safeMessage };
+  }
+}
+
 export async function getEntrySyncListAction(): Promise<{
   success: boolean;
   data?: { date: string; updatedAt: string }[];

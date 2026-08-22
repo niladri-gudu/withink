@@ -15,17 +15,26 @@ import { unlockAction } from "../actions/lock-actions";
 
 interface LockScreenProps {
   onUnlockSuccess: () => void;
+  /** Re-locks the session if the background server verification rejects the PIN
+   *  (e.g. the passcode was rotated on another device). */
+  onServerReject?: () => void;
+  /** Which screen to boot into (used by the shell after a rejected unlock). */
+  initialView?: ScreenView;
   userEmail?: string | null;
 }
 
 type ScreenView = "pin" | "password-verify";
 
-export function LockScreen({ onUnlockSuccess }: LockScreenProps) {
+export function LockScreen({
+  onUnlockSuccess,
+  onServerReject,
+  initialView = "pin",
+}: LockScreenProps) {
   const [pin, setPin] = React.useState<string>("");
   const [isVerifying, setIsVerifying] = React.useState(false);
   const [isDecrypting, setIsDecrypting] = React.useState(false);
   const [shake, setShake] = React.useState(false);
-  const [view, setView] = React.useState<ScreenView>("pin");
+  const [view, setView] = React.useState<ScreenView>(initialView);
   const isMounted = React.useRef(true);
   // Latch set once the passcode has been verified & decrypted so the auto-submit
   // effect can never re-fire (e.g. while the parent transitions post-unlock).
@@ -88,33 +97,72 @@ export function LockScreen({ onUnlockSuccess }: LockScreenProps) {
     if (pin.length === 4 && view === "pin" && !isVerifying) {
       const verify = async () => {
         setIsVerifying(true);
+
+        const encryptedMasterKey = isClientEncrypted
+          ? localStorage.getItem("withink_encrypted_master_key")
+          : null;
+
+        // Fast path: the PIN is verified locally by decrypting the per-device
+        // master key (PBKDF2 runs in a Web Worker and the derived key is
+        // cached, so this is ~100-300ms). Reveal the diary the instant the key
+        // unwraps — no network round-trip gates the unlock. The server
+        // verification then finishes in the background; if it rejects the PIN,
+        // the shell rolls the session back.
+        if (encryptedMasterKey) {
+          setIsDecrypting(true);
+          const decrypted = await unlockWithPin(pin, encryptedMasterKey);
+
+          if (decrypted) {
+            didUnlock.current = true;
+            if (isMounted.current) {
+              setPin("");
+              setIsDecrypting(false);
+              setIsVerifying(false);
+            }
+            onUnlockSuccess();
+
+            // Background server verification. Note: this deliberately runs even
+            // after the LockScreen unmounts (isMounted goes false on success),
+            // because a rejected PIN must still roll the whole session back.
+            void unlockAction(pin).then((res) => {
+              if (!res.success) {
+                onServerReject?.();
+              }
+            });
+            return;
+          }
+
+          // Local decrypt failed — fall through to the server to distinguish a
+          // wrong PIN from an out-of-sync per-device key.
+          if (isMounted.current) setIsDecrypting(false);
+          const res = await unlockAction(pin);
+          if (res.success) {
+            if (isMounted.current) {
+              setPin("");
+              toast.error(
+                "Passcode is out of sync. Use your Diary Password to unlock.",
+              );
+              setIsVerifying(false);
+              setView("password-verify");
+            }
+            return;
+          }
+          if (isMounted.current) {
+            setShake(true);
+            setPin("");
+            toast.error(res.error || "Incorrect passcode");
+            setTimeout(() => setShake(false), 500);
+            setIsVerifying(false);
+          }
+          return;
+        }
+
+        // Legacy path (not client-encrypted): the server is the only authority.
         const res = await unlockAction(pin);
         if (res.success) {
-          if (isClientEncrypted) {
-            const encryptedMasterKey = localStorage.getItem(
-              "withink_encrypted_master_key",
-            );
-            if (encryptedMasterKey) {
-              setIsDecrypting(true);
-              const decrypted = await unlockWithPin(pin, encryptedMasterKey);
-              if (!decrypted) {
-                if (isMounted.current) {
-                  setIsDecrypting(false);
-                  setPin("");
-                  toast.error(
-                    "Passcode is out of sync. Use your Diary Password to unlock.",
-                  );
-                  setIsVerifying(false);
-                  setView("password-verify");
-                }
-                return;
-              }
-            }
-          }
           didUnlock.current = true;
           if (isMounted.current) {
             setPin("");
-            setIsDecrypting(false);
             setIsVerifying(false);
           }
           onUnlockSuccess();
@@ -135,6 +183,7 @@ export function LockScreen({ onUnlockSuccess }: LockScreenProps) {
     view,
     isVerifying,
     onUnlockSuccess,
+    onServerReject,
     isClientEncrypted,
     unlockWithPin,
   ]);

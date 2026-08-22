@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   Angry,
   Archive,
@@ -422,7 +423,7 @@ export function LandingPageContent({
             className="ledger-rules pointer-events-none absolute inset-0"
           />
           <motion.div
-            initial="hidden"
+            initial={false}
             animate="visible"
             className="relative mx-auto flex w-full max-w-3xl flex-col items-center text-center"
           >
@@ -903,11 +904,13 @@ export function LandingPageContent({
                       aria-label={`Enlarge: ${p.caption}`}
                     >
                       <div className="bg-secondary/20 aspect-4/3 relative w-full overflow-hidden rounded-md">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
+                        <Image
                           src={p.src}
                           alt=""
-                          className="grayscale-10 h-full w-full object-cover transition-all duration-300 hover:grayscale-0"
+                          fill
+                          sizes="128px"
+                          loading="lazy"
+                          className="grayscale-10 object-cover transition-all duration-300 hover:grayscale-0"
                         />
                         <div className="bg-primary/5 absolute inset-0 transition-colors hover:bg-transparent" />
                         <div className="absolute bottom-1 right-1 rounded bg-black/40 p-0.5 text-white backdrop-blur-[2px]">
@@ -1291,11 +1294,12 @@ export function LandingPageContent({
                 </button>
 
                 <div className="bg-secondary/20 aspect-4/3 relative w-full overflow-hidden rounded-md">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={lightboxImg}
+                  <Image
+                    src={lightboxImg ?? ""}
                     alt="Enlarged gallery preview"
-                    className="h-full w-full object-cover"
+                    fill
+                    sizes="100vw"
+                    className="object-cover"
                   />
                 </div>
                 <div className="text-muted-foreground font-hand px-2 pb-2 pt-4 text-center text-xl">
