@@ -6,8 +6,10 @@ const FOCUSABLE_SELECTOR =
 /**
  * Traps Tab/Shift+Tab focus within the attached container while `active`.
  *
- * The focusable list is computed once per activation (not on every Tab press) so
- * keyboard navigation never re-queries the DOM or forces layout inside a modal.
+ * The focusable list is recomputed inside each Tab handler: dialogs whose
+ * contents change while open (multi-step flows, inline confirmations) would
+ * otherwise cycle through a stale element list that misses newly-shown
+ * controls.
  */
 export function useFocusTrap(active: boolean) {
   const containerRef = useRef<HTMLElement | null>(null);
@@ -34,11 +36,10 @@ export function useFocusTrap(active: boolean) {
       });
     };
 
-    const focusableElements = getFocusableElements();
-
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key !== "Tab") return;
 
+      const focusableElements = getFocusableElements();
       if (focusableElements.length === 0) {
         e.preventDefault();
         return;
@@ -64,9 +65,10 @@ export function useFocusTrap(active: boolean) {
 
     // Focus the first focusable element initially
     let focusTimer: ReturnType<typeof setTimeout> | undefined;
-    if (focusableElements.length > 0) {
+    const initialFocusable = getFocusableElements();
+    if (initialFocusable.length > 0) {
       focusTimer = setTimeout(() => {
-        focusableElements[0]?.focus();
+        initialFocusable[0]?.focus();
       }, 50);
     }
 

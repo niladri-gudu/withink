@@ -24,6 +24,13 @@ const SENSITIVE_KEYS = [
   "encryption",
   "content",
   "body",
+  // PII and lock secrets that were previously slipping through context
+  // objects (lock-service logs, auth flows).
+  "email",
+  "mail",
+  "passcode",
+  "pin",
+  "proof",
 ];
 
 /**

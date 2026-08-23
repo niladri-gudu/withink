@@ -7,8 +7,9 @@ import { KeyRound, Loader2 } from "lucide-react";
 import { motion } from "motion/react";
 import { toast } from "sonner";
 
-import { GateLayout } from "@/components/gate-layout";
+import { useFocusTrap } from "@/hooks/use-focus-trap";
 import { useEncryption } from "@/providers/encryption-provider";
+import { GateLayout } from "@/components/gate-layout";
 
 interface DiaryPasswordUnlockScreenProps {
   userEmail?: string | null;
@@ -24,6 +25,10 @@ export function DiaryPasswordUnlockScreen({
   const [shake, setShake] = React.useState(false);
   const { unlockWithPassword } = useEncryption();
   const inputRef = React.useRef<HTMLInputElement>(null);
+
+  // Trap keyboard focus inside the gate so Tab can't reach the (locked)
+  // shell behind it — matching the PIN lock screen's behavior.
+  const gateContainerRef = useFocusTrap(true);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,7 +51,7 @@ export function DiaryPasswordUnlockScreen({
   };
 
   return (
-    <GateLayout>
+    <GateLayout containerRef={gateContainerRef}>
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -67,42 +72,40 @@ export function DiaryPasswordUnlockScreen({
           Enter your Diary Password to unlock.
         </p>
 
-          <form onSubmit={handleSubmit} className="w-full space-y-4">
-            <motion.div
-              className="space-y-2"
-              animate={
-                shake ? { x: [0, -10, 10, -10, 10, -5, 5, -2, 2, 0] } : {}
-              }
-              transition={{ duration: 0.5 }}
-            >
-              <Input
-                ref={inputRef}
-                id="diary-password"
-                type="password"
-                placeholder="Enter Diary Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="h-12 rounded-xl text-center"
-                autoComplete="current-password"
-                autoFocus
-                disabled={isVerifying}
-                required
-              />
-            </motion.div>
+        <form onSubmit={handleSubmit} className="w-full space-y-4">
+          <motion.div
+            className="space-y-2"
+            animate={shake ? { x: [0, -10, 10, -10, 10, -5, 5, -2, 2, 0] } : {}}
+            transition={{ duration: 0.5 }}
+          >
+            <Input
+              ref={inputRef}
+              id="diary-password"
+              type="password"
+              placeholder="Enter Diary Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="h-12 rounded-xl text-center"
+              autoComplete="current-password"
+              autoFocus
+              disabled={isVerifying}
+              required
+            />
+          </motion.div>
 
-            <Button
-              type="submit"
-              className="w-full gap-2 rounded-xl py-6"
-              disabled={isVerifying || !password}
-            >
-              {isVerifying ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
-              ) : (
-                <KeyRound className="h-5 w-5" />
-              )}
-              Unlock Diary
-            </Button>
-          </form>
+          <Button
+            type="submit"
+            className="w-full gap-2 rounded-xl py-6"
+            disabled={isVerifying || !password}
+          >
+            {isVerifying ? (
+              <Loader2 className="h-5 w-5 animate-spin" />
+            ) : (
+              <KeyRound className="h-5 w-5" />
+            )}
+            Unlock Diary
+          </Button>
+        </form>
       </motion.div>
     </GateLayout>
   );

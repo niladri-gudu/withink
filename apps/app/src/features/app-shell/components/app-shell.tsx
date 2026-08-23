@@ -4,14 +4,16 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
+import { safeStorage } from "@/lib/safe-storage";
 import { getLocalDateString } from "@/lib/utils/date";
 import { useEncryption } from "@/providers/encryption-provider";
 
-import { MandatoryDiarySetup } from "../../encryption/components/mandatory-diary-setup";
 import { DiaryPasswordUnlockScreen } from "../../encryption/components/diary-password-unlock-screen";
+import { MandatoryDiarySetup } from "../../encryption/components/mandatory-diary-setup";
 import { lockAction } from "../../lock/actions/lock-actions";
 import { LockScreen } from "../../lock/components/lock-screen";
 import { LockSetupOnboarding } from "../../lock/components/lock-setup-onboarding";
+import { UnlockProofBindCard } from "../../lock/components/unlock-proof-bind-card";
 import { useLockTimer } from "../../lock/hooks/use-lock-timer";
 import { Header } from "./header";
 import { Sidebar } from "./sidebar";
@@ -58,8 +60,10 @@ export function AppShell({
 
   const {
     isClientEncrypted,
+    encryptionSettingsSeeded,
     masterKey,
     setEncryptionSettings,
+    proofBindingRequired,
     lock: lockEncryption,
   } = useEncryption();
 
@@ -67,16 +71,16 @@ export function AppShell({
   // its own PIN-bound key), defaulting to OFF on a new device. The server's
   // account-level lock settings are synced when saving, but the device flag is
   // the source of truth for whether this device gates behind the PIN screen.
-  const [isLockEnabled, setIsLockEnabled] = React.useState(
-    () =>
-      typeof window !== "undefined" &&
-      localStorage.getItem("withink_lock_enabled") === "true",
-  );
-  const [hasPasscode, setHasPasscode] = React.useState(
-    () =>
-      typeof window !== "undefined" &&
-      !!localStorage.getItem("withink_encrypted_master_key"),
-  );
+  // State starts at the deterministic server value and syncs from storage in
+  // an effect — reading localStorage during the hydration render would
+  // mismatch the server-rendered HTML.
+  const [isLockEnabled, setIsLockEnabled] = React.useState(false);
+  const [hasPasscode, setHasPasscode] = React.useState(false);
+  React.useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setIsLockEnabled(safeStorage.getItem("withink_lock_enabled") === "true");
+    setHasPasscode(!!safeStorage.getItem("withink_encrypted_master_key"));
+  }, []);
   const [autoLockTimeout] = React.useState(
     () => initialLockSettings?.autoLockTimeout ?? 300,
   );
@@ -103,7 +107,9 @@ export function AppShell({
   React.useEffect(() => {
     if (!user || initialLockSettings?.hasPasscode) return;
     const timer = setTimeout(() => {
-      const dismissed = sessionStorage.getItem("withink_lock_setup_dismissed");
+      const dismissed = safeStorage.getSessionItem(
+        "withink_lock_setup_dismissed",
+      );
       if (!dismissed) {
         setShowSetupPrompt(true);
       }
@@ -119,8 +125,7 @@ export function AppShell({
 
   // PIN lock requires the master key in memory; re-lock if the cookie is valid but the key was cleared (refresh).
   React.useEffect(() => {
-    if (typeof window === "undefined") return;
-    const hasLocalEncryptedKey = !!localStorage.getItem(
+    const hasLocalEncryptedKey = !!safeStorage.getItem(
       "withink_encrypted_master_key",
     );
     if (
@@ -157,6 +162,12 @@ export function AppShell({
     setIsUnlocked(true);
     setLockView("pin");
   }, []);
+
+  // The server accepted the unlock (cookie set) — refresh so content gated by
+  // the server-side lock streams in behind the already-revealed UI.
+  const handleUnlockedSynced = React.useCallback(() => {
+    router.refresh();
+  }, [router]);
 
   // The unlock is verified locally first and the server check runs in the
   // background. If the server rejects the PIN (rotated on another device), roll
@@ -235,13 +246,18 @@ export function AppShell({
   const handleToggleCollapse = () => {
     const nextCollapsed = !isCollapsed;
     setIsCollapsed(nextCollapsed);
-    localStorage.setItem("withink_sidebar_collapsed", String(nextCollapsed));
+    safeStorage.setItem("withink_sidebar_collapsed", String(nextCollapsed));
   };
 
-  const hasLocalEncryptedKey =
-    typeof window !== "undefined"
-      ? !!localStorage.getItem("withink_encrypted_master_key")
-      : false;
+  // Synced from storage after mount (see the lock flags above) so the gate
+  // decision is hydration-stable.
+  const [hasLocalEncryptedKey, setHasLocalEncryptedKey] = React.useState(false);
+  React.useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setHasLocalEncryptedKey(
+      !!safeStorage.getItem("withink_encrypted_master_key"),
+    );
+  }, []);
 
   const showPasswordUnlockPrompt = React.useMemo(() => {
     return (
@@ -257,7 +273,17 @@ export function AppShell({
     hasLocalEncryptedKey,
   ]);
 
-  if (user && !isClientEncrypted) {
+  // While a gate screen is up, the diary underneath must be inert to assistive
+  // tech — otherwise screen readers and keyboard focus can browse locked
+  // content behind the overlay. (The server already withholds gated content;
+  // this covers the client-side lock states too.)
+  const isGated =
+    !!user && (!isUnlocked || showPasswordUnlockPrompt || showSetupPrompt);
+
+  // Wait for the server-seeded encryption settings before deciding this is a
+  // legacy (non-ZK) account: mounting MandatoryDiarySetup during the pre-seed
+  // window flashed the wrong screen and fired migration actions on every load.
+  if (user && !isClientEncrypted && encryptionSettingsSeeded) {
     return (
       <MandatoryDiarySetup
         diaryLockEnabled={isLockEnabled}
@@ -267,12 +293,21 @@ export function AppShell({
     );
   }
 
+  if (user && !isClientEncrypted && !encryptionSettingsSeeded) {
+    return (
+      <div className="bg-background flex h-screen w-full items-center justify-center">
+        <div className="border-border bg-card w-full max-w-md animate-pulse rounded-xl border p-8" />
+      </div>
+    );
+  }
+
   return (
     <>
       {user && !isUnlocked && !masterKey && !showPasswordUnlockPrompt && (
         <LockScreen
           onUnlockSuccess={handleUnlockSuccess}
           onServerReject={handleServerReject}
+          onUnlockedSynced={handleUnlockedSynced}
           initialView={lockView}
           userEmail={user.email}
         />
@@ -292,8 +327,11 @@ export function AppShell({
         />
       )}
 
+      {user && proofBindingRequired && <UnlockProofBindCard />}
+
       <div
         className="bg-background flex h-screen w-full overflow-hidden"
+        inert={isGated ? true : undefined}
         style={
           {
             "--sidebar-width": isCollapsed ? "76px" : "264px",
@@ -320,6 +358,8 @@ export function AppShell({
 
           <main
             id="main-content"
+            // Focusable target so the skip link reliably moves focus here.
+            tabIndex={-1}
             className="no-scrollbar flex min-w-0 flex-1 flex-col overflow-y-auto focus:outline-none"
           >
             <div className="flex w-full flex-1 flex-col items-center">

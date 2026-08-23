@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import type { Route } from "next";
 import Link from "next/link";
 import { Button } from "@withink/ui/button";
+import { Skeleton } from "@withink/ui/skeleton";
 import {
   Angry,
   ArrowRight,
@@ -40,18 +41,28 @@ const moodColors: Record<number, string> = {
 interface RecentReflectionsListProps {
   initialEntries: DecryptedEntry[];
   today: string;
+  /** Whether the account uses client-side encryption. Server-derived so the
+   *  SSR HTML renders skeletons instead of ciphertext blobs for ZK users. */
+  encrypted?: boolean;
 }
 
 export function RecentReflectionsList({
   initialEntries,
   today,
+  encrypted = false,
 }: RecentReflectionsListProps) {
   const { isClientEncrypted, masterKey } = useEncryption();
   const [entries, setEntries] = useState<DecryptedEntry[]>(initialEntries);
+  const [ready, setReady] = useState(!encrypted);
 
   useEffect(() => {
+    let cancelled = false;
     const decryptEntries = async () => {
-      if (isClientEncrypted && masterKey) {
+      if (isClientEncrypted || encrypted) {
+        if (!masterKey) {
+          if (!cancelled) setReady(false);
+          return;
+        }
         const decrypted = [];
         for (const entry of initialEntries) {
           const title = await safeDecryptText(entry.title || "", masterKey);
@@ -60,13 +71,36 @@ export function RecentReflectionsList({
             title: title || "Untitled Entry",
           });
         }
+        if (cancelled) return;
         setEntries(decrypted);
+        setReady(true);
       } else {
+        if (cancelled) return;
         setEntries(initialEntries);
+        setReady(true);
       }
     };
     decryptEntries();
-  }, [initialEntries, isClientEncrypted, masterKey]);
+    return () => {
+      cancelled = true;
+    };
+  }, [initialEntries, isClientEncrypted, masterKey, encrypted]);
+
+  if (!ready) {
+    return (
+      <div className="space-y-4">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="flex items-center gap-3 p-3">
+            <Skeleton className="h-8 w-8 shrink-0 rounded-full" />
+            <div className="min-w-0 flex-1 space-y-2">
+              <Skeleton className="h-4 w-3/5" />
+              <Skeleton className="h-3 w-2/5" />
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   if (entries.length === 0) {
     return (

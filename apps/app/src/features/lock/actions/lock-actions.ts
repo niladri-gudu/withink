@@ -62,6 +62,7 @@ export async function getLockSettingsAction(): Promise<{
  */
 export async function unlockAction(
   passcode: string,
+  unlockProof?: string,
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const session = await getRequestSession();
@@ -103,6 +104,22 @@ export async function unlockAction(
         await redis.del(`ratelimit:lock:unlock-failed:${session.user.id}`);
       } catch {
         // best-effort cleanup
+      }
+    }
+
+    // The client proved possession of the master key locally (the PIN unwrap
+    // succeeded), so it can supply the derived unlock proof. Binding/updating
+    // it here is safe: the passcode was just verified against the stored hash.
+    if (
+      typeof unlockProof === "string" &&
+      /^[0-9a-fA-F]{64}$/.test(unlockProof)
+    ) {
+      try {
+        await LockRepository.saveSettings(session.user.id, {
+          unlockProofHash: LockService.hashUnlockProof(unlockProof),
+        });
+      } catch {
+        // Best-effort binding; the unlock itself still succeeds.
       }
     }
 
@@ -155,6 +172,43 @@ export async function saveLockSettingsAction(
     const validated = updateLockSettingsSchema.parse(inputData);
     const existing = await LockRepository.getSettings(session.user.id);
 
+    // Proof-of-knowledge checks. Strict: the proof must already be bound and
+    // match — binding only happens where knowledge is proven another way
+    // (passcode verification in unlockAction, or at encryption setup).
+    const passcodeOk =
+      !!validated.currentPasscode &&
+      !!existing?.passcodeHash &&
+      LockService.verifyPasscode(
+        validated.currentPasscode,
+        existing.passcodeHash,
+      );
+    const proofOk =
+      !!validated.unlockProof &&
+      !!existing?.unlockProofHash &&
+      LockService.verifyUnlockProofHash(
+        validated.unlockProof,
+        existing.unlockProofHash,
+      );
+
+    // PRIVILEGED TRANSITIONS require proof that the caller knows a secret:
+    //  - disabling an enabled lock (else any session could strip it), and
+    //  - enabling when a passcode already exists — this covers rotating the
+    //    passcode (else an attacker could replace it with their own) AND
+    //    re-enabling without setting a new secret (which would mint an
+    //    unlock cookie without any secret check).
+    // First-time setup (no stored passcode) is exempt: the caller defines
+    // the secret.
+    const privileged =
+      (!!existing?.isLockEnabled && !validated.isLockEnabled) ||
+      (validated.isLockEnabled && !!existing?.passcodeHash);
+    if (privileged && !passcodeOk && !proofOk) {
+      return {
+        success: false,
+        error:
+          "Verify your identity to change the diary lock. Unlock your diary first, then try again.",
+      };
+    }
+
     const updatePayload: Record<string, unknown> = {
       isLockEnabled: validated.isLockEnabled,
       autoLockTimeout: validated.autoLockTimeout,
@@ -168,6 +222,17 @@ export async function saveLockSettingsAction(
         updatePayload.passcodeHash = LockService.hashPasscode(
           validated.passcode,
         );
+        // First-time setup can bind the unlock proof right away (the caller
+        // holds the master key while unlocked).
+        if (
+          !existing?.unlockProofHash &&
+          typeof validated.unlockProof === "string" &&
+          /^[0-9a-fA-F]{64}$/.test(validated.unlockProof)
+        ) {
+          updatePayload.unlockProofHash = LockService.hashUnlockProof(
+            validated.unlockProof,
+          );
+        }
       } else if (!existing || !existing.passcodeHash) {
         return {
           success: false,
@@ -176,8 +241,7 @@ export async function saveLockSettingsAction(
       }
     }
     // Disabling the lock is per-device: the account's passcode hash is kept so
-    // other devices that still have the lock enabled keep working. A device
-    // that disables removes its own PIN key locally in Settings.
+    // other devices that still have the lock enabled keep working.
 
     await LockRepository.saveSettings(session.user.id, updatePayload);
 
@@ -328,6 +392,7 @@ export async function verifyPasswordAndResetLockAction(
     await LockRepository.saveSettings(session.user.id, {
       isLockEnabled: false,
       passcodeHash: "",
+      unlockProofHash: "",
     });
 
     await LockService.clearUnlockCookie();
@@ -341,9 +406,15 @@ export async function verifyPasswordAndResetLockAction(
 
 /**
  * Unlocks the session on the server side (sets the unlock cookie).
- * Used when the client successfully decrypts the master key using the master password.
+ *
+ * Requires an unlock proof: a subkey derived client-side from the diary
+ * master key (HKDF, never used for content). The client can only produce it
+ * after actually decrypting the master key, so the unlock cookie cannot be
+ * minted by an authenticated session that doesn't hold the key. The proof is
+ * verified against its stored sha256 hash; accounts without a bound hash yet
+ * bind on first use (migration for pre-existing diaries).
  */
-export async function unlockSessionAction(): Promise<{
+export async function unlockSessionAction(proof: string): Promise<{
   success: boolean;
   error?: string;
 }> {
@@ -353,12 +424,104 @@ export async function unlockSessionAction(): Promise<{
       return { success: false, error: "Unauthorized" };
     }
 
+    // Validate the proof shape: exactly 32 bytes as 64 hex chars.
+    if (typeof proof !== "string" || !/^[0-9a-fA-F]{64}$/.test(proof)) {
+      return { success: false, error: "Invalid unlock proof." };
+    }
+
     const settings = await LockRepository.getSettings(session.user.id);
     const timeout =
       settings?.autoLockTimeout && settings.autoLockTimeout > 0
         ? settings.autoLockTimeout
         : 28800;
 
+    // Strict verification: the proof must already be bound and match. Binding
+    // happens at encryption setup, at first-time passcode setup, or during
+    // unlockAction (where the passcode is verified server-side). An unbound
+    // hash can never mint a cookie — the client instead routes the user
+    // through the one-time email-code binding flow below.
+    if (!settings?.unlockProofHash) {
+      return { success: false, error: "UNLOCK_PROOF_NOT_BOUND" };
+    }
+    if (!LockService.verifyUnlockProofHash(proof, settings.unlockProofHash)) {
+      // Rate limit failed proofs so the action can't be hammered.
+      const limit = await rateLimit(`lock:unlock-proof:${session.user.id}`, {
+        limit: 10,
+        windowSeconds: 300,
+      });
+      if (!limit.success) {
+        return {
+          success: false,
+          error: "Too many failed attempts. Please try again in 5 minutes.",
+        };
+      }
+      return { success: false, error: "Unlock verification failed." };
+    }
+
+    await LockService.setUnlockCookie(session.user.id, timeout);
+
+    return { success: true };
+  } catch (err) {
+    const appError = handleError(err);
+    return { success: false, error: appError.safeMessage };
+  }
+}
+
+/**
+ * One-time migration for accounts that enabled zero-knowledge encryption
+ * before unlock-proof binding existed. Verifies an email reset code (proof
+ * of mailbox ownership) and binds the client-derived unlock proof, then
+ * mints the unlock cookie. Refuses when a proof is already bound.
+ */
+export async function bindUnlockProofWithCodeAction(
+  code: string,
+  proof: string,
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const session = await getRequestSession();
+    if (!session) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const limit = await rateLimit(`lock:bind-proof:${session.user.id}`, {
+      limit: 5,
+      windowSeconds: 900,
+    });
+    if (!limit.success) {
+      return {
+        success: false,
+        error: "Too many attempts. Please try again in 15 minutes.",
+      };
+    }
+
+    if (typeof proof !== "string" || !/^[0-9a-fA-F]{64}$/.test(proof)) {
+      return { success: false, error: "Invalid unlock proof." };
+    }
+    if (typeof code !== "string" || !/^\d{6}$/.test(code)) {
+      return {
+        success: false,
+        error: "Enter the 6-digit code from your email.",
+      };
+    }
+
+    const settings = await LockRepository.getSettings(session.user.id);
+    if (settings?.unlockProofHash) {
+      return { success: false, error: "Unlock proof is already bound." };
+    }
+
+    const bound = await LockService.verifyResetCodeAndBindProof(
+      session.user.id,
+      code,
+      proof,
+    );
+    if (!bound) {
+      return { success: false, error: "Invalid or expired code." };
+    }
+
+    const timeout =
+      settings?.autoLockTimeout && settings.autoLockTimeout > 0
+        ? settings.autoLockTimeout
+        : 28800;
     await LockService.setUnlockCookie(session.user.id, timeout);
 
     return { success: true };

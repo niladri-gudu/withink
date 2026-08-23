@@ -13,7 +13,7 @@ export function ThemeToggle() {
 
   if (!mounted) {
     return (
-      <Button variant="ghost" size="icon" className="h-9 w-9">
+      <Button variant="ghost" size="icon" className="h-11 w-11 md:h-9 md:w-9">
         <span className="sr-only">Toggle theme</span>
       </Button>
     );
@@ -48,7 +48,7 @@ export function ThemeToggle() {
       variant="ghost"
       size="icon"
       onClick={toggleTheme}
-      className="hover:bg-muted focus-visible:ring-ring relative h-9 w-9 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+      className="hover:bg-muted focus-visible:ring-ring relative h-11 w-11 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none md:h-9 md:w-9"
       aria-label="Toggle theme"
     >
       <Sun className="text-foreground h-[1.2rem] w-[1.2rem] scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90" />

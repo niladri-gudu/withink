@@ -29,14 +29,14 @@ import {
 import type { DecryptedEntry } from "@/features/journal/services/journal-service";
 
 import {
-  getMediaEntryCache,
-  setMediaEntryCache,
-} from "../lib/media-entry-cache";
-import {
   deleteMediaFileAction,
   findEntryForMediaAction,
   type MediaFile,
 } from "../actions/media-actions";
+import {
+  getMediaEntryCache,
+  setMediaEntryCache,
+} from "../lib/media-entry-cache";
 
 interface MediaLightboxProps {
   /** The full filtered, sorted list currently in view (for prev/next bounds). */
@@ -486,7 +486,8 @@ export function MediaLightbox({
                   <div className="bg-destructive/10 border-destructive/20 animate-in slide-in-from-right-2 flex items-center gap-1 rounded-xl border p-1 duration-200">
                     <span className="text-destructive shrink-0 px-2 text-[10px] font-semibold">
                       Delete from entries?
-                    </span>                    <Button
+                    </span>{" "}
+                    <Button
                       variant="destructive"
                       size="sm"
                       onClick={handleDelete}
@@ -516,6 +517,7 @@ export function MediaLightbox({
                     onClick={() => setShowDeleteConfirm(true)}
                     className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 focus-visible:ring-ring h-9 w-9 rounded-xl focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
                     title="Delete memory"
+                    aria-label="Delete memory"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>

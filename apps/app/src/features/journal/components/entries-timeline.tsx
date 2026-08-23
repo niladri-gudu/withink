@@ -1,6 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState, type ComponentPropsWithoutRef } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ComponentPropsWithoutRef,
+} from "react";
 import Link from "next/link";
 import {
   keepPreviousData,
@@ -10,6 +15,7 @@ import {
 } from "@tanstack/react-query";
 import { Button } from "@withink/ui/button";
 import { Card, CardContent } from "@withink/ui/card";
+import { Skeleton } from "@withink/ui/skeleton";
 import { cn } from "@withink/utils";
 import {
   AlertCircle,
@@ -37,13 +43,18 @@ import {
   deleteEntryAction,
   getEntriesListAction,
 } from "../actions/entry-actions";
+import {
+  diaryCacheService,
+  filterLocalTimeline,
+} from "../services/diary-cache-service";
 import type { DecryptedEntry } from "../services/journal-service";
-import { diaryCacheService, filterLocalTimeline } from "../services/diary-cache-service";
 
 interface EntriesTimelineProps {
   initialEntries: DecryptedEntry[];
   initialTotal: number;
   localToday: string;
+  /** Server-derived: whether this account uses client-side encryption. */
+  accountEncrypted: boolean;
   onEntryDeleted?: () => void;
 }
 
@@ -123,6 +134,7 @@ export function EntriesTimeline({
   initialEntries,
   initialTotal,
   localToday,
+  accountEncrypted,
   onEntryDeleted,
 }: EntriesTimelineProps) {
   const queryClient = useQueryClient();
@@ -188,23 +200,29 @@ export function EntriesTimeline({
     };
 
     const schedule = () => {
-      const now = Date.now();
-      if (now - syncRanAtRef.current < 5 * 60 * 1000) {
-        syncScheduledRef.current = false;
-        return;
-      }
-      syncRanAtRef.current = now;
       syncScheduledRef.current = false;
+      const now = Date.now();
+      if (now - syncRanAtRef.current < 5 * 60 * 1000) return;
+      syncRanAtRef.current = now;
       void runSync();
     };
 
     if (syncScheduledRef.current) return;
     syncScheduledRef.current = true;
-    if (typeof window !== "undefined" && "requestIdleCallback" in window) {
-      window.requestIdleCallback(() => schedule(), { timeout: 3000 });
+    let idleId = 0;
+    let timerId: ReturnType<typeof setTimeout> | null = null;
+    if ("requestIdleCallback" in window) {
+      idleId = window.requestIdleCallback(() => schedule(), { timeout: 3000 });
     } else {
-      setTimeout(schedule, 2000);
+      timerId = setTimeout(schedule, 2000);
     }
+    return () => {
+      if ("cancelIdleCallback" in window && idleId) {
+        window.cancelIdleCallback(idleId);
+      }
+      if (timerId !== null) clearTimeout(timerId);
+      syncScheduledRef.current = false;
+    };
   }, [isClientEncrypted, masterKey, localToday, queryClient]);
 
   // Fetch updated page list using react-query (supporting fast local search for ZK mode)
@@ -224,8 +242,7 @@ export function EntriesTimeline({
     queryFn: async () => {
       if (isClientEncrypted && masterKey) {
         // Fetch and decrypt metadata directly from browser cache (no network overhead!)
-        const cached =
-          await diaryCacheService.getLocalCacheTimeline(masterKey);
+        const cached = await diaryCacheService.getLocalCacheTimeline(masterKey);
 
         // Filter against the FULL decrypted text so search matches words
         // anywhere in an entry, not just the 240-char preview snippet, plus
@@ -276,7 +293,10 @@ export function EntriesTimeline({
         !debouncedSearch &&
         moodFilter === "all" &&
         timeFilter === "all";
-      if (isDefaultState && !isClientEncrypted) {
+      // Only trust the server-provided page when the account does NOT use
+      // client-side encryption — otherwise these are ciphertext blobs, not
+      // displayable titles.
+      if (isDefaultState && !accountEncrypted) {
         return {
           entries: initialEntries,
           total: initialTotal,
@@ -289,6 +309,10 @@ export function EntriesTimeline({
 
   const entries = data?.entries ?? [];
   const total = data?.total ?? 0;
+
+  // ZK accounts have no displayable server page: until the local decrypted
+  // cache resolves, show skeletons instead of an (incorrect) empty state.
+  const awaitingLocalCache = accountEncrypted && !data;
 
   const deleteMutation = useMutation({
     mutationFn: (date: string) => deleteEntryAction(date),
@@ -414,7 +438,25 @@ export function EntriesTimeline({
           )}
         </div>
 
-        {entries.length === 0 ? (
+        {awaitingLocalCache ? (
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <Card key={i} className="border-border/60 border">
+                <CardContent className="flex flex-col items-start gap-4 p-6 sm:flex-row sm:p-8">
+                  <div className="flex w-full flex-grow space-y-3">
+                    <div className="flex w-full items-center gap-3">
+                      <Skeleton className="h-9 w-9 shrink-0 rounded-full" />
+                      <div className="w-full max-w-xs space-y-2">
+                        <Skeleton className="h-5 w-4/5" />
+                        <Skeleton className="h-3 w-2/5" />
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : entries.length === 0 ? (
           <Card className="border-border/80 flex flex-col items-center justify-center border py-16 text-center">
             <span className="border-border/40 bg-secondary/40 text-muted-foreground mb-4 flex h-14 w-14 items-center justify-center rounded-full border">
               <FileText className="h-6 w-6" />

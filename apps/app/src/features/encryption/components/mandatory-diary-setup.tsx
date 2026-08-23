@@ -7,8 +7,8 @@ import { Input } from "@withink/ui/input";
 import { CheckCircle2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
-import { GateLayout } from "@/components/gate-layout";
 import {
+  deriveUnlockProofHex,
   encryptText,
   exportKeyToHex,
   generateMasterKey,
@@ -16,6 +16,7 @@ import {
 } from "@/lib/crypto-client";
 import { deriveKeyFromPasswordAsync } from "@/lib/crypto-worker-client";
 import { useEncryption } from "@/providers/encryption-provider";
+import { GateLayout } from "@/components/gate-layout";
 import {
   enableClientEncryptionAction,
   getPlaintextEntriesForMigrationAction,
@@ -149,12 +150,16 @@ export function MandatoryDiarySetup({
         });
       }
 
-      // 6. Submit settings and encrypted entries to the server
+      // 6. Submit settings and encrypted entries to the server.
+      // The unlock proof binds this master key to the lock's unlock cookie so
+      // the cookie can never be minted without possession of the key.
       toast.loading("Saving secure database records...", { id: toastId });
+      const unlockProof = await deriveUnlockProofHex(newMasterKey);
       const enableRes = await enableClientEncryptionAction(
         salt,
         verificationCiphertext,
         encryptedEntries,
+        unlockProof,
       );
       if (!enableRes.success) {
         throw new Error(
@@ -190,7 +195,7 @@ export function MandatoryDiarySetup({
       const { unlockSessionAction } = await import(
         "@/features/lock/actions/lock-actions"
       );
-      await unlockSessionAction();
+      await unlockSessionAction(unlockProof);
 
       toast.success(
         entries.length > 0
@@ -241,155 +246,155 @@ export function MandatoryDiarySetup({
         </p>
       </div>
 
-        {/* ⚠️ Zero-Knowledge Warning */}
-        <div className="border-destructive/20 bg-destructive/5 mb-4 rounded-2xl border p-4 text-left">
-          <label
-            htmlFor="zk-setup-warning"
-            className="flex cursor-pointer items-start gap-3"
-          >
-            <input
-              type="checkbox"
-              id="zk-setup-warning"
-              checked={warningChecked}
-              onChange={(e) => setWarningChecked(e.target.checked)}
+      {/* ⚠️ Zero-Knowledge Warning */}
+      <div className="border-destructive/20 bg-destructive/5 mb-4 rounded-2xl border p-4 text-left">
+        <label
+          htmlFor="zk-setup-warning"
+          className="flex cursor-pointer items-start gap-3"
+        >
+          <input
+            type="checkbox"
+            id="zk-setup-warning"
+            checked={warningChecked}
+            onChange={(e) => setWarningChecked(e.target.checked)}
+            disabled={isMigrating}
+            className="border-border text-accent focus:ring-accent mt-1 h-4 w-4 rounded"
+          />
+          <span className="text-muted-foreground text-[11px] leading-relaxed select-none">
+            This is a{" "}
+            <strong className="text-foreground">100% Zero-Knowledge</strong>{" "}
+            system. If you lose your Diary Password, your data{" "}
+            <strong className="text-foreground">
+              cannot be recovered by anyone
+            </strong>{" "}
+            — not us, not you. There is no &quot;forgot password&quot; for this.
+            Store it in a password manager.
+          </span>
+        </label>
+      </div>
+
+      <form onSubmit={handleSetupAndMigrate} className="space-y-5 text-left">
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <label
+              htmlFor="zk-setup-pwd"
+              className="text-body-small text-foreground font-semibold"
+            >
+              Diary Password
+            </label>
+            <Input
+              id="zk-setup-pwd"
+              type="password"
+              placeholder="At least 8 characters"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               disabled={isMigrating}
-              className="border-border text-accent focus:ring-accent mt-1 h-4 w-4 rounded"
+              required
+              minLength={8}
+              className="bg-background border-border/60 focus:ring-ring h-11 rounded-xl border focus:ring-2"
             />
-            <span className="text-muted-foreground text-[11px] leading-relaxed select-none">
-              This is a{" "}
-              <strong className="text-foreground">100% Zero-Knowledge</strong>{" "}
-              system. If you lose your Diary Password, your data{" "}
-              <strong className="text-foreground">
-                cannot be recovered by anyone
-              </strong>{" "}
-              — not us, not you. There is no &quot;forgot password&quot; for this.
-              Store it in a password manager.
-            </span>
-          </label>
-        </div>
-
-        <form onSubmit={handleSetupAndMigrate} className="space-y-5 text-left">
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <label
-                htmlFor="zk-setup-pwd"
-                className="text-body-small text-foreground font-semibold"
-              >
-                Diary Password
-              </label>
-              <Input
-                id="zk-setup-pwd"
-                type="password"
-                placeholder="At least 8 characters"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={isMigrating}
-                required
-                minLength={8}
-                className="bg-background border-border/60 focus:ring-ring h-11 rounded-xl border focus:ring-2"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label
-                htmlFor="zk-setup-pwd-conf"
-                className="text-body-small text-foreground font-semibold"
-              >
-                Confirm Password
-              </label>
-              <Input
-                id="zk-setup-pwd-conf"
-                type="password"
-                placeholder="Confirm password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                disabled={isMigrating}
-                required
-                className="bg-background border-border/60 focus:ring-ring h-11 rounded-xl border focus:ring-2"
-              />
-            </div>
-
-            {needsPin && step === "password" && (
-              <>
-                <div className="space-y-2 pt-2">
-                  <label
-                    htmlFor="zk-setup-pin"
-                    className="text-body-small text-foreground font-semibold"
-                  >
-                    Create a 4-digit PIN
-                  </label>
-                  <Input
-                    id="zk-setup-pin"
-                    type="text"
-                    inputMode="numeric"
-                    maxLength={4}
-                    placeholder="••••"
-                    value={pin}
-                    onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
-                    disabled={isMigrating}
-                    required
-                    className="bg-background border-border/60 focus:ring-ring h-11 rounded-xl border text-center font-serif text-lg tracking-widest focus:ring-2"
-                  />
-                  <p className="text-muted-foreground/80 text-[10px] leading-snug">
-                    This PIN locks your local encrypted key on this device.
-                    You&apos;ll need it to unlock quickly.
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <label
-                    htmlFor="zk-setup-pin-conf"
-                    className="text-body-small text-foreground font-semibold"
-                  >
-                    Confirm PIN
-                  </label>
-                  <Input
-                    id="zk-setup-pin-conf"
-                    type="text"
-                    inputMode="numeric"
-                    maxLength={4}
-                    placeholder="••••"
-                    value={pinConfirm}
-                    onChange={(e) =>
-                      setPinConfirm(e.target.value.replace(/\D/g, ""))
-                    }
-                    disabled={isMigrating}
-                    required
-                    className="bg-background border-border/60 focus:ring-ring h-11 rounded-xl border text-center font-serif text-lg tracking-widest focus:ring-2"
-                  />
-                </div>
-              </>
-            )}
           </div>
 
-          <Button
-            type="submit"
-            disabled={
-              isMigrating ||
-              !password ||
-              password.length < 8 ||
-              password !== confirmPassword ||
-              !warningChecked ||
-              (needsPin && (pin.length !== 4 || pin !== pinConfirm))
-            }
-            className="mt-4 h-12 w-full gap-2 font-semibold shadow-md transition-all hover:shadow-lg"
-          >
-            {isMigrating ? (
-              <>
-                <Loader2 className="h-5 w-5 animate-spin" />
-                {isMigratingOldData
-                  ? `Encrypting & Migrating Journal...`
-                  : "Initializing Diary..."}
-              </>
-            ) : (
-              <>
-                <CheckCircle2 className="h-5 w-5" />
-                {isMigratingOldData
-                  ? "Migrate & Unlock Journal"
-                  : "Initialize Encryption"}
-              </>
-            )}
-          </Button>
+          <div className="space-y-2">
+            <label
+              htmlFor="zk-setup-pwd-conf"
+              className="text-body-small text-foreground font-semibold"
+            >
+              Confirm Password
+            </label>
+            <Input
+              id="zk-setup-pwd-conf"
+              type="password"
+              placeholder="Confirm password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              disabled={isMigrating}
+              required
+              className="bg-background border-border/60 focus:ring-ring h-11 rounded-xl border focus:ring-2"
+            />
+          </div>
+
+          {needsPin && step === "password" && (
+            <>
+              <div className="space-y-2 pt-2">
+                <label
+                  htmlFor="zk-setup-pin"
+                  className="text-body-small text-foreground font-semibold"
+                >
+                  Create a 4-digit PIN
+                </label>
+                <Input
+                  id="zk-setup-pin"
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={4}
+                  placeholder="••••"
+                  value={pin}
+                  onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
+                  disabled={isMigrating}
+                  required
+                  className="bg-background border-border/60 focus:ring-ring h-11 rounded-xl border text-center font-serif text-lg tracking-widest focus:ring-2"
+                />
+                <p className="text-muted-foreground/80 text-[10px] leading-snug">
+                  This PIN locks your local encrypted key on this device.
+                  You&apos;ll need it to unlock quickly.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <label
+                  htmlFor="zk-setup-pin-conf"
+                  className="text-body-small text-foreground font-semibold"
+                >
+                  Confirm PIN
+                </label>
+                <Input
+                  id="zk-setup-pin-conf"
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={4}
+                  placeholder="••••"
+                  value={pinConfirm}
+                  onChange={(e) =>
+                    setPinConfirm(e.target.value.replace(/\D/g, ""))
+                  }
+                  disabled={isMigrating}
+                  required
+                  className="bg-background border-border/60 focus:ring-ring h-11 rounded-xl border text-center font-serif text-lg tracking-widest focus:ring-2"
+                />
+              </div>
+            </>
+          )}
+        </div>
+
+        <Button
+          type="submit"
+          disabled={
+            isMigrating ||
+            !password ||
+            password.length < 8 ||
+            password !== confirmPassword ||
+            !warningChecked ||
+            (needsPin && (pin.length !== 4 || pin !== pinConfirm))
+          }
+          className="mt-4 h-12 w-full gap-2 font-semibold shadow-md transition-all hover:shadow-lg"
+        >
+          {isMigrating ? (
+            <>
+              <Loader2 className="h-5 w-5 animate-spin" />
+              {isMigratingOldData
+                ? `Encrypting & Migrating Journal...`
+                : "Initializing Diary..."}
+            </>
+          ) : (
+            <>
+              <CheckCircle2 className="h-5 w-5" />
+              {isMigratingOldData
+                ? "Migrate & Unlock Journal"
+                : "Initialize Encryption"}
+            </>
+          )}
+        </Button>
       </form>
     </GateLayout>
   );

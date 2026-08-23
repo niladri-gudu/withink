@@ -154,6 +154,36 @@ export async function decryptText(
   return decoder.decode(decryptedBuffer);
 }
 
+// Derive the unlock-proof subkey from the master key via HKDF-SHA256.
+//
+// This subkey proves possession of the master key without revealing it:
+// it is bound to the master key through a one-way derivation and is never
+// used for content encryption, so the client can safely send it to the
+// server (over TLS) as an unlock credential. The server stores only
+// sha256(proof) — never the proof itself — so a database leak cannot be
+// used to mint unlock sessions or decrypt journal content.
+export async function deriveUnlockProofHex(key: CryptoKey): Promise<string> {
+  const raw = await globalThis.crypto.subtle.exportKey("raw", key);
+  const baseKey = await globalThis.crypto.subtle.importKey(
+    "raw",
+    raw as unknown as BufferSource,
+    { name: "HKDF" },
+    false,
+    ["deriveBits"],
+  );
+  const bits = await globalThis.crypto.subtle.deriveBits(
+    {
+      name: "HKDF",
+      hash: "SHA-256",
+      salt: new Uint8Array(0),
+      info: encoder.encode("withink-unlock-proof-v1"),
+    },
+    baseKey,
+    256,
+  );
+  return bytesToHex(new Uint8Array(bits));
+}
+
 // Safely decrypt text - returns original string if decryption fails or format is invalid
 export async function safeDecryptText(
   encryptedData: string,

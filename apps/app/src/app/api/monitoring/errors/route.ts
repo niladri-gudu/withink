@@ -4,18 +4,36 @@ import { z } from "zod";
 
 import { getRequestSession } from "@/lib/request-cache";
 import { logger } from "@/server/logger";
+import { rateLimit } from "@/server/rate-limit";
 
+// Anonymous endpoint: bound every field so it can't be abused as an
+// unbounded log-writing primitive, and throttle per IP.
 const errorReportingSchema = z.object({
-  message: z.string().min(1),
-  stack: z.string().optional(),
-  digest: z.string().optional(),
-  url: z.string().url().optional(),
+  message: z.string().min(1).max(2_000),
+  stack: z.string().max(8_000).optional(),
+  digest: z.string().max(128).optional(),
+  url: z.string().url().max(2_048).optional(),
 });
 
 export async function POST(req: NextRequest) {
   try {
     const session = await getRequestSession();
     const userId = session?.user?.id || "anonymous";
+
+    const reqHeaders = await headers();
+    const forwardedFor = reqHeaders.get("x-forwarded-for") ?? "";
+    const clientIp =
+      forwardedFor.split(",")[0]?.trim() ||
+      reqHeaders.get("x-real-ip") ||
+      "unknown";
+
+    const limit = await rateLimit(`client-errors:${clientIp}`, {
+      limit: 20,
+      windowSeconds: 300,
+    });
+    if (!limit.success) {
+      return NextResponse.json({ error: "Too many reports" }, { status: 429 });
+    }
 
     const body = await req.json();
     const parsed = errorReportingSchema.safeParse(body);
@@ -28,7 +46,6 @@ export async function POST(req: NextRequest) {
     }
 
     const { message: rawMessage, stack: rawStack, digest, url } = parsed.data;
-    const reqHeaders = await headers();
     const userAgent = reqHeaders.get("user-agent") || "unknown";
 
     // Scrub client-reported message and stack trace to prevent plaintext log injection

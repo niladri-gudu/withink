@@ -7,11 +7,11 @@ import { Check, Loader2 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { toast } from "sonner";
 
-import { GateLayout } from "@/components/gate-layout";
 import { encryptText, exportKeyToHex } from "@/lib/crypto-client";
 import { deriveKeyFromPasswordAsync } from "@/lib/crypto-worker-client";
 import { useFocusTrap } from "@/hooks/use-focus-trap";
 import { useEncryption } from "@/providers/encryption-provider";
+import { GateLayout } from "@/components/gate-layout";
 
 import { saveLockSettingsAction } from "../actions/lock-actions";
 
@@ -36,7 +36,8 @@ export function LockSetupOnboarding({
   const [confirmPin, setConfirmPin] = React.useState("");
   const [step, setStep] = React.useState<1 | 2>(1);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const { isClientEncrypted, masterKey, encryptionSalt } = useEncryption();
+  const { isClientEncrypted, masterKey, encryptionSalt, getUnlockProof } =
+    useEncryption();
 
   const onboardingContainerRef = useFocusTrap(true);
 
@@ -87,9 +88,7 @@ export function LockSetupOnboarding({
     // not save a passcode that this device can't actually use — route the user
     // back through the Diary Password unlock instead.
     if (!masterKey || !encryptionSalt) {
-      toast.error(
-        "Session locked. Please unlock your diary and try again.",
-      );
+      toast.error("Session locked. Please unlock your diary and try again.");
       onCancel?.();
       return;
     }
@@ -97,9 +96,15 @@ export function LockSetupOnboarding({
     setIsSubmitting(true);
     const toastId = toast.loading("Securing your diary…");
 
+    // Attach the unlock proof when the master key is available: it binds the
+    // proof on first-time setup and satisfies the server's privileged-
+    // transition check when an account passcode already exists (fresh device).
+    const unlockProof = await getUnlockProof();
+
     const res = await saveLockSettingsAction({
       isLockEnabled: true,
       passcode: pin,
+      ...(unlockProof ? { unlockProof } : {}),
       autoLockTimeout: 300, // 5 minutes default
       lockOnTabHide: false,
     });
@@ -137,9 +142,9 @@ export function LockSetupOnboarding({
     <GateLayout containerRef={onboardingContainerRef}>
       <div className="flex w-full flex-col items-center text-center">
         <div className="space-y-1.5 text-center sm:text-left">
-          <h2 className="text-h2 text-foreground font-serif font-bold">
+          <h1 className="text-h2 text-foreground font-serif font-bold">
             Secure Your Diary
-          </h2>
+          </h1>
           <p className="text-caption font-serif tracking-[0.16em] uppercase">
             Protect your private pages
           </p>
@@ -149,165 +154,165 @@ export function LockSetupOnboarding({
           leave your screen.
         </p>
 
-          <AnimatePresence mode="wait">
-            {step === 1 && (
-              <motion.form
-                key="step1"
-                onSubmit={goToConfirm}
-                initial={{ opacity: 0, x: 10 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -10 }}
-                className="w-full space-y-5"
-              >
-                <div className="space-y-4">
-                  <label
-                    htmlFor="setup-pin"
-                    className="text-body-small text-foreground block font-medium"
-                  >
-                    Enter a 4-digit passcode
-                  </label>
-                  <div
-                    className="relative flex cursor-text justify-center gap-3 py-1"
-                    onClick={() => inputRef1.current?.focus()}
-                  >
-                    {Array.from({ length: 4 }, (_, i) => {
-                      const char = pin[i] || "";
-                      const isBoxFocused =
-                        isFocused1 &&
-                        (pin.length === i || (pin.length === 4 && i === 3));
-                      return (
-                        <div
-                          key={i}
-                          className={cn(
-                            "border-border bg-background/50 flex h-12 w-12 items-center justify-center rounded-lg border text-lg font-bold transition-all",
-                            isBoxFocused &&
-                              "border-accent ring-ring/30 ring-offset-background scale-[1.05] ring-2",
-                            char &&
-                              "border-accent/40 bg-accent/10 text-foreground",
-                          )}
-                        >
-                          {char ? "●" : ""}
-                        </div>
-                      );
-                    })}
-                    <input
-                      id="setup-pin"
-                      ref={inputRef1}
-                      type="text"
-                      pattern="[0-9]*"
-                      inputMode="numeric"
-                      maxLength={4}
-                      value={pin}
-                      onChange={(e) => handlePinChange(e.target.value)}
-                      onFocus={() => setIsFocused1(true)}
-                      onBlur={() => setIsFocused1(false)}
-                      className="absolute inset-0 h-full w-full cursor-text opacity-0 select-none"
-                      autoComplete="one-time-code"
-                      autoFocus
-                      required
-                    />
-                  </div>
+        <AnimatePresence mode="wait">
+          {step === 1 && (
+            <motion.form
+              key="step1"
+              onSubmit={goToConfirm}
+              initial={{ opacity: 0, x: 10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -10 }}
+              className="w-full space-y-5"
+            >
+              <div className="space-y-4">
+                <label
+                  htmlFor="setup-pin"
+                  className="text-body-small text-foreground block font-medium"
+                >
+                  Enter a 4-digit passcode
+                </label>
+                <div
+                  className="relative flex cursor-text justify-center gap-3 py-1"
+                  onClick={() => inputRef1.current?.focus()}
+                >
+                  {Array.from({ length: 4 }, (_, i) => {
+                    const char = pin[i] || "";
+                    const isBoxFocused =
+                      isFocused1 &&
+                      (pin.length === i || (pin.length === 4 && i === 3));
+                    return (
+                      <div
+                        key={i}
+                        className={cn(
+                          "border-border bg-background/50 flex h-12 w-12 items-center justify-center rounded-lg border text-lg font-bold transition-all",
+                          isBoxFocused &&
+                            "border-accent ring-ring/30 ring-offset-background scale-[1.05] ring-2",
+                          char &&
+                            "border-accent/40 bg-accent/10 text-foreground",
+                        )}
+                      >
+                        {char ? "●" : ""}
+                      </div>
+                    );
+                  })}
+                  <input
+                    id="setup-pin"
+                    ref={inputRef1}
+                    type="text"
+                    pattern="[0-9]*"
+                    inputMode="numeric"
+                    maxLength={4}
+                    value={pin}
+                    onChange={(e) => handlePinChange(e.target.value)}
+                    onFocus={() => setIsFocused1(true)}
+                    onBlur={() => setIsFocused1(false)}
+                    className="absolute inset-0 h-full w-full cursor-text opacity-0 select-none"
+                    autoComplete="one-time-code"
+                    autoFocus
+                    required
+                  />
                 </div>
+              </div>
 
-                <div className="flex justify-end gap-3 pt-2">
-                  <Button
-                    type="submit"
-                    disabled={pin.length !== 4}
-                    className="px-6"
-                  >
-                    Continue
-                  </Button>
-                </div>
-              </motion.form>
-            )}
+              <div className="flex justify-end gap-3 pt-2">
+                <Button
+                  type="submit"
+                  disabled={pin.length !== 4}
+                  className="px-6"
+                >
+                  Continue
+                </Button>
+              </div>
+            </motion.form>
+          )}
 
-            {step === 2 && (
-              <motion.form
-                key="step2"
-                onSubmit={handleSubmit}
-                initial={{ opacity: 0, x: 10 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -10 }}
-                className="w-full space-y-5"
-              >
-                <div className="space-y-4">
-                  <label
-                    htmlFor="confirm-pin"
-                    className="text-body-small text-foreground block font-medium"
-                  >
-                    Confirm your passcode
-                  </label>
-                  <div
-                    className="relative flex cursor-text justify-center gap-3 py-1"
-                    onClick={() => inputRef2.current?.focus()}
-                  >
-                    {Array.from({ length: 4 }, (_, i) => {
-                      const char = confirmPin[i] || "";
-                      const isBoxFocused =
-                        isFocused2 &&
-                        (confirmPin.length === i ||
-                          (confirmPin.length === 4 && i === 3));
-                      return (
-                        <div
-                          key={i}
-                          className={cn(
-                            "border-border bg-background/50 flex h-12 w-12 items-center justify-center rounded-lg border text-lg font-bold transition-all",
-                            isBoxFocused &&
-                              "border-accent ring-ring/30 ring-offset-background scale-[1.05] ring-2",
-                            char &&
-                              "border-accent/40 bg-accent/10 text-foreground",
-                          )}
-                        >
-                          {char ? "●" : ""}
-                        </div>
-                      );
-                    })}
-                    <input
-                      id="confirm-pin"
-                      ref={inputRef2}
-                      type="text"
-                      pattern="[0-9]*"
-                      inputMode="numeric"
-                      maxLength={4}
-                      value={confirmPin}
-                      onChange={(e) => handleConfirmPinChange(e.target.value)}
-                      onFocus={() => setIsFocused2(true)}
-                      onBlur={() => setIsFocused2(false)}
-                      className="absolute inset-0 h-full w-full cursor-text opacity-0 select-none"
-                      autoComplete="one-time-code"
-                      autoFocus
-                      required
-                    />
-                  </div>
+          {step === 2 && (
+            <motion.form
+              key="step2"
+              onSubmit={handleSubmit}
+              initial={{ opacity: 0, x: 10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -10 }}
+              className="w-full space-y-5"
+            >
+              <div className="space-y-4">
+                <label
+                  htmlFor="confirm-pin"
+                  className="text-body-small text-foreground block font-medium"
+                >
+                  Confirm your passcode
+                </label>
+                <div
+                  className="relative flex cursor-text justify-center gap-3 py-1"
+                  onClick={() => inputRef2.current?.focus()}
+                >
+                  {Array.from({ length: 4 }, (_, i) => {
+                    const char = confirmPin[i] || "";
+                    const isBoxFocused =
+                      isFocused2 &&
+                      (confirmPin.length === i ||
+                        (confirmPin.length === 4 && i === 3));
+                    return (
+                      <div
+                        key={i}
+                        className={cn(
+                          "border-border bg-background/50 flex h-12 w-12 items-center justify-center rounded-lg border text-lg font-bold transition-all",
+                          isBoxFocused &&
+                            "border-accent ring-ring/30 ring-offset-background scale-[1.05] ring-2",
+                          char &&
+                            "border-accent/40 bg-accent/10 text-foreground",
+                        )}
+                      >
+                        {char ? "●" : ""}
+                      </div>
+                    );
+                  })}
+                  <input
+                    id="confirm-pin"
+                    ref={inputRef2}
+                    type="text"
+                    pattern="[0-9]*"
+                    inputMode="numeric"
+                    maxLength={4}
+                    value={confirmPin}
+                    onChange={(e) => handleConfirmPinChange(e.target.value)}
+                    onFocus={() => setIsFocused2(true)}
+                    onBlur={() => setIsFocused2(false)}
+                    className="absolute inset-0 h-full w-full cursor-text opacity-0 select-none"
+                    autoComplete="one-time-code"
+                    autoFocus
+                    required
+                  />
                 </div>
+              </div>
 
-                <div className="flex gap-3 pt-2">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    onClick={() => {
-                      setConfirmPin("");
-                      setStep(1);
-                    }}
-                  >
-                    Back
-                  </Button>
-                  <Button
-                    type="submit"
-                    disabled={confirmPin.length !== 4 || isSubmitting}
-                    className="w-full gap-2"
-                  >
-                    {isSubmitting ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Check className="h-4 w-4" />
-                    )}
-                    Set Passcode
-                  </Button>
-                </div>
-              </motion.form>
-            )}
-          </AnimatePresence>
+              <div className="flex gap-3 pt-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => {
+                    setConfirmPin("");
+                    setStep(1);
+                  }}
+                >
+                  Back
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={confirmPin.length !== 4 || isSubmitting}
+                  className="w-full gap-2"
+                >
+                  {isSubmitting ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Check className="h-4 w-4" />
+                  )}
+                  Set Passcode
+                </Button>
+              </div>
+            </motion.form>
+          )}
+        </AnimatePresence>
       </div>
     </GateLayout>
   );

@@ -3,12 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@withink/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@withink/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@withink/ui/card";
 import { cn } from "@withink/utils";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -67,7 +62,10 @@ export function EntriesCalendar({
     calendarEntries.forEach((entry) => {
       map.set(entry.date, entry);
     });
-    return { entryMap: map, dateSet: new Set(calendarEntries.map((e) => e.date)) };
+    return {
+      entryMap: map,
+      dateSet: new Set(calendarEntries.map((e) => e.date)),
+    };
   }, [calendarEntries]);
 
   const [todayYear, todayMonth] = localToday.split("-").map(Number);

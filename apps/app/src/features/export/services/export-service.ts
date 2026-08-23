@@ -23,7 +23,7 @@ export class ExportService {
   /**
    * Generates the ZIP archive bytes for a user's entire journal.
    */
-  static async generateExportZip(userId: string): Promise<Uint8Array> {
+  static async generateExportZip(userId: string): Promise<ArrayBuffer> {
     const entries = await JournalService.getAllEntriesForExport(userId);
 
     const zip = new JSZip();
@@ -62,7 +62,8 @@ export class ExportService {
       // Collect and store any images this entry references.
       for (const src of extractImageSources(entry)) {
         const key = keyFromPublicUrl(src);
-        if (!key || savedImageKeys.has(key)) continue;
+        if (!key || !isOwnedObjectKey(key, userId)) continue;
+        if (savedImageKeys.has(key)) continue;
 
         const bytes = await fetchImageBytes(key);
         if (!bytes) continue;
@@ -72,7 +73,9 @@ export class ExportService {
       }
     }
 
-    return zip.generateAsync({ type: "uint8array" });
+    // ArrayBuffer (not uint8array) so the route can hand it straight to the
+    // Response body — no Buffer.from copy of the whole archive at peak memory.
+    return zip.generateAsync({ type: "arraybuffer" });
   }
 }
 
@@ -177,6 +180,21 @@ function keyFromPublicUrl(src: string): string | null {
   if (!src.startsWith(base)) return null;
   const key = src.slice(base.length).split(/[?#]/)[0];
   return key ? decodeURIComponent(key) : null;
+}
+
+/**
+ * Strict prefix-ownership match: an entry may only pull objects from the
+ * requesting user's own journal/avatars/system namespaces. Entry HTML is
+ * user-authored, so without this a crafted image src could export another
+ * tenant's object into this user's ZIP.
+ */
+function isOwnedObjectKey(key: string, userId: string): boolean {
+  const envPrefix = env.IS_PROD ? "" : "dev-";
+  return (
+    key.startsWith(`${envPrefix}journal/${userId}/`) ||
+    key.startsWith(`${envPrefix}avatars/${userId}/`) ||
+    key.startsWith(`${envPrefix}system/${userId}/`)
+  );
 }
 
 function fileNameFromKey(key: string): string {

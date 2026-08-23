@@ -34,12 +34,14 @@ import { z } from "zod";
 import { authClient, clearSessionCookies } from "@/lib/auth-client";
 import {
   decryptText,
+  deriveUnlockProofHex,
   encryptText,
   exportKeyToHex,
   generateMasterKey,
   generateRandomSalt,
 } from "@/lib/crypto-client";
 import { deriveKeyFromPasswordAsync } from "@/lib/crypto-worker-client";
+import { safeStorage } from "@/lib/safe-storage";
 import { clearSwCaches } from "@/lib/sw-cache";
 import { useFocusTrap } from "@/hooks/use-focus-trap";
 import { useEncryption } from "@/providers/encryption-provider";
@@ -147,12 +149,9 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
   const [avatarUploading, setAvatarUploading] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-  // Paper Feel Calibration States
-  const [paperScale, setPaperScale] = React.useState<number>(() => {
-    if (typeof window === "undefined") return INITIAL_SCALE;
-    const stored = localStorage.getItem(PAPER_SCALE_KEY);
-    return stored ? parseFloat(stored) : INITIAL_SCALE;
-  });
+  // Paper Feel Calibration States. Storage-backed values sync in an effect so
+  // the hydration render matches the server HTML.
+  const [paperScale, setPaperScale] = React.useState<number>(INITIAL_SCALE);
   const [diagonalInches, setDiagonalInches] = React.useState("");
   const [resolutionWidth, setResolutionWidth] = React.useState("");
   const [resolutionHeight, setResolutionHeight] = React.useState("");
@@ -177,6 +176,7 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
   // Danger Zone modal
   const [showDeleteModal, setShowDeleteModal] = React.useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = React.useState("");
+  const [deletePassword, setDeletePassword] = React.useState("");
   const [isDeletingAccount, setIsDeletingAccount] = React.useState(false);
 
   const deleteModalRef = useFocusTrap(showDeleteModal);
@@ -184,12 +184,21 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
   // Diary Lock States. The lock is per-device and defaults to OFF on a new
   // device: the device's own `withink_lock_enabled` flag (falling back to the
   // presence of a bound PIN key) is the source of truth, not the account state.
-  const [diaryLockEnabled, setDiaryLockEnabled] = React.useState(() => {
-    if (typeof window === "undefined") return false;
-    const flag = localStorage.getItem("withink_lock_enabled");
-    if (flag !== null) return flag === "true";
-    return !!localStorage.getItem("withink_encrypted_master_key");
-  });
+  // Both flags sync in an effect (hydration-stable), never during render.
+  const [diaryLockEnabled, setDiaryLockEnabled] = React.useState(false);
+  const [deviceHasPin, setDeviceHasPin] = React.useState(false);
+  React.useEffect(() => {
+    const flag = safeStorage.getItem("withink_lock_enabled");
+    if (flag !== null) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setDiaryLockEnabled(flag === "true");
+    } else {
+      setDiaryLockEnabled(
+        !!safeStorage.getItem("withink_encrypted_master_key"),
+      );
+    }
+    setDeviceHasPin(!!safeStorage.getItem("withink_encrypted_master_key"));
+  }, []);
   const [diaryLockTimeout, setDiaryLockTimeout] = React.useState(300);
   const [diaryLockOnTabHide, setDiaryLockOnTabHide] = React.useState(false);
   const [diaryHasPasscode, setDiaryHasPasscode] = React.useState(false);
@@ -198,16 +207,10 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
   const [showSetupModal, setShowSetupModal] = React.useState(false);
   const [showChangeModal, setShowChangeModal] = React.useState(false);
 
-  // Whether THIS device has a PIN bound (a locally-encrypted master key exists).
-  // "Change PIN" and direct toggling only make sense once a device PIN is set.
-  const deviceHasPin =
-    typeof window !== "undefined"
-      ? !!localStorage.getItem("withink_encrypted_master_key")
-      : false;
-
   // Zero-Knowledge Encryption States
   const {
     isClientEncrypted,
+    masterKey,
     setEncryptionSettings,
     setMasterKey,
     encryptionSalt,
@@ -227,6 +230,22 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
   const [zkNewPasswordConfirm, setZkNewPasswordConfirm] = React.useState("");
   const [isChangingZKPassword, setIsChangingZKPassword] = React.useState(false);
   const [showZKChangeModal, setShowZKChangeModal] = React.useState(false);
+
+  const zkSetupModalRef = useFocusTrap(showZKSetupModal);
+  const zkChangeModalRef = useFocusTrap(showZKChangeModal);
+
+  // Close the ZK modals on Escape (unless a submission is in flight).
+  React.useEffect(() => {
+    if (!showZKSetupModal && !showZKChangeModal) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      if (showZKSetupModal && !isMigrating) setShowZKSetupModal(false);
+      if (showZKChangeModal && !isChangingZKPassword)
+        setShowZKChangeModal(false);
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [showZKSetupModal, showZKChangeModal, isMigrating, isChangingZKPassword]);
 
   React.useEffect(() => {
     getLockSettingsAction()
@@ -261,22 +280,37 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
     setIsSavingLockSettings(true);
     const toastId = toast.loading("Updating lock settings...");
 
+    // Enabling/re-enabling without a new passcode and disabling are
+    // privileged transitions server-side: they require proof of knowledge of
+    // a secret. The diary is always unlocked in Settings, so the master key
+    // is in memory and the unlock proof can be attached silently — no extra
+    // prompt for the user.
+    let unlockProof: string | undefined;
+    if (masterKey) {
+      try {
+        unlockProof = await deriveUnlockProofHex(masterKey);
+      } catch {
+        // Fall back to letting the server return its error message.
+      }
+    }
+
     const res = await saveLockSettingsAction({
       isLockEnabled: diaryLockEnabled,
       autoLockTimeout: diaryLockTimeout,
       lockOnTabHide: diaryLockOnTabHide,
+      ...(unlockProof ? { unlockProof } : {}),
     });
 
     if (res.success) {
       toast.success("Diary lock settings updated", { id: toastId });
       setDiaryHasPasscode(diaryLockEnabled && diaryHasPasscode);
-      localStorage.setItem("withink_lock_enabled", String(diaryLockEnabled));
+      safeStorage.setItem("withink_lock_enabled", String(diaryLockEnabled));
 
       if (!diaryLockEnabled) {
-        localStorage.removeItem("withink_encrypted_master_key");
+        safeStorage.removeItem("withink_encrypted_master_key");
       }
-      localStorage.removeItem("withink_master_key");
-      sessionStorage.removeItem("withink_master_key");
+      safeStorage.removeItem("withink_master_key");
+      safeStorage.removeSessionItem("withink_master_key");
     } else {
       toast.error(res.error || "Failed to update lock settings", {
         id: toastId,
@@ -292,6 +326,7 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
       if (e.key === "Escape" && !isDeletingAccount) {
         setShowDeleteModal(false);
         setDeleteConfirmText("");
+        setDeletePassword("");
       }
     };
     window.addEventListener("keydown", handleKeyDown);
@@ -315,14 +350,29 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
       });
   }, []);
 
+  // Load the stored paper scale before the persist effect below is allowed to
+  // write — otherwise mounting would clobber the saved value with the default.
+  const [paperScaleLoaded, setPaperScaleLoaded] = React.useState(false);
+  React.useEffect(() => {
+    const stored = safeStorage.getItem(PAPER_SCALE_KEY);
+    if (stored) {
+      const parsed = parseFloat(stored);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      if (!Number.isNaN(parsed)) setPaperScale(parsed);
+    }
+    setPaperScaleLoaded(true);
+  }, []);
+
   // Handle Paper Scale updates
   React.useEffect(() => {
     document.documentElement.style.setProperty(
       "--withink-paper-scale",
       paperScale.toString(),
     );
-    localStorage.setItem(PAPER_SCALE_KEY, paperScale.toString());
-  }, [paperScale]);
+    if (paperScaleLoaded) {
+      safeStorage.setItem(PAPER_SCALE_KEY, paperScale.toString());
+    }
+  }, [paperScale, paperScaleLoaded]);
 
   // Profile Upload Handler
   const handleAvatarClick = () => {
@@ -608,12 +658,15 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
         });
       }
 
-      // 6. Submit to the server
+      // 6. Submit to the server. Bind the unlock proof so the lock's unlock
+      // cookie can only be minted with possession of this master key.
       toast.loading("Saving secure database records...", { id: toastId });
+      const unlockProof = await deriveUnlockProofHex(newMasterKey);
       const enableRes = await enableClientEncryptionAction(
         salt,
         verificationCiphertext,
         encryptedEntries,
+        unlockProof,
       );
       if (!enableRes.success) {
         throw new Error(
@@ -629,17 +682,14 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
           50000,
         );
         const encryptedMasterKey = await encryptText(masterKeyHex, pinKey);
-        localStorage.setItem(
-          "withink_encrypted_master_key",
-          encryptedMasterKey,
-        );
+        safeStorage.setItem("withink_encrypted_master_key", encryptedMasterKey);
       } else {
-        localStorage.removeItem("withink_encrypted_master_key");
+        safeStorage.removeItem("withink_encrypted_master_key");
       }
 
       // Plaintext key caching is removed.
-      localStorage.removeItem("withink_master_key");
-      sessionStorage.removeItem("withink_master_key");
+      safeStorage.removeItem("withink_master_key");
+      safeStorage.removeSessionItem("withink_master_key");
 
       // 8. Update local context
       setEncryptionSettings({
@@ -706,9 +756,7 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
       );
 
       // 5. Update server
-      const res = await updateDiaryPasswordAction(
-        newVerificationCiphertext,
-      );
+      const res = await updateDiaryPasswordAction(newVerificationCiphertext);
       if (!res.success) {
         throw new Error(res.error || "Failed to update settings on server");
       }
@@ -759,12 +807,23 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
       toast.error("Please type DELETE to confirm");
       return;
     }
+    // Credential accounts must re-enter their password (server-enforced);
+    // OAuth-only accounts have no password and skip this.
+    const hasCredentialAccount = accounts.some(
+      (a) => a.provider === "credential",
+    );
+    if (hasCredentialAccount && !deletePassword.trim()) {
+      toast.error("Please enter your password to confirm");
+      return;
+    }
 
     setIsDeletingAccount(true);
     const toastId = toast.loading("Deconstructing your diary...");
 
     try {
-      const res = await deleteAccountAction();
+      const res = await deleteAccountAction(
+        hasCredentialAccount ? deletePassword : undefined,
+      );
       if (!res.success) {
         throw new Error(res.error || "Failed to delete account");
       }
@@ -1211,11 +1270,7 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
             </div>
 
             <div className="flex justify-end">
-              <Button
-                type="submit"
-                disabled={isSubmitting}
-                className="px-6"
-              >
+              <Button type="submit" disabled={isSubmitting} className="px-6">
                 {isSubmitting && (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 )}
@@ -1488,11 +1543,7 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
             End this session on this device.
           </p>
         </div>
-        <Button
-          variant="outline"
-          onClick={handleLogout}
-          className="gap-2"
-        >
+        <Button variant="outline" onClick={handleLogout} className="gap-2">
           <LogOut className="h-4 w-4" />
           Sign out
         </Button>
@@ -1530,6 +1581,7 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
               if (!isDeletingAccount) {
                 setShowDeleteModal(false);
                 setDeleteConfirmText("");
+                setDeletePassword("");
               }
             }}
           />
@@ -1568,12 +1620,23 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
                 autoFocus
                 className="text-center tracking-widest"
               />
+              {accounts.some((a) => a.provider === "credential") && (
+                <Input
+                  type="password"
+                  placeholder="Confirm your password"
+                  value={deletePassword}
+                  onChange={(e) => setDeletePassword(e.target.value)}
+                  disabled={isDeletingAccount}
+                  autoComplete="current-password"
+                />
+              )}
               <div className="flex gap-3">
                 <Button
                   variant="outline"
                   onClick={() => {
                     setShowDeleteModal(false);
                     setDeleteConfirmText("");
+                    setDeletePassword("");
                   }}
                   disabled={isDeletingAccount}
                   className="flex-1"
@@ -1605,7 +1668,7 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
             setDiaryLockEnabled(true);
             setDiaryHasPasscode(true);
             setShowSetupModal(false);
-            localStorage.setItem("withink_lock_enabled", "true");
+            safeStorage.setItem("withink_lock_enabled", "true");
           }}
           onCancel={() => setShowSetupModal(false)}
         />
@@ -1622,13 +1685,22 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
 
       {/* ==================== Diary Zero-Knowledge Setup Modal ==================== */}
       {showZKSetupModal && (
-        <div className="bg-foreground/50 animate-in fade-in fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm duration-200">
+        <div
+          ref={zkSetupModalRef as React.RefObject<HTMLDivElement>}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="zk-setup-title"
+          className="bg-foreground/50 animate-in fade-in fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm duration-200"
+        >
           <div
             className="absolute inset-0 cursor-default"
             onClick={() => !isMigrating && setShowZKSetupModal(false)}
           />
           <Card className="animate-in zoom-in-95 relative z-10 w-full max-w-md p-6 shadow-lg duration-200 sm:p-8">
-            <h2 className="text-h3 text-foreground mb-4 font-serif">
+            <h2
+              id="zk-setup-title"
+              className="text-h3 text-foreground mb-4 font-serif"
+            >
               Set up Diary Password
             </h2>
             <p className="text-caption text-muted-foreground mb-6">
@@ -1637,10 +1709,14 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
             </p>
             <div className="space-y-4">
               <div className="space-y-2">
-                <label className="text-body-small text-foreground font-medium">
+                <label
+                  htmlFor="zk-setup-password"
+                  className="text-body-small text-foreground font-medium"
+                >
                   Diary Password
                 </label>
                 <Input
+                  id="zk-setup-password"
                   type="password"
                   placeholder="At least 8 characters"
                   value={zkPassword}
@@ -1649,10 +1725,14 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-body-small text-foreground font-medium">
+                <label
+                  htmlFor="zk-setup-password-confirm"
+                  className="text-body-small text-foreground font-medium"
+                >
                   Confirm Password
                 </label>
                 <Input
+                  id="zk-setup-password-confirm"
                   type="password"
                   placeholder="Confirm password"
                   value={zkPasswordConfirm}
@@ -1663,10 +1743,14 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
 
               {diaryLockEnabled && diaryHasPasscode && (
                 <div className="space-y-2">
-                  <label className="text-body-small text-foreground font-medium">
+                  <label
+                    htmlFor="zk-setup-pin"
+                    className="text-body-small text-foreground font-medium"
+                  >
                     Confirm 4-digit PIN
                   </label>
                   <Input
+                    id="zk-setup-pin"
                     type="password"
                     maxLength={4}
                     placeholder="Enter PIN passcode"
@@ -1738,21 +1822,34 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
 
       {/* ==================== Diary Zero-Knowledge Password Change Modal ==================== */}
       {showZKChangeModal && (
-        <div className="bg-foreground/50 animate-in fade-in fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm duration-200">
+        <div
+          ref={zkChangeModalRef as React.RefObject<HTMLDivElement>}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="zk-change-title"
+          className="bg-foreground/50 animate-in fade-in fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm duration-200"
+        >
           <div
             className="absolute inset-0 cursor-default"
             onClick={() => !isChangingZKPassword && setShowZKChangeModal(false)}
           />
           <Card className="animate-in zoom-in-95 relative z-10 w-full max-w-md p-6 shadow-lg duration-200 sm:p-8">
-            <h2 className="text-h3 text-foreground mb-4 font-serif">
+            <h2
+              id="zk-change-title"
+              className="text-h3 text-foreground mb-4 font-serif"
+            >
               Change Diary Password
             </h2>
             <div className="space-y-4">
               <div className="space-y-2">
-                <label className="text-body-small text-foreground font-medium">
+                <label
+                  htmlFor="zk-current-password"
+                  className="text-body-small text-foreground font-medium"
+                >
                   Current Diary Password
                 </label>
                 <Input
+                  id="zk-current-password"
                   type="password"
                   placeholder="Enter current password"
                   value={zkOldPassword}
@@ -1761,10 +1858,14 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-body-small text-foreground font-medium">
+                <label
+                  htmlFor="zk-new-password"
+                  className="text-body-small text-foreground font-medium"
+                >
                   New Diary Password
                 </label>
                 <Input
+                  id="zk-new-password"
                   type="password"
                   placeholder="At least 8 characters"
                   value={zkNewPassword}
@@ -1773,10 +1874,14 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-body-small text-foreground font-medium">
+                <label
+                  htmlFor="zk-new-password-confirm"
+                  className="text-body-small text-foreground font-medium"
+                >
                   Confirm New Password
                 </label>
                 <Input
+                  id="zk-new-password-confirm"
                   type="password"
                   placeholder="Confirm new password"
                   value={zkNewPasswordConfirm}

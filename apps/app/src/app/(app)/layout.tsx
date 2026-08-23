@@ -1,7 +1,8 @@
+import { getRequestLockSettings, getRequestSession } from "@/lib/request-cache";
 import { AppShell } from "@/features/app-shell/components/app-shell";
+import { LockedContentPlaceholder } from "@/features/app-shell/components/locked-content-placeholder";
 import { EncryptionSettingsRepository } from "@/features/encryption/repositories/encryption-settings-repository";
 import { LockService } from "@/features/lock/services/lock-service";
-import { getRequestLockSettings, getRequestSession } from "@/lib/request-cache";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -10,9 +11,9 @@ interface AppLayoutProps {
 export default async function AppLayout({ children }: AppLayoutProps) {
   const session = await getRequestSession();
 
-  // The lock is enforced client-side by AppShell (and every server action /
-  // route handler re-verifies isSessionUnlocked). Here we only seed the boot
-  // state so users with a valid unlock cookie skip the lock overlay entirely.
+  // Server-side lock verification: locked sessions never receive page content.
+  // The client lock overlay (rendered by AppShell) provides the interactive
+  // unlock experience on top of this gate.
   let sessionUnlocked = true;
   let lockSettings = null;
   let encryptionSettings = null;
@@ -39,6 +40,12 @@ export default async function AppLayout({ children }: AppLayoutProps) {
     encryptionSettings = encryption;
   }
 
+  // The lock is enforced server-side too: while the session is locked, page
+  // content is never streamed — locked sessions get a placeholder (the client
+  // lock overlay covers it). After an unlock, AppShell refreshes so real
+  // content replaces the placeholder without a full reload.
+  const isLocked = !!session?.user && !sessionUnlocked;
+
   return (
     <AppShell
       user={session?.user || null}
@@ -46,7 +53,7 @@ export default async function AppLayout({ children }: AppLayoutProps) {
       initialLockSettings={lockSettings}
       initialEncryptionSettings={encryptionSettings}
     >
-      {children}
+      {isLocked ? <LockedContentPlaceholder /> : children}
     </AppShell>
   );
 }

@@ -1,10 +1,22 @@
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { cn } from "@withink/utils";
 import { CheckCheck, Loader2, Lock, Save, WifiOff } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 
 import type { SaveStatus } from "../hooks/use-auto-save";
 import type { SyncState } from "../services/journal-sync-service";
+
+// Online status via an external store: SSR snapshot is "online" so the first
+// client render always matches the server HTML, then the real value syncs
+// without a setState-in-effect round trip.
+function subscribeOnline(onChange: () => void) {
+  window.addEventListener("online", onChange);
+  window.addEventListener("offline", onChange);
+  return () => {
+    window.removeEventListener("online", onChange);
+    window.removeEventListener("offline", onChange);
+  };
+}
 
 export function SaveIndicator({
   status,
@@ -13,23 +25,11 @@ export function SaveIndicator({
   status: SaveStatus;
   syncState?: SyncState;
 }) {
-  const [isOnline, setIsOnline] = useState(() =>
-    typeof navigator !== "undefined" ? navigator.onLine : true,
+  const isOnline = useSyncExternalStore(
+    subscribeOnline,
+    () => navigator.onLine,
+    () => true,
   );
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-
-    window.addEventListener("online", handleOnline);
-    window.addEventListener("offline", handleOffline);
-    return () => {
-      window.removeEventListener("online", handleOnline);
-      window.removeEventListener("offline", handleOffline);
-    };
-  }, []);
 
   return (
     <AnimatePresence mode="wait">
@@ -103,7 +103,7 @@ export function SaveIndicator({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.95 }}
             transition={{ type: "spring", stiffness: 380, damping: 26 }}
-            className="flex items-center gap-1.5 rounded-full border border-accent/20 bg-accent/5 px-3.5 py-1.5 text-xs font-medium text-accent backdrop-blur-md"
+            className="border-accent/20 bg-accent/5 text-accent flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-medium backdrop-blur-md"
           >
             <WifiOff className="h-3 w-3" />
             <span>Working offline</span>

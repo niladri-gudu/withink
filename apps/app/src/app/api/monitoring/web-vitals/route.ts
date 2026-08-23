@@ -4,12 +4,23 @@ import { z } from "zod";
 import { getRequestSession } from "@/lib/request-cache";
 import { logger } from "@/server/logger";
 
+// Anonymous endpoint: bound every field so it can't be abused as an
+// unbounded log-writing primitive.
 const webVitalsSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  value: z.number(),
+  id: z.string().max(128),
+  name: z.enum([
+    "LCP",
+    "INP",
+    "CLS",
+    "FCP",
+    "TTFB",
+    "Next.js-hydration",
+    "Next.js-route-change-to-render",
+    "Next.js-render",
+  ]),
+  value: z.number().finite(),
   rating: z.enum(["good", "needs-improvement", "poor"]),
-  delta: z.number(),
+  delta: z.number().finite(),
 });
 
 export async function POST(req: NextRequest) {

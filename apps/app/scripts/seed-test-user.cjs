@@ -54,6 +54,23 @@ function hashPasscode(passcode) {
   return `${salt}:${hash}`;
 }
 
+// Mirrors the client's deriveUnlockProofHex (HKDF-SHA256 over the raw master
+// key, empty salt, fixed info) followed by the server's hashUnlockProof
+// (sha256 of the hex string). Binding this at seed time lets the seeded
+// account pass strict unlock verification on the Diary Password path.
+function hashUnlockProof(masterKeyHex) {
+  const ikm = Buffer.from(masterKeyHex, "hex");
+  const derived = crypto.hkdfSync(
+    "sha256",
+    ikm,
+    Buffer.alloc(0),
+    Buffer.from("withink-unlock-proof-v1", "utf8"),
+    32,
+  );
+  const proofHex = Buffer.from(derived).toString("hex");
+  return crypto.createHash("sha256").update(proofHex, "utf8").digest("hex");
+}
+
 async function main() {
   const client = new MongoClient(URI);
   await client.connect();
@@ -74,7 +91,9 @@ async function main() {
       $or: [{ userId: oldId }, { userId: idStr }],
     });
     await db.collection("locksettings").deleteOne({ userId: idStr });
-    await db.collection("clientencryptionsettings").deleteOne({ userId: idStr });
+    await db
+      .collection("clientencryptionsettings")
+      .deleteOne({ userId: idStr });
     await db.collection("entries").deleteMany({ userId: idStr });
     console.log(`Removed previous ${EMAIL} data (userId ${idStr})`);
   }
@@ -111,7 +130,13 @@ async function main() {
   //    collections store userId as String.
   const salt = crypto.randomBytes(16).toString("hex");
   const masterKeyHex = crypto.randomBytes(32).toString("hex");
-  const diaryKey = crypto.pbkdf2Sync(DIARY_PASSWORD, Buffer.from(salt, "hex"), 100000, 32, "sha256");
+  const diaryKey = crypto.pbkdf2Sync(
+    DIARY_PASSWORD,
+    Buffer.from(salt, "hex"),
+    100000,
+    32,
+    "sha256",
+  );
   const verificationCiphertext = encrypt(masterKeyHex, diaryKey);
   await db.collection("clientencryptionsettings").insertOne({
     _id: id(),
@@ -125,7 +150,8 @@ async function main() {
 
   // 3. Lock settings: passcode hash present (so the app knows a PIN exists and
   //    never shows the first-launch setup prompt), but the lock is disabled so
-  //    the test user just unlocks with the Diary Password and no PIN.
+  //    the test user just unlocks with the Diary Password and no PIN. The
+  //    unlock proof hash is bound so strict unlock verification passes.
   await db.collection("locksettings").insertOne({
     _id: id(),
     userId: userIdStr,
@@ -133,6 +159,7 @@ async function main() {
     passcodeHash: hashPasscode("1234"),
     autoLockTimeout: 300,
     lockOnTabHide: false,
+    unlockProofHash: hashUnlockProof(masterKeyHex),
     createdAt: now,
     updatedAt: now,
   });
@@ -170,7 +197,9 @@ async function main() {
   console.log(`  userId            : ${userId}`);
   console.log(`  login password    : ${LOGIN_PASSWORD} (email verified)`);
   console.log(`  diary password    : ${DIARY_PASSWORD}`);
-  console.log(`  entries           : ${entries.length} (encrypted, 120 consecutive days)`);
+  console.log(
+    `  entries           : ${entries.length} (encrypted, 120 consecutive days)`,
+  );
   console.log(`  encryption salt   : ${salt}`);
   console.log(`  master key        : ${masterKeyHex.slice(0, 12)}...`);
   console.log(`  lock enabled      : false (unlock with Diary Password only)`);

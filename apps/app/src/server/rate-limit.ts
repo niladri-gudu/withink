@@ -53,12 +53,21 @@ export async function rateLimit(
   const key = `ratelimit:${identifier}`;
 
   try {
-    const [count, , ttl] = await redis
+    const exec = redis
       .pipeline()
       .incr(key)
       .expire(key, windowSeconds)
       .ttl(key)
       .exec<[number, number, number]>();
+    const [count, , ttl] = await Promise.race([
+      exec,
+      new Promise<never>((_, reject) =>
+        setTimeout(
+          () => reject(new Error("Rate limit check timed out")),
+          1_500,
+        ),
+      ),
+    ]);
 
     const resetSeconds = ttl > 0 ? ttl : windowSeconds;
     const remaining = Math.max(0, limit - count);

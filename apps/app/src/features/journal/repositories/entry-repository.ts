@@ -28,6 +28,21 @@ function getEntryCacheTtlSeconds(date: string, localToday?: string) {
 }
 
 export class EntryRepository {
+  // Sentinel stored in Redis for "no entry exists" so empty-day reads are
+  // served from cache instead of re-hitting Mongo on every request. Stored
+  // values are JSON-encoded, so this plain string can never collide with a
+  // serialized entry object.
+  private static readonly NULL_ENTRY_SENTINEL = "__withink_null__";
+
+  /**
+   * Escapes user input before embedding it in a Mongo $regex. Raw input
+   * would let special characters throw or craft backtracking patterns that
+   * pin DB CPU (ReDoS) across the whole collection scan.
+   */
+  private static escapeRegExp(input: string): string {
+    return input.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+
   private static async getUserEntryVersion(userId: string): Promise<number> {
     const key = `entries:${userId}:version`;
     const version = await getCachedValue<number>(key);
@@ -45,7 +60,9 @@ export class EntryRepository {
    * access. Returns the new version so callers can write hot entries under it
    * without an extra Redis GET.
    */
-  static async invalidateUserEntryCache(userId: string): Promise<number | null> {
+  static async invalidateUserEntryCache(
+    userId: string,
+  ): Promise<number | null> {
     const newVersion = await incrementCachedValue(`entries:${userId}:version`);
     // Invalidate any cached derived views (e.g. insights) for this user. The
     // profile arg is required by Next 16's revalidateTag signature; the
@@ -62,10 +79,14 @@ export class EntryRepository {
     const version = await this.getUserEntryVersion(userId);
     const cacheKey = `entries:${userId}:v${version}:entry:${date}`;
 
-    // 1. Try fetching from Redis cache
-    const cached = await getCachedValue<IEntry | null>(cacheKey);
-    if (cached !== null) {
-      return cached;
+    // 1. Try fetching from Redis cache. A stored sentinel means "confirmed
+    //    empty" — without it, cached nulls are indistinguishable from misses
+    //    and every dashboard read of an empty day pays a Mongo findOne.
+    const cached = await getCachedValue<IEntry | string | null>(cacheKey);
+    if (cached !== null && cached !== undefined) {
+      return cached === EntryRepository.NULL_ENTRY_SENTINEL
+        ? null
+        : (cached as IEntry);
     }
 
     // 2. Fallback to MongoDB
@@ -73,9 +94,13 @@ export class EntryRepository {
     const entry = await (EntryModel as any).findOne({ userId, date }).lean(); // eslint-disable-line @typescript-eslint/no-explicit-any
     const serializedEntry = serialize(entry);
 
-    // 3. Cache the result
+    // 3. Cache the result (including confirmed-empty days via the sentinel)
     const ttl = getEntryCacheTtlSeconds(date, localToday);
-    await setCachedValue(cacheKey, serializedEntry, ttl);
+    await setCachedValue(
+      cacheKey,
+      serializedEntry ?? EntryRepository.NULL_ENTRY_SENTINEL,
+      ttl,
+    );
 
     return serializedEntry;
   }
@@ -156,10 +181,13 @@ export class EntryRepository {
       // IndexedDB cache); their ciphertext never matches a server regex anyway.
       const q = filters.search.trim();
       if (q) {
+        // Escape metacharacters so user input can't throw or craft
+        // backtracking patterns inside mongod.
+        const safe = this.escapeRegExp(q);
         query.$or = [
-          { title: { $regex: q, $options: "i" } },
-          { contentText: { $regex: q, $options: "i" } },
-          { date: { $regex: q, $options: "i" } },
+          { title: { $regex: safe, $options: "i" } },
+          { contentText: { $regex: safe, $options: "i" } },
+          { date: { $regex: safe, $options: "i" } },
         ];
       }
       const [entries, total] = await Promise.all([
@@ -186,9 +214,11 @@ export class EntryRepository {
       }
 
       const [entries, total] = await Promise.all([
+        // Projection mirrors the search branch: timeline rows never need the
+        // bulky ciphertext blobs.
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (EntryModel as any)
-          .find(query)
+          .find(query, { userId: 0, contentHtml: 0, contentJson: 0 })
           .sort({ date: -1 })
           .skip((page - 1) * limit)
           .limit(limit)
@@ -203,7 +233,7 @@ export class EntryRepository {
       const [entries, total] = await Promise.all([
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (EntryModel as any)
-          .find(query)
+          .find(query, { userId: 0, contentHtml: 0, contentJson: 0 })
           .sort({ date: -1 })
           .skip((page - 1) * limit)
           .limit(limit)
@@ -316,7 +346,15 @@ export class EntryRepository {
     const entries = await (EntryModel as any) // eslint-disable-line @typescript-eslint/no-explicit-any
       .find(
         { userId },
-        { date: 1, title: 1, mood: 1, wordCount: 1, contentHtml: 1, contentText: 1, updatedAt: 1 },
+        {
+          date: 1,
+          title: 1,
+          mood: 1,
+          wordCount: 1,
+          contentHtml: 1,
+          contentText: 1,
+          updatedAt: 1,
+        },
       )
       .sort({ date: 1 })
       .lean();
@@ -331,9 +369,8 @@ export class EntryRepository {
     // every pull), so a stale short-TTL read beats a full Mongo scan.
     const version = await this.getUserEntryVersion(userId);
     const cacheKey = `entries:${userId}:v${version}:sync-list`;
-    const cached = await getCachedValue<{ date: string; updatedAt: string }[]>(
-      cacheKey,
-    );
+    const cached =
+      await getCachedValue<{ date: string; updatedAt: string }[]>(cacheKey);
     if (cached !== null) {
       return cached as unknown as { date: string; updatedAt: Date }[];
     }

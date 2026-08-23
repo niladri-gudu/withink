@@ -178,11 +178,20 @@ export function Sidebar({
         .slice(0, 2)
     : "W";
 
-  const todayNote = formatDisplayDate(getLocalDateString(), {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-  });
+  // Computed after mount: the local date depends on the viewer's timezone, so
+  // computing it during render would mismatch the server-rendered HTML (and go
+  // stale across midnight).
+  const [todayNote, setTodayNote] = React.useState("");
+  React.useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setTodayNote(
+      formatDisplayDate(getLocalDateString(), {
+        weekday: "long",
+        month: "long",
+        day: "numeric",
+      }),
+    );
+  }, []);
 
   const renderSidebarContent = (collapsed: boolean) => {
     return (
@@ -425,9 +434,12 @@ export function Sidebar({
         </div>
       </aside>
 
-      {/* Mobile Sidebar overlay / drawer (visible only on mobile) */}
+      {/* Mobile Sidebar overlay / drawer (visible only on mobile). z-[60]
+          keeps it above the editor toolbar/save-indicator chrome, which also
+          sits at z-40/z-50 — later DOM order was letting them paint on top
+          of the open drawer. */}
       {isMobileOpen && (
-        <div className="fixed inset-0 z-40 flex md:hidden">
+        <div className="fixed inset-0 z-[60] flex md:hidden">
           {/* Backdrop overlay */}
           <div
             className="bg-background/80 fixed inset-0 backdrop-blur-sm transition-opacity duration-300"

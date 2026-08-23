@@ -16,12 +16,12 @@ interface HeaderProps {
  */
 export function Header({ onOpenMobile }: HeaderProps) {
   return (
-    <header className="border-border/60 bg-background/90 sticky top-0 z-20 flex h-14 items-center justify-between border-b px-4 backdrop-blur-md select-none md:hidden sm:px-6">
+    <header className="border-border/60 bg-background/90 sticky top-0 z-20 flex h-14 items-center justify-between border-b px-4 backdrop-blur-md select-none sm:px-6 md:hidden">
       <div className="flex items-center gap-2">
         <Button
           variant="ghost"
           size="icon"
-          className="text-muted-foreground hover:bg-muted focus-visible:ring-ring h-9 w-9 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+          className="text-muted-foreground hover:bg-muted focus-visible:ring-ring h-11 w-11 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
           onClick={onOpenMobile}
           aria-label="Open navigation menu"
         >

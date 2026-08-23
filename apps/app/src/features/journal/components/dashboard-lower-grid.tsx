@@ -7,6 +7,7 @@ import {
 } from "@withink/ui/card";
 import { Skeleton } from "@withink/ui/skeleton";
 
+import { EncryptionSettingsRepository } from "@/features/encryption/repositories/encryption-settings-repository";
 import { DashboardFlashbackCard } from "@/features/flashbacks/components/flashback-card-content";
 import { FlashbackService } from "@/features/flashbacks/services/flashback-service";
 import { RecentReflectionsList } from "@/features/journal/components/recent-reflections-list";
@@ -67,13 +68,15 @@ export default async function DashboardLowerGrid({
   userId,
   today,
 }: DashboardLowerGridProps) {
-  const [flashback, recentData] = await Promise.all([
+  const [flashback, recentData, encryptionSettings] = await Promise.all([
     FlashbackService.getFlashbackForToday(userId, today),
     JournalService.getEntriesPage(userId, 1, 3, { today }),
+    EncryptionSettingsRepository.getSettings(userId),
   ]);
 
   const flashbackEntry = flashback ? flashback.entry : null;
   const flashbackLabel = flashback ? flashback.label : "";
+  const encrypted = !!encryptionSettings?.isClientEncrypted;
 
   return (
     <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -94,6 +97,7 @@ export default async function DashboardLowerGrid({
           <RecentReflectionsList
             initialEntries={recentData.entries}
             today={today}
+            encrypted={encrypted}
           />
         </CardContent>
       </Card>

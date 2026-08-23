@@ -9,6 +9,7 @@ import { ChevronLeft, Loader2 } from "lucide-react";
 
 import { ROUTES } from "@/constants/routes";
 import { decryptText } from "@/lib/crypto-client";
+import { safeStorage } from "@/lib/safe-storage";
 import { formatDisplayDate } from "@/lib/utils/date";
 import { zenAudioService } from "@/lib/zen-audio";
 import { useEncryption } from "@/providers/encryption-provider";
@@ -59,33 +60,27 @@ export function JournalEditorShell({
   const [isFocusMode, setIsFocusMode] = useState(false);
 
   const [typewriterEnabled, setTypewriterEnabled] = useState(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("withink-typewriter-enabled") === "true";
-    }
-    return false;
+    return safeStorage.getItem("withink-typewriter-enabled") === "true";
   });
 
   const [ambientSound, setAmbientSound] = useState<
     "none" | "rain" | "library" | "forest"
   >(() => {
-    if (typeof window !== "undefined") {
-      return (localStorage.getItem("withink-ambient-sound") as any) || "none";
-    }
-    return "none";
+    return (safeStorage.getItem("withink-ambient-sound") as any) || "none";
   });
 
   const [scrollProgress, setScrollProgress] = useState(0);
 
   // Sync settings to local storage
   useEffect(() => {
-    localStorage.setItem(
+    safeStorage.setItem(
       "withink-typewriter-enabled",
       String(typewriterEnabled),
     );
   }, [typewriterEnabled]);
 
   useEffect(() => {
-    localStorage.setItem("withink-ambient-sound", ambientSound);
+    safeStorage.setItem("withink-ambient-sound", ambientSound);
   }, [ambientSound]);
 
   // Track window scroll progress, rAF-throttled so we only re-render when the
@@ -162,6 +157,10 @@ export function JournalEditorShell({
 
   // Decrypt content on mount if zero-knowledge is active
   useEffect(() => {
+    // Guard against overlapping runs: quick A→B navigation can start two
+    // loads; without this check a slow load for A could resolve after B's and
+    // commit A's content under B's date.
+    let cancelled = false;
     const loadContent = async () => {
       if (isClientEncrypted) {
         // Wait until the master key is restored in memory
@@ -174,6 +173,7 @@ export function JournalEditorShell({
           date,
           masterKey,
         );
+        if (cancelled) return;
         if (cachedDoc) {
           setTitle(cachedDoc.title);
           setMood(cachedDoc.mood);
@@ -190,11 +190,13 @@ export function JournalEditorShell({
         if (initialTitle && initialTitle.includes(":")) {
           try {
             const decTitle = await decryptText(initialTitle, masterKey);
+            if (cancelled) return;
             setTitle(decTitle);
           } catch (err) {
             console.error("Failed to decrypt initial title:", err);
           }
         } else {
+          if (cancelled) return;
           setTitle(initialTitle);
         }
 
@@ -205,25 +207,32 @@ export function JournalEditorShell({
           try {
             const decrypted = await decryptText(initialContent, masterKey);
             const parsed = JSON.parse(decrypted);
+            if (cancelled) return;
             setDecryptedContent(parsed);
-            setEditorContent((prev) => ({ ...prev, json: parsed }));
+            setEditorContent({ html: "", text: "", json: parsed });
           } catch (err) {
             console.error("Failed to decrypt initial content:", err);
+            if (cancelled) return;
             setDecryptedContent({});
+            setEditorContent({ html: "", text: "", json: {} });
           }
         } else {
           const fallback = initialContent || {};
+          if (cancelled) return;
           setDecryptedContent(fallback);
-          setEditorContent((prev) => ({ ...prev, json: fallback }));
+          setEditorContent({ html: "", text: "", json: fallback });
         }
       } else {
         setTitle(initialTitle);
         const fallback = initialContent || {};
         setDecryptedContent(fallback);
-        setEditorContent((prev) => ({ ...prev, json: fallback }));
+        setEditorContent({ html: "", text: "", json: fallback });
       }
     };
     loadContent();
+    return () => {
+      cancelled = true;
+    };
   }, [initialTitle, initialContent, isClientEncrypted, masterKey, date]);
 
   // Setup scroll-padding for visual viewport (keyboard avoidance on mobile/Safari).

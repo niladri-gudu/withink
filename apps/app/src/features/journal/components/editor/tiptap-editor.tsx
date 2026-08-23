@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useCallback, useEffect, useRef, memo } from "react";
+import { memo, useCallback, useEffect, useRef } from "react";
 import CharacterCount from "@tiptap/extension-character-count";
 import Highlight from "@tiptap/extension-highlight";
 import ImageExt from "@tiptap/extension-image";
@@ -41,11 +41,7 @@ function getEditorSnapshot(editorInstance: any) {
   };
 }
 
-function TiptapEditor({
-  content = "",
-  onChange,
-  onEditorReady,
-}: EditorProps) {
+function TiptapEditor({ content = "", onChange, onEditorReady }: EditorProps) {
   const onChangeRef = useRef(onChange);
   const onEditorReadyRef = useRef(onEditorReady);
   const editorRef = useRef<any>(null);
@@ -78,20 +74,27 @@ function TiptapEditor({
     }, SNAPSHOT_DEBOUNCE_MS);
   }, []);
 
-  // Flush a pending snapshot when the tab hides so a debounced save never runs
-  // from stale content. Also clears any pending timer on unmount.
+  // Flush a pending snapshot when the tab hides or the page unloads so a
+  // debounced save never runs from stale content (some unload paths fire
+  // pagehide without a preceding visibilitychange). On unmount, flush instead
+  // of clearing — dropping the timer used to lose up to ~400ms of typing on
+  // date navigation.
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === "hidden") {
         flushSnapshot();
       }
     };
+    const handlePageHide = () => {
+      flushSnapshot();
+    };
     document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("pagehide", handlePageHide);
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("pagehide", handlePageHide);
       if (snapshotTimerRef.current) {
-        clearTimeout(snapshotTimerRef.current);
-        snapshotTimerRef.current = null;
+        flushSnapshot();
       }
     };
   }, [flushSnapshot]);

@@ -68,6 +68,8 @@ function ToolbarButton({
       size="icon"
       onMouseDown={(e) => {
         e.preventDefault();
+      }}
+      onClick={() => {
         if (typeof navigator !== "undefined" && navigator.vibrate) {
           navigator.vibrate(10);
         }

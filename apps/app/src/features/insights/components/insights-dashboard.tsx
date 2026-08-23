@@ -5,6 +5,8 @@ import dynamic from "next/dynamic";
 import { Card } from "@withink/ui/card";
 import { Loader2 } from "lucide-react";
 
+import { formatDisplayDate } from "@/lib/utils/date";
+
 import { getInsightsAction } from "../actions/insights-actions";
 import type { InsightsPayload } from "../services/insights-service";
 
@@ -66,6 +68,21 @@ export function InsightsDashboard({
 
   const { streaks, heatmap, wordCountStats } = data;
 
+  // Computed after mount: the local date depends on the viewer's timezone, so
+  // computing it during render would mismatch the server-rendered HTML.
+  const [displayDate, setDisplayDate] = useState("");
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setDisplayDate(
+      formatDisplayDate(localToday, {
+        weekday: "long",
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      }),
+    );
+  }, [localToday]);
+
   return (
     <div className="relative w-full space-y-10">
       {isLoading && (
@@ -82,12 +99,7 @@ export function InsightsDashboard({
             Insights
           </span>
           <span className="text-muted-foreground/50 font-hand text-base leading-none">
-            {new Date().toLocaleDateString("en-US", {
-              weekday: "long",
-              month: "long",
-              day: "numeric",
-              year: "numeric",
-            })}
+            {displayDate}
           </span>
         </div>
         <div className="mt-6 space-y-2">
@@ -117,7 +129,7 @@ export function InsightsDashboard({
             <p className="text-foreground mt-2 font-serif text-4xl font-bold tracking-tight">
               {streaks.currentStreak}
             </p>
-            <p className="text-muted-foreground/60 mt-1 font-hand text-base">
+            <p className="text-muted-foreground/60 font-hand mt-1 text-base">
               days in a row
             </p>
           </div>
@@ -128,29 +140,29 @@ export function InsightsDashboard({
             <p className="text-foreground mt-2 font-serif text-4xl font-bold tracking-tight">
               {streaks.longestStreak}
             </p>
-            <p className="text-muted-foreground/60 mt-1 font-hand text-base">
+            <p className="text-muted-foreground/60 font-hand mt-1 text-base">
               consecutive days max
             </p>
           </div>
-          <div className="border-border/70 border-t p-6 md:border-l md:border-t-0">
+          <div className="border-border/70 border-t p-6 md:border-t-0 md:border-l">
             <p className="text-muted-foreground/70 font-serif text-[11px] font-semibold tracking-[0.2em] uppercase">
               Total words
             </p>
             <p className="text-foreground mt-2 font-serif text-4xl font-bold tracking-tight">
               {wordCountStats.total.toLocaleString()}
             </p>
-            <p className="text-muted-foreground/60 mt-1 font-hand text-base">
+            <p className="text-muted-foreground/60 font-hand mt-1 text-base">
               written in total
             </p>
           </div>
-          <div className="border-border/70 border-t p-6 md:border-l md:border-t-0">
+          <div className="border-border/70 border-t p-6 md:border-t-0 md:border-l">
             <p className="text-muted-foreground/70 font-serif text-[11px] font-semibold tracking-[0.2em] uppercase">
               Entries
             </p>
             <p className="text-foreground mt-2 font-serif text-4xl font-bold tracking-tight">
               {heatmap.filter((d) => d.count > 0).length}
             </p>
-            <p className="text-muted-foreground/60 mt-1 font-hand text-base">
+            <p className="text-muted-foreground/60 font-hand mt-1 text-base">
               saved reflections
             </p>
           </div>

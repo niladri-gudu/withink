@@ -1,6 +1,7 @@
 "use server";
 
 import type { Model } from "mongoose";
+import { z } from "zod";
 
 import { connectDB } from "@/lib/db/mongoose";
 import { safeDecrypt } from "@/lib/encryption";
@@ -11,6 +12,7 @@ import {
   type IEntry,
 } from "@/features/journal/repositories/entry-model";
 import { EntryRepository } from "@/features/journal/repositories/entry-repository";
+import { LockRepository } from "@/features/lock/repositories/lock-repository";
 import { LockService } from "@/features/lock/services/lock-service";
 
 import {
@@ -145,15 +147,36 @@ interface EncryptedEntryInput {
   wordCount: number;
 }
 
+// Server Action args are attacker-controlled: bound each blob's size and
+// shape so a crafted payload can't smuggle unbounded strings into Mongo.
+const encryptedEntriesSchema = z
+  .array(
+    z.object({
+      id: z.string().min(1).max(64),
+      title: z.string().max(500_000),
+      contentHtml: z.string().max(2_000_000),
+      contentText: z.string().max(1_000_000),
+      contentJson: z.string().max(2_000_000),
+      wordCount: z.number().int().min(0).max(1_000_000),
+    }),
+  )
+  .max(10_000);
+
 export async function enableClientEncryptionAction(
   salt: string,
   verificationCiphertext: string,
   encryptedEntries: EncryptedEntryInput[],
+  unlockProof?: string,
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const session = await getRequestSession();
     if (!session) {
       return { success: false, error: "Unauthorized" };
+    }
+
+    const parsedEntries = encryptedEntriesSchema.safeParse(encryptedEntries);
+    if (!parsedEntries.success) {
+      return { success: false, error: "Invalid migration payload." };
     }
 
     const unlocked = await LockService.isSessionUnlocked(session.user.id);
@@ -196,26 +219,23 @@ export async function enableClientEncryptionAction(
     const totalEntries = await (EntryModel as Model<IEntry>).countDocuments({
       userId: session.user.id,
     });
-    if (encryptedEntries.length !== totalEntries) {
+    const validEntries = parsedEntries.data;
+    if (validEntries.length !== totalEntries) {
       return {
         success: false,
         error: "Some entries were not migrated. Please try again.",
       };
     }
 
-    // Update settings to enable ZK
-    await EncryptionSettingsRepository.saveSettings(session.user.id, {
-      isClientEncrypted: true,
-      encryptionSalt: salt,
-      verificationCiphertext,
-    });
-
-    // Save newly encrypted entry blobs in database. Batched with bulkWrite so
-    // the migration is a handful of round trips instead of one per entry (N+1).
+    // Save newly encrypted entry blobs in database FIRST and verify every
+    // entry was rewritten BEFORE flipping isClientEncrypted — enabling the
+    // flag before the writes are confirmed would leave an account marked ZK
+    // with partially plaintext entries on a mid-loop failure. Batched with
+    // bulkWrite so the migration is a handful of round trips instead of N+1.
     const BATCH_SIZE = 500;
     let migratedCount = 0;
-    for (let i = 0; i < encryptedEntries.length; i += BATCH_SIZE) {
-      const batch = encryptedEntries.slice(i, i + BATCH_SIZE);
+    for (let i = 0; i < validEntries.length; i += BATCH_SIZE) {
+      const batch = validEntries.slice(i, i + BATCH_SIZE);
       const result = await (EntryModel as Model<IEntry>).bulkWrite(
         batch.map((entry) => ({
           updateOne: {
@@ -240,6 +260,25 @@ export async function enableClientEncryptionAction(
         success: false,
         error: "Could not verify that all entries were migrated.",
       };
+    }
+
+    // Update settings to enable ZK — only after migration is verified.
+    await EncryptionSettingsRepository.saveSettings(session.user.id, {
+      isClientEncrypted: true,
+      encryptionSalt: salt,
+      verificationCiphertext,
+    });
+
+    // Bind the unlock proof (sha256 of the master-key-derived subkey) so the
+    // diary lock's unlock cookie can only be minted with possession of the
+    // master key. Optional for backward compatibility.
+    if (
+      typeof unlockProof === "string" &&
+      /^[0-9a-fA-F]{64}$/.test(unlockProof)
+    ) {
+      await LockRepository.saveSettings(session.user.id, {
+        unlockProofHash: LockService.hashUnlockProof(unlockProof),
+      });
     }
 
     // Invalidate entries cache

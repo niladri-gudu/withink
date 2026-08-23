@@ -33,12 +33,12 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
       <body className="bg-background text-foreground flex h-full flex-col items-center justify-center space-y-6 p-6 text-center antialiased">
         <div className="mx-auto max-w-md space-y-2">
           <span className="text-4xl">🍂</span>
-          <h2 className="font-serif text-2xl font-semibold tracking-tight">
+          <h1 className="font-serif text-2xl font-semibold tracking-tight">
             A critical error occurred
-          </h2>
+          </h1>
           <p className="text-muted-foreground text-sm leading-relaxed">
-            The diary has encountered a critical system error. Please
-            restart or try reloading the application.
+            The diary has encountered a critical system error. Please restart or
+            try reloading the application.
           </p>
         </div>
 

@@ -38,15 +38,20 @@
     --muted: oklch(0.948 0.017 84);
     --muted-foreground: oklch(0.47 0.02 52);
 
-    --accent: oklch(0.7 0.1 75);
-    --accent-foreground: oklch(0.24 0.028 48);
+    /* Deep antique gold: tuned to ≥4.5:1 against the manila background so
+       accent-colored text (page headers, sync status, links) meets WCAG
+       1.4.3, while staying unmistakably gold. */
+    --accent: oklch(0.5 0.105 75);
+    --accent-foreground: oklch(0.962 0.013 85);
 
     --destructive: oklch(0.5 0.15 30);
     --destructive-foreground: oklch(0.962 0.013 85);
 
     --border: oklch(0.84 0.018 79);
     --input: oklch(0.84 0.018 79);
-    --ring: oklch(0.7 0.1 75);
+    /* Focus indicators must hit ≥3:1 (WCAG 1.4.11) — the pale gold failed at
+       ~2.2:1, so rings share the deepened accent. */
+    --ring: oklch(0.5 0.105 75);
 
     --radius: 0.75rem;
 
@@ -57,7 +62,7 @@
     --sidebar-accent: oklch(0.93 0.02 82);
     --sidebar-accent-foreground: oklch(0.24 0.028 48);
     --sidebar-border: oklch(0.84 0.018 79);
-    --sidebar-ring: oklch(0.7 0.1 75);
+    --sidebar-ring: oklch(0.5 0.105 75);
 
     --withink-paper-scale: 1;
 
@@ -162,7 +167,7 @@
 
 .tiptap p:first-child {
   margin-top: 0;
-}/* Headings */
+} /* Headings */
 .tiptap h1 {
   font-family: var(--font-serif), Georgia, serif;
   font-size: 2.125rem;
@@ -350,7 +355,7 @@
 
 .dark .tiptap mark {
   background-color: oklch(0.45 0.1 85 / 0.5);
-}/* Placeholder */
+} /* Placeholder */
 @keyframes placeholderFadeIn {
   from {
     opacity: 0;
@@ -368,7 +373,12 @@
   pointer-events: none;
   height: 0;
   font-style: italic;
-  animation: placeholderFadeIn 0.8s ease-out forwards;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .tiptap p.is-editor-empty:first-child::before {
+    animation: placeholderFadeIn 0.8s ease-out forwards;
+  }
 }
 
 /* Images */
