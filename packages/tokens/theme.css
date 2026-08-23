@@ -289,16 +289,88 @@
   scrollbar-width: none;
 }
 
+/* ─── Overlay motion ───────────────────────────────────────────────────────
+   Sheets, dialogs, and drawers animate from Radix's [data-state]. A panel
+   declares its placement by setting two custom properties (enter/exit
+   transforms); the resting transform is a third so centered dialogs keep
+   their -50% offset. Keyframes live here once — components only set vars.
+   Reduced-motion users get instant open/close (no animation → Radix's
+   Presence unmounts immediately). */
+@keyframes withink-overlay-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes withink-overlay-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes withink-overlay-slide-in {
+  from {
+    opacity: 0;
+    transform: var(--withink-overlay-from, translate3d(0, 1.5rem, 0));
+  }
+  to {
+    opacity: 1;
+    transform: var(--withink-overlay-rest, translate3d(0, 0, 0));
+  }
+}
+
+@keyframes withink-overlay-slide-out {
+  from {
+    opacity: 1;
+    transform: var(--withink-overlay-rest, translate3d(0, 0, 0));
+  }
+  to {
+    opacity: 0;
+    transform: var(--withink-overlay-to, translate3d(0, 1.5rem, 0));
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  [data-slot="overlay-veil"][data-state="open"] {
+    animation: withink-overlay-fade-in 200ms ease-out both;
+  }
+
+  [data-slot="overlay-veil"][data-state="closed"] {
+    animation: withink-overlay-fade-out 150ms ease-out both;
+  }
+
+  [data-slot="overlay-panel"][data-state="open"] {
+    animation: withink-overlay-slide-in 200ms cubic-bezier(0.32, 0.72, 0, 1)
+      both;
+  }
+
+  [data-slot="overlay-panel"][data-state="closed"] {
+    animation: withink-overlay-slide-out 150ms cubic-bezier(0.32, 0.72, 0, 1)
+      both;
+  }
+}
+
 .card-blur {
   backdrop-filter: blur(12px);
   background-color: color-mix(in oklch, var(--card), transparent 40%);
   border: 1px solid var(--border);
 }
 
-/* Typography Scale Utilities */
+/* Typography Scale Utilities
+   Display/headline steps are fluid: each clamps between a phone minimum and
+   the fixed desktop size, reaching the desktop size at ≥1024px so every
+   standard desktop viewport renders exactly the historical px value while
+   phones (360–430px) scale down gracefully. Body/label/caption steps stay
+   fixed rem (product UI legibility). */
 @utility text-display {
   font-family: var(--font-serif), Georgia, Cambria, serif;
-  font-size: 3.75rem; /* 60px */
+  font-size: clamp(2.5rem, 1.82rem + 3vw, 3.75rem); /* 40→60px */
   font-weight: 700;
   line-height: 1.15;
   letter-spacing: -0.02em;
@@ -306,7 +378,7 @@
 
 @utility text-hero {
   font-family: var(--font-serif), Georgia, Cambria, serif;
-  font-size: 3rem; /* 48px */
+  font-size: clamp(2.125rem, 1.65rem + 2.1vw, 3rem); /* 34→48px */
   font-weight: 700;
   line-height: 1.2;
   letter-spacing: -0.015em;
@@ -314,7 +386,7 @@
 
 @utility text-h1 {
   font-family: var(--font-serif), Georgia, Cambria, serif;
-  font-size: 2.25rem; /* 36px */
+  font-size: clamp(1.75rem, 1.48rem + 1.2vw, 2.25rem); /* 28→36px */
   font-weight: 600;
   line-height: 1.25;
   letter-spacing: -0.01em;
@@ -322,7 +394,7 @@
 
 @utility text-h2 {
   font-family: var(--font-serif), Georgia, Cambria, serif;
-  font-size: 1.875rem; /* 30px */
+  font-size: clamp(1.5rem, 1.3rem + 0.9vw, 1.875rem); /* 24→30px */
   font-weight: 600;
   line-height: 1.3;
   letter-spacing: -0.005em;
@@ -330,7 +402,7 @@
 
 @utility text-h3 {
   font-family: var(--font-serif), Georgia, Cambria, serif;
-  font-size: 1.5rem; /* 24px */
+  font-size: clamp(1.25rem, 1.11rem + 0.6vw, 1.5rem); /* 20→24px */
   font-weight: 600;
   line-height: 1.35;
 }
@@ -394,4 +466,24 @@
   font-weight: 400;
   line-height: 1.3;
   color: var(--muted-foreground);
+}
+
+/* The running-head eyebrow: serif micro-caps ruled above titles and used as
+   the nav/label voice of the codex chrome (folio index, tab bar, sheet rows). */
+@utility text-running-head {
+  font-family: var(--font-serif), Georgia, Cambria, serif;
+  font-size: 0.6875rem; /* 11px */
+  font-weight: 500;
+  line-height: 1.25;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+/* The field hand (Caveat): margin notes and keepsake captions only — never
+   headings or body copy. */
+@utility text-hand {
+  font-family: var(--font-hand), Caveat, cursive;
+  font-size: 1.5rem; /* 24px */
+  font-weight: 400;
+  line-height: 1.2;
 }

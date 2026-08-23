@@ -1,36 +1,18 @@
 "use client";
 
-import * as React from "react";
-import { Button } from "@withink/ui/button";
 import { ThemeToggle } from "@withink/ui/theme-toggle";
-import { Menu } from "lucide-react";
-
-interface HeaderProps {
-  onOpenMobile: () => void;
-}
 
 /**
- * Mobile-only running bar. On desktop the codex margin rail and each page's
- * running head carry all chrome, so this collapses to nothing there. On small
- * screens it is a slim band: menu, wordmark, theme.
+ * Mobile-only running bar. The bottom tab bar owns navigation on phones, so
+ * this is just the masthead: wordmark and theme. On desktop the codex margin
+ * rail carries all chrome and this collapses to nothing.
  */
-export function Header({ onOpenMobile }: HeaderProps) {
+export function Header() {
   return (
-    <header className="border-border/60 bg-background/90 sticky top-0 z-20 flex h-14 items-center justify-between border-b px-4 backdrop-blur-md select-none sm:px-6 md:hidden">
-      <div className="flex items-center gap-2">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="text-muted-foreground hover:bg-muted focus-visible:ring-ring h-11 w-11 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
-          onClick={onOpenMobile}
-          aria-label="Open navigation menu"
-        >
-          <Menu className="h-5 w-5" />
-        </Button>
-        <span className="text-foreground font-serif text-lg font-bold tracking-tight">
-          withink<span className="text-accent">.</span>
-        </span>
-      </div>
+    <header className="border-border/60 bg-background/90 sticky top-0 z-20 flex h-14 select-none items-center justify-between border-b px-4 backdrop-blur-md sm:px-6 md:hidden">
+      <span className="text-foreground font-serif text-lg font-bold tracking-tight">
+        withink<span className="text-accent">.</span>
+      </span>
 
       <ThemeToggle />
     </header>

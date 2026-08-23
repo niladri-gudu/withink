@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { cn } from "@withink/utils";
 import { toast } from "sonner";
 
 import { safeStorage } from "@/lib/safe-storage";
@@ -17,6 +18,7 @@ import { UnlockProofBindCard } from "../../lock/components/unlock-proof-bind-car
 import { useLockTimer } from "../../lock/hooks/use-lock-timer";
 import { Header } from "./header";
 import { Sidebar } from "./sidebar";
+import { TabBar } from "./tab-bar";
 
 interface LockSettingsSeed {
   isLockEnabled: boolean;
@@ -54,9 +56,13 @@ export function AppShell({
   initialEncryptionSettings = null,
 }: AppShellProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = React.useState(false);
-  const [isMobileOpen, setIsMobileOpen] = React.useState(false);
   const [mounted, setMounted] = React.useState(false);
+
+  // The editor route is fullscreen writing: the tab bar hides and the page
+  // doesn't reserve bottom clearance for it.
+  const isEditorRoute = /^\/entries\/[^/]+$/.test(pathname ?? "");
 
   const {
     isClientEncrypted,
@@ -340,7 +346,7 @@ export function AppShell({
       >
         <a
           href="#main-content"
-          className="focus:bg-background focus:text-foreground focus:border-border focus:ring-ring sr-only text-sm font-medium focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-9999 focus:rounded-xl focus:border focus:px-4 focus:py-2 focus:shadow-lg focus:ring-2 focus:ring-offset-2 focus:outline-none"
+          className="focus:bg-background focus:text-foreground focus:border-border focus:ring-ring focus:z-9999 sr-only text-sm font-medium focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:rounded-xl focus:border focus:px-4 focus:py-2 focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2"
         >
           Skip to main content
         </a>
@@ -348,13 +354,11 @@ export function AppShell({
         <Sidebar
           isCollapsed={mounted ? isCollapsed : false}
           onToggleCollapse={handleToggleCollapse}
-          isMobileOpen={isMobileOpen}
-          onCloseMobile={() => setIsMobileOpen(false)}
           user={user}
         />
 
         <div className="relative flex min-w-0 flex-1 flex-col overflow-hidden">
-          <Header onOpenMobile={() => setIsMobileOpen(true)} />
+          <Header />
 
           <main
             id="main-content"
@@ -363,11 +367,23 @@ export function AppShell({
             className="no-scrollbar flex min-w-0 flex-1 flex-col overflow-y-auto focus:outline-none"
           >
             <div className="flex w-full flex-1 flex-col items-center">
-              <div className="w-full max-w-4xl flex-1 px-6 py-8 md:py-12 lg:px-8">
+              {/* Phones reserve clearance for the bottom tab bar (plus the
+                  iOS home indicator); the fullscreen editor route doesn't. */}
+              <div
+                className={cn(
+                  "w-full max-w-4xl flex-1 px-6 pt-8 lg:px-8",
+                  isEditorRoute
+                    ? "pb-8"
+                    : "pb-[calc(4.75rem+env(safe-area-inset-bottom))]",
+                  "md:py-12",
+                )}
+              >
                 {children}
               </div>
             </div>
           </main>
+
+          {!isGated && !isEditorRoute && <TabBar user={user} />}
         </div>
       </div>
     </>

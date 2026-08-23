@@ -1,9 +1,8 @@
 "use client";
 
 import * as React from "react";
-import NextImage from "next/image";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { Button } from "@withink/ui/button";
 import { ThemeToggle } from "@withink/ui/theme-toggle";
 import {
@@ -25,20 +24,16 @@ import {
   Sparkles,
   Sun,
 } from "lucide-react";
-import { toast } from "sonner";
 
 import { ROUTES } from "@/constants/routes";
-import { clearSessionCookies, signOut } from "@/lib/auth-client";
-import { clearSwCaches } from "@/lib/sw-cache";
 import { formatDisplayDate, getLocalDateString } from "@/lib/utils/date";
-import { useFocusTrap } from "@/hooks/use-focus-trap";
-import { useEncryption } from "@/providers/encryption-provider";
+
+import { useSignOut } from "../hooks/use-sign-out";
+import { UserAvatar } from "./user-avatar";
 
 interface SidebarProps {
   isCollapsed: boolean;
   onToggleCollapse: () => void;
-  isMobileOpen: boolean;
-  onCloseMobile: () => void;
   user: {
     name: string;
     email: string;
@@ -46,31 +41,10 @@ interface SidebarProps {
   } | null;
 }
 
-export function Sidebar({
-  isCollapsed,
-  onToggleCollapse,
-  isMobileOpen,
-  onCloseMobile,
-  user,
-}: SidebarProps) {
+export function Sidebar({ isCollapsed, onToggleCollapse, user }: SidebarProps) {
   const pathname = usePathname();
-  const router = useRouter();
   const [userMenuOpen, setUserMenuOpen] = React.useState(false);
   const userMenuRef = React.useRef<HTMLDivElement>(null);
-
-  const mobileSidebarRef = useFocusTrap(isMobileOpen);
-
-  // Close mobile sidebar on Escape
-  React.useEffect(() => {
-    if (!isMobileOpen) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        onCloseMobile();
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isMobileOpen, onCloseMobile]);
 
   // Close user menu on outside click
   React.useEffect(() => {
@@ -88,32 +62,7 @@ export function Sidebar({
     };
   }, []);
 
-  const { lock } = useEncryption();
-
-  const handleLogout = async () => {
-    try {
-      const res = await signOut();
-      if (res?.error) {
-        toast.error(res.error.message || "Failed to sign out.");
-        return;
-      }
-      // Best-effort cookie purge + drop the in-memory master key / decrypted
-      // timeline cache before navigating. No router.refresh() here: after
-      // signOut the current route's session is gone and refresh would fire a
-      // server re-render that can race with the navigation.
-      clearSessionCookies();
-      lock();
-      await clearSwCaches();
-      toast.success("Logged out of your diary.");
-      router.push(ROUTES.AUTH.LOGIN);
-    } catch (err: unknown) {
-      const message =
-        err instanceof Error
-          ? err.message
-          : "An unexpected error occurred during logout.";
-      toast.error(message);
-    }
-  };
+  const signOut = useSignOut();
 
   // The codex index: each section is a folio in the margin, numbered like a
   // printed table of contents. The hand note dates the open page.
@@ -169,15 +118,6 @@ export function Sidebar({
     },
   ];
 
-  const userInitials = user?.name
-    ? user.name
-        .split(" ")
-        .map((n) => n[0])
-        .join("")
-        .toUpperCase()
-        .slice(0, 2)
-    : "W";
-
   // Computed after mount: the local date depends on the viewer's timezone, so
   // computing it during render would mismatch the server-rendered HTML (and go
   // stale across midnight).
@@ -195,8 +135,8 @@ export function Sidebar({
 
   const renderSidebarContent = (collapsed: boolean) => {
     return (
-      <div className="bg-sidebar text-sidebar-foreground border-sidebar-border relative flex h-full flex-col border-r select-none">
-        <div className="border-sidebar-border relative flex shrink-0 flex-col border-b px-5 pt-6 pb-5">
+      <div className="bg-sidebar text-sidebar-foreground border-sidebar-border relative flex h-full select-none flex-col border-r">
+        <div className="border-sidebar-border relative flex shrink-0 flex-col border-b px-5 pb-5 pt-6">
           <div
             className={cn(
               "flex items-center justify-between gap-2",
@@ -233,7 +173,7 @@ export function Sidebar({
         {/* The folio index */}
         <TooltipProvider delayDuration={0}>
           <nav
-            className="no-scrollbar flex-1 overflow-x-hidden overflow-y-auto px-3 py-5"
+            className="no-scrollbar flex-1 overflow-y-auto overflow-x-hidden px-3 py-5"
             aria-label="Sidebar navigation"
           >
             <ul className="space-y-0.5">
@@ -247,11 +187,8 @@ export function Sidebar({
                           typeof Link
                         >["href"]
                       }
-                      onClick={() => {
-                        if (isMobileOpen) onCloseMobile();
-                      }}
                       className={cn(
-                        "focus-visible:ring-ring group relative flex h-10 items-center gap-3 rounded-lg px-3 transition-all duration-200 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
+                        "focus-visible:ring-ring group relative flex h-10 items-center gap-3 rounded-lg px-3 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
                         collapsed && "justify-center px-0",
                         item.active
                           ? "text-sidebar-foreground"
@@ -260,7 +197,7 @@ export function Sidebar({
                     >
                       {/* Gold margin tick for the open folio */}
                       {item.active && (
-                        <span className="bg-accent absolute top-2 bottom-2 left-0 w-0.5 rounded-full" />
+                        <span className="bg-accent absolute bottom-2 left-0 top-2 w-0.5 rounded-full" />
                       )}
 
                       {collapsed ? (
@@ -276,7 +213,7 @@ export function Sidebar({
                         <>
                           <span
                             className={cn(
-                              "w-5 shrink-0 text-right font-serif text-[11px] tracking-[0.1em] tabular-nums",
+                              "w-5 shrink-0 text-right font-serif text-[11px] tabular-nums tracking-[0.1em]",
                               item.active
                                 ? "text-accent"
                                 : "text-muted-foreground/50",
@@ -286,7 +223,7 @@ export function Sidebar({
                           </span>
                           <span
                             className={cn(
-                              "animate-in fade-in truncate font-serif text-sm tracking-[0.08em] uppercase duration-200",
+                              "animate-in fade-in truncate font-serif text-sm uppercase tracking-[0.08em] duration-200",
                               item.active ? "font-semibold" : "font-medium",
                             )}
                           >
@@ -321,7 +258,7 @@ export function Sidebar({
           {userMenuOpen && (
             <div
               className={cn(
-                "bg-popover text-popover-foreground border-border animate-in slide-in-from-bottom-2 absolute right-4 bottom-16 left-4 z-50 rounded-xl border p-2 shadow-lg duration-150",
+                "bg-popover text-popover-foreground border-border animate-in slide-in-from-bottom-2 absolute bottom-16 left-4 right-4 z-50 rounded-xl border p-2 shadow-lg duration-150",
                 collapsed && "bottom-16 left-2 w-48",
               )}
               role="menu"
@@ -336,9 +273,9 @@ export function Sidebar({
               </div>
               <div className="pt-1.5">
                 <button
-                  onClick={handleLogout}
+                  onClick={() => void signOut()}
                   role="menuitem"
-                  className="text-destructive hover:bg-destructive/10 focus-visible:ring-destructive flex w-full cursor-pointer items-center space-x-2 rounded-md px-3 py-2 text-left text-xs transition-colors focus-visible:ring-2 focus-visible:outline-none"
+                  className="text-destructive hover:bg-destructive/10 focus-visible:ring-destructive flex w-full cursor-pointer items-center space-x-2 rounded-md px-3 py-2 text-left text-xs transition-colors focus-visible:outline-none focus-visible:ring-2"
                 >
                   <LogOut className="h-3.5 w-3.5" />
                   <span>Log Out</span>
@@ -352,54 +289,30 @@ export function Sidebar({
               <ThemeToggle />
               <button
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
-                className="hover:bg-sidebar-accent focus-visible:ring-ring flex w-full cursor-pointer items-center justify-center rounded-lg p-1 transition-all focus-visible:ring-2 focus-visible:outline-none"
+                className="hover:bg-sidebar-accent focus-visible:ring-ring flex w-full cursor-pointer items-center justify-center rounded-lg p-1 transition-all focus-visible:outline-none focus-visible:ring-2"
                 aria-haspopup="menu"
                 aria-expanded={userMenuOpen}
                 aria-label="User menu"
               >
-                {user?.image ? (
-                  <NextImage
-                    src={user.image}
-                    alt={user.name || "User Avatar"}
-                    width={32}
-                    height={32}
-                    className="border-sidebar-border h-8 w-8 rounded-full border object-cover"
-                  />
-                ) : (
-                  <div className="bg-accent text-accent-foreground border-sidebar-border flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-xs font-bold shadow-sm">
-                    {userInitials}
-                  </div>
-                )}
+                <UserAvatar user={user} className="h-8 w-8" />
               </button>
             </div>
           ) : (
             <>
               <div className="mb-2 flex items-center justify-between px-1">
-                <span className="text-muted-foreground/60 font-serif text-[11px] tracking-[0.16em] uppercase">
+                <span className="text-muted-foreground/60 font-serif text-[11px] uppercase tracking-[0.16em]">
                   Colophon
                 </span>
                 <ThemeToggle />
               </div>
               <button
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
-                className="hover:bg-sidebar-accent focus-visible:ring-ring flex w-full cursor-pointer items-center gap-3 rounded-lg p-2 text-left transition-all focus-visible:ring-2 focus-visible:outline-none"
+                className="hover:bg-sidebar-accent focus-visible:ring-ring flex w-full cursor-pointer items-center gap-3 rounded-lg p-2 text-left transition-all focus-visible:outline-none focus-visible:ring-2"
                 aria-haspopup="menu"
                 aria-expanded={userMenuOpen}
                 aria-label="User menu"
               >
-                {user?.image ? (
-                  <NextImage
-                    src={user.image}
-                    alt={user.name || "User Avatar"}
-                    width={32}
-                    height={32}
-                    className="border-sidebar-border h-8 w-8 rounded-full border object-cover"
-                  />
-                ) : (
-                  <div className="bg-accent text-accent-foreground border-sidebar-border flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-xs font-bold shadow-sm">
-                    {userInitials}
-                  </div>
-                )}
+                <UserAvatar user={user} className="h-8 w-8" />
 
                 <div className="animate-in fade-in min-w-0 flex-1 duration-200">
                   <p className="text-foreground truncate text-xs font-medium">
@@ -416,47 +329,23 @@ export function Sidebar({
       </div>
     );
   };
-  return (
-    <>
-      {/* Desktop margin rail (visible on md screens and up). Animates width via
-          a native CSS transition instead of a JS spring — width is a layout
-          property, so per-frame JS writes (motion) cause layout thrash across
-          the whole main column and the floating editor toolbar. */}
-      <aside
-        style={{ width: isCollapsed ? 76 : 264 }}
-        className="z-30 hidden h-screen shrink-0 flex-col overflow-hidden transition-[width] duration-300 ease-in-out md:flex"
-      >
-        <div
-          className="flex h-full shrink-0 flex-col"
-          style={{ width: isCollapsed ? 76 : 264 }}
-        >
-          {renderSidebarContent(isCollapsed)}
-        </div>
-      </aside>
 
-      {/* Mobile Sidebar overlay / drawer (visible only on mobile). z-[60]
-          keeps it above the editor toolbar/save-indicator chrome, which also
-          sits at z-40/z-50 — later DOM order was letting them paint on top
-          of the open drawer. */}
-      {isMobileOpen && (
-        <div className="fixed inset-0 z-[60] flex md:hidden">
-          {/* Backdrop overlay */}
-          <div
-            className="bg-background/80 fixed inset-0 backdrop-blur-sm transition-opacity duration-300"
-            onClick={onCloseMobile}
-          />
-          {/* Sliding menu panel */}
-          <aside
-            ref={mobileSidebarRef as React.RefObject<HTMLDivElement>}
-            role="dialog"
-            aria-modal="true"
-            aria-label="Navigation menu"
-            className="bg-sidebar text-sidebar-foreground animate-in slide-in-from-left relative z-50 flex h-full w-72 max-w-xs flex-col duration-250"
-          >
-            {renderSidebarContent(false)}
-          </aside>
-        </div>
-      )}
-    </>
+  // Desktop margin rail only — on phones the bottom tab bar owns navigation
+  // (see tab-bar.tsx). Width animates via a native CSS transition instead of
+  // a JS spring: width is a layout property, so per-frame JS writes (motion)
+  // cause layout thrash across the whole main column and the floating editor
+  // toolbar.
+  return (
+    <aside
+      style={{ width: isCollapsed ? 76 : 264 }}
+      className="z-30 hidden h-screen shrink-0 flex-col overflow-hidden transition-[width] duration-300 ease-in-out md:flex"
+    >
+      <div
+        className="flex h-full shrink-0 flex-col"
+        style={{ width: isCollapsed ? 76 : 264 }}
+      >
+        {renderSidebarContent(isCollapsed)}
+      </div>
+    </aside>
   );
 }
