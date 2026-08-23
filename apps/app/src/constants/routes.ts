@@ -28,3 +28,11 @@ export const ROUTES = {
 } as const;
 
 export type Routes = typeof ROUTES;
+
+/**
+ * The journal editor route (`/entries/[date]`) is a TRUE fullscreen writing
+ * surface: the shell renders no masthead, no tab bar, and no content padding
+ * around it (see app-shell.tsx). Single source of truth so the shell and the
+ * tab bar can never drift.
+ */
+export const EDITOR_ROUTE_PATTERN = /^\/entries\/[^/]+$/;

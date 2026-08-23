@@ -40,6 +40,15 @@ export const safeStorage = {
     }
   },
 
+  setSessionItem(key: string, value: string): void {
+    if (typeof window === "undefined") return;
+    try {
+      window.sessionStorage.setItem(key, value);
+    } catch {
+      // Quota exceeded or storage blocked — best-effort.
+    }
+  },
+
   removeSessionItem(key: string): void {
     if (typeof window === "undefined") return;
     try {

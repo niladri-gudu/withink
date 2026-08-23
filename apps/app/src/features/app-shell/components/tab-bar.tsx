@@ -25,14 +25,11 @@ import {
   Sun,
 } from "lucide-react";
 
-import { ROUTES } from "@/constants/routes";
+import { EDITOR_ROUTE_PATTERN, ROUTES } from "@/constants/routes";
 import { formatDisplayDate, getLocalDateString } from "@/lib/utils/date";
 
 import { useSignOut } from "../hooks/use-sign-out";
 import { UserAvatar } from "./user-avatar";
-
-/* The editor route is fullscreen writing — chrome stays out of the way. */
-const EDITOR_ROUTE_PATTERN = /^\/entries\/[^/]+$/;
 
 const tabItems = [
   {

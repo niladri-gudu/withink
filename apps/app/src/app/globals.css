@@ -12,9 +12,12 @@
    do not invent in-between values.
 
    0        content                page flow, cards, editor surface
-   20       sticky header          mobile running bar (header.tsx)
+   20       sticky header          mobile running bar (header.tsx); also
+                                    the editor's sticky top row
    30       desktop margin rail    sidebar.tsx aside
-   40–50    editor overlays        floating toolbar, save indicator
+   40       editor overlays        ONE owner per route: journal-editor-shell
+                                    renders the scroll-progress hairline,
+                                    floating toolbar, and save pill
    60       navigation chrome      bottom tab bar, sheets, dialogs, drawers
                                     (Radix portals land on <body>; give both
                                      Overlay and Content z-[60])

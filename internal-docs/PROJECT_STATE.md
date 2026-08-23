@@ -2,7 +2,7 @@
 
 # Project State
 
-Last Updated: 2026-08-23
+Last Updated: 2026-08-24
 
 Current Phase: Production Hardening
 
@@ -391,6 +391,19 @@ Note: MongoDB (`mongodb+srv://`) now connects. The earlier `querySrv ECONNREFUSE
 ---
 
 # Recent Decisions
+
+2026-08-24
+
+- **Mobile-first redesign, Phase 2/4 — The Writing Experience (fullscreen editor + phone-first dashboard).** Presentation-only pass over the journal editor and dashboard; autosave/sync semantics byte-identical. All verified: `tsc --noEmit` clean, eslint 0 errors (3 pre-existing `clearAllTimers` warnings), 130/130 Vitest, production build clean (21 routes, PPR preserved), browser pass at 375×812 and 1440×900, Impeccable detector `[]` on all changed UI files.
+  - **True fullscreen editor route.** `EDITOR_ROUTE_PATTERN` (`/entries/[date]`) moved to `constants/routes.ts` as the single source of truth (shell + tab-bar now share it). `app-shell.tsx` renders fullscreen routes through a documented conditional wrapper: no mobile masthead, no tab bar, and NO content-padding wrapper (the old `max-w-4xl px-6 py-8` nest that double-padded the editor is gone — no negative-margin hacks). `journal-editor-shell.tsx` rewritten as the ONE owner of fixed overlays on the route: root is `min-h-full` (fills the shell's `<main>`, which remains the only scroll container), `ledger-rules` + top gradient became scoped/removed, the scroll-progress hairline now listens to `#main-content` scroll (it previously tracked `window.scrollY`, which never moves in this layout — dead bar fixed), z-pileup resolved to the contract (header 20 / overlays 40 / Radix 60). Inner writing column is a `div` (no nested `<main>` landmark).
+  - **Thumb-first toolbar.** Primary row always visible and scroll-free at 375px: undo/redo · B/I/U · bullet · task · "+" · sticky-right word-count chip (bare count on phones, "+ Xm read" sm+). "+" opens the Phase-1 Sheet (`side="auto"`): H1–H3, strike, highlight, ordered list, quote, code, clear, LINK, IMAGE — deduped against the primary row (user decision). Link insertion replaced `window.prompt` with a focus-trapped Dialog (URL input, Insert/Remove, Enter submits). Image picker fires `input.click()` synchronously inside the gesture before the sheet closes (iOS Safari requirement); compress→presign→R2→base64 flow unchanged. Desktop md+ keeps the full inline strip (zero desktop regression) and gains the sheet as a right folio panel. h-10/w-10 targets, haptics, and the visualViewport keyboard-avoidance mechanism preserved; toolbar bottom now adds `env(safe-area-inset-bottom)`.
+  - **Save state into the editor header on phones.** `SaveIndicator` gained an `inline` variant rendered from the SAME state machine (all states preserved: Saving… / Saved · Synced / Saved locally · Syncing / Saved locally · Will sync / Session locked — pending save / Save failed / Working offline). Phones read it as quiet text in the new sticky editor header row (back · hand-font date · save state · zen toggle); the floating pill is now `hidden sm:block` at z-40. Verified live: idle→Saving…→Saved·Synced→idle; offline (DevTools Offline) type→local save→`sync_queue` drained to 0 after reconnect (queue convergence confirmed in IndexedDB).
+  - **Zen mode on phones** hides ALL floating chrome (header, toolbar, pill); tapping the page reveals the toolbar for 3s (typing keeps it alive; reduced-motion gets instant swaps); Escape exits on keyboards; entry/exit routed through one `toggleFocusMode` callback (no reset effect). Desktop zen unchanged.
+  - **MoodSelector** hit targets now 44px (`h-11 w-11`, `sm:h-10 sm:w-10`); row sits directly under the title, above the fold at 375×812.
+  - **Phone-first dashboard.** Inline header deleted; `PageHeader` reused (runningHead "Today", note, Good morning + gold accent, viewer-local `today`). Order: Today card → streak margin note → flashback → recent reflections (single column on phones, `md:` grids preserved). Empty-state CTA copy is "Write today's entry"; both Today-card CTAs are thumb-sized (`h-11 w-full sm:w-fit`). Yesterday-missed banner extracted to `YesterdayBanner` (client): calm hairline card, inert `animate-in` classes dropped, session-dismissible via `sessionStorage` keyed by the missed date (`safeStorage.setSessionItem` added).
+  - **Skeletons mirror the new layouts.** `(app)/loading.tsx` matches the PageHeader + Today-card/margin-note order with a thumb CTA hint; `DashboardHeroSkeleton` drops the data-dependent banner placeholder; `entries/[date]/loading.tsx` now imports the rewritten `EditorSkeleton` (fullscreen mirror: header row, 44px mood circles, toolbar silhouette) instead of duplicating stale markup. Z-index contract comment in `globals.css` updated to name the single overlay owner.
+  - **Browser-pass evidence (375×812):** fullscreen editor chrome-free (no masthead/tab bar); sheet, link dialog, mood, zen tap-to-reveal/auto-hide all work by touch; cross-date pending-edit flush survives real navigation (blur→snapshot flush→unmount save; a programmatic `.click()` bypasses blur and can drop the last ≤400ms — synthetic-only artifact, real taps/keyboard are covered by the existing pipeline). Desktop 1440: rail, full inline toolbar, save pill, dashboard grids unchanged.
+  - Deferred: yesterday banner visual states unreachable with seeded data (yesterday always written); tiptap v3 StarterKit duplicate link/underline extension warning (pre-existing, editor internals out of scope); sub-360px toolbar nudge under the sticky chip (safety-net scroll retained); Phase 3 browse surfaces, Phase 4 migrations.
 
 2026-08-23 (latest)
 
