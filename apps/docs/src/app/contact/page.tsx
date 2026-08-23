@@ -62,7 +62,7 @@ export default function ContactPage() {
               <div className="bg-accent/10 text-accent mx-auto flex h-12 w-12 items-center justify-center rounded-full">
                 <Check className="h-6 w-6" />
               </div>
-              <h3 className="text-title font-serif">Message Received</h3>
+              <h2 className="text-title font-serif">Message Received</h2>
               <p className="text-body-small text-muted-foreground">
                 Thank you, {name.split(" ")[0]}. Your message has been sent to
                 our team. We will respond to {email} as soon as possible.
@@ -153,9 +153,9 @@ export default function ContactPage() {
         {/* Direct Contacts */}
         <div className="space-y-6 md:col-span-2">
           <div className="border-border bg-card space-y-4 rounded-xl border p-5">
-            <h3 className="text-foreground flex items-center gap-1.5 font-mono text-sm tracking-wider uppercase">
+            <h2 className="text-foreground flex items-center gap-1.5 font-mono text-sm tracking-wider uppercase">
               <Mail className="text-muted-foreground h-4 w-4" /> Direct Support
-            </h3>
+            </h2>
             <div className="space-y-2">
               <p className="text-muted-foreground text-xs">
                 Email us directly anytime:
@@ -182,10 +182,10 @@ export default function ContactPage() {
           </div>
 
           <div className="border-border bg-card space-y-4 rounded-xl border p-5">
-            <h3 className="text-foreground flex items-center gap-1.5 font-mono text-sm tracking-wider uppercase">
+            <h2 className="text-foreground flex items-center gap-1.5 font-mono text-sm tracking-wider uppercase">
               <MessageSquare className="text-muted-foreground h-4 w-4" /> Social
               Channels
-            </h3>
+            </h2>
             <div className="flex flex-col gap-2 text-xs">
               <a
                 href="https://twitter.com/withinkme"

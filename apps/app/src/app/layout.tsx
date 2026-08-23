@@ -120,15 +120,35 @@ export default function RootLayout({ children }: RootLayoutProps) {
     >
       <head>
         <link rel="manifest" href="/manifest.json" />
-        <meta name="theme-color" content="#EADFC7" />
+        <meta
+          name="theme-color"
+          content="#eee5d6"
+          media="(prefers-color-scheme: light)"
+        />
+        <meta
+          name="theme-color"
+          content="#1e170f"
+          media="(prefers-color-scheme: dark)"
+        />
         <script
           dangerouslySetInnerHTML={{
             __html: `
               if ('serviceWorker' in navigator) {
                 window.addEventListener('load', function() {
-                  navigator.serviceWorker.register('/sw.js').catch(function(err) {
-                    console.error('Service worker registration failed:', err);
-                  });
+                  if (process.env.NODE_ENV === 'production') {
+                    navigator.serviceWorker.register('/sw.js').catch(function(err) {
+                      console.error('Service worker registration failed:', err);
+                    });
+                  } else {
+                    navigator.serviceWorker.getRegistrations().then(function(regs) {
+                      regs.forEach(function(r) { r.unregister(); });
+                    });
+                    if (window.caches && caches.keys) {
+                      caches.keys().then(function(keys) {
+                        keys.forEach(function(k) { caches.delete(k); });
+                      });
+                    }
+                  }
                 });
               }
             `,

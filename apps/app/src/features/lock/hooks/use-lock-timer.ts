@@ -8,7 +8,13 @@ interface UseLockTimerProps {
   onLock: () => void;
 }
 
-const ACTIVITY_EVENTS = ["mousemove", "keydown", "click", "scroll", "touchstart"];
+const ACTIVITY_EVENTS = [
+  "mousemove",
+  "keydown",
+  "click",
+  "scroll",
+  "touchstart",
+];
 
 /**
  * Auto-lock timer driven by a single 1s idle poll.
@@ -66,7 +72,10 @@ export function useLockTimer({
         ACTIVITY_EVENTS.forEach((event) =>
           window.removeEventListener(event, handleActivity),
         );
-        document.removeEventListener("visibilitychange", handleVisibilityChange);
+        document.removeEventListener(
+          "visibilitychange",
+          handleVisibilityChange,
+        );
       };
     }
 

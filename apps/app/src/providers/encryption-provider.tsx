@@ -1,11 +1,18 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 
-import { decryptText, importKeyFromHex } from "@/lib/crypto-client";
+import {
+  decryptText,
+  deriveUnlockProofHex,
+  importKeyFromHex,
+} from "@/lib/crypto-client";
 import { deriveKeyFromPasswordAsync } from "@/lib/crypto-worker-client";
+import { safeStorage } from "@/lib/safe-storage";
 import { diaryCacheService } from "@/features/journal/services/diary-cache-service";
 import { journalSyncService } from "@/features/journal/services/journal-sync-service";
+import { unlockSessionAction } from "@/features/lock/actions/lock-actions";
 import { clearMediaEntryCache } from "@/features/media/lib/media-entry-cache";
 
 // Memory-only cache of derived wrapper keys keyed by `${iterations}:${saltHex}:${password}`.
@@ -32,6 +39,18 @@ async function deriveCachedKey(
   return key;
 }
 
+function evictCachedKey(
+  password: string,
+  saltHex: string,
+  iterations: number,
+): void {
+  derivedKeyCache.delete(`${iterations}:${saltHex}:${password}`);
+}
+
+function clearDerivedKeyCache(): void {
+  derivedKeyCache.clear();
+}
+
 interface EncryptionSettings {
   isClientEncrypted: boolean;
   encryptionSalt: string;
@@ -48,11 +67,19 @@ interface EncryptionContextType {
   isPromptOpen: boolean;
   setPromptOpen: (open: boolean) => void;
   setEncryptionSettings: (settings: EncryptionSettings) => void;
+  encryptionSettingsSeeded: boolean;
   unlockWithPassword: (password: string) => Promise<boolean>;
   unlockWithPin: (
     pin: string,
     encryptedMasterKeyHex: string,
   ) => Promise<boolean>;
+  /** Derives the server unlock proof from the in-memory master key.
+   *  Returns null when no key is available (locked / non-ZK session). */
+  getUnlockProof: () => Promise<string | null>;
+  /** True when the server has no bound unlock proof for this account and the
+   *  one-time email-code binding step must complete before content streams. */
+  proofBindingRequired: boolean;
+  setProofBindingRequired: (required: boolean) => void;
   lock: () => void;
   clearLocalMasterKey: () => void;
 }
@@ -66,12 +93,31 @@ export function EncryptionProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const [masterKey, setMasterKey] = React.useState<CryptoKey | null>(null);
+  const router = useRouter();
+  const [masterKey, setMasterKeyState] = React.useState<CryptoKey | null>(null);
+  // Ref mirror of the master key so async flows that finish after a state
+  // update (e.g. the PIN fast-path's background server verify) can still
+  // derive the unlock proof without waiting for a re-render.
+  const masterKeyRef = React.useRef<CryptoKey | null>(null);
+  const setMasterKey = React.useCallback((key: CryptoKey | null) => {
+    masterKeyRef.current = key;
+    setMasterKeyState(key);
+  }, []);
   const [isClientEncrypted, setIsClientEncrypted] = React.useState(false);
   const [encryptionSalt, setEncryptionSalt] = React.useState("");
   const [verificationCiphertext, setVerificationCiphertext] =
     React.useState("");
   const [isPromptOpen, setPromptOpen] = React.useState(false);
+  // True when a diary-password unlock decrypted correctly but the server has
+  // no bound unlock proof yet (accounts that enabled zero-knowledge before
+  // proof binding existed). The user must complete the one-time email-code
+  // upgrade before server-gated content will stream.
+  const [proofBindingRequired, setProofBindingRequired] = React.useState(false);
+  // Flips true the moment server-seeded settings land, so consumers can tell
+  // "account is genuinely not zero-knowledge" apart from "seed hasn't run yet"
+  // and avoid mounting setup/migration UI off stale defaults.
+  const [encryptionSettingsSeeded, setEncryptionSettingsSeeded] =
+    React.useState(false);
 
   const isUnlocked = React.useMemo(() => {
     if (!isClientEncrypted) return true;
@@ -135,6 +181,7 @@ export function EncryptionProvider({
       setIsClientEncrypted(settings.isClientEncrypted);
       setEncryptionSalt(settings.encryptionSalt);
       setVerificationCiphertext(settings.verificationCiphertext);
+      setEncryptionSettingsSeeded(true);
     },
     [],
   );
@@ -162,14 +209,29 @@ export function EncryptionProvider({
 
         // 3. Import decrypted master key hex as the real CryptoKey
         const key = await importKeyFromHex(decryptedMasterKeyHex);
+        masterKeyRef.current = key;
         setMasterKey(key);
 
         // Set the server-side unlock cookie best-effort and non-blocking so the
-        // UI reveals instantly instead of waiting on a network round-trip. If
-        // the cookie fails to set, this session still works (the key is in
-        // memory) and the next page load simply asks to unlock again.
-        void import("@/features/lock/actions/lock-actions")
-          .then(({ unlockSessionAction }) => unlockSessionAction())
+        // UI reveals instantly instead of waiting on a network round-trip. The
+        // unlock proof (derived from the master key) is required — the server
+        // refuses to mint the cookie without it. Once confirmed, refresh so
+        // server-gated content streams in behind the reveal. The refresh is
+        // deferred to the next task: calling it synchronously inside the
+        // action's promise chain corrupts the router flight cache in dev
+        // (enqueueModel null crash) and takes the whole app down.
+        void deriveUnlockProofHex(key)
+          .then((proof) => unlockSessionAction(proof))
+          .then((res) => {
+            if (!res.success) {
+              if (res.error === "UNLOCK_PROOF_NOT_BOUND") {
+                setProofBindingRequired(true);
+                return;
+              }
+              throw new Error(res.error || "Unlock verification failed");
+            }
+            setTimeout(() => router.refresh(), 0);
+          })
           .catch((err) => {
             console.error("Failed to set unlock session cookie:", err);
           });
@@ -177,11 +239,12 @@ export function EncryptionProvider({
         setPromptOpen(false);
         return true;
       } catch (err) {
+        evictCachedKey(password, encryptionSalt, 100000);
         console.error("Incorrect Diary Password", err);
         return false;
       }
     },
-    [encryptionSalt, verificationCiphertext],
+    [encryptionSalt, verificationCiphertext, router, setMasterKey],
   );
 
   const unlockWithPin = React.useCallback(
@@ -204,6 +267,7 @@ export function EncryptionProvider({
 
         // 3. Import decrypted master key hex as the CryptoKey
         const key = await importKeyFromHex(decryptedMasterKeyHex);
+        masterKeyRef.current = key;
         setMasterKey(key);
 
         // Plaintext key caching is removed.
@@ -211,31 +275,45 @@ export function EncryptionProvider({
         setPromptOpen(false);
         return true;
       } catch (err) {
+        evictCachedKey(pin, encryptionSalt, 50000);
         console.error("PIN Decryption failed", err);
         return false;
       }
     },
-    [encryptionSalt],
+    [encryptionSalt, setMasterKey],
   );
 
+  const getUnlockProof = React.useCallback(async (): Promise<string | null> => {
+    const key = masterKeyRef.current;
+    if (!key) return null;
+    try {
+      return await deriveUnlockProofHex(key);
+    } catch {
+      return null;
+    }
+  }, []);
+
   const lock = React.useCallback(() => {
+    masterKeyRef.current = null;
     setMasterKey(null);
+    // Release the derived wrapper keys too: they decrypt verificationCiphertext
+    // straight to the master-key hex, so keeping them after lock would defeat
+    // the memory-hygiene goal. Re-unlock re-runs PBKDF2 in the worker (~100ms).
+    clearDerivedKeyCache();
     // Release decrypted plaintext held for instant local search and the media
     // lightbox.
     diaryCacheService.clearTimelineCache();
     clearMediaEntryCache();
     if (typeof window !== "undefined") {
-      sessionStorage.removeItem("withink_master_key");
-      localStorage.removeItem("withink_master_key");
+      safeStorage.removeSessionItem("withink_master_key");
+      safeStorage.removeItem("withink_master_key");
     }
-  }, []);
+  }, [setMasterKey]);
 
   const clearLocalMasterKey = React.useCallback(() => {
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("withink_encrypted_master_key");
-      sessionStorage.removeItem("withink_master_key");
-      localStorage.removeItem("withink_master_key");
-    }
+    safeStorage.removeItem("withink_encrypted_master_key");
+    safeStorage.removeSessionItem("withink_master_key");
+    safeStorage.removeItem("withink_master_key");
   }, []);
 
   // Memoize the context value so consumers (the app shell, sidebar, editor,
@@ -249,12 +327,16 @@ export function EncryptionProvider({
       isClientEncrypted,
       encryptionSalt,
       verificationCiphertext,
+      encryptionSettingsSeeded,
       isUnlocked,
       isPromptOpen,
       setPromptOpen,
       setEncryptionSettings,
       unlockWithPassword,
       unlockWithPin,
+      getUnlockProof,
+      proofBindingRequired,
+      setProofBindingRequired,
       lock,
       clearLocalMasterKey,
     }),
@@ -263,14 +345,18 @@ export function EncryptionProvider({
       isClientEncrypted,
       encryptionSalt,
       verificationCiphertext,
+      encryptionSettingsSeeded,
       isUnlocked,
       isPromptOpen,
       setPromptOpen,
       setEncryptionSettings,
       unlockWithPassword,
       unlockWithPin,
+      getUnlockProof,
+      proofBindingRequired,
       lock,
       clearLocalMasterKey,
+      setMasterKey,
     ],
   );
 

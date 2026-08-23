@@ -33,6 +33,12 @@ export async function connectDB() {
       .connect(MONGODB_URI, {
         dbName: DB_NAME,
         bufferCommands: false,
+        // Fail fast instead of hanging a request for the driver default
+        // (30s server selection) when the cluster is unreachable.
+        serverSelectionTimeoutMS: 5_000,
+        connectTimeoutMS: 10_000,
+        socketTimeoutMS: 45_000,
+        maxPoolSize: 10,
       })
       .then((mongooseInstance) => {
         logger.info("Mongoose connected successfully", { dbName: DB_NAME });

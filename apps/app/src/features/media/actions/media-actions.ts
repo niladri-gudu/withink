@@ -8,6 +8,7 @@ import { safeDecrypt } from "@/lib/encryption";
 import { r2 } from "@/lib/r2";
 import { getRequestSession } from "@/lib/request-cache";
 import { handleError } from "@/server/errors";
+import { rateLimit } from "@/server/rate-limit";
 import { EntryModel } from "@/features/journal/repositories/entry-model";
 import { LockService } from "@/features/lock/services/lock-service";
 
@@ -128,9 +129,15 @@ export async function deleteMediaFileAction(
       return { success: false, error: "Locked" };
     }
 
-    // Safety check - make sure user is only deleting their own files
-    const userPathSegment = `/${session.user.id}/`;
-    if (!fileKey.includes(userPathSegment)) {
+    // Safety check — strict prefix match against the caller's own namespaces
+    // (journal/ and avatars/). A substring containment check would accept a
+    // crafted key that merely embeds the user id somewhere in the middle.
+    const envPrefix = env.IS_PROD ? "" : "dev-";
+    const ownsKey =
+      fileKey.startsWith(`${envPrefix}journal/${session.user.id}/`) ||
+      fileKey.startsWith(`${envPrefix}avatars/${session.user.id}/`) ||
+      fileKey.startsWith(`${envPrefix}system/${session.user.id}/`);
+    if (!ownsKey) {
       return {
         success: false,
         error: "You are not authorized to delete this file.",
@@ -167,6 +174,16 @@ export async function findEntryForMediaAction(
     const unlocked = await LockService.isSessionUnlocked(session.user.id);
     if (!unlocked) {
       return { success: false, error: "Locked" };
+    }
+
+    // Each call decrypts up to 200 entries — throttle per user so the
+    // lightbox can't be scripted into a decryption hammer.
+    const limit = await rateLimit(`media-find:${session.user.id}`, {
+      limit: 10,
+      windowSeconds: 60,
+    });
+    if (!limit.success) {
+      return { success: false, error: "Too many requests. Try again soon." };
     }
 
     await connectDB();

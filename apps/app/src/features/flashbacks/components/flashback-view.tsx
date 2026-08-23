@@ -24,10 +24,10 @@ import {
 } from "lucide-react";
 
 import { ROUTES } from "@/constants/routes";
-import { PageHeader } from "@/features/app-shell/components/page-header";
 import { safeDecryptText } from "@/lib/crypto-client";
 import { formatDisplayDate } from "@/lib/utils/date";
 import { useEncryption } from "@/providers/encryption-provider";
+import { PageHeader } from "@/features/app-shell/components/page-header";
 
 import type { DecryptedEntry } from "../../journal/services/journal-service";
 import { refreshFlashbackAction } from "../actions/flashback-actions";
@@ -124,6 +124,7 @@ export function FlashbackView({
           title="Past"
           accent="flashbacks."
           description="Reconnect with your past reflections"
+          today={localToday}
           action={
             <Button
               asChild
@@ -184,9 +185,14 @@ export function FlashbackView({
       {/* Unified Page Header */}
       <PageHeader
         runningHead="Flashbacks"
-        note={label ? `this date, one year past — ${label}` : "this date, one year past"}
+        note={
+          label
+            ? `this date, one year past — ${label}`
+            : "this date, one year past"
+        }
         title="Past"
         accent="flashbacks."
+        today={localToday}
         description={`Written on ${formatDisplayDate(entry.date, {
           weekday: "long",
           month: "long",
@@ -274,7 +280,7 @@ export function FlashbackView({
         </CardContent>
       </Card>
 
-      <p className="text-muted-foreground/60 py-4 text-center font-hand text-xl">
+      <p className="text-muted-foreground/60 font-hand py-4 text-center text-xl">
         Withink resurfaces one memory at a time so reflection stays gentle.
       </p>
     </div>

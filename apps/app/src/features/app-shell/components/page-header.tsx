@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+
 import { formatDisplayDate, getLocalDateString } from "@/lib/utils/date";
 
 interface PageHeaderProps {
@@ -14,6 +15,10 @@ interface PageHeaderProps {
   note?: string;
   /** Optional action, set right in the running head line. */
   action?: ReactNode;
+  /** The viewer's local today (ISO). Callers should pass the value resolved
+   *  from the `withink-local-date` cookie so users ahead of the server's
+   *  timezone don't see yesterday's date; falls back to server time. */
+  today?: string;
 }
 
 /**
@@ -28,8 +33,9 @@ export function PageHeader({
   description,
   note,
   action,
+  today,
 }: PageHeaderProps) {
-  const today = formatDisplayDate(getLocalDateString(), {
+  const displayDate = formatDisplayDate(today || getLocalDateString(), {
     weekday: "long",
     month: "long",
     day: "numeric",
@@ -44,7 +50,7 @@ export function PageHeader({
           {runningHead}
         </span>
         <span className="text-muted-foreground/50 font-hand text-base leading-none">
-          {today}
+          {displayDate}
         </span>
       </div>
 

@@ -9,6 +9,7 @@ import {
   getLocalDateString,
   isDateString,
 } from "@/lib/utils/date";
+import { EncryptionSettingsRepository } from "@/features/encryption/repositories/encryption-settings-repository";
 import { EntriesPageShell } from "@/features/journal/components/entries-page-shell";
 import { JournalService } from "@/features/journal/services/journal-service";
 
@@ -31,11 +32,13 @@ export default async function EntriesPage() {
   // 2. Fetch data in parallel on the server. The calendar entries already
   //    contain the full date list, so derive it from them instead of issuing a
   //    duplicate getEntryDates round trip.
-  const [entriesData, stats, calendarEntries] = await Promise.all([
-    JournalService.getEntriesPage(session.user.id, 1, 5, { today }),
-    JournalService.getEntryStats(session.user.id),
-    JournalService.getCalendarEntries(session.user.id),
-  ]);
+  const [entriesData, stats, calendarEntries, encryptionSettings] =
+    await Promise.all([
+      JournalService.getEntriesPage(session.user.id, 1, 5, { today }),
+      JournalService.getEntryStats(session.user.id),
+      JournalService.getCalendarEntries(session.user.id),
+      EncryptionSettingsRepository.getSettings(session.user.id),
+    ]);
 
   // 3. Compute current streak from the calendar's date list (sorted desc).
   const dates = calendarEntries.map((entry) => entry.date);
@@ -55,6 +58,7 @@ export default async function EntriesPage() {
       initialCalendarEntries={calendarEntries}
       initialStreakData={streakData}
       localToday={today}
+      accountEncrypted={!!encryptionSettings?.isClientEncrypted}
     />
   );
 }

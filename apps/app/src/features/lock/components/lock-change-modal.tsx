@@ -9,6 +9,8 @@ import { toast } from "sonner";
 
 import { encryptText, exportKeyToHex } from "@/lib/crypto-client";
 import { deriveKeyFromPasswordAsync } from "@/lib/crypto-worker-client";
+import { safeStorage } from "@/lib/safe-storage";
+import { useFocusTrap } from "@/hooks/use-focus-trap";
 import { useEncryption } from "@/providers/encryption-provider";
 
 import { saveLockSettingsAction, unlockAction } from "../actions/lock-actions";
@@ -38,6 +40,18 @@ export function LockChangeModal({ onClose, onSuccess }: LockChangeModalProps) {
   const [newFocused, setNewFocused] = React.useState(false);
   const [confirmFocused, setConfirmFocused] = React.useState(false);
 
+  const dialogRef = useFocusTrap(true);
+
+  // Escape closes the modal unless a submission is in flight.
+  React.useEffect(() => {
+    if (isSubmitting) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isSubmitting, onClose]);
+
   // Auto-verify current passcode when 4 digits are typed
   React.useEffect(() => {
     if (currentPin.length === 4 && step === "verify-current") {
@@ -47,7 +61,7 @@ export function LockChangeModal({ onClose, onSuccess }: LockChangeModalProps) {
         // Fast path: verify the PIN locally by unwrapping the per-device master
         // key (no network round-trip), then confirm server-side in the background.
         const encryptedMasterKey = isClientEncrypted
-          ? localStorage.getItem("withink_encrypted_master_key")
+          ? safeStorage.getItem("withink_encrypted_master_key")
           : null;
         if (encryptedMasterKey) {
           const decrypted = await unlockWithPin(currentPin, encryptedMasterKey);
@@ -119,6 +133,9 @@ export function LockChangeModal({ onClose, onSuccess }: LockChangeModalProps) {
     const res = await saveLockSettingsAction({
       isLockEnabled: true,
       passcode: newPin,
+      // Rotating a passcode is a privileged transition server-side: prove
+      // knowledge of the current one (already verified above).
+      currentPasscode: currentPin,
       autoLockTimeout: 300,
       lockOnTabHide: false,
     });
@@ -133,11 +150,11 @@ export function LockChangeModal({ onClose, onSuccess }: LockChangeModalProps) {
             50000,
           );
           const encryptedMasterKey = await encryptText(masterKeyHex, pinKey);
-          localStorage.setItem(
+          safeStorage.setItem(
             "withink_encrypted_master_key",
             encryptedMasterKey,
           );
-          localStorage.removeItem("withink_master_key");
+          safeStorage.removeItem("withink_master_key");
         } catch (err) {
           console.error(
             "Failed to secure master key with new passcode PIN:",
@@ -154,7 +171,13 @@ export function LockChangeModal({ onClose, onSuccess }: LockChangeModalProps) {
   };
 
   return (
-    <div className="bg-background/80 animate-in fade-in fixed inset-0 z-[9990] flex items-center justify-center backdrop-blur-sm duration-200">
+    <div
+      ref={dialogRef as React.RefObject<HTMLDivElement>}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Change passcode"
+      className="bg-background/80 animate-in fade-in fixed inset-0 z-[9990] flex items-center justify-center backdrop-blur-sm duration-200"
+    >
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -314,11 +337,7 @@ export function LockChangeModal({ onClose, onSuccess }: LockChangeModalProps) {
                 </div>
 
                 <div className="flex justify-end gap-3 pt-2">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    onClick={onClose}
-                  >
+                  <Button type="button" variant="ghost" onClick={onClose}>
                     Cancel
                   </Button>
                   <Button

@@ -1,10 +1,16 @@
-import { pbkdf2Sync, randomBytes, randomInt, timingSafeEqual } from "crypto";
+import {
+  createHash,
+  pbkdf2Sync,
+  randomBytes,
+  randomInt,
+  timingSafeEqual,
+} from "crypto";
 import { cookies } from "next/headers";
 
 import { env } from "@/config/env";
 import { auth } from "@/lib/auth";
 import { resend } from "@/lib/email";
-import { decrypt, encrypt } from "@/lib/encryption";
+import { decryptToken, encrypt } from "@/lib/encryption";
 import { getCachedValue, redis, setCachedValue } from "@/lib/redis";
 import { logger } from "@/server/logger";
 
@@ -51,6 +57,30 @@ export class LockService {
   }
 
   /**
+   * Hashes an unlock proof (client-derived HKDF subkey hex) with sha256.
+   * The server only ever stores this hash — never the proof itself.
+   */
+  static hashUnlockProof(proof: string): string {
+    return createHash("sha256").update(proof, "utf8").digest("hex");
+  }
+
+  /**
+   * Verifies a submitted unlock proof against its stored sha256 hash.
+   * Timing-safe to prevent byte-by-byte recovery of the hash.
+   */
+  static verifyUnlockProofHash(proof: string, storedHash: string): boolean {
+    if (!storedHash) return false;
+    try {
+      const expected = Buffer.from(storedHash, "hex");
+      const actual = Buffer.from(this.hashUnlockProof(proof), "hex");
+      if (expected.length !== actual.length) return false;
+      return timingSafeEqual(expected, actual);
+    } catch {
+      return false;
+    }
+  }
+
+  /**
    * Checks if the user's session is currently unlocked by verifying the unlock cookie.
    *
    * @param settings Optional pre-fetched lock settings. Callers that already
@@ -76,8 +106,7 @@ export class LockService {
     }
 
     try {
-      const decrypted = decrypt(cookie.value);
-      if (decrypted === "DECRYPTION_ERROR") return false;
+      const decrypted = decryptToken(cookie.value);
       const token = JSON.parse(decrypted) as UnlockToken;
       if (token.userId !== userId) return false;
       if (Date.now() > token.expiresAt) return false;
@@ -143,6 +172,18 @@ export class LockService {
   static async clearUnlockCookie(): Promise<void> {
     const cookieStore = await cookies();
     cookieStore.delete(UNLOCKED_COOKIE_NAME);
+  }
+
+  /**
+   * Constant-time string comparison for equal-length secrets.
+   */
+  private static timingSafeStringEqual(a: string, b: string): boolean {
+    if (a.length !== b.length) return false;
+    try {
+      return timingSafeEqual(Buffer.from(a, "utf8"), Buffer.from(b, "utf8"));
+    } catch {
+      return false;
+    }
   }
 
   /**
@@ -230,7 +271,12 @@ export class LockService {
     const cacheKey = `lock:reset:${userId}`;
     const storedCode = await getCachedValue<string>(cacheKey);
 
-    if (!storedCode || String(storedCode) !== String(code)) {
+    // Timing-safe comparison — passcodes already use timingSafeEqual, so the
+    // 6-digit reset path shouldn't be a softer target.
+    if (
+      !storedCode ||
+      !this.timingSafeStringEqual(String(storedCode), String(code))
+    ) {
       return false;
     }
 
@@ -238,6 +284,7 @@ export class LockService {
     await LockRepository.saveSettings(userId, {
       isLockEnabled: false,
       passcodeHash: "",
+      unlockProofHash: "",
     });
 
     // Clear reset code from Redis
@@ -249,6 +296,47 @@ export class LockService {
 
     // Clear any existing cookie
     await this.clearUnlockCookie();
+
+    return true;
+  }
+
+  /**
+   * One-time migration for pre-existing zero-knowledge accounts: verifies the
+   * email reset code and binds the supplied unlock proof (whose sha256 the
+   * server stores). The email channel is what makes this safe — an attacker
+   * with only the login session cannot read the victim's inbox. The proof
+   * itself can only be produced by someone holding the master key.
+   */
+  static async verifyResetCodeAndBindProof(
+    userId: string,
+    code: string,
+    proof: string,
+  ): Promise<boolean> {
+    if (!redis) return false;
+
+    if (typeof proof !== "string" || !/^[0-9a-fA-F]{64}$/.test(proof)) {
+      return false;
+    }
+
+    const cacheKey = `lock:reset:${userId}`;
+    const storedCode = await getCachedValue<string>(cacheKey);
+
+    if (
+      !storedCode ||
+      !this.timingSafeStringEqual(String(storedCode), String(code))
+    ) {
+      return false;
+    }
+
+    await LockRepository.saveSettings(userId, {
+      unlockProofHash: this.hashUnlockProof(proof),
+    });
+
+    try {
+      await redis.del(cacheKey);
+    } catch {
+      // ignore
+    }
 
     return true;
   }

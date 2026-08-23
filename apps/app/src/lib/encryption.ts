@@ -67,6 +67,54 @@ export function decrypt(encryptedData: string): string {
   }
 }
 
+const HEX_24 = /^[0-9a-f]{24}$/;
+const HEX_32 = /^[0-9a-f]{32}$/;
+
+/**
+ * Strictly decrypts an authentication token produced by `encrypt()`.
+ *
+ * Unlike `decrypt()` (which tolerates legacy plaintext), this throws unless
+ * the input is exactly `iv:authTag:ciphertext` with valid hex segments AND
+ * the AES-GCM auth tag verifies. Use for security boundaries where an
+ * attacker-controlled value must never pass through unverified.
+ */
+export function decryptToken(encryptedData: string): string {
+  if (!encryptedData || typeof encryptedData !== "string") {
+    throw new Error("Invalid token format");
+  }
+
+  const parts = encryptedData.split(":");
+  if (parts.length !== 3) {
+    throw new Error("Invalid token format");
+  }
+
+  const [ivHex, authTagHex, ciphertextHex] = parts;
+  if (
+    !ivHex ||
+    !authTagHex ||
+    !ciphertextHex ||
+    !HEX_24.test(ivHex) ||
+    !HEX_32.test(authTagHex) ||
+    !/^[0-9a-f]+$/.test(ciphertextHex)
+  ) {
+    throw new Error("Invalid token format");
+  }
+
+  try {
+    const iv = Buffer.from(ivHex, "hex");
+    const authTag = Buffer.from(authTagHex, "hex");
+    const decipher = createDecipheriv(ALGORITHM, KEY, iv);
+    decipher.setAuthTag(authTag);
+
+    let decrypted = decipher.update(ciphertextHex, "hex", "utf8");
+    decrypted += decipher.final("utf8");
+
+    return decrypted;
+  } catch {
+    throw new Error("Token verification failed");
+  }
+}
+
 /**
  * Safely decrypts data if it appears to be encrypted.
  */

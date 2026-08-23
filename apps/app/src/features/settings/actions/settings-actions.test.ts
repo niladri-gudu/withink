@@ -25,9 +25,13 @@ vi.mock("@/lib/r2", () => ({
 vi.mock("@/lib/db", () => {
   const mockDeleteOne = vi.fn().mockResolvedValue({ deletedCount: 1 });
   const mockDeleteMany = vi.fn().mockResolvedValue({ deletedCount: 1 });
+  // Default: no credential account (OAuth-only user) so the password
+  // re-authentication step is skipped in these tests.
+  const mockFindOne = vi.fn().mockResolvedValue(null);
   const mockCollection = vi.fn().mockReturnValue({
     deleteOne: mockDeleteOne,
     deleteMany: mockDeleteMany,
+    findOne: mockFindOne,
   });
   const mockDb = vi.fn().mockReturnValue({
     collection: mockCollection,
@@ -56,6 +60,25 @@ vi.mock("@/features/journal/repositories/entry-model", () => ({
 vi.mock("@/features/journal/repositories/entry-repository", () => ({
   EntryRepository: {
     invalidateUserEntryCache: vi.fn(),
+  },
+}));
+
+// Mock the additional purged collections (lock, encryption settings, feedback)
+vi.mock("@/features/lock/repositories/lock-model", () => ({
+  LockSettingsModel: {
+    deleteMany: vi.fn().mockResolvedValue({ deletedCount: 1 }),
+  },
+}));
+
+vi.mock("@/features/encryption/repositories/encryption-settings-model", () => ({
+  ClientEncryptionSettingsModel: {
+    deleteMany: vi.fn().mockResolvedValue({ deletedCount: 1 }),
+  },
+}));
+
+vi.mock("@/features/feedback/repositories/feedback-model", () => ({
+  FeedbackModel: {
+    deleteMany: vi.fn().mockResolvedValue({ deletedCount: 1 }),
   },
 }));
 

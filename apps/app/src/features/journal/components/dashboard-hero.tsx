@@ -83,7 +83,7 @@ export async function DashboardHero({
             <span className="text-foreground font-serif text-5xl leading-none font-bold">
               {currentStreak}
             </span>
-            <span className="text-muted-foreground/70 pb-1 font-hand text-lg leading-none">
+            <span className="text-muted-foreground/70 font-hand pb-1 text-lg leading-none">
               day{currentStreak === 1 ? "" : "s"} in a row
             </span>
           </div>

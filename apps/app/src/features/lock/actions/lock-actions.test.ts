@@ -11,6 +11,7 @@ import {
   lockAction,
   saveLockSettingsAction,
   unlockAction,
+  unlockSessionAction,
   verifyPasswordAndResetLockAction,
 } from "./lock-actions";
 
@@ -273,6 +274,214 @@ describe("Lock Actions Suite", () => {
     });
   });
 
+  describe("unlockSessionAction", () => {
+    const validProof = "a".repeat(64);
+
+    it("should return Unauthorized if session is missing", async () => {
+      vi.mocked(getRequestSession).mockResolvedValue(null);
+      const res = await unlockSessionAction(validProof);
+      expect(res.success).toBe(false);
+      expect(res.error).toBe("Unauthorized");
+    });
+
+    it("should reject a malformed proof", async () => {
+      vi.mocked(getRequestSession).mockResolvedValue(mockSession as any);
+      const res = await unlockSessionAction("not-a-proof");
+      expect(res.success).toBe(false);
+      expect(res.error).toBe("Invalid unlock proof.");
+    });
+
+    it("should reject the proof when no hash is bound yet (no trust-on-first-use)", async () => {
+      vi.mocked(getRequestSession).mockResolvedValue(mockSession as any);
+      vi.mocked(LockRepository.getSettings).mockResolvedValue({
+        isLockEnabled: true,
+        autoLockTimeout: 300,
+        unlockProofHash: "",
+      } as any);
+      const spyCookie = vi
+        .spyOn(LockService, "setUnlockCookie")
+        .mockResolvedValue(undefined);
+
+      const res = await unlockSessionAction(validProof);
+      expect(res.success).toBe(false);
+      expect(LockRepository.saveSettings).not.toHaveBeenCalled();
+      expect(spyCookie).not.toHaveBeenCalled();
+
+      spyCookie.mockRestore();
+    });
+
+    it("should set the unlock cookie when the proof matches the stored hash", async () => {
+      vi.mocked(getRequestSession).mockResolvedValue(mockSession as any);
+      vi.mocked(LockRepository.getSettings).mockResolvedValue({
+        isLockEnabled: true,
+        autoLockTimeout: 600,
+        unlockProofHash: LockService.hashUnlockProof(validProof),
+      } as any);
+      const spyCookie = vi
+        .spyOn(LockService, "setUnlockCookie")
+        .mockResolvedValue(undefined);
+
+      const res = await unlockSessionAction(validProof);
+      expect(res.success).toBe(true);
+      expect(spyCookie).toHaveBeenCalledWith(mockUserId, 600);
+
+      spyCookie.mockRestore();
+    });
+
+    it("should reject an incorrect proof without setting the cookie", async () => {
+      vi.mocked(getRequestSession).mockResolvedValue(mockSession as any);
+      vi.mocked(LockRepository.getSettings).mockResolvedValue({
+        isLockEnabled: true,
+        autoLockTimeout: 300,
+        unlockProofHash: LockService.hashUnlockProof("b".repeat(64)),
+      } as any);
+      const spyCookie = vi
+        .spyOn(LockService, "setUnlockCookie")
+        .mockResolvedValue(undefined);
+
+      const res = await unlockSessionAction(validProof);
+      expect(res.success).toBe(false);
+      expect(res.error).toBe("Unlock verification failed.");
+      expect(spyCookie).not.toHaveBeenCalled();
+
+      spyCookie.mockRestore();
+    });
+  });
+
+  describe("saveLockSettingsAction disable guard", () => {
+    it("should refuse to disable the lock without proof of knowledge", async () => {
+      vi.mocked(getRequestSession).mockResolvedValue(mockSession as any);
+      vi.mocked(LockRepository.getSettings).mockResolvedValue({
+        isLockEnabled: true,
+        passcodeHash: "salt:hash",
+        unlockProofHash: "",
+      } as any);
+
+      const res = await saveLockSettingsAction({
+        isLockEnabled: false,
+        autoLockTimeout: 300,
+        lockOnTabHide: false,
+      });
+      expect(res.success).toBe(false);
+      expect(LockRepository.saveSettings).not.toHaveBeenCalled();
+    });
+
+    it("should allow disabling with a valid current passcode", async () => {
+      vi.mocked(getRequestSession).mockResolvedValue(mockSession as any);
+      vi.mocked(LockRepository.getSettings).mockResolvedValue({
+        isLockEnabled: true,
+        passcodeHash: "salt:hash",
+        unlockProofHash: "",
+      } as any);
+      const spyVerify = vi
+        .spyOn(LockService, "verifyPasscode")
+        .mockReturnValue(true);
+      const spyClear = vi
+        .spyOn(LockService, "clearUnlockCookie")
+        .mockResolvedValue(undefined);
+
+      const res = await saveLockSettingsAction({
+        isLockEnabled: false,
+        autoLockTimeout: 300,
+        lockOnTabHide: false,
+        currentPasscode: "1234",
+      });
+      expect(res.success).toBe(true);
+      expect(spyVerify).toHaveBeenCalledWith("1234", "salt:hash");
+
+      spyVerify.mockRestore();
+      spyClear.mockRestore();
+    });
+
+    it("should allow disabling with a valid unlock proof", async () => {
+      vi.mocked(getRequestSession).mockResolvedValue(mockSession as any);
+      const storedProof = "c".repeat(64);
+      vi.mocked(LockRepository.getSettings).mockResolvedValue({
+        isLockEnabled: true,
+        passcodeHash: "salt:hash",
+        unlockProofHash: LockService.hashUnlockProof(storedProof),
+      } as any);
+      const spyClear = vi
+        .spyOn(LockService, "clearUnlockCookie")
+        .mockResolvedValue(undefined);
+
+      const res = await saveLockSettingsAction({
+        isLockEnabled: false,
+        autoLockTimeout: 300,
+        lockOnTabHide: false,
+        unlockProof: storedProof,
+      });
+      expect(res.success).toBe(true);
+
+      spyClear.mockRestore();
+    });
+
+    it("should refuse to re-enable/rotate when a passcode exists and no proof is given", async () => {
+      vi.mocked(getRequestSession).mockResolvedValue(mockSession as any);
+      vi.mocked(LockRepository.getSettings).mockResolvedValue({
+        isLockEnabled: false,
+        passcodeHash: "salt:hash",
+        unlockProofHash: "",
+      } as any);
+      const spyCookie = vi
+        .spyOn(LockService, "setUnlockCookie")
+        .mockResolvedValue(undefined);
+
+      // Re-enabling without setting a new secret would mint an unlock cookie.
+      const res = await saveLockSettingsAction({
+        isLockEnabled: true,
+        autoLockTimeout: 300,
+        lockOnTabHide: false,
+      });
+      expect(res.success).toBe(false);
+      expect(spyCookie).not.toHaveBeenCalled();
+
+      // Rotating the passcode would let an attacker replace the secret.
+      const rotate = await saveLockSettingsAction({
+        isLockEnabled: true,
+        passcode: "9999",
+        autoLockTimeout: 300,
+        lockOnTabHide: false,
+      });
+      expect(rotate.success).toBe(false);
+      expect(LockRepository.saveSettings).not.toHaveBeenCalled();
+      expect(spyCookie).not.toHaveBeenCalled();
+
+      spyCookie.mockRestore();
+    });
+
+    it("should bind the unlock proof on first-time passcode setup when provided", async () => {
+      vi.mocked(getRequestSession).mockResolvedValue(mockSession as any);
+      vi.mocked(LockRepository.getSettings).mockResolvedValue(null);
+      const proof = "d".repeat(64);
+      const spyHash = vi
+        .spyOn(LockService, "hashPasscode")
+        .mockReturnValue("salt:hash");
+      const spyCookie = vi
+        .spyOn(LockService, "setUnlockCookie")
+        .mockResolvedValue(undefined);
+
+      const res = await saveLockSettingsAction({
+        isLockEnabled: true,
+        passcode: "1234",
+        unlockProof: proof,
+        autoLockTimeout: 300,
+        lockOnTabHide: false,
+      });
+      expect(res.success).toBe(true);
+      expect(LockRepository.saveSettings).toHaveBeenCalledWith(mockUserId, {
+        isLockEnabled: true,
+        passcodeHash: "salt:hash",
+        unlockProofHash: LockService.hashUnlockProof(proof),
+        autoLockTimeout: 300,
+        lockOnTabHide: false,
+      });
+
+      spyHash.mockRestore();
+      spyCookie.mockRestore();
+    });
+  });
+
   describe("verifyPasswordAndResetLockAction", () => {
     it("should verify password and disable lock on success", async () => {
       vi.mocked(getRequestSession).mockResolvedValue(mockSession as any);
@@ -293,6 +502,7 @@ describe("Lock Actions Suite", () => {
       expect(LockRepository.saveSettings).toHaveBeenCalledWith(mockUserId, {
         isLockEnabled: false,
         passcodeHash: "",
+        unlockProofHash: "",
       });
       expect(spyClear).toHaveBeenCalled();
 

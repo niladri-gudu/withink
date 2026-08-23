@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { ROUTES } from "@/constants/routes";
 import { getRequestSession } from "@/lib/request-cache";
+import { isDateString } from "@/lib/utils/date";
 import { PageHeader } from "@/features/app-shell/components/page-header";
 import { SettingsShell } from "@/features/settings/components/settings-shell";
 
@@ -26,6 +28,10 @@ export default async function SettingsPage() {
     image: session.user.image,
   };
 
+  const cookieStore = await cookies();
+  const cookieToday = cookieStore.get("withink-local-date")?.value;
+  const today = isDateString(cookieToday) ? cookieToday : undefined;
+
   return (
     <div className="animate-in fade-in w-full space-y-8 duration-300">
       <PageHeader
@@ -34,6 +40,7 @@ export default async function SettingsPage() {
         title="Diary"
         accent="settings."
         description="Adjust your writing experience and preferences"
+        today={today}
       />
 
       <SettingsShell initialUser={settingsUser} />

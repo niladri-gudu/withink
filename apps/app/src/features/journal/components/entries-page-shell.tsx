@@ -28,6 +28,7 @@ interface EntriesPageShellProps {
     averageWords: number;
   };
   localToday: string;
+  accountEncrypted: boolean;
 }
 
 export function EntriesPageShell({
@@ -36,6 +37,7 @@ export function EntriesPageShell({
   initialCalendarEntries,
   initialStreakData,
   localToday,
+  accountEncrypted,
 }: EntriesPageShellProps) {
   const [calendarEntries, setCalendarEntries] = useState<CalendarEntry[]>(
     initialCalendarEntries,
@@ -66,6 +68,7 @@ export function EntriesPageShell({
         title="All"
         accent="reflections."
         description="Browse and search your journal history"
+        today={localToday}
         action={
           <Button asChild className="cursor-pointer gap-2">
             <Link
@@ -100,6 +103,7 @@ export function EntriesPageShell({
               initialEntries={initialEntries}
               initialTotal={initialTotal}
               localToday={localToday}
+              accountEncrypted={accountEncrypted}
               onEntryDeleted={handleEntryDeleted}
             />
           </div>

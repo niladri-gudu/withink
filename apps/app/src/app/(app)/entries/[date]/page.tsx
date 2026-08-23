@@ -122,6 +122,7 @@ export default async function EntryPage({
   // 4. Render the fully-functional JournalEditorShell
   return (
     <JournalEditorShell
+      key={date}
       date={date}
       initialTitle={entry?.title ?? ""}
       initialContent={entry?.contentJson ?? ""}

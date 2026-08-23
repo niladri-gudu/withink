@@ -7,8 +7,11 @@ const DOCUMENT_STORE = "document_cache";
 const SYNC_STORE = "sync_queue";
 const DB_VERSION = 2;
 
+let dbPromise: Promise<IDBDatabase> | null = null;
+
 function getDB(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
+  if (dbPromise) return dbPromise;
+  const opening = new Promise<IDBDatabase>((resolve, reject) => {
     if (typeof window === "undefined") {
       reject(new Error("IndexedDB is only available in the browser"));
       return;
@@ -16,7 +19,14 @@ function getDB(): Promise<IDBDatabase> {
     const request = window.indexedDB.open(DB_NAME, DB_VERSION);
 
     request.onerror = () => reject(request.error);
-    request.onsuccess = () => resolve(request.result);
+    request.onsuccess = () => {
+      const db = request.result;
+      db.onversionchange = () => {
+        db.close();
+        dbPromise = null;
+      };
+      resolve(db);
+    };
 
     request.onupgradeneeded = () => {
       const db = request.result;
@@ -31,6 +41,16 @@ function getDB(): Promise<IDBDatabase> {
       }
     };
   });
+  // Cache only settled-successful connections: a rejected open (SSR call,
+  // transient failure) must not poison every future operation.
+  dbPromise = opening.then(
+    () => opening,
+    (err) => {
+      if (dbPromise === opening) dbPromise = null;
+      throw err;
+    },
+  );
+  return dbPromise;
 }
 
 export const diaryCacheDB = {
@@ -161,7 +181,11 @@ export const diaryCacheDB = {
         request.onsuccess = () => resolve();
       });
     } catch (err) {
+      // Writes must reject: the document store is part of the durability
+      // guarantee. Swallowing here would let autosave report "synced" while
+      // nothing was stored.
       console.error("IndexedDB setDocument error:", err);
+      throw err;
     }
   },
 
@@ -211,7 +235,10 @@ export const diaryCacheDB = {
         request.onsuccess = () => resolve();
       });
     } catch (err) {
+      // Writes must reject: a dropped queue item would silently lose the
+      // cloud push for that entry.
       console.error("IndexedDB setSyncItem error:", err);
+      throw err;
     }
   },
 
@@ -232,34 +259,29 @@ export const diaryCacheDB = {
   },
 
   async getAllSyncItems(): Promise<{ key: string; value: string }[]> {
-    try {
-      const db = await getDB();
-      return new Promise((resolve, reject) => {
-        const transaction = db.transaction(SYNC_STORE, "readonly");
-        const store = transaction.objectStore(SYNC_STORE);
+    const db = await getDB();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(SYNC_STORE, "readonly");
+      const store = transaction.objectStore(SYNC_STORE);
 
-        const entries: { key: string; value: string }[] = [];
-        const request = store.openCursor();
+      const entries: { key: string; value: string }[] = [];
+      const request = store.openCursor();
 
-        request.onerror = () => reject(request.error);
-        request.onsuccess = (event) => {
-          const cursor = (event.target as IDBRequest<IDBCursorWithValue | null>)
-            .result;
-          if (cursor) {
-            entries.push({
-              key: cursor.primaryKey as string,
-              value: cursor.value as string,
-            });
-            cursor.continue();
-          } else {
-            resolve(entries);
-          }
-        };
-      });
-    } catch (err) {
-      console.error("IndexedDB getAllSyncItems error:", err);
-      return [];
-    }
+      request.onerror = () => reject(request.error);
+      request.onsuccess = (event) => {
+        const cursor = (event.target as IDBRequest<IDBCursorWithValue | null>)
+          .result;
+        if (cursor) {
+          entries.push({
+            key: cursor.primaryKey as string,
+            value: cursor.value as string,
+          });
+          cursor.continue();
+        } else {
+          resolve(entries);
+        }
+      };
+    });
   },
 
   async clear(): Promise<void> {

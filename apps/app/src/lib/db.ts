@@ -5,7 +5,14 @@ import { MongoClient } from "mongodb";
 import { env } from "@/config/env";
 
 const uri = env.MONGODB_URI;
-const options = {};
+const options = {
+  // Match the Mongoose client's fail-fast posture: an unreachable cluster
+  // should error in seconds, not hang requests for the 30s driver default.
+  serverSelectionTimeoutMS: 5_000,
+  connectTimeoutMS: 10_000,
+  socketTimeoutMS: 45_000,
+  maxPoolSize: 10,
+};
 
 let client: MongoClient;
 

@@ -96,6 +96,12 @@ function syncListFingerprint(
   return entries.map((e) => `${e.date}:${e.updatedAt}`).join("|");
 }
 
+// Single-flight guard for full pulls. Concurrent triggers (unlock, network
+// recovery, visibility change, the provider interval, the entries-page idle
+// sync) would otherwise interleave IndexedDB reads/writes and widen every
+// prune/pull race window. Late callers piggyback on the in-flight run.
+let pullInFlight: Promise<boolean> | null = null;
+
 export interface LocalTimelineFilters {
   moodFilter?: number | "all";
   timeFilter?: "all" | "week" | "month";
@@ -220,8 +226,8 @@ export const diaryCacheService = {
       );
 
       // Filter out failures and sort descending by date
-      const result = (decrypted.filter(Boolean) as CachedMetadata[]).sort((a, b) =>
-        b.date.localeCompare(a.date),
+      const result = (decrypted.filter(Boolean) as CachedMetadata[]).sort(
+        (a, b) => b.date.localeCompare(a.date),
       );
       timelineCache = { key: masterKey, entries: result };
       return result;
@@ -242,10 +248,17 @@ export const diaryCacheService = {
   },
 
   /**
-   * Deletes a record from the local cache
+   * Deletes every local record for a date after the entry was deleted on the
+   * server. All three stores are purged: leaving the document blob behind
+   * would let a deleted entry resurrect in the editor (and get re-pushed to
+   * the cloud), and leaving its sync-queue item would re-push it explicitly.
    */
   async deleteLocalMetadata(date: string): Promise<void> {
-    await diaryCacheDB.delete(date);
+    await Promise.all([
+      diaryCacheDB.delete(date),
+      diaryCacheDB.deleteDocument(date),
+      diaryCacheDB.deleteSyncItem(date),
+    ]);
     invalidateTimelineCache();
   },
 
@@ -253,6 +266,21 @@ export const diaryCacheService = {
    * Background sync local cache with the server database
    */
   async syncDiaryCache(
+    masterKey: CryptoKey,
+    localToday: string,
+    onProgress?: (current: number, total: number) => void,
+  ): Promise<boolean> {
+    if (pullInFlight) return pullInFlight;
+    const run = this.runPull(masterKey, localToday, onProgress);
+    pullInFlight = run;
+    try {
+      return await run;
+    } finally {
+      if (pullInFlight === run) pullInFlight = null;
+    }
+  },
+
+  async runPull(
     masterKey: CryptoKey,
     localToday: string,
     onProgress?: (current: number, total: number) => void,
@@ -298,7 +326,8 @@ export const diaryCacheService = {
             const parsed = JSON.parse(decryptedStr) as CachedMetadata;
             // Records written by older code (before full-text metadata) have no
             // `v: 2` marker; treat them as stale so they are re-fetched once.
-            localMap[entry.key] = parsed.v === METADATA_VERSION ? parsed.updatedAt : "";
+            localMap[entry.key] =
+              parsed.v === METADATA_VERSION ? parsed.updatedAt : "";
           } catch {
             // If decryption fails, mark it as empty so it gets re-fetched
             localMap[entry.key] = "";
@@ -306,13 +335,21 @@ export const diaryCacheService = {
         }),
       );
 
-      // 3. Prune entries deleted on other devices (never prune pending local edits)
+      // 3. Prune entries deleted on other devices (never prune pending local
+      //    edits). All stores are purged so nothing resurrects locally. The
+      //    queue is re-checked per date immediately before deleting: an entry
+      //    created (or edited) while this pull was in flight cannot be in the
+      //    start-of-run snapshot, and pruning its queue item would destroy it.
       const serverDates = new Set(serverEntries.map((e) => e.date));
       const pruneKeys = Object.keys(localMap).filter(
         (date) => !serverDates.has(date) && !pendingDates.has(date),
       );
       for (const date of pruneKeys) {
+        const nowPending = await diaryCacheDB.getSyncItem(date);
+        if (nowPending) continue;
         await diaryCacheDB.delete(date);
+        await diaryCacheDB.deleteDocument(date);
+        await diaryCacheDB.deleteSyncItem(date);
       }
 
       // 4. Identify entries to fetch (missing or updated on server, excluding
@@ -336,6 +373,7 @@ export const diaryCacheService = {
       // 5. Fetch dirty entries in small concurrent chunks to prevent throttling
       const CONCURRENCY_LIMIT = 5;
       let completedCount = 0;
+      let failedCount = 0;
       onProgress?.(0, fetchList.length);
 
       for (let i = 0; i < fetchList.length; i += CONCURRENCY_LIMIT) {
@@ -344,53 +382,69 @@ export const diaryCacheService = {
           chunk.map(async (item) => {
             try {
               const resEntry = await getEntryAction(item.date, localToday);
-              if (resEntry.success && resEntry.data) {
-                const entry = resEntry.data;
+              if (!resEntry.success || !resEntry.data) {
+                failedCount++;
+                console.error(
+                  `Failed to fetch entry for ${item.date}:`,
+                  resEntry.error,
+                );
+                return;
+              }
 
-                // Decrypt fields locally
-                const title = await decryptText(entry.title, masterKey);
-                const contentText = await decryptText(
-                  entry.contentText,
+              const entry = resEntry.data;
+
+              // Decrypt fields locally
+              const title = await decryptText(entry.title, masterKey);
+              const contentText = await decryptText(
+                entry.contentText,
+                masterKey,
+              );
+
+              let contentHtml = "";
+              let contentJson = {};
+              try {
+                contentHtml = await decryptText(entry.contentHtml, masterKey);
+                const contentJsonRaw = await decryptText(
+                  entry.contentJson,
                   masterKey,
                 );
-
-                let contentHtml = "";
-                let contentJson = {};
-                try {
-                  contentHtml = await decryptText(entry.contentHtml, masterKey);
-                  const contentJsonRaw = await decryptText(
-                    entry.contentJson,
-                    masterKey,
-                  );
-                  contentJson = JSON.parse(contentJsonRaw);
-                } catch (err) {
-                  console.error(
-                    "Failed to decrypt full document content fields:",
-                    err,
-                  );
-                }
-
-                await this.saveLocalDocument(
-                  entry.date,
-                  title,
-                  entry.mood,
-                  contentHtml,
-                  contentText,
-                  contentJson,
-                  masterKey,
-                );
-
-                await this.saveLocalMetadata(
-                  entry.date,
-                  title,
-                  contentText,
-                  entry.wordCount,
-                  entry.mood,
-                  entry.updatedAt,
-                  masterKey,
+                contentJson = JSON.parse(contentJsonRaw);
+              } catch (err) {
+                console.error(
+                  "Failed to decrypt full document content fields:",
+                  err,
                 );
               }
+
+              // Re-check the pending queue immediately before writing: the
+              // user may have started editing this date while the pull was
+              // in flight. Never clobber a locally-pending edit.
+              const nowPending = await diaryCacheDB.getSyncItem(item.date);
+              if (nowPending) {
+                return;
+              }
+
+              await this.saveLocalDocument(
+                entry.date,
+                title,
+                entry.mood,
+                contentHtml,
+                contentText,
+                contentJson,
+                masterKey,
+              );
+
+              await this.saveLocalMetadata(
+                entry.date,
+                title,
+                contentText,
+                entry.wordCount,
+                entry.mood,
+                entry.updatedAt,
+                masterKey,
+              );
             } catch (e) {
+              failedCount++;
               console.error(`Failed to sync entry for ${item.date}:`, e);
             } finally {
               completedCount++;
@@ -400,8 +454,14 @@ export const diaryCacheService = {
         );
       }
 
-      lastServerSyncFingerprint = { key: masterKey, fingerprint };
-      return true;
+      // Commit the fast-path fingerprint only when every entry synced
+      // cleanly — otherwise subsequent pulls would skip re-fetching the
+      // failed entries until the server list changes or a re-unlock.
+      if (failedCount === 0) {
+        lastServerSyncFingerprint = { key: masterKey, fingerprint };
+        return true;
+      }
+      return false;
     } catch (err) {
       console.error("Cache synchronization failed:", err);
       return false;
@@ -534,18 +594,25 @@ export const diaryCacheService = {
           );
 
           if (result.success && result.data) {
-            // Delete from queue and update local metadata/document timestamps
-            await this.removeOfflineSync(payload.date);
-            await this.saveLocalMetadata(
-              payload.date,
-              payload.title,
-              payload.contentText,
-              payload.wordCount,
-              payload.mood,
-              result.data.updatedAt,
-              masterKey,
-            );
-            succeeded.push(payload.date);
+            // Compare-and-delete: while the save round-trip was in flight,
+            // autosave may have enqueued a NEWER payload for this date. Only
+            // consume the queue item (and stamp local metadata) when it is
+            // still exactly the version that was flushed; otherwise leave the
+            // newer edit queued for the next run.
+            const current = await diaryCacheDB.getSyncItem(item.key);
+            if (!current || current === item.value) {
+              await this.removeOfflineSync(payload.date);
+              await this.saveLocalMetadata(
+                payload.date,
+                payload.title,
+                payload.contentText,
+                payload.wordCount,
+                payload.mood,
+                result.data.updatedAt,
+                masterKey,
+              );
+              succeeded.push(payload.date);
+            }
           } else {
             failed.push(payload.date);
           }

@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { ROUTES } from "@/constants/routes";
 import { getRequestSession } from "@/lib/request-cache";
+import { isDateString } from "@/lib/utils/date";
 import { PageHeader } from "@/features/app-shell/components/page-header";
 import { MediaGallery } from "@/features/media/components/media-gallery";
 import { getMediaLibraryAndStats } from "@/features/media/services/media-service";
@@ -24,6 +26,9 @@ export default async function MediaPage() {
   // client-side server actions after mount. The R2 listing is one call.
   const { files, stats } = await getMediaLibraryAndStats(session.user.id);
 
+  const cookieStore = await cookies();
+  const cookieToday = cookieStore.get("withink-local-date")?.value;
+
   return (
     <div className="animate-in fade-in w-full space-y-8 duration-300">
       <PageHeader
@@ -32,6 +37,7 @@ export default async function MediaPage() {
         title="Memory"
         accent="gallery."
         description="Revisit and manage all pictures attached to your entries"
+        today={isDateString(cookieToday) ? cookieToday : undefined}
       />
 
       <MediaGallery initialFiles={files} initialStats={stats} />

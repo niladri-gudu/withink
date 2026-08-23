@@ -42,7 +42,10 @@ interface MediaGalleryProps {
   initialStats: StorageStats;
 }
 
-export function MediaGallery({ initialFiles, initialStats }: MediaGalleryProps) {
+export function MediaGallery({
+  initialFiles,
+  initialStats,
+}: MediaGalleryProps) {
   const [files, setFiles] = React.useState<MediaFile[]>(initialFiles);
   const [stats, setStats] = React.useState<StorageStats>(initialStats);
   const [loading, setLoading] = React.useState(false);
@@ -170,6 +173,7 @@ export function MediaGallery({ initialFiles, initialStats }: MediaGalleryProps) 
             disabled={loading || statsLoading}
             className="text-muted-foreground hover:text-foreground h-9 w-9 self-end rounded-xl md:self-auto"
             title="Refresh gallery"
+            aria-label="Refresh gallery"
           >
             <RefreshCw
               className={`h-4 w-4 ${loading || statsLoading ? "animate-spin" : ""}`}
@@ -191,6 +195,7 @@ export function MediaGallery({ initialFiles, initialStats }: MediaGalleryProps) 
           {searchQuery && (
             <button
               onClick={() => setSearchQuery("")}
+              aria-label="Clear search"
               className="hover:bg-secondary text-muted-foreground absolute top-1/2 right-3 -translate-y-1/2 rounded-full p-0.5"
             >
               <X className="h-3 w-3" />
@@ -270,7 +275,7 @@ export function MediaGallery({ initialFiles, initialStats }: MediaGalleryProps) 
               <h3 className="text-title font-semibold">No memories found</h3>
               <p className="text-body-small text-muted-foreground">
                 {searchQuery
-                  ? "We couldn&apos;t find any objects matching your search query."
+                  ? "We couldn’t find any objects matching your search query."
                   : "Photos or images you drag and drop into your journal editor will appear here."}
               </p>
             </div>

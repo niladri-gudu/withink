@@ -55,6 +55,19 @@ const pendingPromises = new Map<
 >();
 let messageCounter = 0;
 
+// Upper bound for a single compression job. Without it, a worker that dies
+// or loses a reply would leave the awaiting promise pending forever — the
+// editor's upload placeholder would never resolve and the broken placeholder
+// node could end up persisted into the entry.
+const WORKER_JOB_TIMEOUT_MS = 20_000;
+
+function rejectAllPending(reason: string) {
+  for (const [id, promise] of pendingPromises) {
+    promise.reject(new Error(reason));
+    pendingPromises.delete(id);
+  }
+}
+
 function getWorker(): Worker | null {
   if (typeof window === "undefined") return null;
   if (!workerInstance) {
@@ -72,6 +85,14 @@ function getWorker(): Worker | null {
             promise.reject(new Error(error || "Worker compression failed"));
           }
         }
+      };
+      // A crashed/errored worker will never reply to pending jobs — fail them
+      // fast so callers fall back to the original file instead of hanging.
+      workerInstance.onerror = () => {
+        console.warn("Image-compressor worker errored; failing pending jobs");
+        rejectAllPending("Image worker failed unexpectedly");
+        workerInstance?.terminate();
+        workerInstance = null;
       };
     } catch (err) {
       console.warn("Failed to initialize image-compressor Web Worker:", err);
@@ -168,7 +189,20 @@ export async function compressImage(
       const id = `img-msg-${messageCounter}`;
 
       blob = await new Promise<Blob>((resolve, reject) => {
-        pendingPromises.set(id, { resolve, reject });
+        const timer = setTimeout(() => {
+          pendingPromises.delete(id);
+          reject(new Error("Image worker timed out"));
+        }, WORKER_JOB_TIMEOUT_MS);
+        pendingPromises.set(id, {
+          resolve: (value) => {
+            clearTimeout(timer);
+            resolve(value);
+          },
+          reject: (error) => {
+            clearTimeout(timer);
+            reject(error);
+          },
+        });
         worker.postMessage({ id, file, maxWidth, maxHeight, quality });
       });
     } else {

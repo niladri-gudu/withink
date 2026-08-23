@@ -36,9 +36,9 @@ export default function Error({ error, reset }: ErrorProps) {
         <span className="border-border bg-secondary/50 text-muted-foreground mx-auto flex h-16 w-16 items-center justify-center rounded-full border">
           <Waves className="h-7 w-7" />
         </span>
-        <h2 className="text-foreground font-serif text-2xl font-semibold tracking-tight">
+        <h1 className="text-foreground font-serif text-2xl font-semibold tracking-tight">
           Something went astray
-        </h2>
+        </h1>
         <p className="text-muted-foreground text-sm leading-relaxed">
           The diary encountered an unexpected ripple. Don&apos;t worry, your
           journal is safe. We can try loading it again.

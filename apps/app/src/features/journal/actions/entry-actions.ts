@@ -1,8 +1,11 @@
 "use server";
 
-import { addDays, getLocalDateString, isDateString } from "@/lib/utils/date";
+import { z } from "zod";
+
 import { getRequestSession } from "@/lib/request-cache";
+import { addDays, getLocalDateString, isDateString } from "@/lib/utils/date";
 import { handleError } from "@/server/errors";
+import { rateLimit } from "@/server/rate-limit";
 import { LockService } from "@/features/lock/services/lock-service";
 
 import {
@@ -78,6 +81,25 @@ export async function saveEntryAction(
   }
 }
 
+// Pagination and filter arguments come from the client (Server Action args
+// are attacker-controlled) — clamp them before they reach Mongo so a crafted
+// call can't dump the whole collection or inject query operators.
+const entriesListArgsSchema = z.object({
+  page: z.number().int().min(1).max(10_000),
+  limit: z.number().int().min(1).max(50),
+  filters: z
+    .object({
+      search: z.string().trim().max(200).optional(),
+      mood: z.number().int().min(1).max(5).nullable().optional(),
+      timeFilter: z.enum(["all", "week", "month"]).optional(),
+      today: z
+        .string()
+        .regex(/^\d{4}-\d{2}-\d{2}$/)
+        .optional(),
+    })
+    .optional(),
+});
+
 export async function getEntriesListAction(
   page: number,
   limit: number,
@@ -103,14 +125,29 @@ export async function getEntriesListAction(
       return { success: false, error: "Locked" };
     }
 
+    const parsed = entriesListArgsSchema.parse({ page, limit, filters });
+
+    // Search is an escaped-but-unindexed $regex scan plus a parallel count —
+    // throttle per user so a scripted client can't pin shared Mongo CPU.
+    const limit_ = await rateLimit(`entries-list:${session.user.id}`, {
+      limit: 30,
+      windowSeconds: 60,
+    });
+    if (!limit_.success) {
+      return { success: false, error: "Too many requests. Try again soon." };
+    }
+
     const result = await JournalService.getEntriesPage(
       session.user.id,
-      page,
-      limit,
-      filters,
+      parsed.page,
+      parsed.limit,
+      parsed.filters,
     );
     return { success: true, data: result };
   } catch (err) {
+    if (err instanceof z.ZodError) {
+      return { success: false, error: "Invalid request" };
+    }
     const appError = handleError(err);
     return { success: false, error: appError.safeMessage };
   }
@@ -311,9 +348,7 @@ export async function getMediaEntriesAction(): Promise<{
       return { success: false, error: "Locked" };
     }
 
-    const entries = await JournalService.getAllEntriesForMedia(
-      session.user.id,
-    );
+    const entries = await JournalService.getAllEntriesForMedia(session.user.id);
     return { success: true, data: entries };
   } catch (err) {
     const appError = handleError(err);

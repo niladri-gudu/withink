@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { getRequestSession } from "@/lib/request-cache";
 import { handleError } from "@/server/errors";
 import { logger } from "@/server/logger";
+import { rateLimit } from "@/server/rate-limit";
 import { ExportService } from "@/features/export/services/export-service";
 import { LockService } from "@/features/lock/services/lock-service";
 
@@ -16,6 +17,20 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  // Export is the most expensive endpoint (full DB scan + per-image R2
+  // fetches + ZIP compression). Cap it so concurrent requests can't exhaust
+  // server memory or bucket throughput.
+  const limit = await rateLimit(`export:${session.user.id}`, {
+    limit: 3,
+    windowSeconds: 3600,
+  });
+  if (!limit.success) {
+    return NextResponse.json(
+      { error: "Export limit reached. Please try again later." },
+      { status: 429 },
+    );
+  }
+
   const unlocked = await LockService.isSessionUnlocked(session.user.id);
   if (!unlocked) {
     return NextResponse.json({ error: "Locked" }, { status: 403 });
@@ -25,7 +40,9 @@ export async function GET() {
     const bytes = await ExportService.generateExportZip(session.user.id);
     const filename = `withink-export-${new Date().toLocaleDateString("en-CA")}.zip`;
 
-    return new NextResponse(Buffer.from(bytes), {
+    // bytes is an ArrayBuffer — handed straight to the response body, so the
+    // archive is never copied a second time at peak memory.
+    return new NextResponse(bytes, {
       status: 200,
       headers: {
         "Content-Type": "application/zip",

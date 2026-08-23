@@ -8,9 +8,9 @@ import { ArrowLeft, Delete, Loader2 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { toast } from "sonner";
 
-import { GateLayout } from "@/components/gate-layout";
 import { useFocusTrap } from "@/hooks/use-focus-trap";
 import { useEncryption } from "@/providers/encryption-provider";
+import { GateLayout } from "@/components/gate-layout";
 
 import { unlockAction } from "../actions/lock-actions";
 
@@ -19,6 +19,9 @@ interface LockScreenProps {
   /** Re-locks the session if the background server verification rejects the PIN
    *  (e.g. the passcode was rotated on another device). */
   onServerReject?: () => void;
+  /** Fired once the server has accepted the unlock and the unlock cookie is
+   *  set, so gated server content can stream in behind the reveal. */
+  onUnlockedSynced?: () => void;
   /** Which screen to boot into (used by the shell after a rejected unlock). */
   initialView?: ScreenView;
   userEmail?: string | null;
@@ -29,6 +32,7 @@ type ScreenView = "pin" | "password-verify";
 export function LockScreen({
   onUnlockSuccess,
   onServerReject,
+  onUnlockedSynced,
   initialView = "pin",
 }: LockScreenProps) {
   const [pin, setPin] = React.useState<string>("");
@@ -47,8 +51,12 @@ export function LockScreen({
     };
   }, []);
 
-  const { isClientEncrypted, unlockWithPin, unlockWithPassword } =
-    useEncryption();
+  const {
+    isClientEncrypted,
+    unlockWithPin,
+    unlockWithPassword,
+    getUnlockProof,
+  } = useEncryption();
 
   // Trap focus inside the entire lock screen dialog when active
   const lockContainerRef = useFocusTrap(true);
@@ -125,11 +133,20 @@ export function LockScreen({
             // Background server verification. Note: this deliberately runs even
             // after the LockScreen unmounts (isMounted goes false on success),
             // because a rejected PIN must still roll the whole session back.
-            void unlockAction(pin).then((res) => {
-              if (!res.success) {
+            // The unlock proof is attached so the server can (re)bind it —
+            // the passcode is verified server-side in the same call.
+            void getUnlockProof()
+              .then((proof) => unlockAction(pin, proof ?? undefined))
+              .then((res) => {
+                if (!res.success) {
+                  onServerReject?.();
+                } else {
+                  onUnlockedSynced?.();
+                }
+              })
+              .catch(() => {
                 onServerReject?.();
-              }
-            });
+              });
             return;
           }
 
@@ -167,6 +184,7 @@ export function LockScreen({
             setIsVerifying(false);
           }
           onUnlockSuccess();
+          onUnlockedSynced?.();
         } else {
           if (isMounted.current) {
             setShake(true);
@@ -185,8 +203,10 @@ export function LockScreen({
     isVerifying,
     onUnlockSuccess,
     onServerReject,
+    onUnlockedSynced,
     isClientEncrypted,
     unlockWithPin,
+    getUnlockProof,
   ]);
 
   const submitPasswordRecovery = async (e: React.FormEvent) => {
@@ -225,9 +245,9 @@ export function LockScreen({
             className="flex w-full flex-col items-center"
           >
             <div className="space-y-1.5 text-center">
-              <h2 className="text-h2 text-foreground font-serif font-bold">
+              <h1 className="text-h2 text-foreground font-serif font-bold">
                 Welcome back
-              </h2>
+              </h1>
               <p className="text-caption font-serif tracking-[0.16em] uppercase">
                 Diary Lock
               </p>
@@ -271,124 +291,124 @@ export function LockScreen({
               </motion.div>
             )}
 
-              {/* Tactile Keypad */}
-              {!isDecrypting && (
-                <div className="mb-8 grid max-w-[280px] grid-cols-3 justify-items-center gap-x-6 gap-y-4">
-                  {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((num) => (
-                    <motion.button
-                      key={num}
-                      onClick={() => handleKeyPress(num)}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      className="border-border bg-card text-foreground hover:bg-secondary/80 focus-visible:ring-ring flex h-16 w-16 items-center justify-center rounded-full border text-xl font-medium shadow-sm transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
-                    >
-                      {num}
-                    </motion.button>
-                  ))}
-
+            {/* Tactile Keypad */}
+            {!isDecrypting && (
+              <div className="mb-8 grid max-w-[280px] grid-cols-3 justify-items-center gap-x-6 gap-y-4">
+                {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((num) => (
                   <motion.button
-                    onClick={handleClear}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="text-muted-foreground hover:text-foreground focus-visible:ring-ring flex h-16 w-16 items-center justify-center rounded-full border border-transparent text-sm font-medium focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
-                  >
-                    Clear
-                  </motion.button>
-
-                  <motion.button
-                    onClick={() => handleKeyPress("0")}
+                    key={num}
+                    onClick={() => handleKeyPress(num)}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     className="border-border bg-card text-foreground hover:bg-secondary/80 focus-visible:ring-ring flex h-16 w-16 items-center justify-center rounded-full border text-xl font-medium shadow-sm transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
                   >
-                    0
+                    {num}
                   </motion.button>
+                ))}
 
-                  <motion.button
-                    onClick={handleBackspace}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    aria-label="Backspace"
-                    className="text-muted-foreground hover:text-foreground focus-visible:ring-ring flex h-16 w-16 items-center justify-center rounded-full border border-transparent focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
-                  >
-                    <Delete className="h-5 w-5" />
-                  </motion.button>
-                </div>
-              )}
-
-              {/* Use Diary Password fallback */}
-              {!isDecrypting && (
-                <button
-                  onClick={() => setView("password-verify")}
-                  className="text-body-small text-muted-foreground hover:text-accent font-medium transition-colors"
+                <motion.button
+                  onClick={handleClear}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="text-muted-foreground hover:text-foreground focus-visible:ring-ring flex h-16 w-16 items-center justify-center rounded-full border border-transparent text-sm font-medium focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
                 >
-                  Use Diary Password instead
-                </button>
-              )}
-            </motion.div>
-          )}
+                  Clear
+                </motion.button>
 
-          {view === "password-verify" && (
-            <motion.div
-              key="password-verify-view"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2 }}
-              className="flex w-full flex-col items-center"
-            >
-              <div className="space-y-1.5 text-center">
-                <h2 className="text-h2 text-foreground font-serif font-bold">
-                  Verify Diary Password
-                </h2>
-                <p className="text-caption font-serif tracking-[0.16em] uppercase">
-                  Diary Lock
-                </p>
+                <motion.button
+                  onClick={() => handleKeyPress("0")}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="border-border bg-card text-foreground hover:bg-secondary/80 focus-visible:ring-ring flex h-16 w-16 items-center justify-center rounded-full border text-xl font-medium shadow-sm transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+                >
+                  0
+                </motion.button>
+
+                <motion.button
+                  onClick={handleBackspace}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  aria-label="Backspace"
+                  className="text-muted-foreground hover:text-foreground focus-visible:ring-ring flex h-16 w-16 items-center justify-center rounded-full border border-transparent focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+                >
+                  <Delete className="h-5 w-5" />
+                </motion.button>
               </div>
-              <p className="text-body-small text-muted-foreground mt-2 mb-6 max-w-xs">
-                Enter your Diary Password to disable the PIN lock and access
-                your diary.
-              </p>
+            )}
 
-              <form
-                onSubmit={submitPasswordRecovery}
-                className="w-full space-y-4"
+            {/* Use Diary Password fallback */}
+            {!isDecrypting && (
+              <button
+                onClick={() => setView("password-verify")}
+                className="text-body-small text-muted-foreground hover:text-accent font-medium transition-colors"
               >
-                <Input
-                  id="login-password"
-                  type="password"
-                  placeholder="Enter Diary Password"
-                  value={loginPassword}
-                  onChange={(e) => setLoginPassword(e.target.value)}
-                  className="h-12 rounded-xl"
-                  autoComplete="current-password"
-                  autoFocus
-                  required
-                />
+                Use Diary Password instead
+              </button>
+            )}
+          </motion.div>
+        )}
 
-                <Button
-                  type="submit"
-                  className="w-full rounded-xl py-6"
-                  disabled={isSubmittingPassword}
-                >
-                  {isSubmittingPassword ? (
-                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  ) : null}
-                  Unlock with Password
-                </Button>
+        {view === "password-verify" && (
+          <motion.div
+            key="password-verify-view"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+            className="flex w-full flex-col items-center"
+          >
+            <div className="space-y-1.5 text-center">
+              <h1 className="text-h2 text-foreground font-serif font-bold">
+                Verify Diary Password
+              </h1>
+              <p className="text-caption font-serif tracking-[0.16em] uppercase">
+                Diary Lock
+              </p>
+            </div>
+            <p className="text-body-small text-muted-foreground mt-2 mb-6 max-w-xs">
+              Enter your Diary Password to disable the PIN lock and access your
+              diary.
+            </p>
 
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="text-muted-foreground hover:text-foreground mt-2 w-full gap-2 rounded-xl py-5"
-                  onClick={() => setView("pin")}
-                >
-                  <ArrowLeft className="h-4 w-4" />
-                  <span>Back to PIN</span>
-                </Button>
-              </form>
-            </motion.div>
-          )}
+            <form
+              onSubmit={submitPasswordRecovery}
+              className="w-full space-y-4"
+            >
+              <Input
+                id="login-password"
+                type="password"
+                placeholder="Enter Diary Password"
+                value={loginPassword}
+                onChange={(e) => setLoginPassword(e.target.value)}
+                className="h-12 rounded-xl"
+                autoComplete="current-password"
+                autoFocus
+                required
+              />
+
+              <Button
+                type="submit"
+                className="w-full rounded-xl py-6"
+                disabled={isSubmittingPassword}
+              >
+                {isSubmittingPassword ? (
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                ) : null}
+                Unlock with Password
+              </Button>
+
+              <Button
+                type="button"
+                variant="ghost"
+                className="text-muted-foreground hover:text-foreground mt-2 w-full gap-2 rounded-xl py-5"
+                onClick={() => setView("pin")}
+              >
+                <ArrowLeft className="h-4 w-4" />
+                <span>Back to PIN</span>
+              </Button>
+            </form>
+          </motion.div>
+        )}
       </AnimatePresence>
     </GateLayout>
   );
