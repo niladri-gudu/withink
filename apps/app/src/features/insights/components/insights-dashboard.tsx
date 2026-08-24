@@ -86,7 +86,7 @@ export function InsightsDashboard({
   return (
     <div className="relative w-full space-y-10">
       {isLoading && (
-        <div className="text-muted-foreground/60 absolute top-6 right-10 flex items-center gap-2 font-serif text-xs uppercase">
+        <div className="text-muted-foreground/60 absolute right-10 top-6 flex items-center gap-2 font-serif text-xs uppercase">
           <Loader2 className="text-accent h-3 w-3 animate-spin" />
           <span>Adjusting timezone…</span>
         </div>
@@ -95,7 +95,7 @@ export function InsightsDashboard({
       {/* Running head + page title */}
       <header>
         <div className="border-border/70 flex items-baseline justify-between gap-4 border-b pb-3">
-          <span className="text-muted-foreground/70 font-serif text-[11px] font-semibold tracking-[0.2em] uppercase">
+          <span className="text-muted-foreground/70 font-serif text-[11px] font-semibold uppercase tracking-[0.2em]">
             Insights
           </span>
           <span className="text-muted-foreground/50 font-hand text-base leading-none">
@@ -106,7 +106,7 @@ export function InsightsDashboard({
           <p className="text-muted-foreground/70 font-hand text-lg leading-snug">
             a quiet look at your year
           </p>
-          <h1 className="text-foreground font-serif text-3xl leading-none font-bold tracking-tight sm:text-4xl">
+          <h1 className="text-foreground font-serif text-3xl font-bold leading-none tracking-tight sm:text-4xl">
             Private{" "}
             <span className="text-accent mt-1 block pl-1 text-4xl font-normal italic sm:mt-0 sm:inline sm:text-5xl">
               insights.
@@ -122,44 +122,44 @@ export function InsightsDashboard({
       {/* At a glance — one ruled passage, four entries */}
       <Card className="border-border overflow-hidden rounded-xl border">
         <div className="grid grid-cols-2 md:grid-cols-4">
-          <div className="border-border/70 p-6">
-            <p className="text-muted-foreground/70 font-serif text-[11px] font-semibold tracking-[0.2em] uppercase">
+          <div className="border-border/70 p-4 sm:p-6">
+            <p className="text-muted-foreground/70 font-serif text-[11px] font-semibold uppercase tracking-[0.2em]">
               Current streak
             </p>
-            <p className="text-foreground mt-2 font-serif text-4xl font-bold tracking-tight">
+            <p className="text-foreground mt-2 font-serif text-3xl font-bold tracking-tight sm:text-4xl">
               {streaks.currentStreak}
             </p>
             <p className="text-muted-foreground/60 font-hand mt-1 text-base">
               days in a row
             </p>
           </div>
-          <div className="border-border/70 border-t p-6 md:border-t-0 md:border-l">
-            <p className="text-muted-foreground/70 font-serif text-[11px] font-semibold tracking-[0.2em] uppercase">
+          <div className="border-border/70 border-l border-t p-4 sm:p-6 md:border-t-0">
+            <p className="text-muted-foreground/70 font-serif text-[11px] font-semibold uppercase tracking-[0.2em]">
               Longest streak
             </p>
-            <p className="text-foreground mt-2 font-serif text-4xl font-bold tracking-tight">
+            <p className="text-foreground mt-2 font-serif text-3xl font-bold tracking-tight sm:text-4xl">
               {streaks.longestStreak}
             </p>
             <p className="text-muted-foreground/60 font-hand mt-1 text-base">
               consecutive days max
             </p>
           </div>
-          <div className="border-border/70 border-t p-6 md:border-t-0 md:border-l">
-            <p className="text-muted-foreground/70 font-serif text-[11px] font-semibold tracking-[0.2em] uppercase">
+          <div className="border-border/70 border-t p-4 sm:p-6 md:border-l">
+            <p className="text-muted-foreground/70 font-serif text-[11px] font-semibold uppercase tracking-[0.2em]">
               Total words
             </p>
-            <p className="text-foreground mt-2 font-serif text-4xl font-bold tracking-tight">
+            <p className="text-foreground mt-2 font-serif text-3xl font-bold tracking-tight sm:text-4xl">
               {wordCountStats.total.toLocaleString()}
             </p>
             <p className="text-muted-foreground/60 font-hand mt-1 text-base">
               written in total
             </p>
           </div>
-          <div className="border-border/70 border-t p-6 md:border-t-0 md:border-l">
-            <p className="text-muted-foreground/70 font-serif text-[11px] font-semibold tracking-[0.2em] uppercase">
+          <div className="border-border/70 border-l border-t p-4 sm:p-6">
+            <p className="text-muted-foreground/70 font-serif text-[11px] font-semibold uppercase tracking-[0.2em]">
               Entries
             </p>
-            <p className="text-foreground mt-2 font-serif text-4xl font-bold tracking-tight">
+            <p className="text-foreground mt-2 font-serif text-3xl font-bold tracking-tight sm:text-4xl">
               {heatmap.filter((d) => d.count > 0).length}
             </p>
             <p className="text-muted-foreground/60 font-hand mt-1 text-base">
@@ -171,7 +171,7 @@ export function InsightsDashboard({
 
       {/* Below-fold visualizations: heatmap, mood/word charts, activity, monthly.
           Lazy-loaded as one async chunk so the header + stat cards render first. */}
-      <InsightsCharts data={data} />
+      <InsightsCharts data={data} localToday={localToday} />
     </div>
   );
 }

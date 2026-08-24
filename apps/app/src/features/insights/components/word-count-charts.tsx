@@ -1,12 +1,7 @@
 "use client";
 
 import React from "react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@withink/ui/tooltip";
+import { Popover, PopoverContent, PopoverTrigger } from "@withink/ui/popover";
 
 interface WordCountChartsProps {
   total: number;
@@ -96,7 +91,7 @@ export function WordCountCharts({
         <div className="relative w-full">
           <svg
             viewBox={`0 0 ${svgWidth} ${svgHeight}`}
-            className="text-muted-foreground h-auto w-full overflow-visible select-none"
+            className="text-muted-foreground h-auto w-full select-none overflow-visible"
           >
             {/* Grid lines */}
             {[0, 0.5, 1].map((ratio) => {
@@ -138,28 +133,42 @@ export function WordCountCharts({
               </linearGradient>
             </defs>
 
-            {/* Bars */}
-            <TooltipProvider>
-              {points.map((p) => {
-                if (p.count === 0) {
-                  return (
-                    <g key={p.month}>
-                      <text
-                        x={p.x + barWidth / 2}
-                        y={svgHeight - 4}
-                        textAnchor="middle"
-                        className="fill-muted-foreground/40 font-serif text-[9px] uppercase"
-                      >
-                        {formatMonthLabel(p.month)}
-                      </text>
-                    </g>
-                  );
-                }
-
+            {/* Bars — full-column transparent hit areas so touch can open
+                the month details (no dead hover-only tooltip) */}
+            {points.map((p) => {
+              if (p.count === 0) {
                 return (
                   <g key={p.month}>
-                    <Tooltip delayDuration={100}>
-                      <TooltipTrigger asChild>
+                    <text
+                      x={p.x + barWidth / 2}
+                      y={svgHeight - 4}
+                      textAnchor="middle"
+                      className="fill-muted-foreground/40 font-serif text-[9px] uppercase"
+                    >
+                      {formatMonthLabel(p.month)}
+                    </text>
+                  </g>
+                );
+              }
+
+              return (
+                <g key={p.month}>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <g
+                        role="button"
+                        tabIndex={0}
+                        aria-label={`${formatMonthLabel(p.month)}: ${p.totalWords.toLocaleString()} total words, ${p.averageWords} average, across ${p.count} entries`}
+                        className="cursor-pointer focus:outline-none"
+                      >
+                        {/* Expanded invisible hit area for the whole column */}
+                        <rect
+                          x={p.x - 6}
+                          y={paddingY}
+                          width={barWidth + 12}
+                          height={svgHeight - 2 * paddingY}
+                          className="fill-transparent stroke-none"
+                        />
                         <rect
                           x={p.x}
                           y={p.y}
@@ -167,32 +176,35 @@ export function WordCountCharts({
                           height={Math.max(p.barHeight, 2)}
                           rx={3}
                           fill="url(#barGradient)"
-                          className="cursor-help transition-opacity hover:opacity-85"
+                          className="transition-opacity hover:opacity-85"
                         />
-                      </TooltipTrigger>
-                      <TooltipContent className="font-serif text-[10px]">
-                        <strong>{formatMonthLabel(p.month)}</strong>
-                        <br />
+                      </g>
+                    </PopoverTrigger>
+                    <PopoverContent side="top" className="w-44">
+                      <p className="text-foreground font-serif text-xs font-semibold">
+                        {formatMonthLabel(p.month)}
+                      </p>
+                      <p className="text-muted-foreground font-serif text-[11px]">
                         Average: {p.averageWords} words
                         <br />
                         Total: {p.totalWords.toLocaleString()} ({p.count}{" "}
                         entries)
-                      </TooltipContent>
-                    </Tooltip>
+                      </p>
+                    </PopoverContent>
+                  </Popover>
 
-                    {/* X-axis labels */}
-                    <text
-                      x={p.x + barWidth / 2}
-                      y={svgHeight - 4}
-                      textAnchor="middle"
-                      className="fill-muted-foreground/60 font-serif text-[9px] uppercase"
-                    >
-                      {formatMonthLabel(p.month)}
-                    </text>
-                  </g>
-                );
-              })}
-            </TooltipProvider>
+                  {/* X-axis labels */}
+                  <text
+                    x={p.x + barWidth / 2}
+                    y={svgHeight - 4}
+                    textAnchor="middle"
+                    className="fill-muted-foreground/60 font-serif text-[9px] uppercase"
+                  >
+                    {formatMonthLabel(p.month)}
+                  </text>
+                </g>
+              );
+            })}
           </svg>
         </div>
       )}

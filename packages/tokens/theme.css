@@ -280,6 +280,41 @@
   }
 }
 
+/* Settings disclosure reveal (phones only — desktop sections never animate).
+   Runs when the class is applied, i.e. each time a collapsed group opens. */
+@keyframes withink-disclosure-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) and (max-width: 63.98rem) {
+  .animate-disclosure {
+    animation: withink-disclosure-in 200ms ease-out both;
+  }
+}
+
+/* Centered dialogs: the resting offset must NOT live in a Tailwind translate
+   utility — under Tailwind v4 that is the standalone `translate` property,
+   which composes with the overlay animation's animated `transform` and
+   double-offsets the panel. The animation's --withink-overlay-rest carries
+   the centering while motion is allowed; reduced-motion users (no animation)
+   get the static offset here instead. */
+.overlay-centered {
+  translate: 0 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .overlay-centered {
+    translate: -50% -50%;
+  }
+}
+
 /* Custom Scrollbar and Utility Classes */
 .no-scrollbar::-webkit-scrollbar {
   display: none;

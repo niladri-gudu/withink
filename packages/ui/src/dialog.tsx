@@ -34,7 +34,7 @@ function DialogOverlay({
 DialogOverlay.displayName = "DialogOverlay";
 
 const dialogContentVariants = cva(
-  "bg-card text-card-foreground border-border data-[slot=overlay-panel] fixed top-1/2 left-1/2 flex w-[calc(100vw-2rem)] max-w-[calc(100vw-2rem)] -translate-x-1/2 -translate-y-1/2 flex-col gap-4 rounded-xl border p-6 shadow-xl [--withink-overlay-from:translate3d(-50%,-46%,0)_scale(0.97)] [--withink-overlay-rest:translate3d(-50%,-50%,0)] [--withink-overlay-to:translate3d(-46%,-46%,0)_scale(0.97)]",
+  "bg-card text-card-foreground border-border data-[slot=overlay-panel] overlay-centered fixed top-1/2 left-1/2 flex w-[calc(100vw-2rem)] max-w-[calc(100vw-2rem)] flex-col gap-4 rounded-xl border p-6 shadow-xl [--withink-overlay-from:translate3d(-50%,-46%,0)_scale(0.97)] [--withink-overlay-rest:translate3d(-50%,-50%,0)] [--withink-overlay-to:translate3d(-46%,-46%,0)_scale(0.97)]",
   {
     variants: {
       size: {
@@ -67,7 +67,7 @@ const DialogContent = React.forwardRef<
     >
       {children}
       <DialogPrimitive.Close
-        className="ring-offset-background focus-visible:ring-ring hover:bg-muted absolute right-3 top-3 inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl opacity-70 transition-all duration-200 hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none"
+        className="ring-offset-background focus-visible:ring-ring hover:bg-muted absolute top-3 right-3 inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl opacity-70 transition-all duration-200 hover:opacity-100 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none"
         aria-label="Close"
       >
         <X className="h-4 w-4" />
@@ -113,7 +113,7 @@ function DialogTitle({
   return (
     <DialogPrimitive.Title
       className={cn(
-        "text-foreground font-serif text-lg font-semibold leading-snug",
+        "text-foreground font-serif text-lg leading-snug font-semibold",
         className,
       )}
       {...props}

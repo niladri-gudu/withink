@@ -87,27 +87,27 @@ export function RegisterForm() {
   };
 
   return (
-    <div className="bg-card border-border/80 animate-in fade-in mx-auto w-full max-w-md space-y-6 rounded-xl border p-6 shadow-sm duration-300 select-none sm:space-y-8 sm:p-8">
+    <div className="bg-card border-border/80 animate-in fade-in mx-auto w-full max-w-md select-none space-y-6 rounded-xl border p-6 shadow-sm duration-300 sm:space-y-8 sm:p-8">
       {verifyPending ? (
         <div className="animate-in fade-in zoom-in space-y-6 text-center duration-500 sm:text-left">
           <div className="space-y-1.5">
             <h2 className="text-h2 text-foreground font-serif font-bold">
               Check your ink.
             </h2>
-            <p className="text-caption font-serif tracking-[0.16em] uppercase">
+            <p className="text-caption font-serif uppercase tracking-[0.16em]">
               Identity pending • Action required
             </p>
           </div>
           <p className="text-muted-foreground font-serif text-sm leading-relaxed">
             A verification link has been dispatched to:
-            <span className="text-foreground decoration-accent/40 mt-2 block font-serif text-xs break-all underline underline-offset-4">
+            <span className="text-foreground decoration-accent/40 mt-2 block break-all font-serif text-xs underline underline-offset-4">
               {registeredEmail}
             </span>
           </p>
           <Button
             variant="ghost"
             onClick={() => setVerifyPending(false)}
-            className="text-muted-foreground/60 hover:text-foreground h-auto cursor-pointer p-0 font-serif text-xs tracking-wider uppercase"
+            className="text-muted-foreground/60 hover:text-foreground h-auto cursor-pointer p-0 font-serif text-xs uppercase tracking-wider"
           >
             <span className="border-muted-foreground/20 hover:border-foreground border-b pb-0.5">
               Edit Identity
@@ -120,7 +120,7 @@ export function RegisterForm() {
             <h1 className="text-h2 text-foreground font-serif font-bold">
               New journey.
             </h1>
-            <p className="text-caption font-serif tracking-[0.16em] uppercase">
+            <p className="text-caption font-serif uppercase tracking-[0.16em]">
               A fresh notebook, ready for your first page
             </p>
           </div>
@@ -137,7 +137,7 @@ export function RegisterForm() {
                 {errors.name?.message && (
                   <span
                     id="name-error"
-                    className="text-destructive animate-in fade-in font-serif text-[10px] tracking-tight uppercase"
+                    className="text-destructive animate-in fade-in font-serif text-[10px] uppercase tracking-tight"
                   >
                     {errors.name.message}
                   </span>
@@ -145,6 +145,7 @@ export function RegisterForm() {
               </div>
               <Input
                 id="name"
+                autoComplete="name"
                 placeholder="How should we address you?"
                 aria-invalid={!!errors.name}
                 aria-describedby={errors.name ? "name-error" : undefined}
@@ -168,7 +169,7 @@ export function RegisterForm() {
                 {errors.email?.message && (
                   <span
                     id="email-error"
-                    className="text-destructive animate-in fade-in font-serif text-[10px] tracking-tight uppercase"
+                    className="text-destructive animate-in fade-in font-serif text-[10px] uppercase tracking-tight"
                   >
                     {errors.email.message}
                   </span>
@@ -177,6 +178,7 @@ export function RegisterForm() {
               <Input
                 id="email"
                 type="email"
+                autoComplete="email"
                 placeholder="name@example.com"
                 aria-invalid={!!errors.email}
                 aria-describedby={errors.email ? "email-error" : undefined}
@@ -200,7 +202,7 @@ export function RegisterForm() {
                 {errors.password?.message && (
                   <span
                     id="password-error"
-                    className="text-destructive animate-in fade-in font-serif text-[10px] tracking-tight uppercase"
+                    className="text-destructive animate-in fade-in font-serif text-[10px] uppercase tracking-tight"
                   >
                     {errors.password.message}
                   </span>
@@ -210,6 +212,7 @@ export function RegisterForm() {
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
+                  autoComplete="new-password"
                   placeholder="••••••••"
                   aria-invalid={!!errors.password}
                   aria-describedby={
@@ -229,7 +232,7 @@ export function RegisterForm() {
                     showPassword ? "Hide secret key" : "Show secret key"
                   }
                   aria-pressed={showPassword}
-                  className="text-muted-foreground/60 hover:text-foreground focus-visible:ring-ring absolute top-1/2 right-3 -translate-y-1/2 cursor-pointer p-1 font-serif text-xs tracking-wider uppercase transition-colors focus-visible:rounded focus-visible:ring-2 focus-visible:outline-none"
+                  className="text-muted-foreground/60 hover:text-foreground focus-visible:ring-ring absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer p-1 font-serif text-xs uppercase tracking-wider transition-colors focus-visible:rounded focus-visible:outline-none focus-visible:ring-2"
                 >
                   {showPassword ? "Hide" : "Show"}
                 </button>

@@ -79,12 +79,12 @@ export function LoginForm() {
   };
 
   return (
-    <div className="bg-card border-border/80 animate-in fade-in mx-auto w-full max-w-md space-y-6 rounded-xl border p-6 shadow-sm duration-300 select-none sm:space-y-8 sm:p-8">
+    <div className="bg-card border-border/80 animate-in fade-in mx-auto w-full max-w-md select-none space-y-6 rounded-xl border p-6 shadow-sm duration-300 sm:space-y-8 sm:p-8">
       <div className="space-y-1.5 text-center sm:text-left">
         <h1 className="text-h2 text-foreground font-serif font-bold">
           Welcome back.
         </h1>
-        <p className="text-caption font-serif tracking-[0.16em] uppercase">
+        <p className="text-caption font-serif uppercase tracking-[0.16em]">
           Open your private notebook
         </p>
       </div>
@@ -101,7 +101,7 @@ export function LoginForm() {
             {errors.email?.message && (
               <span
                 id="email-error"
-                className="text-destructive animate-in fade-in font-serif text-[10px] tracking-tight uppercase"
+                className="text-destructive animate-in fade-in font-serif text-[10px] uppercase tracking-tight"
               >
                 {errors.email.message}
               </span>
@@ -110,6 +110,7 @@ export function LoginForm() {
           <Input
             id="email"
             type="email"
+            autoComplete="email"
             placeholder="name@example.com"
             aria-invalid={!!errors.email}
             aria-describedby={errors.email ? "email-error" : undefined}
@@ -133,7 +134,7 @@ export function LoginForm() {
             {errors.password?.message && (
               <span
                 id="password-error"
-                className="text-destructive animate-in fade-in font-serif text-[10px] tracking-tight uppercase"
+                className="text-destructive animate-in fade-in font-serif text-[10px] uppercase tracking-tight"
               >
                 {errors.password.message}
               </span>
@@ -143,6 +144,7 @@ export function LoginForm() {
             <Input
               id="password"
               type={showPassword ? "text" : "password"}
+              autoComplete="current-password"
               placeholder="••••••••"
               aria-invalid={!!errors.password}
               aria-describedby={errors.password ? "password-error" : undefined}
@@ -158,7 +160,7 @@ export function LoginForm() {
               onClick={() => setShowPassword(!showPassword)}
               aria-label={showPassword ? "Hide secret key" : "Show secret key"}
               aria-pressed={showPassword}
-              className="text-muted-foreground/60 hover:text-foreground focus-visible:ring-ring absolute top-1/2 right-3 -translate-y-1/2 cursor-pointer p-1 font-serif text-xs tracking-wider uppercase transition-colors focus-visible:rounded focus-visible:ring-2 focus-visible:outline-none"
+              className="text-muted-foreground/60 hover:text-foreground focus-visible:ring-ring absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer p-1 font-serif text-xs uppercase tracking-wider transition-colors focus-visible:rounded focus-visible:outline-none focus-visible:ring-2"
             >
               {showPassword ? "Hide" : "Show"}
             </button>
@@ -203,7 +205,7 @@ export function LoginForm() {
       <div className="flex flex-col items-center gap-3 pt-2">
         <Link
           href={ROUTES.AUTH.FORGOT_PASSWORD}
-          className="text-muted-foreground/60 hover:text-foreground font-serif text-xs tracking-widest uppercase italic transition-colors"
+          className="text-muted-foreground/60 hover:text-foreground font-serif text-xs uppercase italic tracking-widest transition-colors"
         >
           Forgot Password?
         </Link>

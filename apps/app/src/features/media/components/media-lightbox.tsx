@@ -21,6 +21,7 @@ import { encryptText, safeDecryptText } from "@/lib/crypto-client";
 import { getLocalDateString } from "@/lib/utils/date";
 import { useFocusTrap } from "@/hooks/use-focus-trap";
 import { useEncryption } from "@/providers/encryption-provider";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import {
   getAllEntriesAction,
   getMediaEntriesAction,
@@ -203,6 +204,18 @@ export function MediaLightbox({
 
   const filename = file ? file.key.split("/").pop() || "" : "";
 
+  // Swipe navigation: a deliberate horizontal drag past the threshold moves
+  // prev/next (the touch-primary affordance; arrows remain for pointers).
+  const handleDragEnd = (
+    _event: unknown,
+    info: { offset: { x: number }; velocity: { x: number } },
+  ) => {
+    if (index === null) return;
+    const swipe = info.offset.x + info.velocity.x * 0.2;
+    if (swipe < -64 && index < files.length - 1) onNext();
+    else if (swipe > 64 && index > 0) onPrev();
+  };
+
   const handleCopyLink = async () => {
     if (!file) return;
     try {
@@ -351,182 +364,198 @@ export function MediaLightbox({
   };
 
   return (
-    <AnimatePresence>
-      {index !== null && file && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm"
-        >
-          {/* Close backdrop click */}
-          <div className="absolute inset-0 cursor-default" onClick={onClose} />
-
+    <>
+      <AnimatePresence>
+        {index !== null && file && (
           <motion.div
-            ref={lightboxRef as React.RefObject<HTMLDivElement>}
-            role="dialog"
-            aria-modal="true"
-            aria-label="Image preview"
-            initial={{ opacity: 0, scale: 0.95, y: 15 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 10 }}
-            transition={{ type: "spring", stiffness: 350, damping: 26 }}
-            className="bg-card border-border relative z-10 mx-4 flex w-full max-w-3xl flex-col overflow-hidden rounded-xl border shadow-2xl"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm"
           >
-            {/* Close Button */}
-            <button
+            {/* Close backdrop click */}
+            <div
+              className="absolute inset-0 cursor-default"
               onClick={onClose}
-              className="bg-background/60 hover:bg-background text-foreground border-border/20 focus-visible:ring-ring absolute top-4 right-4 z-50 cursor-pointer rounded-full border p-2 shadow-sm backdrop-blur-sm transition-all focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
-              aria-label="Close preview"
+            />
+
+            <motion.div
+              ref={lightboxRef as React.RefObject<HTMLDivElement>}
+              role="dialog"
+              aria-modal="true"
+              aria-label={`Image preview: ${filename} (${(index ?? 0) + 1} of ${files.length})`}
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ type: "spring", stiffness: 350, damping: 26 }}
+              className="bg-card border-border relative z-10 mx-4 flex w-full max-w-3xl flex-col overflow-hidden rounded-xl border shadow-2xl"
             >
-              <X size={16} />
-            </button>
+              {/* Close Button */}
+              <button
+                onClick={onClose}
+                className="bg-background/60 hover:bg-background text-foreground border-border/20 focus-visible:ring-ring absolute right-4 top-4 z-50 cursor-pointer rounded-full border p-2 shadow-sm backdrop-blur-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+                aria-label="Close preview"
+              >
+                <X size={16} />
+              </button>
 
-            {/* Image Preview Container */}
-            <div className="relative flex aspect-video w-full items-center justify-center bg-black/95">
-              <Image
-                src={file.url}
-                alt={filename}
-                fill
-                priority
-                sizes="100vw"
-                className="object-contain p-2"
-              />
+              {/* Counter — position is always visible while paging */}
+              <span className="bg-background/60 text-foreground border-border/20 absolute left-4 top-4 z-50 select-none rounded-full border px-3 py-1 font-serif text-[11px] font-semibold uppercase tracking-[0.14em] shadow-sm backdrop-blur-sm">
+                {(index ?? 0) + 1} / {files.length}
+              </span>
 
-              {/* Prev Button */}
-              {index > 0 && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onPrev();
-                  }}
-                  className="bg-background/50 hover:bg-background/80 text-foreground border-border/20 focus-visible:ring-ring absolute top-1/2 left-4 -translate-y-1/2 rounded-full border p-2.5 shadow-md transition-all focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
-                  aria-label="Previous image"
-                >
-                  <ArrowLeft size={16} />
-                </button>
-              )}
+              {/* Image Preview Container — swipe left/right to page */}
+              <motion.div
+                drag="x"
+                dragDirectionLock
+                dragConstraints={{ left: 0, right: 0 }}
+                dragElastic={0.18}
+                onDragEnd={handleDragEnd}
+                className="relative flex aspect-video w-full touch-pan-y items-center justify-center overflow-hidden bg-black/95"
+              >
+                <Image
+                  src={file.url}
+                  alt={filename}
+                  fill
+                  priority
+                  sizes="100vw"
+                  draggable={false}
+                  className="select-none object-contain p-2"
+                />
 
-              {/* Next Button */}
-              {index < files.length - 1 && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onNext();
-                  }}
-                  className="bg-background/50 hover:bg-background/80 text-foreground border-border/20 focus-visible:ring-ring absolute top-1/2 right-4 -translate-y-1/2 rounded-full border p-2.5 shadow-md transition-all focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
-                  aria-label="Next image"
-                >
-                  <ArrowRight size={16} />
-                </button>
-              )}
-            </div>
+                {/* Prev Button (pointer devices; touch swipes) */}
+                {index > 0 && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onPrev();
+                    }}
+                    className="bg-background/50 hover:bg-background/80 text-foreground border-border/20 focus-visible:ring-ring absolute left-4 top-1/2 hidden -translate-y-1/2 cursor-pointer rounded-full border p-2.5 shadow-md transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 sm:block"
+                    aria-label="Previous image"
+                  >
+                    <ArrowLeft size={16} />
+                  </button>
+                )}
 
-            {/* Info details footer */}
-            <div className="bg-card border-border flex flex-col justify-between gap-5 border-t p-6 select-none md:flex-row md:items-center">
-              <div className="min-w-0 space-y-1">
-                <p className="text-muted-foreground max-w-sm truncate font-serif text-xs sm:max-w-md">
-                  {filename}
-                </p>
-                <div className="text-muted-foreground flex items-center gap-2.5 text-xs">
-                  <span>{(file.size / 1024).toFixed(1)} KB</span>
-                  <span>•</span>
-                  <span>
-                    {file.lastModified
-                      ? new Date(file.lastModified).toLocaleDateString()
-                      : "Unknown date"}
-                  </span>
-                  <span>•</span>
-                  {entrySearchLoading ? (
-                    <span className="text-accent flex items-center gap-1.5 font-medium">
-                      <Loader2 className="h-3 w-3 animate-spin" />
-                      Checking entries…
+                {/* Next Button (pointer devices; touch swipes) */}
+                {index !== null && index < files.length - 1 && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onNext();
+                    }}
+                    className="bg-background/50 hover:bg-background/80 text-foreground border-border/20 focus-visible:ring-ring absolute right-4 top-1/2 hidden -translate-y-1/2 cursor-pointer rounded-full border p-2.5 shadow-md transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 sm:block"
+                    aria-label="Next image"
+                  >
+                    <ArrowRight size={16} />
+                  </button>
+                )}
+              </motion.div>
+
+              {/* Info details footer */}
+              <div className="bg-card border-border flex select-none flex-col gap-4 border-t p-5 md:flex-row md:items-center md:p-6">
+                <div className="min-w-0 flex-1 space-y-1">
+                  <p className="text-muted-foreground max-w-sm truncate font-serif text-xs sm:max-w-md">
+                    {filename}
+                  </p>
+                  <div className="text-muted-foreground flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs">
+                    <span>{(file.size / 1024).toFixed(1)} KB</span>
+                    <span aria-hidden="true">·</span>
+                    <span>
+                      {file.lastModified
+                        ? new Date(file.lastModified).toLocaleDateString()
+                        : "Unknown date"}
                     </span>
-                  ) : entryDate ? (
-                    <span className="text-primary flex items-center gap-1 font-medium">
-                      Woven on{" "}
-                      <Link
-                        href={`/entries/${entryDate}`}
-                        className="hover:text-accent flex items-center gap-0.5 font-semibold underline"
-                      >
-                        {entryDate}
-                        <ExternalLink className="inline h-3 w-3" />
-                      </Link>
-                    </span>
-                  ) : (
-                    <span className="text-muted-foreground/60 italic">
-                      Orphaned (Not in entries)
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {/* Actions panel */}
-              <div className="flex shrink-0 items-center gap-2 self-end md:self-auto">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleCopyLink}
-                  className="border-border/60 hover:bg-secondary focus-visible:ring-ring h-9 gap-1.5 rounded-xl px-3 text-xs font-medium focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
-                >
-                  {copiedKey === file.url ? (
-                    <>
-                      <Check className="text-accent h-3.5 w-3.5" />
-                      Copied
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="h-3.5 w-3.5" />
-                      Copy Link
-                    </>
-                  )}
-                </Button>
-
-                {showDeleteConfirm ? (
-                  <div className="bg-destructive/10 border-destructive/20 animate-in slide-in-from-right-2 flex items-center gap-1 rounded-xl border p-1 duration-200">
-                    <span className="text-destructive shrink-0 px-2 text-[10px] font-semibold">
-                      Delete from entries?
-                    </span>{" "}
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={handleDelete}
-                      disabled={deleting !== null}
-                      className="h-7 rounded-lg px-2.5 text-[10px] font-semibold tracking-wider uppercase"
-                    >
-                      {deleting !== null ? (
+                    <span aria-hidden="true">·</span>
+                    {entrySearchLoading ? (
+                      <span className="text-accent flex items-center gap-1.5 font-medium">
                         <Loader2 className="h-3 w-3 animate-spin" />
-                      ) : (
-                        "Yes, Delete"
-                      )}
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setShowDeleteConfirm(false)}
-                      disabled={deleting !== null}
-                      className="text-muted-foreground hover:bg-secondary h-7 rounded-lg px-2.5 text-[10px] font-semibold"
-                    >
-                      Cancel
-                    </Button>
+                        Checking entries…
+                      </span>
+                    ) : entryDate ? (
+                      <span className="text-primary flex items-center gap-1 font-medium">
+                        Woven on{" "}
+                        <Link
+                          href={`/entries/${entryDate}`}
+                          className="hover:text-accent flex items-center gap-0.5 font-semibold underline"
+                        >
+                          {entryDate}
+                          <ExternalLink className="inline h-3 w-3" />
+                        </Link>
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground/60 italic">
+                        Orphaned (Not in entries)
+                      </span>
+                    )}
                   </div>
-                ) : (
+                </div>
+
+                {/* Actions row */}
+                <div className="flex shrink-0 items-center gap-2 self-start md:self-auto">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={onClose}
+                    className="text-muted-foreground hover:text-foreground h-9 rounded-xl px-3 text-xs font-medium lg:hidden"
+                  >
+                    Close
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleCopyLink}
+                    className="border-border/60 hover:bg-secondary focus-visible:ring-ring h-9 gap-1.5 rounded-xl px-3 text-xs font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+                  >
+                    {copiedKey === file.url ? (
+                      <>
+                        <Check className="text-accent h-3.5 w-3.5" />
+                        Copied
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="h-3.5 w-3.5" />
+                        Copy Link
+                      </>
+                    )}
+                  </Button>
+
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => setShowDeleteConfirm(true)}
-                    className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 focus-visible:ring-ring h-9 w-9 rounded-xl focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+                    disabled={deleting !== null}
+                    className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 focus-visible:ring-ring h-9 w-9 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
                     title="Delete memory"
                     aria-label="Delete memory"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
-                )}
+                </div>
               </div>
-            </div>
+            </motion.div>
           </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+        )}
+      </AnimatePresence>
+
+      {/* Delete confirmation — the one app-wide destructive convention */}
+      <ConfirmDialog
+        open={showDeleteConfirm && file !== null}
+        onOpenChange={(open) => {
+          if (!open) setShowDeleteConfirm(false);
+        }}
+        title="Delete this memory?"
+        description={
+          <>
+            The image will be removed from storage and scrubbed from every entry
+            that references it. This cannot be undone.
+          </>
+        }
+        confirmLabel="Delete memory"
+        pending={deleting !== null}
+        onConfirm={() => void handleDelete()}
+      />
+    </>
   );
 }

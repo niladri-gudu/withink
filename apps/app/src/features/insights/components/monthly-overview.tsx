@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { Card, CardContent } from "@withink/ui/card";
+import { Select } from "@withink/ui/select";
 import { cn } from "@withink/utils";
 import {
   Angry,
@@ -125,18 +126,19 @@ export function MonthlyOverview({ monthlyOverview }: MonthlyOverviewProps) {
           </p>
         </div>
 
-        {/* Dropdown Selector */}
-        <select
+        {/* Month selector — the one shared Select pattern */}
+        <Select
           value={selectedMonth}
           onChange={(e) => setSelectedMonth(e.target.value)}
-          className="bg-card border-border text-foreground focus-visible:ring-ring h-10 cursor-pointer rounded-xl border px-3 text-sm transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none sm:w-[200px]"
+          aria-label="Select month"
+          className="sm:w-[200px]"
         >
           {months.map((m) => (
             <option key={m} value={m}>
               {formatMonthTitle(m)}
             </option>
           ))}
-        </select>
+        </Select>
       </div>
 
       {/* Grid of monthly metrics */}
@@ -147,7 +149,7 @@ export function MonthlyOverview({ monthlyOverview }: MonthlyOverviewProps) {
             <Calendar className="h-5 w-5" />
           </div>
           <div>
-            <p className="text-muted-foreground/60 font-serif text-[11px] tracking-[0.16em] uppercase">
+            <p className="text-muted-foreground/60 font-serif text-[11px] uppercase tracking-[0.16em]">
               Reflections
             </p>
             <p className="text-foreground font-serif text-2xl font-bold">
@@ -161,11 +163,11 @@ export function MonthlyOverview({ monthlyOverview }: MonthlyOverviewProps) {
 
         {/* Words written */}
         <Card className="border-border/60 flex items-center gap-4 p-5">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-accent/20 bg-accent/10 text-accent">
+          <div className="border-accent/20 bg-accent/10 text-accent flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border">
             <Type className="h-5 w-5" />
           </div>
           <div>
-            <p className="text-muted-foreground/60 font-serif text-[11px] tracking-[0.16em] uppercase">
+            <p className="text-muted-foreground/60 font-serif text-[11px] uppercase tracking-[0.16em]">
               Words
             </p>
             <p className="text-foreground font-serif text-2xl font-bold">
@@ -179,11 +181,11 @@ export function MonthlyOverview({ monthlyOverview }: MonthlyOverviewProps) {
 
         {/* Average mood */}
         <Card className="border-border/60 flex items-center gap-4 p-5">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-accent/20 bg-accent/10 text-accent">
+          <div className="border-accent/20 bg-accent/10 text-accent flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border">
             <Sparkles className="h-5 w-5" />
           </div>
           <div>
-            <p className="text-muted-foreground/60 font-serif text-[11px] tracking-[0.16em] uppercase">
+            <p className="text-muted-foreground/60 font-serif text-[11px] uppercase tracking-[0.16em]">
               Average Mood
             </p>
             <p className="text-foreground font-serif text-2xl font-bold">
@@ -196,14 +198,14 @@ export function MonthlyOverview({ monthlyOverview }: MonthlyOverviewProps) {
         </Card>
       </div>
 
-      {/* Monthly Mood Distribution */}
+      {/* Monthly Mood Distribution — 2-up on phones (5th tile spans), 5-up on sm+ */}
       {totalMoodsInMonth > 0 && (
         <Card className="border-border/60 p-6">
-          <h5 className="text-muted-foreground/60 mb-4 font-serif text-[11px] tracking-[0.16em] uppercase">
+          <h5 className="text-muted-foreground/60 mb-4 font-serif text-[11px] uppercase tracking-[0.16em]">
             Mood distribution in {formatMonthTitle(selectedMonth)}
           </h5>
-          <div className="grid gap-3 sm:grid-cols-5">
-            {[5, 4, 3, 2, 1].map((rating) => {
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+            {[5, 4, 3, 2, 1].map((rating, idx) => {
               const config = moodConfig[rating]!;
               const Icon = config.icon;
               const count = stat.moodDistribution[rating] || 0;
@@ -212,7 +214,10 @@ export function MonthlyOverview({ monthlyOverview }: MonthlyOverviewProps) {
               return (
                 <div
                   key={rating}
-                  className="border-border/40 bg-card hover:bg-muted/5 flex flex-col items-center justify-center rounded-xl border p-4 text-center transition-colors"
+                  className={cn(
+                    "border-border/40 bg-card hover:bg-muted/5 flex flex-col items-center justify-center rounded-xl border p-4 text-center transition-colors",
+                    idx === 4 && "col-span-2 sm:col-span-1",
+                  )}
                 >
                   <div
                     className={cn(
@@ -223,7 +228,7 @@ export function MonthlyOverview({ monthlyOverview }: MonthlyOverviewProps) {
                   >
                     <Icon className="h-5 w-5" />
                   </div>
-                  <span className="text-muted-foreground/60 font-serif text-[11px] tracking-[0.16em] uppercase">
+                  <span className="text-muted-foreground/60 font-serif text-[11px] uppercase tracking-[0.16em]">
                     {config.label}
                   </span>
                   <span className="text-foreground mt-1 font-serif text-base font-bold">

@@ -129,7 +129,7 @@ export function FlashbackView({
             <Button
               asChild
               variant="ghost"
-              className="cursor-pointer gap-1.5 font-serif text-xs tracking-[0.16em] uppercase"
+              className="cursor-pointer gap-1.5 font-serif text-xs uppercase tracking-[0.16em]"
             >
               <Link href={ROUTES.APP.DASHBOARD}>
                 <ArrowLeft className="h-3.5 w-3.5" />
@@ -145,7 +145,7 @@ export function FlashbackView({
               <MailOpen className="h-8 w-8" />
             </div>
             <div className="max-w-md space-y-2">
-              <span className="text-accent/70 block font-serif text-[11px] font-bold tracking-[0.16em] uppercase">
+              <span className="text-accent/70 block font-serif text-[11px] font-bold uppercase tracking-[0.16em]">
                 Flashback
               </span>
               <h2 className="text-foreground font-serif text-2xl font-bold tracking-tight">
@@ -200,12 +200,12 @@ export function FlashbackView({
           year: "numeric",
         })}`}
         action={
-          <div className="flex items-center gap-2.5">
+          <div className="flex flex-wrap items-center gap-2">
             <Button
               onClick={handleRefresh}
               disabled={isPending}
               variant="outline"
-              className="hover:bg-muted/10 animate-in fade-in h-10 shrink-0 cursor-pointer gap-1.5 px-4 font-serif text-xs tracking-[0.16em] uppercase duration-300"
+              className="hover:bg-muted/10 animate-in fade-in h-9 shrink-0 cursor-pointer gap-1.5 px-3.5 font-serif text-xs uppercase tracking-[0.16em] duration-300 sm:h-10 sm:px-4"
             >
               <RefreshCw
                 className={cn("h-3.5 w-3.5", isPending && "animate-spin")}
@@ -216,11 +216,11 @@ export function FlashbackView({
             <Button
               asChild
               variant="ghost"
-              className="hover:bg-muted/10 h-10 shrink-0 cursor-pointer gap-1.5 px-4 font-serif text-xs tracking-[0.16em] uppercase"
+              className="hover:bg-muted/10 h-9 shrink-0 cursor-pointer gap-1.5 px-3.5 font-serif text-xs uppercase tracking-[0.16em] sm:h-10 sm:px-4"
             >
               <Link href={ROUTES.APP.DASHBOARD}>
                 <ArrowLeft className="h-3.5 w-3.5" />
-                <span>Back to Home</span>
+                <span>Home</span>
               </Link>
             </Button>
           </div>
@@ -237,7 +237,7 @@ export function FlashbackView({
       >
         <CardHeader className="border-border/10 flex flex-row items-center justify-between gap-4 border-b pb-4">
           <div className="flex items-center gap-2">
-            <span className="text-muted-foreground/60 font-serif text-[11px] tracking-[0.15em] uppercase">
+            <span className="text-muted-foreground/60 font-serif text-[11px] uppercase tracking-[0.15em]">
               Mood
             </span>
             <div
@@ -256,8 +256,8 @@ export function FlashbackView({
           </div>
         </CardHeader>
 
-        <CardContent className="space-y-6 px-6 pt-8 pb-10 sm:px-10">
-          <h2 className="text-foreground border-border/10 border-b pb-3 font-serif text-2xl font-bold tracking-tight uppercase sm:text-3xl">
+        <CardContent className="space-y-6 px-5 pb-9 pt-7 sm:px-10 sm:pb-10 sm:pt-8">
+          <h2 className="text-foreground border-border/10 border-b pb-3 font-serif text-2xl font-bold uppercase tracking-tight sm:text-3xl">
             {decryptedTitle || "Untitled Memory"}
           </h2>
 
@@ -268,11 +268,11 @@ export function FlashbackView({
                 dangerouslySetInnerHTML={{ __html: decryptedHtml }}
               />
             ) : decryptedText ? (
-              <div className="text-foreground/90 font-serif text-base leading-relaxed whitespace-pre-wrap sm:text-lg">
+              <div className="text-foreground/90 whitespace-pre-wrap font-serif text-base leading-relaxed sm:text-lg">
                 {decryptedText}
               </div>
             ) : (
-              <p className="text-muted-foreground/60 font-serif text-base leading-relaxed italic sm:text-lg">
+              <p className="text-muted-foreground/60 font-serif text-base italic leading-relaxed sm:text-lg">
                 This memory is quiet, but it is still yours to revisit.
               </p>
             )}

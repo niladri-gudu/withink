@@ -16,7 +16,13 @@ import { WordCountCharts } from "./word-count-charts";
  * already fetched by the dashboard (server-rendered with a client timezone
  * correction), so the wrapper is purely presentational — no fetching here.
  */
-export function InsightsCharts({ data }: { data: InsightsPayload }) {
+export function InsightsCharts({
+  data,
+  localToday,
+}: {
+  data: InsightsPayload;
+  localToday: string;
+}) {
   const {
     heatmap,
     moodStats,
@@ -34,11 +40,11 @@ export function InsightsCharts({ data }: { data: InsightsPayload }) {
             Reflection frequency
           </h3>
           <p className="text-body-small text-muted-foreground">
-            A visual summary of your consistency over the past 365 days
+            A month at a time — tap any written day for its story
           </p>
         </div>
-        <Card className="border-border/60 p-6">
-          <CalendarHeatmap heatmap={heatmap} />
+        <Card className="border-border/60 p-4 sm:p-6">
+          <CalendarHeatmap heatmap={heatmap} localToday={localToday} />
         </Card>
       </section>
 

@@ -1,12 +1,7 @@
 "use client";
 
 import React from "react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@withink/ui/tooltip";
+import { Popover, PopoverContent, PopoverTrigger } from "@withink/ui/popover";
 import { cn } from "@withink/utils";
 import { Angry, Frown, Meh, Smile, SmilePlus } from "lucide-react";
 
@@ -204,7 +199,7 @@ export function MoodHistoryCharts({
           <div className="relative w-full">
             <svg
               viewBox={`0 0 ${svgWidth} ${svgHeight}`}
-              className="text-muted-foreground h-auto w-full overflow-visible select-none"
+              className="text-muted-foreground h-auto w-full select-none overflow-visible"
             >
               {/* Horizontal grid lines for mood levels 1 to 5 */}
               {[1, 2, 3, 4, 5].map((level) => {
@@ -274,42 +269,58 @@ export function MoodHistoryCharts({
                 </linearGradient>
               </defs>
 
-              {/* Interactive nodes */}
-              <TooltipProvider>
-                {points.map((p) => {
-                  if (!p.hasData) return null;
+              {/* Interactive nodes — tap/hover opens a popover (no dead
+                  hover-only tooltip; the transparent halo gives touch an
+                  honest hit target) */}
+              {points.map((p) => {
+                if (!p.hasData) return null;
 
-                  return (
-                    <g key={p.month}>
-                      <Tooltip delayDuration={100}>
-                        <TooltipTrigger asChild>
+                return (
+                  <g key={p.month}>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <g
+                          role="button"
+                          tabIndex={0}
+                          aria-label={`${formatMonthLabel(p.month)}: average mood ${p.averageMood} across ${p.count} entries`}
+                          className="cursor-pointer focus:outline-none"
+                        >
+                          <circle
+                            cx={p.x}
+                            cy={p.y}
+                            r={12}
+                            className="fill-transparent stroke-none"
+                          />
                           <circle
                             cx={p.x}
                             cy={p.y}
                             r={4}
-                            className="fill-background hover:r-6 cursor-help stroke-accent stroke-[2px] transition-all duration-200"
+                            className="fill-background hover:r-6 stroke-accent stroke-[2px] transition-all duration-200"
                           />
-                        </TooltipTrigger>
-                        <TooltipContent className="font-serif text-[10px]">
-                          <strong>{formatMonthLabel(p.month)}</strong>
-                          <br />
-                          Average: {p.averageMood} ({p.count} entries)
-                        </TooltipContent>
-                      </Tooltip>
+                        </g>
+                      </PopoverTrigger>
+                      <PopoverContent side="top" className="w-44">
+                        <p className="text-foreground font-serif text-xs font-semibold">
+                          {formatMonthLabel(p.month)}
+                        </p>
+                        <p className="text-muted-foreground font-serif text-[11px]">
+                          Average mood: {p.averageMood} ({p.count} entries)
+                        </p>
+                      </PopoverContent>
+                    </Popover>
 
-                      {/* X-axis Month Label */}
-                      <text
-                        x={p.x}
-                        y={svgHeight - 4}
-                        textAnchor="middle"
-                        className="fill-muted-foreground/60 font-serif text-[9px] uppercase"
-                      >
-                        {formatMonthLabel(p.month)}
-                      </text>
-                    </g>
-                  );
-                })}
-              </TooltipProvider>
+                    {/* X-axis Month Label */}
+                    <text
+                      x={p.x}
+                      y={svgHeight - 4}
+                      textAnchor="middle"
+                      className="fill-muted-foreground/60 font-serif text-[9px] uppercase"
+                    >
+                      {formatMonthLabel(p.month)}
+                    </text>
+                  </g>
+                );
+              })}
             </svg>
           </div>
         )}

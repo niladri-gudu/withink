@@ -44,6 +44,14 @@
       "types": "./src/icon-button.tsx",
       "default": "./src/icon-button.tsx"
     },
+    "./select": {
+      "types": "./src/select.tsx",
+      "default": "./src/select.tsx"
+    },
+    "./popover": {
+      "types": "./src/popover.tsx",
+      "default": "./src/popover.tsx"
+    },
     "./brand-loader": {
       "types": "./src/brand-loader.tsx",
       "default": "./src/brand-loader.tsx"

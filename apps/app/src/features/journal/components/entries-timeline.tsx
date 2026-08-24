@@ -15,22 +15,21 @@ import {
 } from "@tanstack/react-query";
 import { Button } from "@withink/ui/button";
 import { Card, CardContent } from "@withink/ui/card";
+import { IconButton } from "@withink/ui/icon-button";
 import { Skeleton } from "@withink/ui/skeleton";
 import { cn } from "@withink/utils";
 import {
-  AlertCircle,
   Angry,
   Calendar,
   ChevronLeft,
   ChevronRight,
+  EllipsisVertical,
   FileText,
   Frown,
   Loader2,
   Meh,
-  Search,
   Smile,
   SmilePlus,
-  Trash2,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { toast } from "sonner";
@@ -38,6 +37,7 @@ import { toast } from "sonner";
 import { ROUTES } from "@/constants/routes";
 import { formatDisplayDate } from "@/lib/utils/date";
 import { useEncryption } from "@/providers/encryption-provider";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 
 import {
   deleteEntryAction,
@@ -48,6 +48,7 @@ import {
   filterLocalTimeline,
 } from "../services/diary-cache-service";
 import type { DecryptedEntry } from "../services/journal-service";
+import type { TimeFilter } from "./entries-controls";
 
 interface EntriesTimelineProps {
   initialEntries: DecryptedEntry[];
@@ -55,6 +56,10 @@ interface EntriesTimelineProps {
   localToday: string;
   /** Server-derived: whether this account uses client-side encryption. */
   accountEncrypted: boolean;
+  /** Page-level filter state (owned by EntriesPageShell). */
+  debouncedSearch: string;
+  moodFilter: string;
+  timeFilter: TimeFilter;
   onEntryDeleted?: () => void;
 }
 
@@ -135,35 +140,39 @@ export function EntriesTimeline({
   initialTotal,
   localToday,
   accountEncrypted,
+  debouncedSearch,
+  moodFilter,
+  timeFilter,
   onEntryDeleted,
 }: EntriesTimelineProps) {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const { isClientEncrypted, masterKey } = useEncryption();
 
-  const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [moodFilter, setMoodFilter] = useState<string>("all");
-  const [timeFilter, setTimeFilter] = useState<"all" | "week" | "month">("all");
+  // Any page-level filter change restarts pagination from the first page.
+  // (Render-time adjustment per the React docs — no cascading effect.)
+  const [prevFilters, setPrevFilters] = useState({
+    search: debouncedSearch,
+    moodFilter,
+    timeFilter,
+  });
+  if (
+    prevFilters.search !== debouncedSearch ||
+    prevFilters.moodFilter !== moodFilter ||
+    prevFilters.timeFilter !== timeFilter
+  ) {
+    setPrevFilters({
+      search: debouncedSearch,
+      moodFilter,
+      timeFilter,
+    });
+    setPage(1);
+  }
 
-  const [deleteDateConfirm, setDeleteDateConfirm] = useState<string | null>(
-    null,
-  );
+  const [deleteDate, setDeleteDate] = useState<string | null>(null);
 
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncProgress, setSyncProgress] = useState({ current: 0, total: 0 });
-
-  // Search debounce effect
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedSearch(search);
-      setPage(1);
-    }, 400);
-
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [search]);
 
   // Background Cache Sync Hook
   // Deferred to idle time (requestIdleCallback with a timeout fallback) so it
@@ -322,7 +331,7 @@ export function EntriesTimeline({
           await diaryCacheService.deleteLocalMetadata(date);
         }
         toast.success(`Entry for ${formatDisplayDate(date)} deleted.`);
-        setDeleteDateConfirm(null);
+        setDeleteDate(null);
         onEntryDeleted?.();
 
         // Adjust page if we deleted the last item on this page
@@ -346,69 +355,15 @@ export function EntriesTimeline({
     deleteMutation.mutate(date);
   };
 
-  const isDeleting = deleteMutation.isPending;
+  const deletingEntry =
+    deleteMutation.isPending && deleteMutation.variables
+      ? deleteMutation.variables
+      : null;
 
   const totalPages = Math.ceil(total / LIMIT);
 
   return (
     <div className="space-y-6">
-      {/* Controls: Search & Filters */}
-      <div className="flex flex-col gap-4 sm:flex-row">
-        {/* Search */}
-        <div className="relative flex-grow">
-          {isFetching ? (
-            <Loader2 className="text-primary absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 animate-spin" />
-          ) : (
-            <Search className="text-muted-foreground/60 absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-          )}
-          <input
-            type="text"
-            placeholder="Search by title, contents, date…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            aria-label="Search entries"
-            autoComplete="off"
-            className="bg-card border-border placeholder:text-muted-foreground/50 focus-visible:ring-ring h-10 w-full rounded-xl border pr-4 pl-9 text-sm transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
-          />
-        </div>
-
-        {/* Filters */}
-        <div className="no-scrollbar flex items-center gap-2 overflow-x-auto">
-          {/* Time range */}
-          <select
-            value={timeFilter}
-            onChange={(e) => {
-              setTimeFilter(e.target.value as any); // eslint-disable-line @typescript-eslint/no-explicit-any
-              setPage(1);
-            }}
-            aria-label="Filter by time range"
-            className="bg-card border-border text-foreground focus-visible:ring-ring h-10 cursor-pointer rounded-xl border px-3 text-sm transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
-          >
-            <option value="all">All time</option>
-            <option value="week">This week</option>
-            <option value="month">This month</option>
-          </select>
-
-          {/* Mood filter */}
-          <select
-            value={moodFilter}
-            onChange={(e) => {
-              setMoodFilter(e.target.value);
-              setPage(1);
-            }}
-            aria-label="Filter by mood"
-            className="bg-card border-border text-foreground focus-visible:ring-ring h-10 cursor-pointer rounded-xl border px-3 text-sm transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
-          >
-            <option value="all">All moods</option>
-            <option value="1">Angry</option>
-            <option value="2">Sad</option>
-            <option value="3">Neutral</option>
-            <option value="4">Happy</option>
-            <option value="5">Radiant</option>
-          </select>
-        </div>
-      </div>
-
       {/* Background Syncing Progress Indicator */}
       {isSyncing && syncProgress.total > 0 && (
         <div className="text-accent border-accent/15 bg-accent/5 flex animate-pulse items-center gap-2 rounded-xl border px-3 py-1.5 font-serif text-xs select-none">
@@ -442,7 +397,7 @@ export function EntriesTimeline({
           <div className="space-y-4">
             {[1, 2, 3].map((i) => (
               <Card key={i} className="border-border/60 border">
-                <CardContent className="flex flex-col items-start gap-4 p-6 sm:flex-row sm:p-8">
+                <CardContent className="flex flex-col items-start gap-4 p-5 sm:flex-row sm:p-8">
                   <div className="flex w-full flex-grow space-y-3">
                     <div className="flex w-full items-center gap-3">
                       <Skeleton className="h-9 w-9 shrink-0 rounded-full" />
@@ -477,7 +432,6 @@ export function EntriesTimeline({
               const moodColor = entry.mood
                 ? moodColors[entry.mood]
                 : "text-muted-foreground/60 bg-muted/10 border-border/10";
-              const confirmOpen = deleteDateConfirm === entry.date;
 
               return (
                 <motion.div
@@ -496,9 +450,9 @@ export function EntriesTimeline({
                     className="border-border/60 hover:border-border overflow-hidden border transition-all duration-300 hover:shadow-md"
                     interactive
                   >
-                    <CardContent className="flex flex-col items-start justify-between gap-4 p-6 sm:flex-row sm:p-8">
-                      {/* Left: Info */}
-                      <div className="min-w-0 flex-grow space-y-3">
+                    <CardContent className="flex flex-row items-start justify-between gap-2 p-5 sm:gap-6 sm:p-8">
+                      {/* Info */}
+                      <div className="min-w-0 flex-1 space-y-2.5">
                         <div className="flex items-center gap-3">
                           <div
                             className={cn(
@@ -508,7 +462,7 @@ export function EntriesTimeline({
                           >
                             <MoodIcon className="h-5 w-5" />
                           </div>
-                          <div className="min-w-0">
+                          <div className="min-w-0 flex-1">
                             <Link
                               href={
                                 `${ROUTES.APP.ENTRY(entry.date)}?today=${localToday}` as unknown as ComponentPropsWithoutRef<
@@ -517,7 +471,7 @@ export function EntriesTimeline({
                               }
                               className="block"
                             >
-                              <h3 className="text-foreground hover:text-primary truncate font-serif text-xl font-semibold tracking-tight transition-colors">
+                              <h3 className="text-foreground hover:text-primary truncate font-serif text-lg font-semibold tracking-tight transition-colors sm:text-xl">
                                 {entry.title ? (
                                   <Highlight
                                     text={entry.title}
@@ -528,7 +482,8 @@ export function EntriesTimeline({
                                 )}
                               </h3>
                             </Link>
-                            <div className="text-muted-foreground/60 mt-0.5 flex items-center gap-2 font-serif text-[11px] tracking-[0.16em] uppercase">
+                            {/* Meta row: date · words · mood — always visible */}
+                            <div className="text-muted-foreground/60 mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 font-serif text-[11px] tracking-[0.16em] uppercase">
                               <span className="flex items-center gap-1">
                                 <Calendar className="h-3 w-3" />
                                 <Highlight
@@ -536,7 +491,7 @@ export function EntriesTimeline({
                                   query={debouncedSearch}
                                 />
                               </span>
-                              <span>•</span>
+                              <span aria-hidden="true">·</span>
                               <span>{entry.wordCount} words</span>
                             </div>
                           </div>
@@ -557,48 +512,17 @@ export function EntriesTimeline({
                         </p>
                       </div>
 
-                      {/* Right: Actions */}
-                      <div className="relative flex shrink-0 items-center gap-2 self-start sm:self-center">
-                        {confirmOpen ? (
-                          <div className="bg-destructive/10 border-destructive/20 animate-in slide-in-from-right-2 flex items-center gap-1.5 rounded-xl border p-1 duration-200">
-                            <AlertCircle className="text-destructive ml-1 h-4 w-4 shrink-0" />
-                            <span className="text-destructive font-serif text-[11px] font-semibold tracking-[0.16em] uppercase">
-                              Delete?
-                            </span>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              aria-label="Confirm delete entry"
-                              className="text-destructive hover:bg-destructive hover:text-destructive-foreground h-7 cursor-pointer rounded-lg px-2 text-xs font-bold"
-                              onClick={() => handleDelete(entry.date)}
-                              disabled={isDeleting}
-                            >
-                              Yes
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              aria-label="Cancel delete entry"
-                              className="text-muted-foreground hover:bg-muted h-7 cursor-pointer rounded-lg px-2 text-xs font-bold"
-                              onClick={() => setDeleteDateConfirm(null)}
-                              disabled={isDeleting}
-                            >
-                              No
-                            </Button>
-                          </div>
-                        ) : (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10 h-9 w-9 shrink-0 cursor-pointer rounded-lg opacity-100 transition-colors group-hover:opacity-100 sm:opacity-0"
-                            onClick={() => setDeleteDateConfirm(entry.date)}
-                            title="Delete entry"
-                            aria-label="Delete entry"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
+                      {/* Actions: visible kebab → confirm Dialog (the one
+                          app-wide destructive convention; no hover-reveal) */}
+                      <IconButton
+                        variant="ghost"
+                        aria-label={`Options for entry on ${formatDisplayDate(entry.date)}`}
+                        title="Entry options"
+                        className="text-muted-foreground/70 hover:text-destructive shrink-0"
+                        onClick={() => setDeleteDate(entry.date)}
+                      >
+                        <EllipsisVertical className="h-4 w-4" />
+                      </IconButton>
                     </CardContent>
                   </Card>
                 </motion.div>
@@ -619,7 +543,7 @@ export function EntriesTimeline({
               variant="outline"
               size="sm"
               aria-label="Previous page"
-              className="h-9 cursor-pointer gap-1 rounded-xl text-xs"
+              className="h-10 cursor-pointer gap-1 rounded-xl text-xs sm:h-9"
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
             >
@@ -630,7 +554,7 @@ export function EntriesTimeline({
               variant="outline"
               size="sm"
               aria-label="Next page"
-              className="h-9 cursor-pointer gap-1 rounded-xl text-xs"
+              className="h-10 cursor-pointer gap-1 rounded-xl text-xs sm:h-9"
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
             >
@@ -640,6 +564,28 @@ export function EntriesTimeline({
           </div>
         </div>
       )}
+
+      {/* Delete confirmation — one convention for every destructive action */}
+      <ConfirmDialog
+        open={deleteDate !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteDate(null);
+        }}
+        title="Delete this reflection?"
+        description={
+          <>
+            The entry written for{" "}
+            <span className="text-foreground font-semibold">
+              {deleteDate ? formatDisplayDate(deleteDate) : ""}
+            </span>{" "}
+            will be permanently erased. This cannot be undone.
+          </>
+        }
+        pending={deletingEntry !== null}
+        onConfirm={() => {
+          if (deleteDate) void handleDelete(deleteDate);
+        }}
+      />
     </div>
   );
 }

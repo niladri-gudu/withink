@@ -67,6 +67,10 @@ export function LockScreen({
 
   const handleKeyPress = React.useCallback(
     (digit: string) => {
+      // Quiet tactile tick, matching the editor toolbar's haptics.
+      if (typeof navigator !== "undefined" && navigator.vibrate) {
+        navigator.vibrate(10);
+      }
       if (pin.length < 6 && /^\d$/.test(digit)) {
         setPin((prev) => prev + digit);
       }
@@ -75,6 +79,9 @@ export function LockScreen({
   );
 
   const handleBackspace = React.useCallback(() => {
+    if (typeof navigator !== "undefined" && navigator.vibrate) {
+      navigator.vibrate(10);
+    }
     setPin((prev) => prev.slice(0, -1));
   }, []);
 
@@ -248,7 +255,7 @@ export function LockScreen({
               <h1 className="text-h2 text-foreground font-serif font-bold">
                 Welcome back
               </h1>
-              <p className="text-caption font-serif tracking-[0.16em] uppercase">
+              <p className="text-caption font-serif uppercase tracking-[0.16em]">
                 Diary Lock
               </p>
             </div>
@@ -262,7 +269,7 @@ export function LockScreen({
                 className="mb-8 flex h-16 flex-col items-center justify-center gap-4"
               >
                 <Loader2 className="text-accent h-6 w-6 animate-spin" />
-                <span className="text-muted-foreground font-serif text-xs tracking-wider uppercase">
+                <span className="text-muted-foreground font-serif text-xs uppercase tracking-wider">
                   Decrypting your diary…
                 </span>
               </motion.div>
@@ -300,7 +307,7 @@ export function LockScreen({
                     onClick={() => handleKeyPress(num)}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className="border-border bg-card text-foreground hover:bg-secondary/80 focus-visible:ring-ring flex h-16 w-16 items-center justify-center rounded-full border text-xl font-medium shadow-sm transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+                    className="border-border bg-card text-foreground hover:bg-secondary/80 focus-visible:ring-ring flex h-16 w-16 items-center justify-center rounded-full border text-xl font-medium shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
                   >
                     {num}
                   </motion.button>
@@ -310,7 +317,7 @@ export function LockScreen({
                   onClick={handleClear}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="text-muted-foreground hover:text-foreground focus-visible:ring-ring flex h-16 w-16 items-center justify-center rounded-full border border-transparent text-sm font-medium focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+                  className="text-muted-foreground hover:text-foreground focus-visible:ring-ring flex h-16 w-16 items-center justify-center rounded-full border border-transparent text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
                 >
                   Clear
                 </motion.button>
@@ -319,7 +326,7 @@ export function LockScreen({
                   onClick={() => handleKeyPress("0")}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="border-border bg-card text-foreground hover:bg-secondary/80 focus-visible:ring-ring flex h-16 w-16 items-center justify-center rounded-full border text-xl font-medium shadow-sm transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+                  className="border-border bg-card text-foreground hover:bg-secondary/80 focus-visible:ring-ring flex h-16 w-16 items-center justify-center rounded-full border text-xl font-medium shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
                 >
                   0
                 </motion.button>
@@ -329,7 +336,7 @@ export function LockScreen({
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   aria-label="Backspace"
-                  className="text-muted-foreground hover:text-foreground focus-visible:ring-ring flex h-16 w-16 items-center justify-center rounded-full border border-transparent focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+                  className="text-muted-foreground hover:text-foreground focus-visible:ring-ring flex h-16 w-16 items-center justify-center rounded-full border border-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
                 >
                   <Delete className="h-5 w-5" />
                 </motion.button>
@@ -361,11 +368,11 @@ export function LockScreen({
               <h1 className="text-h2 text-foreground font-serif font-bold">
                 Verify Diary Password
               </h1>
-              <p className="text-caption font-serif tracking-[0.16em] uppercase">
+              <p className="text-caption font-serif uppercase tracking-[0.16em]">
                 Diary Lock
               </p>
             </div>
-            <p className="text-body-small text-muted-foreground mt-2 mb-6 max-w-xs">
+            <p className="text-body-small text-muted-foreground mb-6 mt-2 max-w-xs">
               Enter your Diary Password to disable the PIN lock and access your
               diary.
             </p>

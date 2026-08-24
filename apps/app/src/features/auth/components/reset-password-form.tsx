@@ -76,19 +76,19 @@ function ResetPasswordFormContent() {
   };
 
   return (
-    <div className="bg-card border-border/80 animate-in fade-in mx-auto w-full max-w-md space-y-6 rounded-xl border p-6 shadow-sm duration-300 select-none sm:space-y-8 sm:p-8">
+    <div className="bg-card border-border/80 animate-in fade-in mx-auto w-full max-w-md select-none space-y-6 rounded-xl border p-6 shadow-sm duration-300 sm:space-y-8 sm:p-8">
       <div className="space-y-1.5 text-center sm:text-left">
         <h1 className="text-h2 text-foreground font-serif font-bold">
           Reset access.
         </h1>
-        <p className="text-caption font-serif tracking-[0.2em] uppercase">
+        <p className="text-caption font-serif uppercase tracking-[0.2em]">
           Set a new key for your notebook
         </p>
       </div>
 
       {globalError && (
         <div className="bg-destructive/5 border-destructive/20 animate-in fade-in slide-in-from-top-2 rounded-lg border p-3">
-          <p className="text-destructive text-center font-serif text-[10px] tracking-widest uppercase">
+          <p className="text-destructive text-center font-serif text-[10px] uppercase tracking-widest">
             Warning: {globalError}
           </p>
         </div>
@@ -106,7 +106,7 @@ function ResetPasswordFormContent() {
             {errors.password?.message && (
               <span
                 id="password-error"
-                className="text-destructive animate-in fade-in font-serif text-[10px] tracking-tight uppercase"
+                className="text-destructive animate-in fade-in font-serif text-[10px] uppercase tracking-tight"
               >
                 {errors.password.message}
               </span>
@@ -116,6 +116,7 @@ function ResetPasswordFormContent() {
             <Input
               id="password"
               type={showPassword ? "text" : "password"}
+              autoComplete="new-password"
               placeholder="••••••••"
               aria-invalid={!!errors.password}
               aria-describedby={errors.password ? "password-error" : undefined}
@@ -131,7 +132,7 @@ function ResetPasswordFormContent() {
               onClick={() => setShowPassword(!showPassword)}
               aria-label={showPassword ? "Hide secret key" : "Show secret key"}
               aria-pressed={showPassword}
-              className="text-muted-foreground/60 hover:text-foreground focus-visible:ring-ring absolute top-1/2 right-3 -translate-y-1/2 cursor-pointer p-1 font-serif text-xs tracking-wider uppercase transition-colors focus-visible:rounded focus-visible:ring-2 focus-visible:outline-none"
+              className="text-muted-foreground/60 hover:text-foreground focus-visible:ring-ring absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer p-1 font-serif text-xs uppercase tracking-wider transition-colors focus-visible:rounded focus-visible:outline-none focus-visible:ring-2"
             >
               {showPassword ? "Hide" : "Show"}
             </button>
@@ -149,7 +150,7 @@ function ResetPasswordFormContent() {
             {errors.confirmPassword?.message && (
               <span
                 id="confirm-password-error"
-                className="text-destructive animate-in fade-in font-serif text-[10px] tracking-tight uppercase"
+                className="text-destructive animate-in fade-in font-serif text-[10px] uppercase tracking-tight"
               >
                 {errors.confirmPassword.message}
               </span>
@@ -159,6 +160,7 @@ function ResetPasswordFormContent() {
             <Input
               id="confirmPassword"
               type={showConfirm ? "text" : "password"}
+              autoComplete="new-password"
               placeholder="••••••••"
               aria-invalid={!!errors.confirmPassword}
               aria-describedby={
@@ -180,7 +182,7 @@ function ResetPasswordFormContent() {
                   : "Show confirm secret key"
               }
               aria-pressed={showConfirm}
-              className="text-muted-foreground/60 hover:text-foreground focus-visible:ring-ring absolute top-1/2 right-3 -translate-y-1/2 cursor-pointer p-1 font-serif text-xs tracking-wider uppercase transition-colors focus-visible:rounded focus-visible:ring-2 focus-visible:outline-none"
+              className="text-muted-foreground/60 hover:text-foreground focus-visible:ring-ring absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer p-1 font-serif text-xs uppercase tracking-wider transition-colors focus-visible:rounded focus-visible:outline-none focus-visible:ring-2"
             >
               {showConfirm ? "Hide" : "Show"}
             </button>
