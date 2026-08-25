@@ -392,6 +392,11 @@ Note: MongoDB (`mongodb+srv://`) now connects. The earlier `querySrv ECONNREFUSE
 
 # Recent Decisions
 
+2026-08-25 (Billing Phase A)
+
+- **Monetization Phase A — billing/entitlements spine (no behavior change yet).** Strategy locked and written to `internal-docs/MONETIZATION_PLAN.md` (tier matrix, Dodo Payments integration design, launch gates, deferred roadmap). New feature folder `features/billing/`: `config/plans.ts` is the canonical entitlements matrix (Free 14d backfill / 100MB / 1 session · Plus 90d / 10GB / 3 · Pro ∞ / 50GB / ∞; reserved fields for fast-follow features) + `PLAN_PRODUCTS` mapping for the five Dodo products incl. lifetime; `repositories/billing-account-model.ts` + `-repository.ts` (lazy `billingaccounts` collection — absence of a row means Free; upserts reserved for webhook use only); `services/entitlements-service.ts` resolves tier via Redis cache (`billing:{userId}:plan`, 60s TTL) over Mongo with fail-to-Free semantics (gates never throw/block), `lifetime=true` forces Pro regardless of status, `past_due` keeps paid access as dunning grace, `canceled` → Free. Callers mutating rows must call `EntitlementsService.invalidateCache(userId)`. 16 new Vitest tests (matrix pinned to locked numbers, resolution rules, cache hit/miss/degrade, copy-isolation). Verified: `tsc --noEmit` clean, eslint clean on `features/billing`, full suite 146/146, production build clean.
+  - Next: Phase B gates (backfill window in entry save path replacing `BACKDATE_GRACE_PERIOD_DAYS`, per-tier media quota in upload route, session soft-kick hook), then Phase C Dodo wiring.
+
 2026-08-25 (Phase 5)
 
 - **Mobile-first redesign, Phase 5 — Public site (apps/docs) phone-first pass.** Presentation-only; copy, claims, product truth byte-identical. All verified: `pnpm --filter @withink/docs exec tsc --noEmit` clean, eslint 0 errors, `pnpm build` clean for BOTH apps, impeccable detector `[]` on all 8 changed files, batched browser pass at 375×812, 320×700, and 1440×900 (light/dark tokens untouched).
