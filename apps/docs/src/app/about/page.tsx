@@ -33,9 +33,9 @@ export default function AboutPage() {
       <div className="text-body-small text-muted-foreground space-y-6 font-sans leading-relaxed">
         <p>
           At <strong>withink.</strong>, we believe your personal reflections
-          deserve a diary. In an era dominated by instant notifications,
-          data harvesting, and scrollable feeds, the simple act of taking a pen
-          to paper (or fingers to keys) has been lost to the noise.
+          deserve a diary. In an era dominated by instant notifications, data
+          harvesting, and scrollable feeds, the simple act of taking a pen to
+          paper (or fingers to keys) has been lost to the noise.
         </p>
         <p>
           We set out to recreate the peaceful atmosphere of a silent library—a

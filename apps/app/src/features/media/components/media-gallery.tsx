@@ -126,14 +126,14 @@ export function MediaGallery({
     <div className="space-y-6">
       {/* Storage stats card — compact single row on phones, two-part on md+ */}
       <Card className="border-border overflow-hidden rounded-xl border">
-        <CardContent className="flex select-none flex-col gap-3 p-4 sm:p-5 md:flex-row md:items-center md:gap-5">
+        <CardContent className="flex flex-col gap-3 p-4 select-none sm:p-5 md:flex-row md:items-center md:gap-5">
           <div className="flex min-w-0 flex-1 items-center gap-3.5">
             <span className="bg-accent/10 text-accent hidden shrink-0 rounded-xl p-3 md:block">
               <HardDrive className="h-5 w-5" />
             </span>
             <div className="min-w-0 flex-1">
               <div className="flex items-baseline justify-between gap-2">
-                <p className="text-muted-foreground font-serif text-[11px] uppercase tracking-[0.16em]">
+                <p className="text-running-head text-muted-foreground">
                   Diary Archives
                 </p>
                 <p className="text-muted-foreground shrink-0 text-xs">
@@ -180,18 +180,18 @@ export function MediaGallery({
       {/* Filter and Control Toolbar */}
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
         <div className="relative max-w-sm flex-1">
-          <Search className="text-muted-foreground absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
+          <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
           <Input
             placeholder="Search filenames..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="bg-card/60 border-border/60 focus:bg-background focus-visible:ring-ring h-10 rounded-xl pl-9 pr-4"
+            className="bg-card/60 border-border/60 focus:bg-background focus-visible:ring-ring h-10 rounded-xl pr-4 pl-9"
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery("")}
               aria-label="Clear search"
-              className="hover:bg-secondary text-muted-foreground absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-0.5"
+              className="hover:bg-secondary text-muted-foreground absolute top-1/2 right-3 -translate-y-1/2 rounded-full p-0.5"
             >
               <X className="h-3 w-3" />
             </button>
@@ -221,7 +221,6 @@ export function MediaGallery({
           <div className="bg-secondary/50 border-border/30 flex items-center gap-1 rounded-xl border p-1">
             <IconButton
               variant="ghost"
-              size="sm"
               onClick={() => setViewMode("grid")}
               aria-label="Grid view"
               aria-pressed={viewMode === "grid"}
@@ -235,7 +234,6 @@ export function MediaGallery({
             </IconButton>
             <IconButton
               variant="ghost"
-              size="sm"
               onClick={() => setViewMode("list")}
               aria-label="List view"
               aria-pressed={viewMode === "list"}
@@ -301,17 +299,17 @@ export function MediaGallery({
                 type="button"
                 onClick={() => setLightboxIndex(index)}
                 aria-label={`View memory: ${filename}, ${dateStr}`}
-                className="border-border/60 bg-card focus-visible:ring-ring group relative aspect-square cursor-pointer overflow-hidden rounded-xl border text-left shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+                className="border-border/60 bg-card focus-visible:ring-ring group relative aspect-square cursor-pointer overflow-hidden rounded-xl border text-left shadow-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
               >
                 <Image
                   src={file.url}
                   alt={filename}
                   fill
                   sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                  className="group-hover:scale-103 object-cover transition-transform duration-300 ease-out group-hover:brightness-95"
+                  className="object-cover transition-transform duration-300 ease-out group-hover:scale-103 group-hover:brightness-95"
                 />
                 {/* Caption scrim: readable at rest on every breakpoint */}
-                <span className="absolute inset-x-0 bottom-0 flex flex-col gap-0.5 bg-gradient-to-t from-black/75 via-black/45 to-transparent px-2.5 pb-2 pt-6">
+                <span className="absolute inset-x-0 bottom-0 flex flex-col gap-0.5 bg-gradient-to-t from-black/75 via-black/45 to-transparent px-2.5 pt-6 pb-2">
                   <span className="truncate text-[11px] font-medium text-white">
                     {filename}
                   </span>
@@ -343,7 +341,7 @@ export function MediaGallery({
                 type="button"
                 onClick={() => setLightboxIndex(index)}
                 aria-label={`View memory: ${filename}`}
-                className="border-border/50 bg-card/40 hover:bg-card hover:border-border focus-visible:ring-ring group flex w-full cursor-pointer select-none items-center justify-between rounded-xl border p-3.5 text-left shadow-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+                className="border-border/50 bg-card/40 hover:bg-card hover:border-border focus-visible:ring-ring group flex w-full cursor-pointer items-center justify-between rounded-xl border p-3.5 text-left shadow-sm transition-all select-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
               >
                 <div className="flex min-w-0 items-center gap-4">
                   <div className="border-border/40 bg-secondary relative h-12 w-12 shrink-0 overflow-hidden rounded-lg border">

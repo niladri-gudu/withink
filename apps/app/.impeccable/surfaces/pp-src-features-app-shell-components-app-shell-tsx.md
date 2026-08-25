@@ -26,3 +26,10 @@ Continuity across breakpoints: tapping More lifts a sheet that reads like the ma
 - Whether Flashbacks earns a permanent tab slot once real usage data exists (it currently pools under More by design).
 - Phase 2–4 work will migrate the app's chaotic h-7..h-11 icon buttons onto IconButton and bespoke overlays onto Sheet/Dialog; this phase only establishes the primitives.
 - Android/iOS PWA install prompts and gesture-bar interplay are untested against viewport-fit=cover beyond safe-area padding math.
+
+
+## Phase 4 finalization (2026-08-24)
+- The More tab is now a real Radix SheetTrigger inside a Sheet root that also wraps the nav - Escape/trigger close restores focus to the More button (verified live).
+- Sidebar collapse toggle migrated from Button size=icon to IconButton; the rail user popover dropped its off-contract z-50 (local stacking suffices).
+- page-header.tsx and page-loading.tsx render running heads via text-running-head (the utility is the single source of the eyebrow voice).
+- Resolved: focus restore on sheet close (was dropping to body).

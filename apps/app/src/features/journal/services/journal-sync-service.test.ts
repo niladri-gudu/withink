@@ -105,7 +105,9 @@ describe("JournalSyncService", () => {
   });
 
   it("coalesces concurrent sync requests into a single in-flight run", async () => {
-    const resolvers: Array<(value: { succeeded: string[]; failed: string[] }) => void> = [];
+    const resolvers: Array<
+      (value: { succeeded: string[]; failed: string[] }) => void
+    > = [];
     flushMock.mockImplementation(
       () =>
         new Promise((resolve) => {

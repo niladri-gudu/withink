@@ -1,8 +1,8 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
 import Image from "next/image";
+import Link from "next/link";
 import {
   Angry,
   Archive,
@@ -387,7 +387,7 @@ export function LandingPageContent({
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
           <Link
             href="/"
-            className="text-foreground focus-visible:ring-ring select-none rounded p-0.5 font-serif text-2xl font-bold tracking-tight focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+            className="text-foreground focus-visible:ring-ring rounded p-0.5 font-serif text-2xl font-bold tracking-tight select-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
           >
             withink.
           </Link>
@@ -397,7 +397,7 @@ export function LandingPageContent({
               <Button
                 variant="default"
                 asChild
-                className="focus-visible:ring-ring rounded-xl px-4 font-serif text-xs font-medium uppercase tracking-[0.2em] shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+                className="focus-visible:ring-ring rounded-xl px-4 font-serif text-xs font-medium tracking-[0.2em] uppercase shadow-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
               >
                 <a href={APP_URL}>Open</a>
               </Button>
@@ -405,7 +405,7 @@ export function LandingPageContent({
               <Button
                 variant="default"
                 asChild
-                className="focus-visible:ring-ring rounded-xl px-4 font-serif text-xs font-medium uppercase tracking-[0.2em] shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+                className="focus-visible:ring-ring rounded-xl px-4 font-serif text-xs font-medium tracking-[0.2em] uppercase shadow-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
               >
                 <a href={`${APP_URL}/login`}>Sign In</a>
               </Button>
@@ -417,7 +417,7 @@ export function LandingPageContent({
       {/* Main Content */}
       <main className="flex-1">
         {/* Hero */}
-        <section className="relative flex min-h-[calc(100svh-4rem)] flex-col items-center justify-start px-6 pb-14 pt-[14vh] md:justify-center md:pb-20 md:pt-0">
+        <section className="relative flex min-h-[calc(100svh-4rem)] flex-col items-center justify-start px-6 pt-[14vh] pb-14 md:justify-center md:pt-0 md:pb-20">
           <div
             aria-hidden="true"
             className="ledger-rules pointer-events-none absolute inset-0"
@@ -430,7 +430,7 @@ export function LandingPageContent({
             <motion.h1
               variants={fadeInVariants}
               custom={0}
-              className="text-foreground sm:text-hero md:text-display mx-auto max-w-xl text-balance font-serif text-5xl leading-[1.12] tracking-tight"
+              className="text-foreground sm:text-hero md:text-display mx-auto max-w-xl font-serif text-5xl leading-[1.12] tracking-tight text-balance"
             >
               Your ordinary days are{" "}
               <em className="font-normal italic">worth keeping.</em>
@@ -447,7 +447,7 @@ export function LandingPageContent({
             <motion.p
               variants={fadeInVariants}
               custom={2}
-              className="text-muted-foreground/85 mx-auto mt-7 max-w-lg text-pretty font-serif text-xl leading-relaxed"
+              className="text-muted-foreground/85 mx-auto mt-7 max-w-lg font-serif text-xl leading-relaxed text-pretty"
             >
               A private, encrypted journal — one page a day, saved offline and
               exported anytime. Yours forever.
@@ -462,7 +462,7 @@ export function LandingPageContent({
                 <Button
                   size="lg"
                   asChild
-                  className="focus-visible:ring-ring w-full rounded-xl px-8 font-serif text-xs uppercase tracking-[0.2em] shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 sm:w-auto"
+                  className="focus-visible:ring-ring w-full rounded-xl px-8 font-serif text-xs tracking-[0.2em] uppercase shadow-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none sm:w-auto"
                 >
                   <a href={APP_URL}>Open Diary</a>
                 </Button>
@@ -470,7 +470,7 @@ export function LandingPageContent({
                 <Button
                   size="lg"
                   asChild
-                  className="focus-visible:ring-ring w-full rounded-xl px-8 font-serif text-xs uppercase tracking-[0.2em] shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 sm:w-auto"
+                  className="focus-visible:ring-ring w-full rounded-xl px-8 font-serif text-xs tracking-[0.2em] uppercase shadow-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none sm:w-auto"
                 >
                   <a href={`${APP_URL}/register`}>Open Your Diary</a>
                 </Button>
@@ -479,7 +479,7 @@ export function LandingPageContent({
                 size="lg"
                 variant="outline"
                 asChild
-                className="border-border/80 focus-visible:ring-ring w-full rounded-xl px-8 font-serif text-xs uppercase tracking-[0.2em] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 sm:w-auto"
+                className="border-border/80 focus-visible:ring-ring w-full rounded-xl px-8 font-serif text-xs tracking-[0.2em] uppercase focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none sm:w-auto"
               >
                 <Link href="/privacy">Read Privacy Philosophy</Link>
               </Button>
@@ -586,7 +586,7 @@ export function LandingPageContent({
               <motion.div
                 variants={fadeInVariants}
                 custom={0}
-                className="border-border/80 bg-card min-h-95 relative flex flex-col justify-between rounded-xl border shadow-sm md:col-span-2"
+                className="border-border/80 bg-card relative flex min-h-95 flex-col justify-between rounded-xl border shadow-sm md:col-span-2"
               >
                 {/*<div className="from-accent/40 via-foreground/25 to-accent/40 absolute left-0 right-0 top-0 h-[2px] rounded-t-xl bg-gradient-to-r" />*/}
 
@@ -605,7 +605,7 @@ export function LandingPageContent({
                         {moodData.find((m) => m.level === selectedMood)?.label}
                       </span>
                     </div>
-                    <span className="text-muted-foreground flex items-center gap-1.5 font-serif text-xs uppercase tracking-[0.14em]">
+                    <span className="text-muted-foreground flex items-center gap-1.5 font-serif text-xs tracking-[0.14em] uppercase">
                       {isSaving ? (
                         <>
                           <Loader2 className="text-accent h-3 w-3 animate-spin" />
@@ -655,10 +655,10 @@ export function LandingPageContent({
                     Today&rsquo;s field note
                   </h3>
 
-                  <div className="min-h-21 relative mt-2">
+                  <div className="relative mt-2 min-h-21">
                     <React.Suspense
                       fallback={
-                        <p className="text-muted-foreground border-border/70 border-l py-1 pl-4 font-serif text-sm italic leading-relaxed">
+                        <p className="text-muted-foreground border-border/70 border-l py-1 pl-4 font-serif text-sm leading-relaxed italic">
                           &ldquo;{editorText}&rdquo;
                         </p>
                       }
@@ -670,7 +670,7 @@ export function LandingPageContent({
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -5 }}
                           transition={quickSpring}
-                          className="text-muted-foreground border-border/70 border-l py-1 pl-4 font-serif text-sm italic leading-relaxed"
+                          className="text-muted-foreground border-border/70 border-l py-1 pl-4 font-serif text-sm leading-relaxed italic"
                         >
                           &ldquo;{editorText}&rdquo;
                         </motion.p>
@@ -681,7 +681,7 @@ export function LandingPageContent({
 
                 {/* Mood selector */}
                 <div className="border-border/70 mt-4 border-t p-6 pt-4 md:px-7">
-                  <span className="text-muted-foreground block font-serif text-xs uppercase tracking-[0.16em]">
+                  <span className="text-muted-foreground block font-serif text-xs tracking-[0.16em] uppercase">
                     How are you feeling today?
                   </span>
                   <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-5">
@@ -692,14 +692,14 @@ export function LandingPageContent({
                           key={mood.level}
                           onClick={() => handleMoodSelect(mood.level)}
                           aria-label={`Select ${mood.label}`}
-                          className={`focus-visible:ring-ring flex flex-col items-center justify-center gap-1 rounded-xl border p-2 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-95 ${
+                          className={`focus-visible:ring-ring flex flex-col items-center justify-center gap-1 rounded-xl border p-2 transition-all focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95 ${
                             selectedMood === mood.level
                               ? "bg-primary text-primary-foreground border-primary shadow-sm"
                               : "bg-secondary/30 border-border/60 text-muted-foreground/80 hover:bg-secondary/70 hover:text-foreground"
                           }`}
                         >
                           <MoodIcon className="h-4 w-4" />
-                          <span className="font-serif text-xs font-medium uppercase tracking-widest">
+                          <span className="font-serif text-xs font-medium tracking-widest uppercase">
                             {mood.label}
                           </span>
                         </button>
@@ -713,14 +713,14 @@ export function LandingPageContent({
               <motion.div
                 variants={fadeInVariants}
                 custom={1}
-                className="border-border/80 bg-card min-h-95 relative flex flex-col justify-between rounded-xl border shadow-sm"
+                className="border-border/80 bg-card relative flex min-h-95 flex-col justify-between rounded-xl border shadow-sm"
               >
                 <div className="p-6 md:p-7">
                   <div className="border-border/70 flex items-center justify-between border-b pb-3">
-                    <span className="text-muted-foreground flex items-center gap-1.5 font-serif text-xs uppercase tracking-[0.16em]">
+                    <span className="text-muted-foreground flex items-center gap-1.5 font-serif text-xs tracking-[0.16em] uppercase">
                       <Lock className="h-3 w-3" /> Diary Lock
                     </span>
-                    <span className="bg-accent text-accent-foreground rounded-full border border-transparent px-2 py-0.5 font-serif text-xs uppercase tracking-[0.14em]">
+                    <span className="bg-accent text-accent-foreground rounded-full border border-transparent px-2 py-0.5 font-serif text-xs tracking-[0.14em] uppercase">
                       Demo
                     </span>
                   </div>
@@ -785,21 +785,21 @@ export function LandingPageContent({
                       key={num}
                       onClick={() => handlePinPress(num)}
                       disabled={isPinUnlocked}
-                      className="bg-secondary/20 hover:bg-secondary/55 text-foreground border-border/40 focus-visible:ring-ring flex h-10 items-center justify-center rounded-xl border font-serif text-xs font-bold transition-all focus-visible:outline-none focus-visible:ring-1 active:scale-95"
+                      className="bg-secondary/20 hover:bg-secondary/55 text-foreground border-border/40 focus-visible:ring-ring flex h-10 items-center justify-center rounded-xl border font-serif text-xs font-bold transition-all focus-visible:ring-1 focus-visible:outline-none active:scale-95"
                     >
                       {num}
                     </button>
                   ))}
                   <button
                     onClick={handlePinClear}
-                    className="bg-secondary/15 hover:bg-secondary/35 border-border/40 focus-visible:ring-ring flex h-10 items-center justify-center rounded-xl border font-serif text-xs font-bold uppercase tracking-wider transition-all focus-visible:outline-none focus-visible:ring-1 active:scale-95"
+                    className="bg-secondary/15 hover:bg-secondary/35 border-border/40 focus-visible:ring-ring flex h-10 items-center justify-center rounded-xl border font-serif text-xs font-bold tracking-wider uppercase transition-all focus-visible:ring-1 focus-visible:outline-none active:scale-95"
                   >
                     Clear
                   </button>
                   <button
                     onClick={() => handlePinPress("0")}
                     disabled={isPinUnlocked}
-                    className="bg-secondary/20 hover:bg-secondary/55 text-foreground border-border/40 focus-visible:ring-ring flex h-10 items-center justify-center rounded-xl border font-serif text-xs font-bold transition-all focus-visible:outline-none focus-visible:ring-1 active:scale-95"
+                    className="bg-secondary/20 hover:bg-secondary/55 text-foreground border-border/40 focus-visible:ring-ring flex h-10 items-center justify-center rounded-xl border font-serif text-xs font-bold transition-all focus-visible:ring-1 focus-visible:outline-none active:scale-95"
                   >
                     0
                   </button>
@@ -807,7 +807,7 @@ export function LandingPageContent({
                     onClick={handlePinBackspace}
                     disabled={isPinUnlocked || pinDigits.length === 0}
                     aria-label="Delete last digit"
-                    className="bg-secondary/15 hover:bg-secondary/35 border-border/40 focus-visible:ring-ring text-muted-foreground/70 flex h-10 items-center justify-center rounded-xl border text-xs transition-all focus-visible:outline-none focus-visible:ring-1 active:scale-95 disabled:opacity-40 disabled:active:scale-100"
+                    className="bg-secondary/15 hover:bg-secondary/35 border-border/40 focus-visible:ring-ring text-muted-foreground/70 flex h-10 items-center justify-center rounded-xl border text-xs transition-all focus-visible:ring-1 focus-visible:outline-none active:scale-95 disabled:opacity-40 disabled:active:scale-100"
                   >
                     <Delete className="h-3.5 w-3.5" />
                   </button>
@@ -821,7 +821,7 @@ export function LandingPageContent({
                 className="border-border/80 bg-card flex min-h-80 flex-col justify-between rounded-xl border shadow-sm"
               >
                 <div className="space-y-4 p-6">
-                  <div className="text-muted-foreground border-border/70 flex items-center space-x-2 border-b pb-3 font-serif text-xs uppercase tracking-[0.16em]">
+                  <div className="text-muted-foreground border-border/70 flex items-center space-x-2 border-b pb-3 font-serif text-xs tracking-[0.16em] uppercase">
                     <Sparkles className="text-accent h-3 w-3" />
                     <span>This date · one year past</span>
                   </div>
@@ -837,7 +837,7 @@ export function LandingPageContent({
                     <h3 className="text-foreground font-serif text-base font-bold">
                       Watching the sunrise
                     </h3>
-                    <p className="text-muted-foreground/80 border-border/70 border-l pl-3 font-serif text-sm italic leading-relaxed">
+                    <p className="text-muted-foreground/80 border-border/70 border-l pl-3 font-serif text-sm leading-relaxed italic">
                       &ldquo;We watched the sunrise from the peak. The air was
                       crisp, and the entire city below was silent. I want to
                       remember this feeling of infinite possibility.&rdquo;
@@ -871,7 +871,7 @@ export function LandingPageContent({
                         type="submit"
                         variant="outline"
                         size="sm"
-                        className="border-border/60 hover:bg-secondary/40 w-full rounded-xl font-serif text-xs font-medium uppercase tracking-[0.14em]"
+                        className="border-border/60 hover:bg-secondary/40 w-full rounded-xl font-serif text-xs font-medium tracking-[0.14em] uppercase"
                       >
                         Keep the note
                       </Button>
@@ -886,7 +886,7 @@ export function LandingPageContent({
                 custom={3}
                 className="border-border/80 bg-card flex min-h-80 flex-col justify-between rounded-xl border shadow-sm"
               >
-                <div className="text-muted-foreground border-border/70 flex items-center space-x-2 border-b p-6 pb-3 font-serif text-xs uppercase tracking-[0.16em]">
+                <div className="text-muted-foreground border-border/70 flex items-center space-x-2 border-b p-6 pb-3 font-serif text-xs tracking-[0.16em] uppercase">
                   <ImageIcon className="h-3 w-3" />
                   <span>Memory pages</span>
                 </div>
@@ -900,20 +900,20 @@ export function LandingPageContent({
                         prefersReduced ? {} : { scale: 1.05, y: -8, zIndex: 10 }
                       }
                       style={{ left: `calc(50% - 60px + ${idx * 16 - 16}px)` }}
-                      className={`bg-card border-border/40 absolute w-32 cursor-zoom-in rounded-xl border p-2 pb-3 shadow-md transition-shadow duration-300 hover:shadow-xl ${p.rotation} focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-2`}
+                      className={`bg-card border-border/40 absolute w-32 cursor-zoom-in rounded-xl border p-2 pb-3 shadow-md transition-shadow duration-300 hover:shadow-xl ${p.rotation} focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none`}
                       aria-label={`Enlarge: ${p.caption}`}
                     >
-                      <div className="bg-secondary/20 aspect-4/3 relative w-full overflow-hidden rounded-md">
+                      <div className="bg-secondary/20 relative aspect-4/3 w-full overflow-hidden rounded-md">
                         <Image
                           src={p.src}
                           alt=""
                           fill
                           sizes="128px"
                           loading="lazy"
-                          className="grayscale-10 object-cover transition-all duration-300 hover:grayscale-0"
+                          className="object-cover grayscale-10 transition-all duration-300 hover:grayscale-0"
                         />
                         <div className="bg-primary/5 absolute inset-0 transition-colors hover:bg-transparent" />
-                        <div className="absolute bottom-1 right-1 rounded bg-black/40 p-0.5 text-white backdrop-blur-[2px]">
+                        <div className="absolute right-1 bottom-1 rounded bg-black/40 p-0.5 text-white backdrop-blur-[2px]">
                           <Maximize2 className="h-2 w-2" />
                         </div>
                       </div>
@@ -924,7 +924,7 @@ export function LandingPageContent({
                   ))}
                 </div>
 
-                <div className="text-muted-foreground/50 border-border/70 border-t p-6 pt-3 text-center font-serif text-[11px] uppercase tracking-[0.12em]">
+                <div className="text-muted-foreground/50 border-border/70 border-t p-6 pt-3 text-center font-serif text-[11px] tracking-[0.12em] uppercase">
                   Hover to tilt · Click to enlarge
                 </div>
               </motion.div>
@@ -935,7 +935,7 @@ export function LandingPageContent({
                 custom={4}
                 className="border-border/80 bg-card flex min-h-80 flex-col justify-between rounded-xl border shadow-sm"
               >
-                <div className="text-muted-foreground border-border/70 flex items-center space-x-2 border-b p-6 pb-3 font-serif text-xs uppercase tracking-[0.16em]">
+                <div className="text-muted-foreground border-border/70 flex items-center space-x-2 border-b p-6 pb-3 font-serif text-xs tracking-[0.16em] uppercase">
                   <Archive className="h-3 w-3" />
                   <span>Export anytime</span>
                 </div>
@@ -978,7 +978,7 @@ export function LandingPageContent({
                   ) : (
                     <Button
                       onClick={triggerExport}
-                      className="focus-visible:ring-ring w-full gap-1.5 rounded-xl py-1 font-serif text-xs uppercase tracking-[0.16em] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+                      className="focus-visible:ring-ring w-full gap-1.5 rounded-xl py-1 font-serif text-xs tracking-[0.16em] uppercase focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
                     >
                       <Download className="h-3.5 w-3.5" />
                       Export My Diary
@@ -991,11 +991,11 @@ export function LandingPageContent({
               <motion.div
                 variants={fadeInVariants}
                 custom={5}
-                className="border-border/80 bg-card min-h-75 relative flex flex-col justify-between rounded-xl border shadow-sm md:col-span-3"
+                className="border-border/80 bg-card relative flex min-h-75 flex-col justify-between rounded-xl border shadow-sm md:col-span-3"
               >
                 <div className="border-border/70 border-b-2 p-6 pb-4 md:p-7 md:pb-4">
                   <div className="flex flex-wrap items-center justify-between gap-3">
-                    <span className="text-muted-foreground flex items-center gap-1.5 font-serif text-xs uppercase tracking-[0.16em]">
+                    <span className="text-muted-foreground flex items-center gap-1.5 font-serif text-xs tracking-[0.16em] uppercase">
                       <BarChart2 className="h-3.5 w-3.5" /> Your year at a
                       glance
                     </span>
@@ -1052,13 +1052,13 @@ export function LandingPageContent({
                             type="button"
                             onClick={() => setVignetteDay(dayVal)}
                             aria-label={`July ${dayVal}, 2026 — ${mood.label}, ${vignette.words} words. Open this day's entry`}
-                            className={`group/cell focus-visible:ring-ring relative flex size-[clamp(1.5rem,7vw,2.5rem)] cursor-pointer items-center justify-center rounded-md border transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-95 ${cellColor}`}
+                            className={`group/cell focus-visible:ring-ring relative flex size-[clamp(1.5rem,7vw,2.5rem)] cursor-pointer items-center justify-center rounded-md border transition-all duration-200 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95 ${cellColor}`}
                           >
-                            <span className="text-muted-foreground/45 pointer-events-none select-none font-serif text-[10px]">
+                            <span className="text-muted-foreground/45 pointer-events-none font-serif text-[10px] select-none">
                               {dayVal}
                             </span>
 
-                            <div className="bg-primary text-primary-foreground absolute bottom-full left-1/2 z-20 mb-1.5 hidden -translate-x-1/2 whitespace-nowrap rounded-md px-2 py-1 font-serif text-[10px] shadow-lg group-hover/cell:block">
+                            <div className="bg-primary text-primary-foreground absolute bottom-full left-1/2 z-20 mb-1.5 hidden -translate-x-1/2 rounded-md px-2 py-1 font-serif text-[10px] whitespace-nowrap shadow-lg group-hover/cell:block">
                               July {dayVal}: {tooltipLabel}
                             </div>
                           </button>
@@ -1213,7 +1213,7 @@ export function LandingPageContent({
               <Button
                 size="lg"
                 asChild
-                className="focus-visible:ring-ring gap-1.5 rounded-xl px-8 font-serif text-xs uppercase tracking-[0.2em] shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+                className="focus-visible:ring-ring gap-1.5 rounded-xl px-8 font-serif text-xs tracking-[0.2em] uppercase shadow-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
               >
                 <a href={`${APP_URL}/register`}>
                   Open Your Diary <ChevronRight className="h-4 w-4" />
@@ -1236,25 +1236,25 @@ export function LandingPageContent({
           <div className="order-1 flex flex-wrap justify-center gap-x-6 gap-y-3 sm:order-2 sm:gap-y-0">
             <Link
               href="/about"
-              className="hover:text-foreground focus-visible:ring-ring rounded p-0.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+              className="hover:text-foreground focus-visible:ring-ring rounded p-0.5 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
             >
               About Us
             </Link>
             <Link
               href="/contact"
-              className="hover:text-foreground focus-visible:ring-ring rounded p-0.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+              className="hover:text-foreground focus-visible:ring-ring rounded p-0.5 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
             >
               Contact Us
             </Link>
             <Link
               href="/terms"
-              className="hover:text-foreground focus-visible:ring-ring rounded p-0.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+              className="hover:text-foreground focus-visible:ring-ring rounded p-0.5 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
             >
               Terms of Service
             </Link>
             <Link
               href="/privacy"
-              className="hover:text-foreground focus-visible:ring-ring rounded p-0.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+              className="hover:text-foreground focus-visible:ring-ring rounded p-0.5 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
             >
               Privacy Philosophy
             </Link>
@@ -1288,12 +1288,12 @@ export function LandingPageContent({
                   ref={lightboxCloseRef}
                   onClick={closeOverlay}
                   aria-label="Close Lightbox"
-                  className="bg-secondary/80 border-border hover:bg-secondary text-foreground focus-visible:ring-ring absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full border transition-all focus-visible:outline-none focus-visible:ring-2 active:scale-95"
+                  className="bg-secondary/80 border-border hover:bg-secondary text-foreground focus-visible:ring-ring absolute top-4 right-4 flex h-8 w-8 items-center justify-center rounded-full border transition-all focus-visible:ring-2 focus-visible:outline-none active:scale-95"
                 >
                   <X className="h-4 w-4" />
                 </button>
 
-                <div className="bg-secondary/20 aspect-4/3 relative w-full overflow-hidden rounded-md">
+                <div className="bg-secondary/20 relative aspect-4/3 w-full overflow-hidden rounded-md">
                   <Image
                     src={lightboxImg ?? ""}
                     alt="Enlarged gallery preview"
@@ -1302,7 +1302,7 @@ export function LandingPageContent({
                     className="object-cover"
                   />
                 </div>
-                <div className="text-muted-foreground font-hand px-2 pb-2 pt-4 text-center text-xl">
+                <div className="text-muted-foreground font-hand px-2 pt-4 pb-2 text-center text-xl">
                   {polaroids.find((p) => p.src === lightboxImg)?.caption ??
                     "Pressed keepsake"}
                 </div>
@@ -1338,7 +1338,7 @@ export function LandingPageContent({
                   ref={vignetteCloseRef}
                   onClick={closeOverlay}
                   aria-label="Close day entry"
-                  className="bg-secondary/80 border-border hover:bg-secondary text-foreground focus-visible:ring-ring absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full border transition-all focus-visible:outline-none focus-visible:ring-2 active:scale-95"
+                  className="bg-secondary/80 border-border hover:bg-secondary text-foreground focus-visible:ring-ring absolute top-4 right-4 flex h-8 w-8 items-center justify-center rounded-full border transition-all focus-visible:ring-2 focus-visible:outline-none active:scale-95"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -1361,7 +1361,7 @@ export function LandingPageContent({
                   >
                     {openVignette.vignette.title}
                   </h3>
-                  <p className="text-muted-foreground border-border/70 mt-3 border-l pl-4 font-serif text-sm italic leading-relaxed">
+                  <p className="text-muted-foreground border-border/70 mt-3 border-l pl-4 font-serif text-sm leading-relaxed italic">
                     &ldquo;{openVignette.vignette.quote}&rdquo;
                   </p>
                 </div>

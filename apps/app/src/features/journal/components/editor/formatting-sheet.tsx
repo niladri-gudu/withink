@@ -18,10 +18,10 @@ import {
   Image as ImageIcon,
   Link as LinkIcon,
   ListOrdered,
-  type LucideIcon,
   Quote,
   RemoveFormatting,
   Strikethrough,
+  type LucideIcon,
 } from "lucide-react";
 
 import { useFormatState } from "./format-state";
@@ -119,7 +119,11 @@ export function FormattingSheet({
           className="no-scrollbar -mx-1 flex-1 overflow-y-auto px-1 pb-2"
         >
           <div className="flex flex-col gap-0.5">
-            <div role="group" aria-label="Headings" className="flex flex-col gap-0.5">
+            <div
+              role="group"
+              aria-label="Headings"
+              className="flex flex-col gap-0.5"
+            >
               <FormatRow
                 icon={Heading1}
                 label="Heading 1"

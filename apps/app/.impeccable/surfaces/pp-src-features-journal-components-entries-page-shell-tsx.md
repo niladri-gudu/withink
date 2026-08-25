@@ -25,3 +25,9 @@ Scrolling the archive while the search bar stays put like a bookmark ribbon — 
 ## Unresolved decisions
 - LIMIT stays 5 per page for both breakpoints; infinite scroll considered but deferred (pagination is honest about archive size).
 - Calendar day cells are ~43px squares at 375px (grid math); acceptable touch size, but could grow if filters move fully off-screen in future.
+
+
+## Phase 4 finalization (2026-08-24)
+- Eyebrows/legends across controls, calendar, folio, and timeline migrated to text-running-head (tracking drift 0.12/0.14/0.15em eliminated).
+- Sticky search+filters verified pinning below the 56px header once scrolled past natural position; the below-fold position at 375 is the shipped Phase-3 IA (documented, not a defect).
+- Tracked-caps action links (View Archive, RE-READ) remain the control voice - intentionally not eyebrows.

@@ -11,9 +11,7 @@ import {
 // ships in production builds (where the NODE_ENV guard below is eliminated).
 const ReactQueryDevtools = dynamic(
   () =>
-    import("@tanstack/react-query-devtools").then(
-      (m) => m.ReactQueryDevtools,
-    ),
+    import("@tanstack/react-query-devtools").then((m) => m.ReactQueryDevtools),
   { ssr: false },
 );
 

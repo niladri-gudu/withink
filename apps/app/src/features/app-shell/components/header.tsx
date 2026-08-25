@@ -9,7 +9,7 @@ import { ThemeToggle } from "@withink/ui/theme-toggle";
  */
 export function Header() {
   return (
-    <header className="border-border/60 bg-background/90 sticky top-0 z-20 flex h-14 select-none items-center justify-between border-b px-4 backdrop-blur-md sm:px-6 md:hidden">
+    <header className="border-border/60 bg-background/90 sticky top-0 z-20 flex h-14 items-center justify-between border-b px-4 backdrop-blur-md select-none sm:px-6 md:hidden">
       <span className="text-foreground font-serif text-lg font-bold tracking-tight">
         withink<span className="text-accent">.</span>
       </span>

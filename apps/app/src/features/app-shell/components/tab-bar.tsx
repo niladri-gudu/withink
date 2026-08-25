@@ -10,6 +10,7 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
+  SheetTrigger,
 } from "@withink/ui/sheet";
 import { ThemeToggle } from "@withink/ui/theme-toggle";
 import { cn } from "@withink/utils";
@@ -108,10 +109,10 @@ export function TabBar({ user }: TabBarProps) {
   if (EDITOR_ROUTE_PATTERN.test(pathname)) return null;
 
   return (
-    <>
+    <Sheet open={moreOpen} onOpenChange={setMoreOpen}>
       <nav
         aria-label="Primary"
-        className="border-border bg-card/90 fixed inset-x-0 bottom-0 z-[60] select-none border-t backdrop-blur-md md:hidden"
+        className="border-border bg-card/90 fixed inset-x-0 bottom-0 z-[60] border-t backdrop-blur-md select-none md:hidden"
       >
         <div className="grid grid-cols-4 pb-[env(safe-area-inset-bottom)]">
           {tabItems.map((item) => {
@@ -123,7 +124,7 @@ export function TabBar({ user }: TabBarProps) {
                 href={item.href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "focus-visible:ring-ring relative flex min-h-[3.5rem] cursor-pointer flex-col items-center justify-center gap-1 pb-2 pt-2 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset",
+                  "focus-visible:ring-ring relative flex min-h-[3.5rem] cursor-pointer flex-col items-center justify-center gap-1 pt-2 pb-2 transition-colors duration-200 focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset",
                   active
                     ? "text-foreground"
                     : "text-muted-foreground hover:text-foreground",
@@ -133,7 +134,7 @@ export function TabBar({ user }: TabBarProps) {
                 {active && (
                   <span
                     aria-hidden="true"
-                    className="bg-accent absolute left-1/2 top-0 h-0.5 w-8 -translate-x-1/2 rounded-b-full"
+                    className="bg-accent absolute top-0 left-1/2 h-0.5 w-8 -translate-x-1/2 rounded-b-full"
                   />
                 )}
                 <Icon
@@ -145,45 +146,39 @@ export function TabBar({ user }: TabBarProps) {
             );
           })}
 
-          <button
-            onClick={() => setMoreOpen(true)}
-            aria-expanded={moreOpen}
-            className={cn(
-              "text-muted-foreground hover:text-foreground focus-visible:ring-ring relative flex min-h-[3.5rem] cursor-pointer flex-col items-center justify-center gap-1 pb-2 pt-2 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset",
-              (moreActive || moreOpen) && "text-foreground",
-            )}
-          >
-            {(moreActive || moreOpen) && (
-              <span
-                aria-hidden="true"
-                className="bg-accent absolute left-1/2 top-0 h-0.5 w-8 -translate-x-1/2 rounded-b-full"
-              />
-            )}
-            <Ellipsis
+          <SheetTrigger asChild>
+            <button
+              aria-expanded={moreOpen}
               className={cn(
-                "h-5 w-5",
-                (moreActive || moreOpen) && "text-accent",
+                "text-muted-foreground hover:text-foreground focus-visible:ring-ring relative flex min-h-[3.5rem] cursor-pointer flex-col items-center justify-center gap-1 pt-2 pb-2 transition-colors duration-200 focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset",
+                (moreActive || moreOpen) && "text-foreground",
               )}
-              strokeWidth={moreActive || moreOpen ? 2.25 : 2}
-            />
-            <span className="text-running-head">More</span>
-          </button>
+            >
+              {(moreActive || moreOpen) && (
+                <span
+                  aria-hidden="true"
+                  className="bg-accent absolute top-0 left-1/2 h-0.5 w-8 -translate-x-1/2 rounded-b-full"
+                />
+              )}
+              <Ellipsis
+                className={cn(
+                  "h-5 w-5",
+                  (moreActive || moreOpen) && "text-accent",
+                )}
+                strokeWidth={moreActive || moreOpen ? 2.25 : 2}
+              />
+              <span className="text-running-head">More</span>
+            </button>
+          </SheetTrigger>
         </div>
       </nav>
 
-      <MoreSheet
-        open={moreOpen}
-        onOpenChange={setMoreOpen}
-        pathname={pathname}
-        user={user}
-      />
-    </>
+      <MoreSheet pathname={pathname} user={user} />
+    </Sheet>
   );
 }
 
 interface MoreSheetProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
   pathname: string;
   user: TabBarProps["user"];
 }
@@ -192,8 +187,10 @@ interface MoreSheetProps {
  * The overflow folio: Media, Flashbacks, Feedback, Settings plus the theme
  * toggle and the writer's account row — everything the rail's lower half
  * holds, restated as a bottom sheet (right-hand panel from md up).
+ * Rendered inside the tab bar's Sheet root so the More trigger keeps its
+ * Radix trigger relationship (focus restores to it on close).
  */
-function MoreSheet({ open, onOpenChange, pathname, user }: MoreSheetProps) {
+function MoreSheet({ pathname, user }: MoreSheetProps) {
   const signOut = useSignOut();
   const todayNote = formatDisplayDate(getLocalDateString(), {
     weekday: "long",
@@ -202,100 +199,97 @@ function MoreSheet({ open, onOpenChange, pathname, user }: MoreSheetProps) {
   });
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="auto" aria-describedby={undefined}>
-        <SheetHeader>
-          <SheetTitle className="text-running-head text-muted-foreground/70">
-            More
-          </SheetTitle>
-          <p className="text-hand text-muted-foreground leading-snug">
-            {todayNote}
-          </p>
-        </SheetHeader>
+    <SheetContent side="auto" aria-describedby={undefined}>
+      <SheetHeader>
+        <SheetTitle className="text-running-head text-muted-foreground/70">
+          More
+        </SheetTitle>
+        <p className="text-hand text-muted-foreground leading-snug">
+          {todayNote}
+        </p>
+      </SheetHeader>
 
-        <nav aria-label="Secondary" className="mt-3">
-          <ul className="space-y-0.5">
-            {moreItems.map((item) => {
-              const Icon = item.icon;
-              const active = item.isActive(pathname);
-              return (
-                <li key={item.label} className="list-none">
-                  <SheetClose asChild>
-                    <Link
-                      href={item.href}
-                      aria-current={active ? "page" : undefined}
+      <nav aria-label="Secondary" className="mt-3">
+        <ul className="space-y-0.5">
+          {moreItems.map((item) => {
+            const Icon = item.icon;
+            const active = item.isActive(pathname);
+            return (
+              <li key={item.label} className="list-none">
+                <SheetClose asChild>
+                  <Link
+                    href={item.href}
+                    aria-current={active ? "page" : undefined}
+                    className={cn(
+                      "focus-visible:ring-ring group relative flex h-11 items-center gap-3 rounded-lg px-3 transition-all duration-200 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
+                      active
+                        ? "text-foreground"
+                        : "text-muted-foreground hover:bg-secondary hover:text-foreground",
+                    )}
+                  >
+                    {active && (
+                      <span
+                        aria-hidden="true"
+                        className="bg-accent absolute top-2 bottom-2 left-0 w-0.5 rounded-full"
+                      />
+                    )}
+                    <span
                       className={cn(
-                        "focus-visible:ring-ring group relative flex h-11 items-center gap-3 rounded-lg px-3 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
-                        active
-                          ? "text-foreground"
-                          : "text-muted-foreground hover:bg-secondary hover:text-foreground",
+                        "w-5 shrink-0 text-right font-serif text-[11px] tracking-[0.1em] tabular-nums",
+                        active ? "text-accent" : "text-muted-foreground/50",
                       )}
                     >
-                      {active && (
-                        <span
-                          aria-hidden="true"
-                          className="bg-accent absolute bottom-2 left-0 top-2 w-0.5 rounded-full"
-                        />
+                      {item.folio}
+                    </span>
+                    <span
+                      className={cn(
+                        "truncate font-serif text-sm tracking-[0.08em] uppercase",
+                        active ? "font-semibold" : "font-medium",
                       )}
-                      <span
-                        className={cn(
-                          "w-5 shrink-0 text-right font-serif text-[11px] tabular-nums tracking-[0.1em]",
-                          active ? "text-accent" : "text-muted-foreground/50",
-                        )}
-                      >
-                        {item.folio}
-                      </span>
-                      <span
-                        className={cn(
-                          "truncate font-serif text-sm uppercase tracking-[0.08em]",
-                          active ? "font-semibold" : "font-medium",
-                        )}
-                      >
-                        {item.label}
-                      </span>
-                      <Icon
-                        className={cn(
-                          "ml-auto h-4 w-4 shrink-0",
-                          active ? "text-accent" : "text-muted-foreground/50",
-                        )}
-                      />
-                    </Link>
-                  </SheetClose>
-                </li>
-              );
-            })}
-          </ul>
-        </nav>
+                    >
+                      {item.label}
+                    </span>
+                    <Icon
+                      className={cn(
+                        "ml-auto h-4 w-4 shrink-0",
+                        active ? "text-accent" : "text-muted-foreground/50",
+                      )}
+                    />
+                  </Link>
+                </SheetClose>
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
 
-        <div className="border-border mt-4 flex items-center justify-between border-t pt-4">
-          <span className="text-running-head text-muted-foreground/60">
-            Theme
-          </span>
-          <ThemeToggle />
-        </div>
+      <div className="border-border mt-4 flex items-center justify-between border-t pt-4">
+        <span className="text-running-head text-muted-foreground/60">
+          Theme
+        </span>
+        <ThemeToggle />
+      </div>
 
-        <div className="border-border mt-auto flex items-center gap-3 border-t pt-4">
-          <UserAvatar user={user} />
-          <div className="min-w-0 flex-1">
-            <p className="text-foreground truncate text-xs font-medium">
-              {user?.name || "Writer"}
-            </p>
-            <p className="text-muted-foreground truncate text-[10px]">
-              {user?.email || "diary@withink.me"}
-            </p>
-          </div>
-          <IconButton
-            variant="destructive"
-            aria-label="Log Out"
-            onClick={() => {
-              onOpenChange(false);
-              void signOut();
-            }}
-          >
-            <LogOut className="h-4 w-4" />
-          </IconButton>
+      <div className="border-border mt-auto flex items-center gap-3 border-t pt-4">
+        <UserAvatar user={user} />
+        <div className="min-w-0 flex-1">
+          <p className="text-foreground truncate text-xs font-medium">
+            {user?.name || "Writer"}
+          </p>
+          <p className="text-muted-foreground truncate text-[10px]">
+            {user?.email || "diary@withink.me"}
+          </p>
         </div>
-      </SheetContent>
-    </Sheet>
+        <IconButton
+          variant="destructive"
+          aria-label="Log Out"
+          onClick={() => {
+            void signOut();
+          }}
+        >
+          <LogOut className="h-4 w-4" />
+        </IconButton>
+      </div>
+    </SheetContent>
   );
 }

@@ -112,7 +112,6 @@ export function CalendarHeatmap({ heatmap, localToday }: CalendarHeatmapProps) {
       <div className="flex w-full items-center justify-between gap-2">
         <IconButton
           variant="outline"
-          size="sm"
           onClick={() => setMonthIndex((idx) => Math.max(0, idx - 1))}
           disabled={safeIndex === 0}
           aria-label={`Previous month (${safeIndex > 0 ? monthNameFor(months[safeIndex - 1]!) : "none"})`}
@@ -124,7 +123,7 @@ export function CalendarHeatmap({ heatmap, localToday }: CalendarHeatmapProps) {
           <p className="text-foreground font-serif text-lg font-semibold tracking-tight">
             {monthLabel}
           </p>
-          <p className="text-muted-foreground/60 font-serif text-[11px] uppercase tracking-[0.16em]">
+          <p className="text-running-head text-muted-foreground/60">
             {monthEntries.length}{" "}
             {monthEntries.length === 1 ? "reflection" : "reflections"} ·{" "}
             {monthWords.toLocaleString()} words
@@ -133,7 +132,6 @@ export function CalendarHeatmap({ heatmap, localToday }: CalendarHeatmapProps) {
 
         <IconButton
           variant="outline"
-          size="sm"
           onClick={() =>
             setMonthIndex((idx) => Math.min(months.length - 1, idx + 1))
           }
@@ -147,7 +145,7 @@ export function CalendarHeatmap({ heatmap, localToday }: CalendarHeatmapProps) {
       {/* Weekday header */}
       <div
         aria-hidden="true"
-        className="text-muted-foreground/50 mt-4 grid w-full max-w-[21rem] grid-cols-7 gap-1.5 text-center font-serif text-[10px] font-semibold uppercase tracking-[0.16em]"
+        className="text-muted-foreground/50 mt-4 grid w-full max-w-[21rem] grid-cols-7 gap-1.5 text-center font-serif text-[10px] font-semibold tracking-[0.16em] uppercase"
       >
         {WEEKDAY_HEADERS.map((label, idx) => (
           <span key={`${label}-${idx}`}>{label}</span>
@@ -180,7 +178,7 @@ export function CalendarHeatmap({ heatmap, localToday }: CalendarHeatmapProps) {
                   type="button"
                   aria-label={`${formatFull(day.date)}: ${day.wordCount} words${day.mood ? `, mood ${MOOD_LABELS[day.mood]}` : ""}. View details.`}
                   className={cn(
-                    "focus-visible:ring-ring aspect-square cursor-pointer rounded-md border text-[10px] font-semibold transition-all duration-200 hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
+                    "focus-visible:ring-ring aspect-square cursor-pointer rounded-md border text-[10px] font-semibold transition-all duration-200 hover:scale-105 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
                     getIntensityClass(day),
                   )}
                 >

@@ -25,3 +25,10 @@ Grid stays 2-up on phones (3/4-up from sm/md) but every tile now carries an alwa
 ## Unresolved decisions
 - Tap-to-dismiss remains backdrop-click + explicit Close/X; double-tap-to-zoom was considered and deferred (native pinch still works).
 - Lightbox delete re-fetches full entries on demand for scrubbing (pre-existing design); candidate-scrubbing from the decrypted cache remains deferred debt.
+
+
+## Phase 4 finalization (2026-08-24)
+- Grid/list view toggles moved from size sm to the IconButton default (44px phone).
+- Lightbox: root overlay raised to the z-[60] nav-chrome tier (was off-contract z-50); close button is now an IconButton (44px phone); footer Close/Copy/Delete are 44px on phones, sm:h-9 on desktop.
+- Resolved: lightbox could previously under-stack sheets opened above it.
+- Lightbox keyboard (Escape/arrows) and delete confirm flow to be exercised in the manual regression script (needs a real upload).

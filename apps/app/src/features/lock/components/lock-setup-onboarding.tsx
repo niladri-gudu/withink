@@ -204,7 +204,7 @@ export function LockSetupOnboarding({
                 onChange={(e) => handlePinChange(e.target.value)}
                 onFocus={() => setIsFocused1(true)}
                 onBlur={() => setIsFocused1(false)}
-                className="absolute inset-0 h-full w-full cursor-text select-none opacity-0"
+                className="absolute inset-0 h-full w-full cursor-text opacity-0 select-none"
                 autoComplete="one-time-code"
                 autoFocus
                 required
@@ -271,7 +271,7 @@ export function LockSetupOnboarding({
                 onChange={(e) => handleConfirmPinChange(e.target.value)}
                 onFocus={() => setIsFocused2(true)}
                 onBlur={() => setIsFocused2(false)}
-                className="absolute inset-0 h-full w-full cursor-text select-none opacity-0"
+                className="absolute inset-0 h-full w-full cursor-text opacity-0 select-none"
                 autoComplete="one-time-code"
                 autoFocus
                 required
@@ -352,11 +352,11 @@ export function LockSetupOnboarding({
           <h1 className="text-h2 text-foreground font-serif font-bold">
             Secure Your Diary
           </h1>
-          <p className="text-caption font-serif uppercase tracking-[0.16em]">
+          <p className="text-running-head text-muted-foreground">
             Protect your private pages
           </p>
         </div>
-        <p className="text-body-small text-muted-foreground mb-6 mt-2 max-w-sm">
+        <p className="text-body-small text-muted-foreground mt-2 mb-6 max-w-sm">
           Protect your diary entries from local access when you switch tabs or
           leave your screen.
         </p>

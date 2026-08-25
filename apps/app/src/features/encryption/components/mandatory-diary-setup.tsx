@@ -235,9 +235,7 @@ export function MandatoryDiarySetup({
               ? "Secure & Migrate Your Journal"
               : "Create Diary Password"}
           </h1>
-          <p className="text-caption font-serif tracking-[0.16em] uppercase">
-            Diary Setup
-          </p>
+          <p className="text-running-head text-muted-foreground">Diary Setup</p>
         </div>
         <p className="text-body-small text-muted-foreground mt-2 max-w-md leading-relaxed">
           {isMigratingOldData

@@ -4,10 +4,10 @@ import * as React from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { toast } from "sonner";
 
+import { EDITOR_ROUTE_PATTERN } from "@/constants/routes";
 import { safeStorage } from "@/lib/safe-storage";
 import { getLocalDateString } from "@/lib/utils/date";
 import { useEncryption } from "@/providers/encryption-provider";
-import { EDITOR_ROUTE_PATTERN } from "@/constants/routes";
 
 import { DiaryPasswordUnlockScreen } from "../../encryption/components/diary-password-unlock-screen";
 import { MandatoryDiarySetup } from "../../encryption/components/mandatory-diary-setup";
@@ -348,7 +348,7 @@ export function AppShell({
       >
         <a
           href="#main-content"
-          className="focus:bg-background focus:text-foreground focus:border-border focus:ring-ring focus:z-9999 sr-only text-sm font-medium focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:rounded-xl focus:border focus:px-4 focus:py-2 focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2"
+          className="focus:bg-background focus:text-foreground focus:border-border focus:ring-ring sr-only text-sm font-medium focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-9999 focus:rounded-xl focus:border focus:px-4 focus:py-2 focus:shadow-lg focus:ring-2 focus:ring-offset-2 focus:outline-none"
         >
           Skip to main content
         </a>
@@ -378,7 +378,7 @@ export function AppShell({
               <div className="flex w-full flex-1 flex-col items-center">
                 {/* Phones reserve clearance for the bottom tab bar (plus the
                     iOS home indicator). */}
-                <div className="w-full max-w-4xl flex-1 px-6 pt-8 pb-[calc(4.75rem+env(safe-area-inset-bottom))] lg:px-8 md:py-12">
+                <div className="w-full max-w-4xl flex-1 px-6 pt-8 pb-[calc(4.75rem+env(safe-area-inset-bottom))] md:py-12 lg:px-8">
                   {children}
                 </div>
               </div>

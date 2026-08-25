@@ -25,3 +25,9 @@ Groups are hairline-separated sections in the codex's ruled language — never c
 ## Unresolved decisions
 - Disclosure state is per-visit (no persistence); could remember last-open group if usage warrants.
 - Danger zone is always expanded even on phones (deliberate: destructive actions shouldn't hide).
+
+
+## Phase 4 finalization (2026-08-24)
+- Theme swatch hexes (bg-[#EADFC7]/[#3A2D1D]/[#33291C]) are the SANCTIONED token exception: swatches must depict the other theme fixed colors and cannot be semantic tokens. Documented in DESIGN.md.
+- Dark --destructive hardened oklch(0.62 to 0.66 0.13 30) for AA text contrast on the dark card (3.97 to 4.76:1 measured); the filled destructive Button variant remains unused app-side.
+- Disclosure groups, migrated dialogs, and the danger band verified unchanged at 375 and 1440.

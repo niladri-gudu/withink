@@ -1,5 +1,5 @@
-import Link from "next/link";
 import type { Metadata } from "next";
+import Link from "next/link";
 
 import { Button } from "@withink/ui/button";
 
@@ -25,9 +25,9 @@ export default function PrivacyPage() {
       <div className="text-body-small text-muted-foreground space-y-6 leading-relaxed">
         <p>
           At <strong>withink.</strong>, privacy is not a compliance check box.
-          It is the cornerstone of why we built this diary. Your journal
-          entries are your private thoughts, dreams, and reflections. They
-          belong entirely to you.
+          It is the cornerstone of why we built this diary. Your journal entries
+          are your private thoughts, dreams, and reflections. They belong
+          entirely to you.
         </p>
         <h2 className="text-title text-foreground pt-4 font-serif">
           1. Data Encryption
@@ -42,8 +42,8 @@ export default function PrivacyPage() {
         </h2>
         <p>
           We do not sell, rent, or share your journal entries or personal data
-          with any third-party advertising networks. Your diary remains free
-          of trackers and visual noise.
+          with any third-party advertising networks. Your diary remains free of
+          trackers and visual noise.
         </p>
       </div>
 

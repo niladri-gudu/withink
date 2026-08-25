@@ -74,7 +74,7 @@ export function UnlockProofBindCard() {
   };
 
   return (
-    <div className="bg-background/90 animate-in fade-in fixed inset-0 z-[9990] flex items-center justify-center p-4 backdrop-blur-sm duration-200">
+    <div className="bg-background/90 animate-in fade-in fixed inset-0 z-[9999] flex items-center justify-center p-4 backdrop-blur-sm duration-200">
       <div className="border-border bg-card animate-in zoom-in-95 w-full max-w-md rounded-xl border p-6 shadow-xl duration-200 sm:p-8">
         <div className="mb-5 flex flex-col items-center text-center">
           <div className="border-accent/20 bg-accent/10 text-accent mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl border">

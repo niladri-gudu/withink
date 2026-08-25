@@ -1,8 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import type { Editor } from "@tiptap/react";
-import { useEditorState } from "@tiptap/react";
+import { useEditorState, type Editor } from "@tiptap/react";
 import { Button } from "@withink/ui/button";
 import {
   Bold,
@@ -32,10 +31,7 @@ import {
 import { toast } from "sonner";
 
 import { useFormatState } from "./format-state";
-import {
-  FormattingSheet,
-  type FormatAction,
-} from "./formatting-sheet";
+import { FormattingSheet, type FormatAction } from "./formatting-sheet";
 import { LinkDialog } from "./link-dialog";
 
 interface ToolbarProps {

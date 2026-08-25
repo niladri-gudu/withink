@@ -9,140 +9,320 @@
         "displayName": "Warm Ivory",
         "canonical": "oklch(0.98 0.015 76)",
         "purpose": "Light-mode page background — cream paper.",
-        "tonalRamp": ["oklch(0.30 0.02 76)", "oklch(0.40 0.02 76)", "oklch(0.52 0.02 76)", "oklch(0.64 0.02 76)", "oklch(0.76 0.018 76)", "oklch(0.86 0.016 76)", "oklch(0.93 0.016 76)", "oklch(0.98 0.015 76)"]
+        "tonalRamp": [
+          "oklch(0.30 0.02 76)",
+          "oklch(0.40 0.02 76)",
+          "oklch(0.52 0.02 76)",
+          "oklch(0.64 0.02 76)",
+          "oklch(0.76 0.018 76)",
+          "oklch(0.86 0.016 76)",
+          "oklch(0.93 0.016 76)",
+          "oklch(0.98 0.015 76)"
+        ]
       },
       "soft-white": {
         "role": "surface",
         "displayName": "Soft White",
         "canonical": "oklch(0.99 0.005 76)",
         "purpose": "Card and popover paper surface (light).",
-        "tonalRamp": ["oklch(0.30 0.02 76)", "oklch(0.41 0.02 76)", "oklch(0.53 0.02 76)", "oklch(0.65 0.015 76)", "oklch(0.77 0.012 76)", "oklch(0.87 0.008 76)", "oklch(0.94 0.006 76)", "oklch(0.99 0.005 76)"]
+        "tonalRamp": [
+          "oklch(0.30 0.02 76)",
+          "oklch(0.41 0.02 76)",
+          "oklch(0.53 0.02 76)",
+          "oklch(0.65 0.015 76)",
+          "oklch(0.77 0.012 76)",
+          "oklch(0.87 0.008 76)",
+          "oklch(0.94 0.006 76)",
+          "oklch(0.99 0.005 76)"
+        ]
       },
       "warm-sand": {
         "role": "secondary",
         "displayName": "Warm Sand",
         "canonical": "oklch(0.94 0.015 76)",
         "purpose": "Secondary/muted surfaces and hover fills (light).",
-        "tonalRamp": ["oklch(0.30 0.02 76)", "oklch(0.40 0.02 76)", "oklch(0.52 0.02 76)", "oklch(0.64 0.018 76)", "oklch(0.76 0.016 76)", "oklch(0.86 0.015 76)", "oklch(0.92 0.015 76)", "oklch(0.94 0.015 76)"]
+        "tonalRamp": [
+          "oklch(0.30 0.02 76)",
+          "oklch(0.40 0.02 76)",
+          "oklch(0.52 0.02 76)",
+          "oklch(0.64 0.018 76)",
+          "oklch(0.76 0.016 76)",
+          "oklch(0.86 0.015 76)",
+          "oklch(0.92 0.015 76)",
+          "oklch(0.94 0.015 76)"
+        ]
       },
       "warm-gray": {
         "role": "border",
         "displayName": "Warm Gray",
         "canonical": "oklch(0.9 0.015 76)",
         "purpose": "Hairline borders and input strokes (light).",
-        "tonalRamp": ["oklch(0.30 0.02 76)", "oklch(0.41 0.018 76)", "oklch(0.53 0.016 76)", "oklch(0.65 0.015 76)", "oklch(0.77 0.015 76)", "oklch(0.86 0.015 76)", "oklch(0.90 0.015 76)", "oklch(0.93 0.015 76)"]
+        "tonalRamp": [
+          "oklch(0.30 0.02 76)",
+          "oklch(0.41 0.018 76)",
+          "oklch(0.53 0.016 76)",
+          "oklch(0.65 0.015 76)",
+          "oklch(0.77 0.015 76)",
+          "oklch(0.86 0.015 76)",
+          "oklch(0.90 0.015 76)",
+          "oklch(0.93 0.015 76)"
+        ]
       },
       "dark-brown": {
         "role": "primary",
         "displayName": "Dark Brown Ink",
         "canonical": "oklch(0.24 0.03 55)",
         "purpose": "Primary text and primary button fill (light).",
-        "tonalRamp": ["oklch(0.18 0.03 55)", "oklch(0.24 0.03 55)", "oklch(0.30 0.03 55)", "oklch(0.37 0.03 55)", "oklch(0.45 0.03 55)", "oklch(0.55 0.03 55)", "oklch(0.68 0.02 55)", "oklch(0.82 0.015 55)"]
+        "tonalRamp": [
+          "oklch(0.18 0.03 55)",
+          "oklch(0.24 0.03 55)",
+          "oklch(0.30 0.03 55)",
+          "oklch(0.37 0.03 55)",
+          "oklch(0.45 0.03 55)",
+          "oklch(0.55 0.03 55)",
+          "oklch(0.68 0.02 55)",
+          "oklch(0.82 0.015 55)"
+        ]
       },
       "muted-brown": {
         "role": "muted",
         "displayName": "Muted Brown",
         "canonical": "oklch(0.45 0.02 60)",
         "purpose": "Secondary text, captions, placeholders (light).",
-        "tonalRamp": ["oklch(0.24 0.02 60)", "oklch(0.32 0.02 60)", "oklch(0.45 0.02 60)", "oklch(0.54 0.02 60)", "oklch(0.63 0.02 60)", "oklch(0.73 0.018 60)", "oklch(0.83 0.016 60)", "oklch(0.92 0.015 60)"]
+        "tonalRamp": [
+          "oklch(0.24 0.02 60)",
+          "oklch(0.32 0.02 60)",
+          "oklch(0.45 0.02 60)",
+          "oklch(0.54 0.02 60)",
+          "oklch(0.63 0.02 60)",
+          "oklch(0.73 0.018 60)",
+          "oklch(0.83 0.016 60)",
+          "oklch(0.92 0.015 60)"
+        ]
       },
       "warm-amber": {
         "role": "accent",
         "displayName": "Warm Amber",
         "canonical": "oklch(0.78 0.12 75)",
         "purpose": "The only accent: selection, caret, interactive hover, blockquote rail (light).",
-        "tonalRamp": ["oklch(0.35 0.10 75)", "oklch(0.45 0.11 75)", "oklch(0.55 0.12 75)", "oklch(0.64 0.12 75)", "oklch(0.70 0.12 75)", "oklch(0.74 0.12 75)", "oklch(0.78 0.12 75)", "oklch(0.85 0.10 75)"]
+        "tonalRamp": [
+          "oklch(0.35 0.10 75)",
+          "oklch(0.45 0.11 75)",
+          "oklch(0.55 0.12 75)",
+          "oklch(0.64 0.12 75)",
+          "oklch(0.70 0.12 75)",
+          "oklch(0.74 0.12 75)",
+          "oklch(0.78 0.12 75)",
+          "oklch(0.85 0.10 75)"
+        ]
       },
       "muted-terracotta": {
         "role": "destructive",
         "displayName": "Muted Terracotta",
         "canonical": "oklch(0.6 0.14 25)",
         "purpose": "The only danger color and the angry mood (light).",
-        "tonalRamp": ["oklch(0.30 0.12 25)", "oklch(0.40 0.13 25)", "oklch(0.48 0.14 25)", "oklch(0.54 0.14 25)", "oklch(0.60 0.14 25)", "oklch(0.68 0.12 25)", "oklch(0.78 0.10 25)", "oklch(0.88 0.07 25)"]
+        "tonalRamp": [
+          "oklch(0.30 0.12 25)",
+          "oklch(0.40 0.13 25)",
+          "oklch(0.48 0.14 25)",
+          "oklch(0.54 0.14 25)",
+          "oklch(0.60 0.14 25)",
+          "oklch(0.68 0.12 25)",
+          "oklch(0.78 0.10 25)",
+          "oklch(0.88 0.07 25)"
+        ]
       },
       "sidebar-ivory": {
         "role": "surface",
         "displayName": "Sidebar Ivory",
         "canonical": "oklch(0.96 0.015 76)",
         "purpose": "Notebook-margin sidebar surface (light).",
-        "tonalRamp": ["oklch(0.30 0.02 76)", "oklch(0.41 0.02 76)", "oklch(0.53 0.02 76)", "oklch(0.65 0.018 76)", "oklch(0.77 0.016 76)", "oklch(0.87 0.015 76)", "oklch(0.93 0.015 76)", "oklch(0.96 0.015 76)"]
+        "tonalRamp": [
+          "oklch(0.30 0.02 76)",
+          "oklch(0.41 0.02 76)",
+          "oklch(0.53 0.02 76)",
+          "oklch(0.65 0.018 76)",
+          "oklch(0.77 0.016 76)",
+          "oklch(0.87 0.015 76)",
+          "oklch(0.93 0.015 76)",
+          "oklch(0.96 0.015 76)"
+        ]
       },
       "sidebar-sand": {
         "role": "accent",
         "displayName": "Sidebar Sand",
         "canonical": "oklch(0.92 0.015 76)",
         "purpose": "Sidebar active/hover item fill (light).",
-        "tonalRamp": ["oklch(0.30 0.02 76)", "oklch(0.41 0.02 76)", "oklch(0.53 0.02 76)", "oklch(0.65 0.018 76)", "oklch(0.77 0.016 76)", "oklch(0.86 0.015 76)", "oklch(0.92 0.015 76)", "oklch(0.95 0.015 76)"]
+        "tonalRamp": [
+          "oklch(0.30 0.02 76)",
+          "oklch(0.41 0.02 76)",
+          "oklch(0.53 0.02 76)",
+          "oklch(0.65 0.018 76)",
+          "oklch(0.77 0.016 76)",
+          "oklch(0.86 0.015 76)",
+          "oklch(0.92 0.015 76)",
+          "oklch(0.95 0.015 76)"
+        ]
       },
       "warm-charcoal": {
         "role": "background",
         "displayName": "Warm Charcoal",
         "canonical": "oklch(0.18 0.01 70)",
         "purpose": "Dark-mode background — quiet library, soft black.",
-        "tonalRamp": ["oklch(0.15 0.01 70)", "oklch(0.18 0.01 70)", "oklch(0.22 0.01 70)", "oklch(0.28 0.01 70)", "oklch(0.36 0.01 70)", "oklch(0.46 0.01 70)", "oklch(0.60 0.01 70)", "oklch(0.76 0.01 70)"]
+        "tonalRamp": [
+          "oklch(0.15 0.01 70)",
+          "oklch(0.18 0.01 70)",
+          "oklch(0.22 0.01 70)",
+          "oklch(0.28 0.01 70)",
+          "oklch(0.36 0.01 70)",
+          "oklch(0.46 0.01 70)",
+          "oklch(0.60 0.01 70)",
+          "oklch(0.76 0.01 70)"
+        ]
       },
       "charcoal-card": {
         "role": "surface",
         "displayName": "Charcoal Card",
         "canonical": "oklch(0.22 0.01 70)",
         "purpose": "Card and popover surface (dark).",
-        "tonalRamp": ["oklch(0.18 0.01 70)", "oklch(0.22 0.01 70)", "oklch(0.26 0.01 70)", "oklch(0.32 0.01 70)", "oklch(0.40 0.01 70)", "oklch(0.50 0.01 70)", "oklch(0.63 0.01 70)", "oklch(0.78 0.01 70)"]
+        "tonalRamp": [
+          "oklch(0.18 0.01 70)",
+          "oklch(0.22 0.01 70)",
+          "oklch(0.26 0.01 70)",
+          "oklch(0.32 0.01 70)",
+          "oklch(0.40 0.01 70)",
+          "oklch(0.50 0.01 70)",
+          "oklch(0.63 0.01 70)",
+          "oklch(0.78 0.01 70)"
+        ]
       },
       "charcoal-sand": {
         "role": "secondary",
         "displayName": "Charcoal Sand",
         "canonical": "oklch(0.25 0.01 70)",
         "purpose": "Secondary/muted surfaces and hover fills (dark).",
-        "tonalRamp": ["oklch(0.20 0.01 70)", "oklch(0.25 0.01 70)", "oklch(0.29 0.01 70)", "oklch(0.35 0.01 70)", "oklch(0.43 0.01 70)", "oklch(0.53 0.01 70)", "oklch(0.65 0.01 70)", "oklch(0.80 0.01 70)"]
+        "tonalRamp": [
+          "oklch(0.20 0.01 70)",
+          "oklch(0.25 0.01 70)",
+          "oklch(0.29 0.01 70)",
+          "oklch(0.35 0.01 70)",
+          "oklch(0.43 0.01 70)",
+          "oklch(0.53 0.01 70)",
+          "oklch(0.65 0.01 70)",
+          "oklch(0.80 0.01 70)"
+        ]
       },
       "charcoal-line": {
         "role": "border",
         "displayName": "Charcoal Line",
         "canonical": "oklch(0.28 0.01 70)",
         "purpose": "Hairline borders and input strokes (dark).",
-        "tonalRamp": ["oklch(0.22 0.01 70)", "oklch(0.28 0.01 70)", "oklch(0.32 0.01 70)", "oklch(0.38 0.01 70)", "oklch(0.46 0.01 70)", "oklch(0.56 0.01 70)", "oklch(0.68 0.01 70)", "oklch(0.82 0.01 70)"]
+        "tonalRamp": [
+          "oklch(0.22 0.01 70)",
+          "oklch(0.28 0.01 70)",
+          "oklch(0.32 0.01 70)",
+          "oklch(0.38 0.01 70)",
+          "oklch(0.46 0.01 70)",
+          "oklch(0.56 0.01 70)",
+          "oklch(0.68 0.01 70)",
+          "oklch(0.82 0.01 70)"
+        ]
       },
       "warm-cream": {
         "role": "primary",
         "displayName": "Warm Cream",
         "canonical": "oklch(0.92 0.01 75)",
         "purpose": "Dark-mode primary text and primary button fill.",
-        "tonalRamp": ["oklch(0.28 0.02 75)", "oklch(0.40 0.02 75)", "oklch(0.52 0.02 75)", "oklch(0.64 0.015 75)", "oklch(0.74 0.012 75)", "oklch(0.83 0.010 75)", "oklch(0.88 0.010 75)", "oklch(0.92 0.01 75)"]
+        "tonalRamp": [
+          "oklch(0.28 0.02 75)",
+          "oklch(0.40 0.02 75)",
+          "oklch(0.52 0.02 75)",
+          "oklch(0.64 0.015 75)",
+          "oklch(0.74 0.012 75)",
+          "oklch(0.83 0.010 75)",
+          "oklch(0.88 0.010 75)",
+          "oklch(0.92 0.01 75)"
+        ]
       },
       "muted-cream": {
         "role": "muted",
         "displayName": "Muted Cream",
         "canonical": "oklch(0.65 0.01 75)",
         "purpose": "Secondary text, captions, placeholders (dark).",
-        "tonalRamp": ["oklch(0.28 0.02 75)", "oklch(0.38 0.015 75)", "oklch(0.48 0.012 75)", "oklch(0.56 0.010 75)", "oklch(0.65 0.01 75)", "oklch(0.72 0.01 75)", "oklch(0.80 0.01 75)", "oklch(0.88 0.01 75)"]
+        "tonalRamp": [
+          "oklch(0.28 0.02 75)",
+          "oklch(0.38 0.015 75)",
+          "oklch(0.48 0.012 75)",
+          "oklch(0.56 0.010 75)",
+          "oklch(0.65 0.01 75)",
+          "oklch(0.72 0.01 75)",
+          "oklch(0.80 0.01 75)",
+          "oklch(0.88 0.01 75)"
+        ]
       },
       "night-amber": {
         "role": "accent",
         "displayName": "Night Amber",
         "canonical": "oklch(0.7 0.1 75)",
         "purpose": "The only accent (dark) — softened lamp glow.",
-        "tonalRamp": ["oklch(0.30 0.08 75)", "oklch(0.40 0.09 75)", "oklch(0.49 0.10 75)", "oklch(0.56 0.10 75)", "oklch(0.63 0.10 75)", "oklch(0.70 0.10 75)", "oklch(0.76 0.09 75)", "oklch(0.84 0.08 75)"]
+        "tonalRamp": [
+          "oklch(0.30 0.08 75)",
+          "oklch(0.40 0.09 75)",
+          "oklch(0.49 0.10 75)",
+          "oklch(0.56 0.10 75)",
+          "oklch(0.63 0.10 75)",
+          "oklch(0.70 0.10 75)",
+          "oklch(0.76 0.09 75)",
+          "oklch(0.84 0.08 75)"
+        ]
       },
       "night-terracotta": {
         "role": "destructive",
         "displayName": "Night Terracotta",
         "canonical": "oklch(0.55 0.1 25)",
         "purpose": "The only danger color (dark).",
-        "tonalRamp": ["oklch(0.26 0.09 25)", "oklch(0.36 0.10 25)", "oklch(0.44 0.10 25)", "oklch(0.49 0.10 25)", "oklch(0.55 0.10 25)", "oklch(0.63 0.09 25)", "oklch(0.74 0.08 25)", "oklch(0.86 0.06 25)"]
+        "tonalRamp": [
+          "oklch(0.26 0.09 25)",
+          "oklch(0.36 0.10 25)",
+          "oklch(0.44 0.10 25)",
+          "oklch(0.49 0.10 25)",
+          "oklch(0.55 0.10 25)",
+          "oklch(0.63 0.09 25)",
+          "oklch(0.74 0.08 25)",
+          "oklch(0.86 0.06 25)"
+        ]
       },
       "sidebar-charcoal": {
         "role": "surface",
         "displayName": "Sidebar Charcoal",
         "canonical": "oklch(0.15 0.01 70)",
         "purpose": "Notebook-margin sidebar surface (dark).",
-        "tonalRamp": ["oklch(0.13 0.01 70)", "oklch(0.15 0.01 70)", "oklch(0.19 0.01 70)", "oklch(0.25 0.01 70)", "oklch(0.33 0.01 70)", "oklch(0.43 0.01 70)", "oklch(0.56 0.01 70)", "oklch(0.72 0.01 70)"]
+        "tonalRamp": [
+          "oklch(0.13 0.01 70)",
+          "oklch(0.15 0.01 70)",
+          "oklch(0.19 0.01 70)",
+          "oklch(0.25 0.01 70)",
+          "oklch(0.33 0.01 70)",
+          "oklch(0.43 0.01 70)",
+          "oklch(0.56 0.01 70)",
+          "oklch(0.72 0.01 70)"
+        ]
       },
       "sidebar-charcoal-sand": {
         "role": "accent",
         "displayName": "Sidebar Charcoal Sand",
         "canonical": "oklch(0.22 0.01 70)",
         "purpose": "Sidebar active/hover item fill (dark).",
-        "tonalRamp": ["oklch(0.17 0.01 70)", "oklch(0.22 0.01 70)", "oklch(0.26 0.01 70)", "oklch(0.32 0.01 70)", "oklch(0.40 0.01 70)", "oklch(0.50 0.01 70)", "oklch(0.63 0.01 70)", "oklch(0.78 0.01 70)"]
+        "tonalRamp": [
+          "oklch(0.17 0.01 70)",
+          "oklch(0.22 0.01 70)",
+          "oklch(0.26 0.01 70)",
+          "oklch(0.32 0.01 70)",
+          "oklch(0.40 0.01 70)",
+          "oklch(0.50 0.01 70)",
+          "oklch(0.63 0.01 70)",
+          "oklch(0.78 0.01 70)"
+        ]
       }
     },
     "typographyMeta": {
@@ -173,18 +353,58 @@
       }
     },
     "shadows": [
-      { "name": "shadow-sm", "value": "0 1px 2px 0 rgb(0 0 0 / 0.05)", "purpose": "Quiet resting lift for cards and buttons." },
-      { "name": "shadow-md", "value": "0 4px 6px -1px rgb(0 0 0 / 0.1)", "purpose": "Interactive card hover — a gentle rise." },
-      { "name": "shadow-lg", "value": "0 10px 15px -3px rgb(0 0 0 / 0.1)", "purpose": "Popovers, context menus, dialogs, mobile drawer." },
-      { "name": "editor-image", "value": "0 4px 20px -2px rgba(0, 0, 0, 0.08)", "purpose": "Soft shelf under memory photos in the editor." }
+      {
+        "name": "shadow-sm",
+        "value": "0 1px 2px 0 rgb(0 0 0 / 0.05)",
+        "purpose": "Quiet resting lift for cards and buttons."
+      },
+      {
+        "name": "shadow-md",
+        "value": "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+        "purpose": "Interactive card hover — a gentle rise."
+      },
+      {
+        "name": "shadow-lg",
+        "value": "0 10px 15px -3px rgb(0 0 0 / 0.1)",
+        "purpose": "Popovers, context menus, dialogs, mobile drawer."
+      },
+      {
+        "name": "editor-image",
+        "value": "0 4px 20px -2px rgba(0, 0, 0, 0.08)",
+        "purpose": "Soft shelf under memory photos in the editor."
+      }
     ],
     "motion": [
-      { "name": "instant", "value": "100ms", "purpose": "Instant feedback (icon flips, micro-states)." },
-      { "name": "fast", "value": "150ms", "purpose": "Small state changes, active press." },
-      { "name": "standard", "value": "200ms", "purpose": "Default interactive transitions, button hovers." },
-      { "name": "slow", "value": "250ms", "purpose": "Theme/color transitions on containers and copy." },
-      { "name": "ease-standard", "value": "cubic-bezier(0.4, 0, 0.2, 1)", "purpose": "Default easing for state transitions." },
-      { "name": "view-transition", "value": "200ms cross-fade", "purpose": "Theme switch via View Transition API (skipped under reduced motion)." }
+      {
+        "name": "instant",
+        "value": "100ms",
+        "purpose": "Instant feedback (icon flips, micro-states)."
+      },
+      {
+        "name": "fast",
+        "value": "150ms",
+        "purpose": "Small state changes, active press."
+      },
+      {
+        "name": "standard",
+        "value": "200ms",
+        "purpose": "Default interactive transitions, button hovers."
+      },
+      {
+        "name": "slow",
+        "value": "250ms",
+        "purpose": "Theme/color transitions on containers and copy."
+      },
+      {
+        "name": "ease-standard",
+        "value": "cubic-bezier(0.4, 0, 0.2, 1)",
+        "purpose": "Default easing for state transitions."
+      },
+      {
+        "name": "view-transition",
+        "value": "200ms cross-fade",
+        "purpose": "Theme switch via View Transition API (skipped under reduced motion)."
+      }
     ],
     "breakpoints": [
       { "name": "sm", "value": "640px" },
@@ -286,14 +506,46 @@
       "Quiet and tactile interactions: fade hovers, a subtle press (scale(0.98)), fast 200ms transitions, View-Transition cross-fade on theme change."
     ],
     "rules": [
-      { "name": "The One Accent Rule", "body": "Warm amber is the system's only accent color. It appears in ≤5% of any screen: text selection, the caret, an interactive card's hover border, the blockquote rail. No secondary accent is ever introduced.", "section": "colors" },
-      { "name": "The Low-Strain Rule", "body": "All surfaces and text sit in a warm, low-chroma band. Never ship pure white, pure black, or saturated blue anywhere in either theme — eye comfort is a product feature.", "section": "colors" },
-      { "name": "The Serif Headline Rule", "body": "EB Garamond is for display and headings only. Body copy, labels, navigation, and buttons are always Outfit. Never set a paragraph in the serif and never set a label in the serif.", "section": "typography" },
-      { "name": "The Hierarchy-by-Spacing Rule", "body": "Headings never exceed weight 700, and hierarchy is carried by size and spacing rather than by color or extra-bold weights. Bold is a tool, not an exclamation point.", "section": "typography" },
-      { "name": "The Breathe Rule", "body": "Never fill empty space and never compress a layout to fit more content. If a screen looks sparse, the answer is better typography and spacing, not more elements.", "section": "layout" },
-      { "name": "The No-Floating-Cards Rule", "body": "Cards at rest are flat paper with a hairline border. Shadows are earned by interaction or by being an overlay; a static card that hovers above the page is a defect.", "section": "elevation" },
-      { "name": "The 250ms Rule", "body": "All theme/color transitions run at 250ms with standard easing (cubic-bezier(0.4, 0, 0.2, 1)); no transition ever exceeds 300ms. Motion communicates, never entertains.", "section": "elevation" },
-      { "name": "The Soft Corner Rule", "body": "Sharp 0px corners and exaggerated pill radii are both forbidden. Every control sits somewhere in the 0.375–0.875rem band, or is fully round for a deliberately circular element (avatar, mood dot).", "section": "shapes" }
+      {
+        "name": "The One Accent Rule",
+        "body": "Warm amber is the system's only accent color. It appears in ≤5% of any screen: text selection, the caret, an interactive card's hover border, the blockquote rail. No secondary accent is ever introduced.",
+        "section": "colors"
+      },
+      {
+        "name": "The Low-Strain Rule",
+        "body": "All surfaces and text sit in a warm, low-chroma band. Never ship pure white, pure black, or saturated blue anywhere in either theme — eye comfort is a product feature.",
+        "section": "colors"
+      },
+      {
+        "name": "The Serif Headline Rule",
+        "body": "EB Garamond is for display and headings only. Body copy, labels, navigation, and buttons are always Outfit. Never set a paragraph in the serif and never set a label in the serif.",
+        "section": "typography"
+      },
+      {
+        "name": "The Hierarchy-by-Spacing Rule",
+        "body": "Headings never exceed weight 700, and hierarchy is carried by size and spacing rather than by color or extra-bold weights. Bold is a tool, not an exclamation point.",
+        "section": "typography"
+      },
+      {
+        "name": "The Breathe Rule",
+        "body": "Never fill empty space and never compress a layout to fit more content. If a screen looks sparse, the answer is better typography and spacing, not more elements.",
+        "section": "layout"
+      },
+      {
+        "name": "The No-Floating-Cards Rule",
+        "body": "Cards at rest are flat paper with a hairline border. Shadows are earned by interaction or by being an overlay; a static card that hovers above the page is a defect.",
+        "section": "elevation"
+      },
+      {
+        "name": "The 250ms Rule",
+        "body": "All theme/color transitions run at 250ms with standard easing (cubic-bezier(0.4, 0, 0.2, 1)); no transition ever exceeds 300ms. Motion communicates, never entertains.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Soft Corner Rule",
+        "body": "Sharp 0px corners and exaggerated pill radii are both forbidden. Every control sits somewhere in the 0.375–0.875rem band, or is fully round for a deliberately circular element (avatar, mood dot).",
+        "section": "shapes"
+      }
     ],
     "dos": [
       "Do keep every surface and text color in the warm, low-chroma band — no pure white, pure black, or saturated blue.",

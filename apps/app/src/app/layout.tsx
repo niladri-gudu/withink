@@ -137,24 +137,33 @@ export default function RootLayout({ children }: RootLayoutProps) {
           content="#1e170f"
           media="(prefers-color-scheme: dark)"
         />
+        {/* Service worker: register in production, self-unregister in dev.
+            The branch is resolved at SSR — inline scripts can't reference
+            `process` (undefined in the browser; threw a ReferenceError on
+            every production load before this was hoisted server-side). */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `
+            __html:
+              process.env.NODE_ENV === "production"
+                ? `
               if ('serviceWorker' in navigator) {
                 window.addEventListener('load', function() {
-                  if (process.env.NODE_ENV === 'production') {
-                    navigator.serviceWorker.register('/sw.js').catch(function(err) {
-                      console.error('Service worker registration failed:', err);
+                  navigator.serviceWorker.register('/sw.js').catch(function(err) {
+                    console.error('Service worker registration failed:', err);
+                  });
+                });
+              }
+            `
+                : `
+              if ('serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                  navigator.serviceWorker.getRegistrations().then(function(regs) {
+                    regs.forEach(function(r) { r.unregister(); });
+                  });
+                  if (window.caches && caches.keys) {
+                    caches.keys().then(function(keys) {
+                      keys.forEach(function(k) { caches.delete(k); });
                     });
-                  } else {
-                    navigator.serviceWorker.getRegistrations().then(function(regs) {
-                      regs.forEach(function(r) { r.unregister(); });
-                    });
-                    if (window.caches && caches.keys) {
-                      caches.keys().then(function(keys) {
-                        keys.forEach(function(k) { caches.delete(k); });
-                      });
-                    }
                   }
                 });
               }

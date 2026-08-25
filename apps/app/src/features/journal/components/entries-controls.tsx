@@ -65,7 +65,7 @@ export function EntriesControls({
       {/* Phone: search + filters trigger (filters open the sheet) */}
       <div className="flex items-center gap-2 lg:hidden">
         <div className="relative flex-1">
-          <Search className="text-muted-foreground/60 absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
+          <Search className="text-muted-foreground/60 absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
           <input
             type="text"
             placeholder="Search title, text, date…"
@@ -74,7 +74,7 @@ export function EntriesControls({
             aria-label="Search entries"
             autoComplete="off"
             enterKeyHint="search"
-            className="bg-card border-border placeholder:text-muted-foreground/50 focus-visible:ring-ring h-11 w-full rounded-xl border pl-9 pr-4 text-base transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+            className="bg-card border-border placeholder:text-muted-foreground/50 focus-visible:ring-ring h-11 w-full rounded-xl border pr-4 pl-9 text-base transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
           />
         </div>
         <div className="relative shrink-0">
@@ -90,7 +90,7 @@ export function EntriesControls({
           {activeCount > 0 && (
             <span
               aria-hidden="true"
-              className="bg-accent text-accent-foreground absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full px-1 font-serif text-[10px] font-bold"
+              className="bg-accent text-accent-foreground absolute -top-1.5 -right-1.5 flex h-5 min-w-5 items-center justify-center rounded-full px-1 font-serif text-[10px] font-bold"
             >
               {activeCount}
             </span>
@@ -135,7 +135,7 @@ export function EntriesControls({
       {/* Desktop: original inline toolbar (search + selects) */}
       <div className="hidden items-center gap-3 lg:flex">
         <div className="relative flex-grow">
-          <Search className="text-muted-foreground/60 absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
+          <Search className="text-muted-foreground/60 absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
           <input
             type="text"
             placeholder="Search by title, contents, date…"
@@ -143,7 +143,7 @@ export function EntriesControls({
             onChange={(e) => onSearchChange(e.target.value)}
             aria-label="Search entries"
             autoComplete="off"
-            className="bg-card border-border placeholder:text-muted-foreground/50 focus-visible:ring-ring h-10 w-full rounded-xl border pl-9 pr-4 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+            className="bg-card border-border placeholder:text-muted-foreground/50 focus-visible:ring-ring h-10 w-full rounded-xl border pr-4 pl-9 text-sm transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
           />
         </div>
         <Select
@@ -181,7 +181,7 @@ export function EntriesControls({
           </SheetHeader>
 
           <fieldset className="space-y-3">
-            <legend className="text-muted-foreground/70 font-serif text-[11px] font-semibold uppercase tracking-[0.16em]">
+            <legend className="text-running-head text-muted-foreground/70">
               Time range
             </legend>
             <div className="flex flex-wrap gap-2">
@@ -194,7 +194,7 @@ export function EntriesControls({
                     aria-pressed={active}
                     onClick={() => onTimeFilterChange(option.value)}
                     className={cn(
-                      "focus-visible:ring-ring inline-flex h-11 cursor-pointer items-center gap-1.5 rounded-full border px-4 font-serif text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
+                      "focus-visible:ring-ring inline-flex h-11 cursor-pointer items-center gap-1.5 rounded-full border px-4 font-serif text-sm transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
                       active
                         ? "border-accent bg-accent/5 ring-accent/30 text-foreground ring-1"
                         : "border-border text-muted-foreground hover:border-accent/50 hover:bg-secondary/40",
@@ -209,7 +209,7 @@ export function EntriesControls({
           </fieldset>
 
           <fieldset className="space-y-3">
-            <legend className="text-muted-foreground/70 font-serif text-[11px] font-semibold uppercase tracking-[0.16em]">
+            <legend className="text-running-head text-muted-foreground/70">
               Mood
             </legend>
             <div className="flex flex-wrap gap-2">
@@ -222,7 +222,7 @@ export function EntriesControls({
                     aria-pressed={active}
                     onClick={() => onMoodFilterChange(option.value)}
                     className={cn(
-                      "focus-visible:ring-ring inline-flex h-11 cursor-pointer items-center gap-1.5 rounded-full border px-4 font-serif text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
+                      "focus-visible:ring-ring inline-flex h-11 cursor-pointer items-center gap-1.5 rounded-full border px-4 font-serif text-sm transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
                       active
                         ? "border-accent bg-accent/5 ring-accent/30 text-foreground ring-1"
                         : "border-border text-muted-foreground hover:border-accent/50 hover:bg-secondary/40",

@@ -127,7 +127,9 @@
     --accent: oklch(0.74 0.11 75);
     --accent-foreground: oklch(0.21 0.018 70);
 
-    --destructive: oklch(0.62 0.13 30);
+    /* Hardened for AA text contrast against the dark card (4.76:1 measured;
+       the filled destructive Button variant is unused app-side). */
+    --destructive: oklch(0.66 0.13 30);
     --destructive-foreground: oklch(0.92 0.015 80);
 
     --border: oklch(0.34 0.016 70);

@@ -26,3 +26,10 @@ The toolbar that floats just above the keyboard like a pencil tray â€” hapt
 - The yesterday banner is verified by code review + unit paths; seeded data always has yesterday written, so the dismissed/visible states were not exercised visually in the Phase 2 browser pass.
 - Sub-360px devices may nudge the primary toolbar cluster under the sticky word-count chip (scroll safety net retained by design).
 - tiptap v3 StarterKit now bundles link/underline; tiptap-editor.tsx configures both and logs a duplicate-extension warning â€” pre-existing, deferred (editor internals out of Phase 2 scope).
+
+
+## Phase 4 finalization (2026-08-24)
+- Impeccable critique (degraded single-context run): 35/40 Excellent. No P0/P1.
+- Keyboard walkthrough verified: title to moods (44px) to editor to toolbar all reachable; Bold activates via Enter with focus returning to the editor.
+- Deferred (debt list): manual retry affordance on the save-failed state (auto-backoff already converges); Ctrl-hints in toolbar aria-labels are desktop-oriented; sub-360px toolbar nudge stands as documented.
+- The toolbar h-10 touch size remains the ONE documented exception to the 44px rule.

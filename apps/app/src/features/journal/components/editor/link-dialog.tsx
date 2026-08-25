@@ -71,7 +71,7 @@ export function LinkDialog({
           <div className="flex flex-col gap-1.5">
             <label
               htmlFor="withink-link-url"
-              className="text-muted-foreground/70 font-serif text-[11px] font-semibold tracking-[0.16em] uppercase"
+              className="text-running-head text-muted-foreground/70"
             >
               URL
             </label>

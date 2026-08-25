@@ -149,7 +149,7 @@ export function MonthlyOverview({ monthlyOverview }: MonthlyOverviewProps) {
             <Calendar className="h-5 w-5" />
           </div>
           <div>
-            <p className="text-muted-foreground/60 font-serif text-[11px] uppercase tracking-[0.16em]">
+            <p className="text-running-head text-muted-foreground/60">
               Reflections
             </p>
             <p className="text-foreground font-serif text-2xl font-bold">
@@ -167,9 +167,7 @@ export function MonthlyOverview({ monthlyOverview }: MonthlyOverviewProps) {
             <Type className="h-5 w-5" />
           </div>
           <div>
-            <p className="text-muted-foreground/60 font-serif text-[11px] uppercase tracking-[0.16em]">
-              Words
-            </p>
+            <p className="text-running-head text-muted-foreground/60">Words</p>
             <p className="text-foreground font-serif text-2xl font-bold">
               {stat.totalWords.toLocaleString()}
             </p>
@@ -185,7 +183,7 @@ export function MonthlyOverview({ monthlyOverview }: MonthlyOverviewProps) {
             <Sparkles className="h-5 w-5" />
           </div>
           <div>
-            <p className="text-muted-foreground/60 font-serif text-[11px] uppercase tracking-[0.16em]">
+            <p className="text-running-head text-muted-foreground/60">
               Average Mood
             </p>
             <p className="text-foreground font-serif text-2xl font-bold">
@@ -201,7 +199,7 @@ export function MonthlyOverview({ monthlyOverview }: MonthlyOverviewProps) {
       {/* Monthly Mood Distribution — 2-up on phones (5th tile spans), 5-up on sm+ */}
       {totalMoodsInMonth > 0 && (
         <Card className="border-border/60 p-6">
-          <h5 className="text-muted-foreground/60 mb-4 font-serif text-[11px] uppercase tracking-[0.16em]">
+          <h5 className="text-muted-foreground/60 mb-4 font-serif text-[11px] tracking-[0.16em] uppercase">
             Mood distribution in {formatMonthTitle(selectedMonth)}
           </h5>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
@@ -228,7 +226,7 @@ export function MonthlyOverview({ monthlyOverview }: MonthlyOverviewProps) {
                   >
                     <Icon className="h-5 w-5" />
                   </div>
-                  <span className="text-muted-foreground/60 font-serif text-[11px] uppercase tracking-[0.16em]">
+                  <span className="text-running-head text-muted-foreground/60">
                     {config.label}
                   </span>
                   <span className="text-foreground mt-1 font-serif text-base font-bold">

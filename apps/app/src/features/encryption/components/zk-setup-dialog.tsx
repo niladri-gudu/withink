@@ -298,7 +298,7 @@ export function ZkSetupDialog({
             />
             <label
               htmlFor="zk-warning"
-              className="text-muted-foreground cursor-pointer select-none text-[11px] leading-relaxed"
+              className="text-muted-foreground cursor-pointer text-[11px] leading-relaxed select-none"
             >
               I understand my journal is 100% zero-knowledge. If I lose my Diary
               Password, my data cannot be recovered by anyone.

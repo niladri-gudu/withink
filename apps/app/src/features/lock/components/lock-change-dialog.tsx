@@ -259,7 +259,7 @@ export function LockChangeDialog({
                     }
                     onFocus={() => setCurrentFocused(true)}
                     onBlur={() => setCurrentFocused(false)}
-                    className="absolute inset-0 h-full w-full cursor-text select-none opacity-0"
+                    className="absolute inset-0 h-full w-full cursor-text opacity-0 select-none"
                     autoComplete="one-time-code"
                     autoFocus
                     required
@@ -323,7 +323,7 @@ export function LockChangeDialog({
                     }
                     onFocus={() => setNewFocused(true)}
                     onBlur={() => setNewFocused(false)}
-                    className="absolute inset-0 h-full w-full cursor-text select-none opacity-0"
+                    className="absolute inset-0 h-full w-full cursor-text opacity-0 select-none"
                     autoComplete="one-time-code"
                     autoFocus
                     required
@@ -400,7 +400,7 @@ export function LockChangeDialog({
                     }
                     onFocus={() => setConfirmFocused(true)}
                     onBlur={() => setConfirmFocused(false)}
-                    className="absolute inset-0 h-full w-full cursor-text select-none opacity-0"
+                    className="absolute inset-0 h-full w-full cursor-text opacity-0 select-none"
                     autoComplete="one-time-code"
                     autoFocus
                     required

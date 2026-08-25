@@ -1,15 +1,12 @@
-import type { Metadata } from "next";
 import { Suspense } from "react";
+import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { ROUTES } from "@/constants/routes";
 import { getRequestSession } from "@/lib/request-cache";
-import {
-  addDays,
-  getLocalDateString,
-  isDateString,
-} from "@/lib/utils/date";
+import { addDays, getLocalDateString, isDateString } from "@/lib/utils/date";
+import { PageHeader } from "@/features/app-shell/components/page-header";
 import {
   DashboardHero,
   DashboardHeroSkeleton,
@@ -17,7 +14,6 @@ import {
 import DashboardLowerGrid, {
   DashboardLowerGridSkeleton,
 } from "@/features/journal/components/dashboard-lower-grid";
-import { PageHeader } from "@/features/app-shell/components/page-header";
 
 export const metadata: Metadata = {
   title: "Diary Dashboard",

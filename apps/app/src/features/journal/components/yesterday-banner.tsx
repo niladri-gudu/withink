@@ -64,14 +64,17 @@ export function YesterdayBanner({ yesterday, today }: YesterdayBannerProps) {
                 Write Yesterday&apos;s Reflection
               </h4>
               <p className="text-muted-foreground text-xs leading-relaxed">
-                It looks like you missed writing yesterday. You still have
-                time to capture your thoughts before the archive seals.
+                It looks like you missed writing yesterday. You still have time
+                to capture your thoughts before the archive seals.
               </p>
             </div>
           </div>
 
           <div className="flex shrink-0 items-center justify-end gap-1 self-end sm:self-center">
-            <Button asChild className="h-11 w-full cursor-pointer px-5 sm:h-10 sm:w-auto">
+            <Button
+              asChild
+              className="h-11 w-full cursor-pointer px-5 sm:h-10 sm:w-auto"
+            >
               <Link
                 href={`${ROUTES.APP.ENTRY(yesterday)}?today=${today}` as Route}
               >

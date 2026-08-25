@@ -64,27 +64,27 @@ export function ForgotPasswordForm() {
   };
 
   return (
-    <div className="bg-card border-border/80 animate-in fade-in mx-auto w-full max-w-md select-none space-y-6 rounded-xl border p-6 shadow-sm duration-300 sm:space-y-8 sm:p-8">
+    <div className="bg-card border-border/80 animate-in fade-in mx-auto w-full max-w-md space-y-6 rounded-xl border p-6 shadow-sm duration-300 select-none sm:space-y-8 sm:p-8">
       {sent ? (
         <div className="animate-in fade-in zoom-in space-y-5 text-center duration-500">
           <div className="space-y-1.5">
             <h2 className="text-h2 text-foreground font-serif font-bold">
               Check your inbox.
             </h2>
-            <p className="text-caption font-serif uppercase tracking-[0.16em]">
+            <p className="text-running-head text-muted-foreground">
               Instructions dispatched • Action required
             </p>
           </div>
           <p className="text-muted-foreground font-serif text-sm leading-relaxed">
             Recovery instructions have been sent to:
-            <span className="text-foreground decoration-accent/40 mt-2 block break-all font-serif text-xs underline underline-offset-4">
+            <span className="text-foreground decoration-accent/40 mt-2 block font-serif text-xs break-all underline underline-offset-4">
               {registeredEmail}
             </span>
           </p>
           <div className="pt-2">
             <Link
               href={ROUTES.AUTH.LOGIN}
-              className="text-muted-foreground/60 hover:text-foreground border-muted-foreground/20 hover:border-foreground border-b pb-0.5 font-serif text-xs uppercase italic tracking-widest transition-colors"
+              className="text-muted-foreground/60 hover:text-foreground border-muted-foreground/20 hover:border-foreground border-b pb-0.5 font-serif text-xs tracking-widest uppercase italic transition-colors"
             >
               Return to Sign In
             </Link>
@@ -96,7 +96,7 @@ export function ForgotPasswordForm() {
             <h1 className="text-h2 text-foreground font-serif font-bold">
               Forgot secret.
             </h1>
-            <p className="text-caption font-serif uppercase tracking-[0.16em]">
+            <p className="text-running-head text-muted-foreground">
               We&apos;ll send recovery instructions to your email
             </p>
           </div>
@@ -113,7 +113,7 @@ export function ForgotPasswordForm() {
                 {errors.email?.message && (
                   <span
                     id="email-error"
-                    className="text-destructive animate-in fade-in font-serif text-[10px] uppercase tracking-tight"
+                    className="text-destructive animate-in fade-in font-serif text-[10px] tracking-tight uppercase"
                   >
                     {errors.email.message}
                   </span>
@@ -138,7 +138,7 @@ export function ForgotPasswordForm() {
             <div className="space-y-3 pt-2 text-center">
               <Button
                 type="submit"
-                className="relative h-11 w-full cursor-pointer overflow-hidden font-serif text-sm font-medium uppercase tracking-[0.15em] transition-transform hover:scale-[1.01] active:scale-[0.99]"
+                className="relative h-11 w-full cursor-pointer overflow-hidden font-serif text-sm font-medium tracking-[0.15em] uppercase transition-transform hover:scale-[1.01] active:scale-[0.99]"
                 disabled={isLoading}
               >
                 {isLoading ? (
@@ -153,7 +153,7 @@ export function ForgotPasswordForm() {
 
               <Link
                 href={ROUTES.AUTH.LOGIN}
-                className="text-muted-foreground/60 hover:text-foreground border-muted-foreground/20 hover:border-foreground inline-block border-b pb-0.5 pt-2 font-serif text-xs uppercase italic tracking-widest transition-colors"
+                className="text-muted-foreground/60 hover:text-foreground border-muted-foreground/20 hover:border-foreground inline-block border-b pt-2 pb-0.5 font-serif text-xs tracking-widest uppercase italic transition-colors"
               >
                 Back to Sign In
               </Link>

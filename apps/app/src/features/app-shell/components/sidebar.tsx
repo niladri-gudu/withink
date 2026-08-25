@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Button } from "@withink/ui/button";
+import { IconButton } from "@withink/ui/icon-button";
 import { ThemeToggle } from "@withink/ui/theme-toggle";
 import {
   Tooltip,
@@ -135,8 +135,8 @@ export function Sidebar({ isCollapsed, onToggleCollapse, user }: SidebarProps) {
 
   const renderSidebarContent = (collapsed: boolean) => {
     return (
-      <div className="bg-sidebar text-sidebar-foreground border-sidebar-border relative flex h-full select-none flex-col border-r">
-        <div className="border-sidebar-border relative flex shrink-0 flex-col border-b px-5 pb-5 pt-6">
+      <div className="bg-sidebar text-sidebar-foreground border-sidebar-border relative flex h-full flex-col border-r select-none">
+        <div className="border-sidebar-border relative flex shrink-0 flex-col border-b px-5 pt-6 pb-5">
           <div
             className={cn(
               "flex items-center justify-between gap-2",
@@ -148,11 +148,10 @@ export function Sidebar({ isCollapsed, onToggleCollapse, user }: SidebarProps) {
                 withink<span className="text-accent">.</span>
               </span>
             )}
-            <Button
+            <IconButton
               variant="ghost"
-              size="icon"
               onClick={onToggleCollapse}
-              className="text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hidden h-8 w-8 shrink-0 md:flex"
+              className="text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hidden shrink-0 md:flex"
               aria-label={collapsed ? "Expand margin" : "Collapse margin"}
             >
               {collapsed ? (
@@ -160,7 +159,7 @@ export function Sidebar({ isCollapsed, onToggleCollapse, user }: SidebarProps) {
               ) : (
                 <ChevronLeft className="h-4 w-4" />
               )}
-            </Button>
+            </IconButton>
           </div>
 
           {!collapsed && (
@@ -173,7 +172,7 @@ export function Sidebar({ isCollapsed, onToggleCollapse, user }: SidebarProps) {
         {/* The folio index */}
         <TooltipProvider delayDuration={0}>
           <nav
-            className="no-scrollbar flex-1 overflow-y-auto overflow-x-hidden px-3 py-5"
+            className="no-scrollbar flex-1 overflow-x-hidden overflow-y-auto px-3 py-5"
             aria-label="Sidebar navigation"
           >
             <ul className="space-y-0.5">
@@ -188,7 +187,7 @@ export function Sidebar({ isCollapsed, onToggleCollapse, user }: SidebarProps) {
                         >["href"]
                       }
                       className={cn(
-                        "focus-visible:ring-ring group relative flex h-10 items-center gap-3 rounded-lg px-3 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
+                        "focus-visible:ring-ring group relative flex h-10 items-center gap-3 rounded-lg px-3 transition-all duration-200 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
                         collapsed && "justify-center px-0",
                         item.active
                           ? "text-sidebar-foreground"
@@ -197,7 +196,7 @@ export function Sidebar({ isCollapsed, onToggleCollapse, user }: SidebarProps) {
                     >
                       {/* Gold margin tick for the open folio */}
                       {item.active && (
-                        <span className="bg-accent absolute bottom-2 left-0 top-2 w-0.5 rounded-full" />
+                        <span className="bg-accent absolute top-2 bottom-2 left-0 w-0.5 rounded-full" />
                       )}
 
                       {collapsed ? (
@@ -213,7 +212,7 @@ export function Sidebar({ isCollapsed, onToggleCollapse, user }: SidebarProps) {
                         <>
                           <span
                             className={cn(
-                              "w-5 shrink-0 text-right font-serif text-[11px] tabular-nums tracking-[0.1em]",
+                              "w-5 shrink-0 text-right font-serif text-[11px] tracking-[0.1em] tabular-nums",
                               item.active
                                 ? "text-accent"
                                 : "text-muted-foreground/50",
@@ -223,7 +222,7 @@ export function Sidebar({ isCollapsed, onToggleCollapse, user }: SidebarProps) {
                           </span>
                           <span
                             className={cn(
-                              "animate-in fade-in truncate font-serif text-sm uppercase tracking-[0.08em] duration-200",
+                              "animate-in fade-in truncate font-serif text-sm tracking-[0.08em] uppercase duration-200",
                               item.active ? "font-semibold" : "font-medium",
                             )}
                           >
@@ -258,7 +257,7 @@ export function Sidebar({ isCollapsed, onToggleCollapse, user }: SidebarProps) {
           {userMenuOpen && (
             <div
               className={cn(
-                "bg-popover text-popover-foreground border-border animate-in slide-in-from-bottom-2 absolute bottom-16 left-4 right-4 z-50 rounded-xl border p-2 shadow-lg duration-150",
+                "bg-popover text-popover-foreground border-border animate-in slide-in-from-bottom-2 absolute right-4 bottom-16 left-4 rounded-xl border p-2 shadow-lg duration-150",
                 collapsed && "bottom-16 left-2 w-48",
               )}
               role="menu"
@@ -275,7 +274,7 @@ export function Sidebar({ isCollapsed, onToggleCollapse, user }: SidebarProps) {
                 <button
                   onClick={() => void signOut()}
                   role="menuitem"
-                  className="text-destructive hover:bg-destructive/10 focus-visible:ring-destructive flex w-full cursor-pointer items-center space-x-2 rounded-md px-3 py-2 text-left text-xs transition-colors focus-visible:outline-none focus-visible:ring-2"
+                  className="text-destructive hover:bg-destructive/10 focus-visible:ring-destructive flex w-full cursor-pointer items-center space-x-2 rounded-md px-3 py-2 text-left text-xs transition-colors focus-visible:ring-2 focus-visible:outline-none"
                 >
                   <LogOut className="h-3.5 w-3.5" />
                   <span>Log Out</span>
@@ -289,7 +288,7 @@ export function Sidebar({ isCollapsed, onToggleCollapse, user }: SidebarProps) {
               <ThemeToggle />
               <button
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
-                className="hover:bg-sidebar-accent focus-visible:ring-ring flex w-full cursor-pointer items-center justify-center rounded-lg p-1 transition-all focus-visible:outline-none focus-visible:ring-2"
+                className="hover:bg-sidebar-accent focus-visible:ring-ring flex w-full cursor-pointer items-center justify-center rounded-lg p-1 transition-all focus-visible:ring-2 focus-visible:outline-none"
                 aria-haspopup="menu"
                 aria-expanded={userMenuOpen}
                 aria-label="User menu"
@@ -300,14 +299,14 @@ export function Sidebar({ isCollapsed, onToggleCollapse, user }: SidebarProps) {
           ) : (
             <>
               <div className="mb-2 flex items-center justify-between px-1">
-                <span className="text-muted-foreground/60 font-serif text-[11px] uppercase tracking-[0.16em]">
+                <span className="text-running-head text-muted-foreground/60">
                   Colophon
                 </span>
                 <ThemeToggle />
               </div>
               <button
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
-                className="hover:bg-sidebar-accent focus-visible:ring-ring flex w-full cursor-pointer items-center gap-3 rounded-lg p-2 text-left transition-all focus-visible:outline-none focus-visible:ring-2"
+                className="hover:bg-sidebar-accent focus-visible:ring-ring flex w-full cursor-pointer items-center gap-3 rounded-lg p-2 text-left transition-all focus-visible:ring-2 focus-visible:outline-none"
                 aria-haspopup="menu"
                 aria-expanded={userMenuOpen}
                 aria-label="User menu"

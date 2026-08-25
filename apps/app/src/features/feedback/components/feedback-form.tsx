@@ -338,7 +338,7 @@ export function FeedbackForm() {
                 type="button"
                 onClick={removeImage}
                 aria-label="Remove screenshot"
-                className="bg-foreground/60 text-background hover:bg-foreground/80 absolute right-2 top-2 flex h-11 w-11 items-center justify-center rounded-full backdrop-blur-sm transition-colors sm:h-8 sm:w-8"
+                className="bg-foreground/60 text-background hover:bg-foreground/80 absolute top-2 right-2 flex h-11 w-11 items-center justify-center rounded-full backdrop-blur-sm transition-colors sm:h-8 sm:w-8"
               >
                 <X className="h-4 w-4" />
               </button>

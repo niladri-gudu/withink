@@ -135,7 +135,7 @@ export function RecentReflectionsList({
                   <h4 className="text-foreground truncate font-serif text-sm font-bold">
                     {entry.title || "Untitled Entry"}
                   </h4>
-                  <span className="text-muted-foreground/60 font-serif text-[11px] tracking-[0.16em] uppercase">
+                  <span className="text-running-head text-muted-foreground/60">
                     {formatDisplayDate(entry.date)}
                   </span>
                 </div>

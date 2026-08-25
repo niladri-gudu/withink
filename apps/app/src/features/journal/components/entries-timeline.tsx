@@ -483,7 +483,7 @@ export function EntriesTimeline({
                               </h3>
                             </Link>
                             {/* Meta row: date · words · mood — always visible */}
-                            <div className="text-muted-foreground/60 mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 font-serif text-[11px] tracking-[0.16em] uppercase">
+                            <div className="text-running-head text-muted-foreground/60 mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5">
                               <span className="flex items-center gap-1">
                                 <Calendar className="h-3 w-3" />
                                 <Highlight
@@ -535,7 +535,7 @@ export function EntriesTimeline({
       {/* Pagination controls */}
       {totalPages > 1 && (
         <div className="border-border/10 flex items-center justify-between border-t pt-4">
-          <span className="text-muted-foreground/60 font-serif text-[11px] tracking-[0.12em] uppercase">
+          <span className="text-running-head text-muted-foreground/60">
             Showing Page {page} of {totalPages} ({total} total)
           </span>
           <div className="flex items-center gap-2">

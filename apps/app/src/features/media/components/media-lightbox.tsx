@@ -4,6 +4,7 @@ import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@withink/ui/button";
+import { IconButton } from "@withink/ui/icon-button";
 import {
   ArrowLeft,
   ArrowRight,
@@ -371,7 +372,7 @@ export function MediaLightbox({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm"
+            className="fixed inset-0 z-[60] flex items-center justify-center bg-black/85 backdrop-blur-sm"
           >
             {/* Close backdrop click */}
             <div
@@ -391,16 +392,16 @@ export function MediaLightbox({
               className="bg-card border-border relative z-10 mx-4 flex w-full max-w-3xl flex-col overflow-hidden rounded-xl border shadow-2xl"
             >
               {/* Close Button */}
-              <button
+              <IconButton
                 onClick={onClose}
-                className="bg-background/60 hover:bg-background text-foreground border-border/20 focus-visible:ring-ring absolute right-4 top-4 z-50 cursor-pointer rounded-full border p-2 shadow-sm backdrop-blur-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
                 aria-label="Close preview"
+                className="bg-background/60 hover:bg-background text-foreground border-border/20 absolute top-4 right-4 z-50 rounded-full border shadow-sm backdrop-blur-sm"
               >
                 <X size={16} />
-              </button>
+              </IconButton>
 
               {/* Counter — position is always visible while paging */}
-              <span className="bg-background/60 text-foreground border-border/20 absolute left-4 top-4 z-50 select-none rounded-full border px-3 py-1 font-serif text-[11px] font-semibold uppercase tracking-[0.14em] shadow-sm backdrop-blur-sm">
+              <span className="bg-background/60 text-foreground border-border/20 absolute top-4 left-4 z-50 rounded-full border px-3 py-1 font-serif text-[11px] font-semibold tracking-[0.14em] uppercase shadow-sm backdrop-blur-sm select-none">
                 {(index ?? 0) + 1} / {files.length}
               </span>
 
@@ -420,7 +421,7 @@ export function MediaLightbox({
                   priority
                   sizes="100vw"
                   draggable={false}
-                  className="select-none object-contain p-2"
+                  className="object-contain p-2 select-none"
                 />
 
                 {/* Prev Button (pointer devices; touch swipes) */}
@@ -430,7 +431,7 @@ export function MediaLightbox({
                       e.stopPropagation();
                       onPrev();
                     }}
-                    className="bg-background/50 hover:bg-background/80 text-foreground border-border/20 focus-visible:ring-ring absolute left-4 top-1/2 hidden -translate-y-1/2 cursor-pointer rounded-full border p-2.5 shadow-md transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 sm:block"
+                    className="bg-background/50 hover:bg-background/80 text-foreground border-border/20 focus-visible:ring-ring absolute top-1/2 left-4 hidden -translate-y-1/2 cursor-pointer rounded-full border p-2.5 shadow-md transition-all focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none sm:block"
                     aria-label="Previous image"
                   >
                     <ArrowLeft size={16} />
@@ -444,7 +445,7 @@ export function MediaLightbox({
                       e.stopPropagation();
                       onNext();
                     }}
-                    className="bg-background/50 hover:bg-background/80 text-foreground border-border/20 focus-visible:ring-ring absolute right-4 top-1/2 hidden -translate-y-1/2 cursor-pointer rounded-full border p-2.5 shadow-md transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 sm:block"
+                    className="bg-background/50 hover:bg-background/80 text-foreground border-border/20 focus-visible:ring-ring absolute top-1/2 right-4 hidden -translate-y-1/2 cursor-pointer rounded-full border p-2.5 shadow-md transition-all focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none sm:block"
                     aria-label="Next image"
                   >
                     <ArrowRight size={16} />
@@ -453,7 +454,7 @@ export function MediaLightbox({
               </motion.div>
 
               {/* Info details footer */}
-              <div className="bg-card border-border flex select-none flex-col gap-4 border-t p-5 md:flex-row md:items-center md:p-6">
+              <div className="bg-card border-border flex flex-col gap-4 border-t p-5 select-none md:flex-row md:items-center md:p-6">
                 <div className="min-w-0 flex-1 space-y-1">
                   <p className="text-muted-foreground max-w-sm truncate font-serif text-xs sm:max-w-md">
                     {filename}
@@ -497,7 +498,7 @@ export function MediaLightbox({
                     variant="ghost"
                     size="sm"
                     onClick={onClose}
-                    className="text-muted-foreground hover:text-foreground h-9 rounded-xl px-3 text-xs font-medium lg:hidden"
+                    className="text-muted-foreground hover:text-foreground h-11 rounded-xl px-3 text-xs font-medium sm:h-9 lg:hidden"
                   >
                     Close
                   </Button>
@@ -506,7 +507,7 @@ export function MediaLightbox({
                     variant="outline"
                     size="sm"
                     onClick={handleCopyLink}
-                    className="border-border/60 hover:bg-secondary focus-visible:ring-ring h-9 gap-1.5 rounded-xl px-3 text-xs font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+                    className="border-border/60 hover:bg-secondary focus-visible:ring-ring h-11 gap-1.5 rounded-xl px-3 text-xs font-medium focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none sm:h-9"
                   >
                     {copiedKey === file.url ? (
                       <>
@@ -526,7 +527,7 @@ export function MediaLightbox({
                     size="sm"
                     onClick={() => setShowDeleteConfirm(true)}
                     disabled={deleting !== null}
-                    className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 focus-visible:ring-ring h-9 w-9 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+                    className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 focus-visible:ring-ring h-11 w-11 rounded-xl focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none sm:h-9 sm:w-9"
                     title="Delete memory"
                     aria-label="Delete memory"
                   >

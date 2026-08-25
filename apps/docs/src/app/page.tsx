@@ -6,7 +6,9 @@ import { JsonLd } from "@/components/json-ld";
 import { LandingPageContent } from "@/components/landing-page-content";
 
 const SITE_URL =
-  process.env.IS_PROD === "true" ? "https://withink.me" : "http://localhost:3001";
+  process.env.IS_PROD === "true"
+    ? "https://withink.me"
+    : "http://localhost:3001";
 
 export const metadata: Metadata = {
   title: "withink. - your private journal",

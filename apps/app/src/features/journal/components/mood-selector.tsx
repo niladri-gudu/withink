@@ -51,7 +51,7 @@ export function MoodSelector({
 }) {
   return (
     <div className="flex items-center gap-1.5 sm:gap-2">
-      <span className="text-muted-foreground/60 mr-1 hidden font-serif text-xs tracking-[0.15em] uppercase sm:inline">
+      <span className="text-running-head text-muted-foreground/60 mr-1 hidden sm:inline">
         Mood
       </span>
       <div

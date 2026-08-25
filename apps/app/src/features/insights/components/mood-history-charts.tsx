@@ -199,7 +199,7 @@ export function MoodHistoryCharts({
           <div className="relative w-full">
             <svg
               viewBox={`0 0 ${svgWidth} ${svgHeight}`}
-              className="text-muted-foreground h-auto w-full select-none overflow-visible"
+              className="text-muted-foreground h-auto w-full overflow-visible select-none"
             >
               {/* Horizontal grid lines for mood levels 1 to 5 */}
               {[1, 2, 3, 4, 5].map((level) => {

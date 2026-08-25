@@ -11,9 +11,9 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { ROUTES } from "@/constants/routes";
 import { decryptText } from "@/lib/crypto-client";
 import { safeStorage } from "@/lib/safe-storage";
-import { useMediaQuery } from "@/hooks/use-media-query";
 import { formatDisplayDate } from "@/lib/utils/date";
 import { zenAudioService } from "@/lib/zen-audio";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import { useEncryption } from "@/providers/encryption-provider";
 
 import { useAutoSave } from "../hooks/use-auto-save";

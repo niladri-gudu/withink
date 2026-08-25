@@ -57,7 +57,7 @@ export function DashboardFlashbackCard({
     return (
       <Card className="border-border border">
         <CardHeader>
-          <span className="text-accent font-serif text-[11px] font-semibold tracking-[0.2em] uppercase">
+          <span className="text-running-head text-accent">
             {label || "Flashback"}
           </span>
           <CardTitle className="text-foreground font-serif text-lg font-semibold">
@@ -85,7 +85,7 @@ export function DashboardFlashbackCard({
   return (
     <Card className="border-border border">
       <CardHeader>
-        <span className="text-accent font-serif text-[11px] font-semibold tracking-[0.2em] uppercase">
+        <span className="text-running-head text-accent">
           {label || "Flashback"}
         </span>
         <CardTitle className="text-foreground font-serif text-lg font-semibold">
@@ -110,7 +110,7 @@ export function DashboardFlashbackCard({
             <Button
               asChild
               variant="link"
-              className="text-accent hover:text-accent/80 h-auto cursor-pointer gap-1 p-0 font-serif text-[11px] font-semibold tracking-[0.2em] uppercase"
+              className="text-running-head text-accent hover:text-accent/80 h-auto cursor-pointer gap-1 p-0"
             >
               <Link
                 href={`${ROUTES.APP.ENTRY(entry.date)}?today=${today}` as Route}

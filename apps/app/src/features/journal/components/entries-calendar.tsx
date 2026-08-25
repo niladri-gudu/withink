@@ -140,7 +140,7 @@ export function EntriesCalendar({
       <Card className="border-border border">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <div className="flex flex-col">
-            <span className="text-muted-foreground/60 font-serif text-[11px] uppercase tracking-[0.16em]">
+            <span className="text-running-head text-muted-foreground/60">
               The year, kept in order
             </span>
             <CardTitle className="text-foreground font-serif text-xl font-semibold">
@@ -169,7 +169,7 @@ export function EntriesCalendar({
             {WEEKDAY_NAMES.map((day) => (
               <span
                 key={day}
-                className="text-muted-foreground/50 py-1 font-serif text-[11px] font-semibold uppercase tracking-[0.16em]"
+                className="text-muted-foreground/50 py-1 font-serif text-[11px] font-semibold tracking-[0.16em] uppercase"
               >
                 {day}
               </span>
@@ -224,7 +224,7 @@ export function EntriesCalendar({
                   disabled={!isClickable}
                   aria-label={dayLabel}
                   className={cn(
-                    "focus-visible:ring-ring relative flex aspect-square flex-col items-center justify-center rounded-lg text-xs transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
+                    "focus-visible:ring-ring relative flex aspect-square flex-col items-center justify-center rounded-lg text-xs transition-all duration-200 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
                     isClickable && "cursor-pointer",
                     isToday && "ring-primary font-bold ring-2 ring-offset-2",
                     cellColorClass,

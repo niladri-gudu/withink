@@ -43,9 +43,7 @@ export function EntriesFolio({ streakData, className }: EntriesFolioProps) {
               </span>
             )}
             <span className="text-foreground font-bold">{stat.value}</span>
-            <span className="text-[11px] uppercase tracking-[0.16em]">
-              {stat.label}
-            </span>
+            <span className="text-running-head">{stat.label}</span>
           </span>
         ))}
       </p>
@@ -69,7 +67,7 @@ export function EntriesFolio({ streakData, className }: EntriesFolioProps) {
               <span className="text-foreground font-serif text-3xl font-bold">
                 {stat.value}
               </span>
-              <p className="text-muted-foreground/70 mt-1 font-serif text-[11px] font-semibold uppercase tracking-[0.16em]">
+              <p className="text-running-head text-muted-foreground/70 mt-1">
                 {stat.label}
               </p>
             </div>

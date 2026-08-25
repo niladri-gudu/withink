@@ -2,13 +2,13 @@
 
 # Project State
 
-Last Updated: 2026-08-24
+Last Updated: 2026-08-25
 
-Current Phase: Production Hardening
+Current Phase: Mobile-First Redesign Complete
 
-Current Milestone: Release Ready (Security & Housekeeping Remediation)
+Current Milestone: Phone-First Redesign Shipped (Phases 1–4)
 
-Project Status: 🟢 Rebuild Complete and Release Ready
+Project Status: 🟢 Redesign Complete and Release Ready
 
 ---
 
@@ -378,7 +378,7 @@ Final Polish
 
 # Current Goals
 
-- Release Ready: Rebuild successfully completed, visual consistency checked, and test suite green. Ready for final release deployment.
+- Mobile-first redesign (Phases 1–4) shipped and verified. Next candidate: marketing site phone-first pass (apps/docs — see REDESIGN_PROMPTS.md Phase 5).
 
 ---
 
@@ -391,6 +391,20 @@ Note: MongoDB (`mongodb+srv://`) now connects. The earlier `querySrv ECONNREFUSE
 ---
 
 # Recent Decisions
+
+2026-08-25
+
+- **Mobile-first redesign, Phase 4/4 — Finish (consistency, a11y/responsive audit, performance, docs).** Bounded passes per the impeccable skill: one batched inspection round (research fact sheet + live keyboard/a11y/responsive sweep), one batched fix round, one confirm round. All verified: `tsc --noEmit` clean, eslint 0 errors (3 pre-existing `clearAllTimers` warnings), 130/130 Vitest, production build clean (21 routes, PPR ◐ preserved), impeccable detector `[]` on all 33 changed files (one known false positive: the `<img[^>]*src=` scrub-regex string in media-lightbox).
+  - **Consistency sweep.** Insights header migrated onto the shared `PageHeader` (hand-rolled DOM + its date `useEffect` deleted); ~50 copy-pasted eyebrows across ~20 files (incl. `page-header.tsx`/`page-loading.tsx` themselves) now use `text-running-head` — tracking drift (0.12/0.14/0.15/0.2em) eliminated; auth/gate card eyebrows normalized to the same voice. Tracked-caps ACTION links (View Archive / RE-READ ENTRY) intentionally remain the control voice, not eyebrows. IconButton primitive adopted at media-lightbox close, sidebar collapse toggle; media grid/list toggles and insights month chevrons bumped from `size="sm"` (36px) to the 44px default; flashbacks header actions ("Show another"/"Home") h-9→h-11 on phones; auth password-visibility toggles given 44px hit areas. Sanctioned exceptions documented: editor toolbar h-10 (Phase-2), weekday grid headers (10/11px grid labels), settings theme swatch hexes, chart `var(--color-accent, #c39553)` fallbacks.
+  - **State coverage.** New `(app)/error.tsx` route-group boundary (keeps the shell mounted; reports to `/api/monitoring/errors`) and `(app)/feedback/loading.tsx` skeleton mirroring the form card. Insights timezone-refetch failure now surfaces a quiet toast (was console-only). Toast conventions verified consistent (~100 sonner calls, zero bare `toast()`).
+  - **A11y.** More-sheet focus restore fixed by making the More tab a real `SheetTrigger` inside a `Sheet` root that wraps the nav (Escape/trigger close restores focus to the trigger — verified live; the first attempt placed the trigger outside the context and was caught by the confirm round). Keyboard-only walkthrough green: tab order (skip link → header → content → tab bar), editor toolbar via keyboard (Enter activates, focus returns), sheets/dialogs focus restore, PIN-pad keyboard listeners unchanged. Contrast computed from tokens in both themes; dark `--destructive` hardened `oklch(0.62→0.66 0.13 30)` (3.97→4.76:1 vs dark card); light passes fully (accent 4.90:1, ring 4.90:1).
+  - **Z-index contract restored.** Media lightbox root `z-50→z-[60]` (could under-stack sheets); unlock-proof-bind-card `z-[9990]→z-[9999]`; sidebar popover off-contract `z-50` dropped (local stacking).
+  - **Responsive.** Zero horizontal overflow measured at 320/375/414/768/1024/1440 and landscape-phone editor (812×375); gates fit short viewports; sticky entries search verified pinning below the header; desktop 1440 rail/two-column unchanged.
+  - **Performance.** Build route report identical to baseline (21 routes; main routes PPR ◐). Per-route client chunks: editor cluster 78.4→78.0KB (smaller), settings 57.4→57.4, media 17.9→17.8, insights +1.1KB (toast + PageHeader), others ±0.1. Gate screens still statically imported; client jszip still lazy (`await import` in data-export-card); images all `next/image` (raw `<img>` only in the email template). **Mobile Lighthouse (prod build, DevTools MCP): A11y 100 / Best Practices 100 / Agentic 100 on `/`, `/entries`, `/entries/[date]`; SEO 54–63 by design (private app is noindex; the meta-description flag on the editor route fires only in the locked-state HTML); CLS 0.**
+  - **Two production bugs the audits flushed out (both pre-existing, both fixed):** (1) the inline service-worker script referenced `process.env.NODE_ENV`, which is undefined in the browser → ReferenceError on every production load; the branch is now resolved server-side in `layout.tsx` (production registers, dev unregisters). (2) `public/sw.js` contained TypeScript syntax (`url: URL` annotation) → "ServiceWorker script evaluation failed" — offline support never actually worked in production; annotation removed, `node --check` clean, registration verified green in the Lighthouse pass.
+  - **Documentation of record.** `DESIGN.md` restructured as a two-surface doc: a new app-surface section written from the BUILT world (hardened accent/ring/destructive oklch values, fluid type + `text-running-head`, shipped component inventory, z-index/touch/safe-area rules, sanctioned exceptions) with the docs-surface section preserved below. All six `.impeccable/surfaces/` briefs carry Phase-4 finalization notes. Impeccable critique on the flagships (degraded single-context run — subagent provider was down): editor 35/40, dashboard 34/40, no P0/P1; snapshots in `.impeccable/critique/`.
+  - **Manual regression script** (run before any release; test@test.com / test@123, diary password test@test): sign in → unlock with Diary Password → write today's entry, watch Saving…→Saved·Synced → go offline (DevTools), type more, confirm "Saved locally · Will sync", reconnect, confirm queue drains to 0 → search a title and a "Jul 1"-style date → flashbacks: open, "Show another", re-read → insights: month pager, tap a day popover, stats → media: upload an image in the editor, open the lightbox, swipe prev/next, delete via confirm (verify scrub) → settings: toggle theme, paper scale, enable Diary Lock (PIN 1234), auto-lock, lock now, unlock with PIN, disable lock → export ZIP (verify entries + images) → lock → logout → sign in again.
+  - **Deferred debt (carried):** manual retry affordance on save-failed (auto-backoff converges); toolbar `(Ctrl+…)` hints in aria-labels; sub-360px toolbar nudge; lightbox double-tap zoom (native pinch works); year-summary ribbon for insights; persisting settings disclosure state; tiptap v3 StarterKit duplicate-extension warning; export streaming (JSZip buffers); media gallery virtualization; entries search below the fold at 375 (Phase-3 IA); `Button size="icon"` legacy variant (only the editor toolbar consumes it); meta-description on the editor route's locked-state HTML (noindex app — cosmetic).
 
 2026-08-24
 
@@ -772,6 +786,7 @@ Note: MongoDB (`mongodb+srv://`) now connects. The earlier `querySrv ECONNREFUSE
 
 # Technical Debt
 
+- Mobile-first redesign deferred items (2026-08-25, all documented in the Phase-4 entry and surface briefs): save-failed manual retry affordance; toolbar aria-label Ctrl-hints; sub-360px toolbar nudge; lightbox double-tap zoom; insights year-summary ribbon; settings disclosure state persistence; tiptap v3 StarterKit duplicate-extension warning; export archive streaming; media gallery virtualization/R2-list cap; entries search below the fold at 375; legacy `Button size="icon"` variant (editor toolbar only).
 - Low priority: `src/constants/cache-keys.ts` declares `CACHE_KEYS` builders (`ENTRY_HOT`, `STATS`, `FLASHBACK`) but `EntryRepository` and `FlashbackService` use ad-hoc string keys (`entries:{userId}:v{n}:...`) instead. Purely a maintainability nit with no perf impact; left untouched during Phase 14 because consolidating the key builders risks churning working version-based invalidation for no gain. Revisit if cache keys are ever centralized.
 
 All Phase 1 modules compile cleanly and pass linter/typecheck verification successfully.

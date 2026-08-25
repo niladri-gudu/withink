@@ -25,3 +25,10 @@ The old GitHub-style 365-day strip (min-w-[760px] scroll, hover-only tooltips) i
 ## Unresolved decisions
 - Month pager replaces the year-at-a-glance entirely (Phase-3 decision); a year-summary ribbon could return if readers miss the long view.
 - Chart SVGs keep fixed viewBoxes that scale fluidly; labels are 9–11px serif — verified readable at 375px but could step up if complaints arrive.
+
+
+## Phase 4 finalization (2026-08-24)
+- insights-dashboard.tsx now renders the shared PageHeader (hand-rolled header copy + its date useEffect deleted); the timezone-adjust refetch failure surfaces a quiet sonner toast instead of console-only.
+- Month-pager chevrons moved from size sm (36px) to the IconButton default (44px phone / 36px md+).
+- All stat/card eyebrows use text-running-head; the 10px weekday grid header remains a sanctioned grid label (not an eyebrow).
+- Resolved: inline header duplication; silent refetch failure; sub-44px month paging.

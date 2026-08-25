@@ -91,7 +91,7 @@ export function WordCountCharts({
         <div className="relative w-full">
           <svg
             viewBox={`0 0 ${svgWidth} ${svgHeight}`}
-            className="text-muted-foreground h-auto w-full select-none overflow-visible"
+            className="text-muted-foreground h-auto w-full overflow-visible select-none"
           >
             {/* Grid lines */}
             {[0, 0.5, 1].map((ratio) => {

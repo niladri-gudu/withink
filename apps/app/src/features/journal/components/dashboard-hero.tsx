@@ -46,7 +46,7 @@ export async function DashboardHero({
 
         {/* Day-streak margin note */}
         <div className="border-border flex flex-col justify-between rounded-xl border p-6">
-          <p className="text-muted-foreground/70 font-serif text-[11px] font-semibold tracking-[0.2em] uppercase">
+          <p className="text-running-head text-muted-foreground/70">
             Margin note
           </p>
           <div className="my-6 flex items-end gap-3">
