@@ -41,6 +41,7 @@ vi.mock("@/lib/db", () => {
     client: {
       db: mockDb,
     },
+    DB_NAME: "withink_dev",
   };
 });
 

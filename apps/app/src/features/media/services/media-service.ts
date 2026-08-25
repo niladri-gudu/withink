@@ -1,6 +1,7 @@
 import "server-only";
 
 import { env } from "@/config/env";
+import { EntitlementsService } from "@/features/billing/services/entitlements-service";
 import { listAllObjects } from "@/lib/r2-list";
 
 export interface MediaFile {
@@ -20,12 +21,11 @@ export interface StorageStats {
 const isProduction = env.IS_PROD;
 const envPrefix = isProduction ? "" : "dev-";
 
-export const STORAGE_LIMIT_MB = 50;
-
 /**
  * Lists the user's media library and derives storage stats from a single R2
  * listing (paginated). Shared by the server-rendered media page and the server
- * actions so the library and stats never trigger two full listings.
+ * actions so the library and stats never trigger two full listings. The quota
+ * limit comes from the viewer's plan entitlements.
  */
 export async function getMediaLibraryAndStats(userId: string): Promise<{
   files: MediaFile[];
@@ -43,6 +43,10 @@ export async function getMediaLibraryAndStats(userId: string): Promise<{
     }))
     .sort((a, b) => (b.lastModified || "").localeCompare(a.lastModified || ""));
 
+  const { mediaStorageBytes } = await EntitlementsService.getEntitlements(
+    userId,
+  );
+  const limitMB = Number((mediaStorageBytes / (1024 * 1024)).toFixed(2));
   const totalSizeBytes = objects.reduce((acc, obj) => acc + obj.size, 0);
   const totalSizeMB = Number((totalSizeBytes / (1024 * 1024)).toFixed(2));
 
@@ -51,9 +55,9 @@ export async function getMediaLibraryAndStats(userId: string): Promise<{
     stats: {
       usedMB: totalSizeMB,
       fileCount: objects.length,
-      limitMB: STORAGE_LIMIT_MB,
+      limitMB,
       percentUsed: Number(
-        Math.min((totalSizeMB / STORAGE_LIMIT_MB) * 100, 100).toFixed(1),
+        Math.min((totalSizeMB / limitMB) * 100, 100).toFixed(1),
       ),
     },
   };

@@ -4,14 +4,13 @@ import { nextCookies } from "better-auth/next-js";
 
 import { env } from "@/config/env";
 import { logger } from "@/server/logger";
+import { SessionCapService } from "@/features/billing/services/session-cap-service";
 import { ResetPassword } from "@/features/auth/components/emails/reset-password";
 import { VerifyEmail } from "@/features/auth/components/emails/verify-email";
 import { WelcomeEmail } from "@/features/auth/components/emails/welcome-email";
 
-import { client } from "./db";
+import { DB_NAME, client } from "./db";
 import { resend } from "./email";
-
-const DB_NAME = env.IS_PROD ? "withink_prod" : "withink_dev";
 
 export const auth = betterAuth({
   database: mongodbAdapter(client.db(DB_NAME), { client }),
@@ -28,6 +27,15 @@ export const auth = betterAuth({
   },
 
   databaseHooks: {
+    session: {
+      create: {
+        // Device soft-kick (Gate #3): enforce the plan's concurrent-session
+        // cap after each new sign-in. Best-effort — never blocks auth.
+        after: async (session) => {
+          await SessionCapService.enforceOnSessionCreate(session.userId);
+        },
+      },
+    },
     user: {
       create: {
         after: async (user) => {

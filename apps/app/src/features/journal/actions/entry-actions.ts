@@ -6,6 +6,7 @@ import { getRequestSession } from "@/lib/request-cache";
 import { addDays, getLocalDateString, isDateString } from "@/lib/utils/date";
 import { handleError } from "@/server/errors";
 import { rateLimit } from "@/server/rate-limit";
+import { EntitlementsService } from "@/features/billing/services/entitlements-service";
 import { LockService } from "@/features/lock/services/lock-service";
 
 import {
@@ -59,7 +60,12 @@ export async function saveEntryAction(
     // 1. Validate fields using Zod
     const validated = saveEntrySchema.parse(inputData);
 
-    // 2. Delegate to JournalService
+    // 2. Resolve the plan's backfill window (Free 14d · Plus 90d · Pro ∞)
+    const entitlements = await EntitlementsService.getEntitlements(
+      session.user.id,
+    );
+
+    // 3. Delegate to JournalService
     const entry = await JournalService.saveJournalEntry(
       session.user.id,
       validated.date,
@@ -72,6 +78,7 @@ export async function saveEntryAction(
         wordCount: validated.wordCount,
       },
       userLocalToday,
+      { backfillDays: entitlements.backfillDays },
     );
 
     return { success: true, data: entry };

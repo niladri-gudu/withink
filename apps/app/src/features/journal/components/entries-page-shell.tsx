@@ -31,6 +31,8 @@ interface EntriesPageShellProps {
   };
   localToday: string;
   accountEncrypted: boolean;
+  /** Viewer's plan backfill window (days); Infinity = unlimited. */
+  backfillDays: number;
 }
 
 export function EntriesPageShell({
@@ -40,6 +42,7 @@ export function EntriesPageShell({
   initialStreakData,
   localToday,
   accountEncrypted,
+  backfillDays,
 }: EntriesPageShellProps) {
   const [calendarEntries, setCalendarEntries] = useState<CalendarEntry[]>(
     initialCalendarEntries,
@@ -114,6 +117,7 @@ export function EntriesPageShell({
           <EntriesCalendar
             calendarEntries={calendarEntries}
             localToday={localToday}
+            backfillDays={backfillDays}
             className="lg:order-2"
           />
           <EntriesFolio streakData={streakData} className="lg:order-1" />

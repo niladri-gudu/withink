@@ -23,6 +23,19 @@ export function addDays(dateString: string, days: number): string {
   return getLocalDateString(date);
 }
 
+/**
+ * Oldest date (inclusive) a NEW journal entry may target, given a plan's
+ * backfill window. Returns null when the window is unlimited (Pro), which
+ * callers must treat as "no lower bound" instead of doing date math.
+ */
+export function backfillWindowStart(
+  today: string,
+  backfillDays: number,
+): string | null {
+  if (!Number.isFinite(backfillDays)) return null;
+  return addDays(today, -Math.max(0, Math.floor(backfillDays)));
+}
+
 /** Format a YYYY-MM-DD local date string for display (avoids UTC timezone shifts). */
 export function formatDisplayDate(
   dateStr: string,

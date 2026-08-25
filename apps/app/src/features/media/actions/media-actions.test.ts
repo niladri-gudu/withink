@@ -20,6 +20,21 @@ vi.mock("@/features/lock/services/lock-service", () => ({
   },
 }));
 
+// Mock billing entitlements (per-tier media storage quota source)
+vi.mock("@/features/billing/services/entitlements-service", () => ({
+  EntitlementsService: {
+    getEntitlements: vi.fn().mockResolvedValue({
+      plan: "free",
+      backfillDays: 14,
+      mediaStorageBytes: 100 * 1024 * 1024,
+      maxConcurrentSessions: 1,
+      notebookLimit: 1,
+      revisionRetentionDays: 7,
+      futureLetterLimit: 0,
+    }),
+  },
+}));
+
 // Mock getRequestSession (never run the real cache()-wrapped implementation)
 vi.mock("@/lib/request-cache", () => ({
   getRequestSession: vi.fn(),
@@ -124,8 +139,8 @@ describe("media-actions", () => {
       expect(res.data).toEqual({
         usedMB: 15,
         fileCount: 2,
-        limitMB: 50,
-        percentUsed: 30,
+        limitMB: 100, // Free tier quota from mocked entitlements
+        percentUsed: 15,
       });
     });
 

@@ -29,4 +29,6 @@ if (process.env.NODE_ENV === "development") {
   client = new MongoClient(uri, options);
 }
 
-export { client };
+const DB_NAME = env.IS_PROD ? "withink_prod" : "withink_dev";
+
+export { client, DB_NAME };

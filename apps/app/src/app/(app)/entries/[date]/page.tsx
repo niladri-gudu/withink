@@ -6,8 +6,9 @@ import { redirect } from "next/navigation";
 import { Button } from "@withink/ui/button";
 
 import { ROUTES } from "@/constants/routes";
+import { EntitlementsService } from "@/features/billing/services/entitlements-service";
 import { getRequestSession } from "@/lib/request-cache";
-import { addDays, getLocalDateString, isDateString } from "@/lib/utils/date";
+import { backfillWindowStart, getLocalDateString, isDateString } from "@/lib/utils/date";
 import { EditorSkeleton } from "@/features/journal/components/editor-skeleton";
 import { JournalService } from "@/features/journal/services/journal-service";
 
@@ -69,10 +70,15 @@ export default async function EntryPage({
     today,
   );
 
-  // 3. Grace period firewall checks
-  const yesterday = addDays(today, -1);
+  // 3. Grace period firewall checks — the window is the viewer's plan's
+  //    backfill entitlement (Free 14d · Plus 90d · Pro unlimited). Existing
+  //    entries are always viewable/editable; the wall only blocks creation.
+  const entitlements = await EntitlementsService.getEntitlements(
+    session.user.id,
+  );
+  const windowStart = backfillWindowStart(today, entitlements.backfillDays);
   const isFuture = date > today;
-  const isExpired = date < yesterday;
+  const isExpired = windowStart !== null && date < windowStart;
   const exists = !!entry;
 
   // 🏛️ FIREWALL: If entry does not exist, block creation outside allowed journaling window

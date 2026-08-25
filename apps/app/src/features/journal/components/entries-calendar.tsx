@@ -8,13 +8,15 @@ import { cn } from "@withink/utils";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { ROUTES } from "@/constants/routes";
-import { addDays } from "@/lib/utils/date";
+import { backfillWindowStart } from "@/lib/utils/date";
 
 import type { CalendarEntry } from "../actions/entry-actions";
 
 interface EntriesCalendarProps {
   calendarEntries: CalendarEntry[];
   localToday: string;
+  /** Viewer's plan backfill window (days); Infinity = unlimited. */
+  backfillDays: number;
   className?: string;
 }
 
@@ -52,6 +54,7 @@ const moodCellClasses: Record<number, string> = {
 export function EntriesCalendar({
   calendarEntries,
   localToday,
+  backfillDays,
   className,
 }: EntriesCalendarProps) {
   const router = useRouter();
@@ -68,6 +71,14 @@ export function EntriesCalendar({
       dateSet: new Set(calendarEntries.map((e) => e.date)),
     };
   }, [calendarEntries]);
+
+  // Oldest creatable date for the viewer's plan (null = unlimited, Pro).
+  // Computed once per (today, plan) pair; shared by the click handler and
+  // every rendered cell.
+  const windowStartStr = useMemo(
+    () => backfillWindowStart(localToday, backfillDays),
+    [localToday, backfillDays],
+  );
 
   const [todayYear, todayMonth] = localToday.split("-").map(Number);
   const [currentYear, setCurrentYear] = useState(
@@ -111,10 +122,9 @@ export function EntriesCalendar({
 
   const handleDayClick = (day: number) => {
     const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-    const yesterdayStr = addDays(localToday, -1);
     const hasEntry = dateSet.has(dateStr);
     const isFuture = dateStr > localToday;
-    const isExpired = dateStr < yesterdayStr;
+    const isExpired = windowStartStr !== null && dateStr < windowStartStr;
 
     if (isFuture) {
       return; // Locked future day
@@ -186,9 +196,11 @@ export function EntriesCalendar({
               const dayEntry = entryMap.get(dateStr);
               const hasEntry = !!dayEntry;
               const isToday = dateStr === localToday;
-              const yesterdayStr = addDays(localToday, -1);
+              // The writing window is the plan's backfill entitlement;
+              // existing entries stay clickable at any age.
               const isFuture = dateStr > localToday;
-              const isExpired = dateStr < yesterdayStr;
+              const isExpired =
+                windowStartStr !== null && dateStr < windowStartStr;
               const isClickable = !isFuture && (!isExpired || hasEntry);
 
               let cellColorClass = "";

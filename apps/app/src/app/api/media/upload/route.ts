@@ -5,6 +5,7 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { z } from "zod";
 
 import { env } from "@/config/env";
+import { EntitlementsService } from "@/features/billing/services/entitlements-service";
 import { r2 } from "@/lib/r2";
 import { listAllObjects } from "@/lib/r2-list";
 import { getCachedValue, redis, setCachedValue } from "@/lib/redis";
@@ -20,8 +21,7 @@ const ALLOWED_TYPES = [
   "image/png",
   "image/gif",
 ] as const;
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-const STORAGE_LIMIT_BYTES = 50 * 1024 * 1024; // 50MB per user
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB per file (safety bound, not a tier perk)
 
 // Extensions are derived from the validated MIME type, never from the raw
 // filename (attacker-controlled strings don't belong in object keys).
@@ -128,13 +128,23 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unknown folder" }, { status: 400 });
     }
 
-    // Enforce the storage quota server-side (the client-side bar is display
-    // only). Without this, a presign loop could store unbounded data.
+    // Enforce the plan's storage quota server-side (the client-side bar is
+    // display only). Without this, a presign loop could store unbounded data.
+    // The structured payload lets the client open the paywall dialog (Phase D)
+    // instead of showing a generic error.
     try {
+      const { mediaStorageBytes } = await EntitlementsService.getEntitlements(
+        session.user.id,
+      );
       const used = await getCurrentUsageBytes(session.user.id);
-      if (used + size > STORAGE_LIMIT_BYTES) {
+      if (used + size > mediaStorageBytes) {
         return NextResponse.json(
-          { error: "Storage quota exceeded. Delete some files first." },
+          {
+            error: "Storage quota exceeded. Delete some files first.",
+            code: "storage_quota_exceeded",
+            limitBytes: mediaStorageBytes,
+            usedBytes: used,
+          },
           { status: 507 },
         );
       }

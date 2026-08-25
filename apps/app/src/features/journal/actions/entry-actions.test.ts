@@ -20,6 +20,21 @@ vi.mock("@/features/lock/services/lock-service", () => ({
   },
 }));
 
+// Mock EntitlementsService (billing resolution)
+vi.mock("@/features/billing/services/entitlements-service", () => ({
+  EntitlementsService: {
+    getEntitlements: vi.fn().mockResolvedValue({
+      plan: "free",
+      backfillDays: 14,
+      mediaStorageBytes: 100 * 1024 * 1024,
+      maxConcurrentSessions: 1,
+      notebookLimit: 1,
+      revisionRetentionDays: 7,
+      futureLetterLimit: 0,
+    }),
+  },
+}));
+
 // Mock getRequestSession (never run the real cache()-wrapped implementation)
 vi.mock("@/lib/request-cache", () => ({
   getRequestSession: vi.fn(),
@@ -132,6 +147,45 @@ describe("entry-actions", () => {
         "2026-07-06",
         expect.any(Object),
         "2026-07-06",
+        { backfillDays: 14 },
+      );
+    });
+
+    it("should pass the plan's backfill window from entitlements to the service", async () => {
+      const { EntitlementsService } = await import(
+        "@/features/billing/services/entitlements-service"
+      );
+      vi.mocked(EntitlementsService.getEntitlements).mockResolvedValue({
+        plan: "pro",
+        backfillDays: Number.POSITIVE_INFINITY,
+        mediaStorageBytes: 50 * 1024 * 1024 * 1024,
+        maxConcurrentSessions: Number.POSITIVE_INFINITY,
+        notebookLimit: Number.POSITIVE_INFINITY,
+        revisionRetentionDays: Number.POSITIVE_INFINITY,
+        futureLetterLimit: Number.POSITIVE_INFINITY,
+      });
+
+      const input = {
+        date: "2020-01-01",
+        title: "Old",
+        contentHtml: "<p>Old</p>",
+        contentText: "Old",
+      };
+      vi.mocked(JournalService.saveJournalEntry).mockResolvedValue({
+        id: "saved-old",
+      } as any);
+
+      await saveEntryAction(input, "2026-07-06");
+
+      expect(EntitlementsService.getEntitlements).toHaveBeenCalledWith(
+        mockUserId,
+      );
+      expect(JournalService.saveJournalEntry).toHaveBeenCalledWith(
+        mockUserId,
+        "2020-01-01",
+        expect.any(Object),
+        "2026-07-06",
+        { backfillDays: Number.POSITIVE_INFINITY },
       );
     });
 

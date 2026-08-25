@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { ROUTES } from "@/constants/routes";
+import { EntitlementsService } from "@/features/billing/services/entitlements-service";
 import { getRequestSession } from "@/lib/request-cache";
 import {
   computeCurrentStreak,
@@ -32,12 +33,13 @@ export default async function EntriesPage() {
   // 2. Fetch data in parallel on the server. The calendar entries already
   //    contain the full date list, so derive it from them instead of issuing a
   //    duplicate getEntryDates round trip.
-  const [entriesData, stats, calendarEntries, encryptionSettings] =
+  const [entriesData, stats, calendarEntries, encryptionSettings, entitlements] =
     await Promise.all([
       JournalService.getEntriesPage(session.user.id, 1, 5, { today }),
       JournalService.getEntryStats(session.user.id),
       JournalService.getCalendarEntries(session.user.id),
       EncryptionSettingsRepository.getSettings(session.user.id),
+      EntitlementsService.getEntitlements(session.user.id),
     ]);
 
   // 3. Compute current streak from the calendar's date list (sorted desc).
@@ -59,6 +61,7 @@ export default async function EntriesPage() {
       initialStreakData={streakData}
       localToday={today}
       accountEncrypted={!!encryptionSettings?.isClientEncrypted}
+      backfillDays={entitlements.backfillDays}
     />
   );
 }

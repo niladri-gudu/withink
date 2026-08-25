@@ -44,6 +44,13 @@ interface MediaGalleryProps {
   initialStats: StorageStats;
 }
 
+/** Quota display: MB below a gigabyte, GB above (Free 100MB · Plus 10GB · Pro 50GB). */
+function formatStorageLimit(limitMB: number): string {
+  return limitMB >= 1024
+    ? `${Number((limitMB / 1024).toFixed(1))} GB`
+    : `${limitMB} MB`;
+}
+
 export function MediaGallery({
   initialFiles,
   initialStats,
@@ -145,7 +152,7 @@ export function MediaGallery({
                   {statsLoading ? "…" : `${stats?.usedMB || 0} MB`}
                 </span>
                 <span className="text-muted-foreground text-sm">
-                  of {stats?.limitMB || 50} MB
+                  of {formatStorageLimit(stats?.limitMB ?? 100)}
                 </span>
               </div>
               <div className="bg-secondary mt-2 h-1.5 w-full overflow-hidden rounded-full">

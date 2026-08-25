@@ -1,6 +1,6 @@
 import "server-only";
 
-import { addDays, isDateString } from "@/lib/utils/date";
+import { addDays, backfillWindowStart, isDateString } from "@/lib/utils/date";
 import { BusinessRuleError, ValidationError } from "@/server/errors";
 
 import type { IEntry } from "../repositories/entry-model";
@@ -79,7 +79,13 @@ export class JournalService {
   }
 
   /**
-   * Saves a journal entry (creates or updates), enforcing formatting and daily grace periods.
+   * Saves a journal entry (creates or updates), enforcing formatting and the
+   * plan's backfill window.
+   *
+   * `options.backfillDays` comes from the caller's resolved entitlements.
+   * The legacy default (1 = today or yesterday) only applies to direct
+   * service callers; the server action always passes the tier's window and
+   * Infinity disables the lower bound entirely (Pro).
    */
   static async saveJournalEntry(
     userId: string,
@@ -93,6 +99,7 @@ export class JournalService {
       wordCount?: number;
     },
     userLocalToday: string,
+    options?: { backfillDays?: number },
   ): Promise<DecryptedEntry> {
     if (!isDateString(date) || !isDateString(userLocalToday)) {
       throw new ValidationError("Invalid date strings provided.");
@@ -105,10 +112,9 @@ export class JournalService {
       userLocalToday,
     );
 
-    // 2. If it's a NEW entry, enforce the daily journaling window rules
+    // 2. If it's a NEW entry, enforce the daily journaling window rules.
+    //    Editing an existing day is always allowed regardless of its age.
     if (!existingEntry) {
-      const yesterdayStr = addDays(userLocalToday, -1);
-
       // Rule A: Cannot write in the future
       if (date > userLocalToday) {
         throw new BusinessRuleError(
@@ -116,10 +122,12 @@ export class JournalService {
         );
       }
 
-      // Rule B: Cannot write old entries outside the 1-day grace period
-      if (date < yesterdayStr) {
+      // Rule B: Cannot create entries older than the plan's backfill window
+      const backfillDays = options?.backfillDays ?? 1;
+      const windowStartStr = backfillWindowStart(userLocalToday, backfillDays);
+      if (windowStartStr !== null && date < windowStartStr) {
         throw new BusinessRuleError(
-          "Grace period expired. New journal entries can only be created for today or yesterday.",
+          "This page is beyond your writing window. Existing entries can always be edited, but new past days depend on your plan.",
         );
       }
     }
