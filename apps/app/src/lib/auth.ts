@@ -4,12 +4,12 @@ import { nextCookies } from "better-auth/next-js";
 
 import { env } from "@/config/env";
 import { logger } from "@/server/logger";
-import { SessionCapService } from "@/features/billing/services/session-cap-service";
 import { ResetPassword } from "@/features/auth/components/emails/reset-password";
 import { VerifyEmail } from "@/features/auth/components/emails/verify-email";
 import { WelcomeEmail } from "@/features/auth/components/emails/welcome-email";
+import { SessionCapService } from "@/features/billing/services/session-cap-service";
 
-import { DB_NAME, client } from "./db";
+import { client, DB_NAME } from "./db";
 import { resend } from "./email";
 
 export const auth = betterAuth({
@@ -44,12 +44,17 @@ export const auth = betterAuth({
               await resend.emails.send({
                 from: env.EMAIL_FROM,
                 to: user.email,
-                subject: "Welcome to your diary - withink.",
+                subject: "Your diary is ready · withink.",
                 react: WelcomeEmail({
                   userFirstname:
                     (user.name || "friend").split(" ")[0] || "friend",
                   baseUrl: env.BETTER_AUTH_URL,
                 }),
+                text:
+                  `Hi ${(user.name || "friend").split(" ")[0] || "friend"},\n\n` +
+                  "Welcome to withink — a private, quiet space designed for " +
+                  "your mind to breathe. Your diary is ready.\n\n" +
+                  `Start writing: ${env.BETTER_AUTH_URL}/dashboard\n`,
               });
             } catch (error) {
               logger.error(
@@ -74,8 +79,14 @@ export const auth = betterAuth({
         await resend.emails.send({
           from: env.EMAIL_FROM,
           to: user.email,
-          subject: "Reset your password - withink.",
-          react: ResetPassword({ name: user.name, url }),
+          subject: "Reset your password · withink.",
+          react: ResetPassword({ name: user.name || "friend", url }),
+          text:
+            `Hey ${user.name || "friend"},\n\n` +
+            "We received a request to get you back into your diary. " +
+            `Choose a new password:\n${url}\n\n` +
+            "This link expires in 1 hour. If you didn't request this, " +
+            "you can safely ignore it — your diary is untouched.\n",
         });
       } catch (error) {
         logger.error(
@@ -98,11 +109,16 @@ export const auth = betterAuth({
         await resend.emails.send({
           from: env.EMAIL_FROM,
           to: user.email,
-          subject: "Verify your email - withink.",
+          subject: "Confirm your email · withink.",
           react: VerifyEmail({
-            name: user.name,
+            name: user.name || "friend",
             url: verificationUrl.toString(),
           }),
+          text:
+            `Hey ${user.name || "friend"},\n\n` +
+            "Verify your email address to start journaling:\n" +
+            `${verificationUrl.toString()}\n\n` +
+            "This link expires in 24 hours.\n",
         });
       } catch (error) {
         logger.error(
@@ -117,11 +133,16 @@ export const auth = betterAuth({
         await resend.emails.send({
           from: env.EMAIL_FROM,
           to: user.email,
-          subject: "Welcome to your diary - withink.",
+          subject: "Your diary is ready · withink.",
           react: WelcomeEmail({
             userFirstname: (user.name || "friend").split(" ")[0] || "friend",
             baseUrl: env.BETTER_AUTH_URL,
           }),
+          text:
+            `Hi ${(user.name || "friend").split(" ")[0] || "friend"},\n\n` +
+            "Welcome to withink — a private, quiet space designed for " +
+            "your mind to breathe. Your diary is ready.\n\n" +
+            `Start writing: ${env.BETTER_AUTH_URL}/dashboard\n`,
         });
         logger.info(
           "Welcome email sent successfully after email verification",

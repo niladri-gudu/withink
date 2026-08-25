@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { ENTITLEMENTS } from "../config/plans";
+import { EntitlementsService } from "./entitlements-service";
+import { SessionCapService } from "./session-cap-service";
+
 const { mockSessionCollection, mockUserCollection, resendMock, loggerMock } =
   vi.hoisted(() => ({
     mockSessionCollection: {
@@ -41,10 +45,6 @@ vi.mock("@/lib/db", () => ({
 // Mock email + logger (never hit the network in tests)
 vi.mock("@/lib/email", () => ({ resend: resendMock }));
 vi.mock("@/server/logger", () => ({ logger: loggerMock }));
-
-import { ENTITLEMENTS } from "../config/plans";
-import { EntitlementsService } from "./entitlements-service";
-import { SessionCapService } from "./session-cap-service";
 
 const mockedGetEntitlements = vi.mocked(EntitlementsService.getEntitlements);
 const mockedCountDocuments = mockSessionCollection.countDocuments;
@@ -105,7 +105,7 @@ describe("SessionCapService.enforceOnSessionCreate", () => {
     expect(mockedSend).toHaveBeenCalledWith(
       expect.objectContaining({
         to: "t@t.co",
-        subject: "New device sign-in - withink.",
+        subject: "New device signed in · withink.",
       }),
     );
   });
@@ -130,4 +130,3 @@ describe("SessionCapService.enforceOnSessionCreate", () => {
     expect(mockedDeleteMany).not.toHaveBeenCalled();
   });
 });
-

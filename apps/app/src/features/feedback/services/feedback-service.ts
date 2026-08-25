@@ -66,6 +66,10 @@ export class FeedbackService {
           imageUrl: input.imageUrl || undefined,
           traceId,
         }),
+        text:
+          `${CATEGORY_SUBJECT_PREFIX[input.category]} ${input.subject}\n` +
+          `From: ${input.email}\n\n` +
+          `${input.message}\n\nTrace ID: ${traceId}`,
       });
     } catch (error) {
       // The record is already saved; a failed notification is logged, not thrown.

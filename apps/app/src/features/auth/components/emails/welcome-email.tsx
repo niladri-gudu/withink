@@ -1,5 +1,7 @@
 import * as React from "react";
 
+import { EmailLayout, emailStyles } from "@/components/email/email-layout";
+
 interface WelcomeEmailProps {
   userFirstname: string;
   baseUrl: string;
@@ -7,82 +9,28 @@ interface WelcomeEmailProps {
 
 export function WelcomeEmail({ userFirstname, baseUrl }: WelcomeEmailProps) {
   return (
-    <div style={main}>
-      <div style={container}>
-        <h1 style={h1}>think in ink.</h1>
-        <p style={text}>Hi {userFirstname},</p>
-        <p style={text}>
-          Welcome to <strong>withink.</strong>—a private, minimal space designed
-          for your mind to breathe. Your diary is now ready.
+    <EmailLayout footer="You're receiving this because you just started a diary at withink.me.">
+      <h1 style={emailStyles.heading}>Your diary is ready</h1>
+      <p style={emailStyles.text}>Hi {userFirstname},</p>
+      <p style={emailStyles.text}>
+        Welcome to <strong>withink</strong> — a private, quiet space designed
+        for your mind to breathe. No feeds, no noise. Just you and the page.
+      </p>
+      <div style={{ margin: "20px 0" }}>
+        <p style={emailStyles.bullet}>
+          <span style={emailStyles.bulletDot}>●</span>&nbsp;&nbsp;Private by
+          default — your pages belong to you alone.
         </p>
-        <div style={buttonContainer}>
-          <a href={`${baseUrl}/dashboard`} style={button}>
-            Open Your Journal
-          </a>
-        </div>
-        <div style={divider} />
-        <p style={footer}>
-          This email was sent to welcome you to the archives.
+        <p style={emailStyles.bullet}>
+          <span style={emailStyles.bulletDot}>●</span>&nbsp;&nbsp;Start with
+          today: what mattered most?
         </p>
       </div>
-    </div>
+      <div style={emailStyles.buttonContainer}>
+        <a href={`${baseUrl}/dashboard`} style={emailStyles.button}>
+          Open your journal
+        </a>
+      </div>
+    </EmailLayout>
   );
 }
-
-const main = {
-  backgroundColor: "#ffffff",
-  fontFamily:
-    '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
-  padding: "40px 20px",
-};
-
-const container = {
-  margin: "0 auto",
-  maxWidth: "560px",
-  backgroundColor: "#ffffff",
-  border: "1px solid #e5e7eb",
-  borderRadius: "12px",
-  padding: "40px",
-};
-
-const h1 = {
-  color: "#111827",
-  fontSize: "24px",
-  fontWeight: "bold",
-  letterSpacing: "-0.5px",
-  margin: "0 0 24px 0",
-};
-
-const text = {
-  color: "#374151",
-  fontSize: "15px",
-  lineHeight: "24px",
-  margin: "0 0 16px 0",
-};
-
-const buttonContainer = {
-  padding: "16px 0",
-};
-
-const button = {
-  backgroundColor: "#111827",
-  borderRadius: "8px",
-  color: "#ffffff",
-  fontSize: "14px",
-  fontWeight: "bold",
-  textDecoration: "none",
-  textAlign: "center" as const,
-  display: "inline-block",
-  padding: "12px 24px",
-};
-
-const divider = {
-  borderTop: "1px solid #e5e7eb",
-  margin: "32px 0 24px 0",
-};
-
-const footer = {
-  fontSize: "12px",
-  color: "#9ca3af",
-  margin: 0,
-};

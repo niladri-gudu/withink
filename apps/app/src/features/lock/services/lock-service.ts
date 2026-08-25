@@ -14,6 +14,7 @@ import { decryptToken, encrypt } from "@/lib/encryption";
 import { getCachedValue, redis, setCachedValue } from "@/lib/redis";
 import { logger } from "@/server/logger";
 
+import { ResetPasscode } from "../components/emails/reset-passcode";
 import { LockRepository } from "../repositories/lock-repository";
 
 const UNLOCKED_COOKIE_NAME = "withink-unlocked";
@@ -227,27 +228,14 @@ export class LockService {
       await resend.emails.send({
         from: env.EMAIL_FROM,
         to: email,
-        subject: "Reset your diary passcode - withink.",
-        html: `
-          <div style="font-family: ui-monospace, monospace; background-color: #020617; color: #e4e4e7; padding: 40px 20px;">
-            <div style="max-width: 480px; margin: 0 auto; background-color: #09090b; border: 1px solid #27272a; border-radius: 16px; padding: 40px;">
-              <div style="margin-bottom: 32px;">
-                <span style="font-size: 22px; font-weight: 900; color: #f4f4f5; letter-spacing: -1px;">withink.</span>
-              </div>
-              <h1 style="font-size: 24px; font-weight: 700; color: #f4f4f5; margin: 0 0 8px 0; letter-spacing: -0.5px;">Reset your diary passcode</h1>
-              <p style="font-size: 15px; color: #a1a1aa; margin: 0 0 32px 0; line-height: 1.6;">
-                Hey ${name}, we received a request to reset the passcode lock for your diary. Use the code below to reset your lock:
-              </p>
-              <div style="display: inline-block; background-color: #1e1b4b; border: 1px solid #4f46e5; color: #e0e7ff; font-weight: 700; font-size: 28px; padding: 12px 28px; border-radius: 10px; letter-spacing: 4px; text-align: center; margin-bottom: 32px;">
-                ${code}
-              </div>
-              <div style="border-top: 1px solid #27272a; margin: 32px 0;"></div>
-              <p style="font-size: 12px; color: #52525b; margin: 0;">
-                This code expires in 15 minutes. If you did not make this request, you can ignore this email.
-              </p>
-            </div>
-          </div>
-        `,
+        subject: "Passcode reset code · withink.",
+        react: ResetPasscode({ name, code }),
+        text:
+          `Hey ${name},\n\n` +
+          "Use this code to reset the passcode protecting your diary:\n\n" +
+          `${code}\n\n` +
+          "This code expires in 15 minutes. If you didn't request this, " +
+          "nothing changes — your passcode stays exactly as it was.\n",
       });
       logger.info("Passcode reset email sent", { email });
       return true;

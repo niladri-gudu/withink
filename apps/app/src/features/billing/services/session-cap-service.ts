@@ -1,10 +1,11 @@
 import "server-only";
 
 import { env } from "@/config/env";
-import { DB_NAME, client } from "@/lib/db";
+import { client, DB_NAME } from "@/lib/db";
 import { resend } from "@/lib/email";
 import { logger } from "@/server/logger";
 
+import { SessionCapNotice } from "../components/emails/session-cap-notice";
 import { EntitlementsService } from "./entitlements-service";
 
 /**
@@ -72,21 +73,23 @@ export class SessionCapService {
       const user = await client
         .db(DB_NAME)
         .collection("user")
-        .findOne(
-          { id: userId },
-          { projection: { email: 1, name: 1 } },
-        );
+        .findOne({ id: userId }, { projection: { email: 1, name: 1 } });
       if (!user?.email) return;
 
+      const name = user.name || "friend";
       await resend.emails.send({
         from: env.EMAIL_FROM,
         to: user.email,
-        subject: "New device sign-in - withink.",
+        subject: "New device signed in · withink.",
+        react: SessionCapNotice({
+          name,
+          baseUrl: env.BETTER_AUTH_URL,
+        }),
         text:
-          `${user.name || "friend"},\n\n` +
+          `${name},\n\n` +
           "You just signed in on a new device, so your oldest signed-in " +
           "device has been signed out of withink.\n\n" +
-          "You can sign back in on that device anytime.\n",
+          `You can sign back in on that device anytime: ${env.BETTER_AUTH_URL}\n`,
       });
     } catch (error) {
       logger.warn(
