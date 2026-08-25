@@ -19,19 +19,16 @@ function getCacheKey(userId: string): string {
  *
  * Rules:
  * - No record → Free (default tier; no signup row exists).
- * - lifetime=true → Pro forever, regardless of stored plan/status.
  * - A paid plan grants access while status is active OR past_due (dunning
  *   grace); canceled/expired records resolve to Free.
  */
 export function resolvePlanFromAccount(
   account: {
     plan: string;
-    lifetime: boolean;
     status: string;
   } | null,
 ): ResolvedPlan {
   if (!account) return "free";
-  if (account.lifetime) return "pro";
   if (account.status === "canceled") return "free";
   if (account.plan === "plus" || account.plan === "pro") return account.plan;
   return "free";

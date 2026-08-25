@@ -257,7 +257,7 @@ export function Sidebar({ isCollapsed, onToggleCollapse, user }: SidebarProps) {
           {userMenuOpen && (
             <div
               className={cn(
-                "bg-popover text-popover-foreground border-border animate-in slide-in-from-bottom-2 absolute right-4 bottom-16 left-4 rounded-xl border p-2 shadow-lg duration-150",
+                "bg-popover text-popover-foreground border-border animate-in slide-in-from-bottom-2 absolute right-4 bottom-16 left-4 z-10 rounded-xl border p-2 shadow-lg duration-150",
                 collapsed && "bottom-16 left-2 w-48",
               )}
               role="menu"

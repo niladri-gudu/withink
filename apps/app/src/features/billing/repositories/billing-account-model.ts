@@ -8,8 +8,6 @@ export interface IBillingAccount extends Document {
   userId: string;
   /** Last known paid plan. Only meaningful while status grants access. */
   plan: "free" | "plus" | "pro";
-  /** One-time purchase — resolves to Pro forever, ignoring plan/status. */
-  lifetime: boolean;
   interval: "monthly" | "yearly" | null;
   status: "active" | "canceled" | "past_due";
   dodoCustomerId: string;
@@ -27,7 +25,6 @@ const BillingAccountSchema = new Schema<IBillingAccount>(
       enum: ["free", "plus", "pro"],
       default: "free",
     },
-    lifetime: { type: Boolean, default: false },
     interval: {
       type: String,
       enum: ["monthly", "yearly", null],

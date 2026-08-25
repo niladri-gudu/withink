@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
+import { UpgradeDialog } from "@/features/billing/components/upgrade-dialog";
 import { useFormatState } from "./format-state";
 import { FormattingSheet, type FormatAction } from "./formatting-sheet";
 import { LinkDialog } from "./link-dialog";
@@ -135,6 +136,9 @@ export function EditorToolbar({
   const [linkOpen, setLinkOpen] = useState(false);
   const [linkHref, setLinkHref] = useState("");
   const [linkHasExisting, setLinkHasExisting] = useState(false);
+  // Gate #2 paywall: quota-rejected photo uploads open the upgrade dialog
+  // instead of falling back to a base64 embed.
+  const [storagePaywallOpen, setStoragePaywallOpen] = useState(false);
 
   const imageInputRef = useRef<HTMLInputElement>(null);
 
@@ -245,7 +249,15 @@ export function EditorToolbar({
         }),
       });
 
-      if (!res.ok) throw new Error("Upload URL failed");
+      if (!res.ok) {
+        // Quota rejection: paywall moment, not a generic failure.
+        if (res.status === 507) {
+          removePlaceholder(tempId);
+          setStoragePaywallOpen(true);
+          return;
+        }
+        throw new Error("Upload URL failed");
+      }
 
       const { presignedUrl, publicUrl } = await res.json();
 
@@ -567,6 +579,12 @@ export function EditorToolbar({
         href={linkHref}
         onHrefChange={setLinkHref}
         hasExistingLink={linkHasExisting}
+      />
+
+      <UpgradeDialog
+        open={storagePaywallOpen}
+        onOpenChange={setStoragePaywallOpen}
+        reason="storage"
       />
     </>
   );

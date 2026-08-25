@@ -31,7 +31,8 @@ interface PlanCard {
 }
 
 // Canonical tier structure lives in internal-docs/MONETIZATION_PLAN.md §2 —
-// update both together.
+// update both together. The one-time Lifetime tier is deferred to a
+// fast-follow and intentionally absent at launch.
 const PLANS: PlanCard[] = [
   {
     name: "Free",
@@ -80,19 +81,6 @@ const PLANS: PlanCard[] = [
       "Priority support & early betas",
     ],
   },
-  {
-    name: "Lifetime",
-    price: "$199",
-    period: "once",
-    tagline: "Pro forever. One payment.",
-    cta: "Become a founding member",
-    features: [
-      "Everything in Pro, forever",
-      "Founding Member badge",
-      "Supporters page opt-in",
-      "All future Pro features",
-    ],
-  },
 ];
 
 export default function PricingPage() {
@@ -114,7 +102,7 @@ export default function PricingPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {PLANS.map((plan) => (
           <section
             key={plan.name}

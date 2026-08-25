@@ -52,7 +52,6 @@ const serverEnvSchema = z.object({
   DODO_PRODUCT_PLUS_YEARLY: z.string().min(1).optional(),
   DODO_PRODUCT_PRO_MONTHLY: z.string().min(1).optional(),
   DODO_PRODUCT_PRO_YEARLY: z.string().min(1).optional(),
-  DODO_PRODUCT_PRO_LIFETIME: z.string().min(1).optional(),
 });
 
 export type ServerEnv = z.infer<typeof serverEnvSchema>;

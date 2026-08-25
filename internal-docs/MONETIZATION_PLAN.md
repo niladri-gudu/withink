@@ -47,9 +47,17 @@ Full cloud sync and backup included on every plan.
 Lifetime = Pro forever, plus cosmetic perks (Founding Member badge,
 supporters page opt-in). No storage delta over Pro (margin protection).
 
+**Launch decision (2026-08-26): Lifetime is deferred to a fast-follow.**
+Launch scope is the three subscription products only
+(`plus-monthly`, `plus-yearly`, `pro-monthly`, `pro-yearly`). The one-time
+purchase path, `lifetime` account flag, and Founding Member UI were removed
+before any real sale, so no grandfathering or migration applies. Re-adding it
+later means: a Dodo one-time product + env id, the webhook lifetime branch,
+and a settings card state.
+
 Payments: Dodo Payments (merchant of record — handles global tax).
-Products: `plus-monthly`, `plus-yearly`, `pro-monthly`, `pro-yearly`,
-`pro-lifetime`.
+Products at launch: `plus-monthly`, `plus-yearly`, `pro-monthly`,
+`pro-yearly`.
 
 ---
 

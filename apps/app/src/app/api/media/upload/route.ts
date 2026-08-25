@@ -130,32 +130,37 @@ export async function POST(req: NextRequest) {
 
     // Enforce the plan's storage quota server-side (the client-side bar is
     // display only). Without this, a presign loop could store unbounded data.
-    // The structured payload lets the client open the paywall dialog (Phase D)
+    // The structured 507 payload lets the client open the upgrade dialog
     // instead of showing a generic error.
-    try {
-      const { mediaStorageBytes } = await EntitlementsService.getEntitlements(
-        session.user.id,
-      );
-      const used = await getCurrentUsageBytes(session.user.id);
-      if (used + size > mediaStorageBytes) {
-        return NextResponse.json(
-          {
-            error: "Storage quota exceeded. Delete some files first.",
-            code: "storage_quota_exceeded",
-            limitBytes: mediaStorageBytes,
-            usedBytes: used,
-          },
-          { status: 507 },
+    // Service folders (avatar, feedback) are app infrastructure, not the
+    // user's photo allowance — the usage counter only tracks journal/ — so
+    // they are exempt and can never be broken by a full quota.
+    const countsTowardQuota = !folder || folder === "journal";
+    if (countsTowardQuota) {
+      try {
+        const { mediaStorageBytes } =
+          await EntitlementsService.getEntitlements(session.user.id);
+        const used = await getCurrentUsageBytes(session.user.id);
+        if (used + size > mediaStorageBytes) {
+          return NextResponse.json(
+            {
+              error: "Storage quota exceeded. Delete some files first.",
+              code: "storage_quota_exceeded",
+              limitBytes: mediaStorageBytes,
+              usedBytes: used,
+            },
+            { status: 507 },
+          );
+        }
+      } catch (e) {
+        logger.warn(
+          "Could not verify storage quota before upload",
+          undefined,
+          e as Error,
         );
       }
-    } catch (e) {
-      logger.warn(
-        "Could not verify storage quota before upload",
-        undefined,
-        e as Error,
-      );
+      void recordUsageBytes(session.user.id, size);
     }
-    void recordUsageBytes(session.user.id, size);
 
     const isProduction = env.IS_PROD;
     const envPrefix = isProduction ? "" : "dev-";

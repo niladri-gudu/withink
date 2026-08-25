@@ -27,7 +27,6 @@ const PRODUCT_ENV_KEY: Record<
   "plus-yearly": "DODO_PRODUCT_PLUS_YEARLY",
   "pro-monthly": "DODO_PRODUCT_PRO_MONTHLY",
   "pro-yearly": "DODO_PRODUCT_PRO_YEARLY",
-  "pro-lifetime": "DODO_PRODUCT_PRO_LIFETIME",
 };
 
 export function getProductIdForPlan(productKey: PlanProductKey): string | null {

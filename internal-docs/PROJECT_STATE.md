@@ -392,6 +392,16 @@ Note: MongoDB (`mongodb+srv://`) now connects. The earlier `querySrv ECONNREFUSE
 
 # Recent Decisions
 
+2026-08-25 (Billing Phase D — monetization launch-complete)
+
+- **Monetization Phase D — paywall moments, post-checkout UX, and Lifetime removal.** Verified: `tsc --noEmit` clean (both apps), eslint 0 errors (3 pre-existing warnings), full Vitest **196/196** (+3 route-quota tests; lifetime cases removed), `pnpm build` clean for BOTH apps.
+  - **Lifetime removed everywhere (launch decision).** `PLAN_PRODUCTS` is subscription-only (`plus-monthly/yearly`, `pro-monthly/yearly`); webhook payment branch now subscription-only; `resolvePlanFromAccount` dropped the lifetime rule; model/summary lost the field; checkout action lost the duplicate-purchase guard; settings card lost the Lifetime row + Founding Member state; docs `/pricing` is a 3-column grid; env/examples/vitest mock lost `DODO_PRODUCT_PRO_LIFETIME`. MONETIZATION_PLAN §2 records the deferral decision. No real sales existed → zero migration.
+  - **Paywall dialog** (`features/billing/components/upgrade-dialog.tsx`): controlled Radix dialog with `reason: "storage" | "backfill"` driving gate-specific copy ("photo space is full" / "beyond your writing window"). Option-A CTAs — Plus $4.99/mo + Pro $9.99/mo buttons redirect straight into hosted checkout via shared `hooks/use-checkout-redirect.ts` (single checkout implementation reused by the settings card). Yearly billing stays in Settings only.
+  - **Gate #2 wiring:** tiptap-editor + editor-toolbar parse upload errors before their base64 fallback — a `507 storage_quota_exceeded` removes the placeholder image and opens the paywall instead of silently embedding base64. Upload-route fix: avatar/feedback folders are exempt from the quota check AND usage recording (service storage was never counted by the counter — a maxed Free user could previously not attach feedback screenshots); new `route.test.ts` covers 507 payload shape + exemptions.
+  - **Gate #1 wiring:** calendar sealed days (expired & empty) are no longer dead cells — clicking opens the backfill paywall; they keep a muted style with hover affordance and honest aria-labels ("Writing window ended before…"). Future days stay locked; entries remain clickable at any age.
+  - **Post-checkout banner:** Dodo's return_url lands on `/settings?status=…`; new `billing-return-banner.tsx` (Suspense-wrapped) shows one dismissible success/cancelled banner then `router.replace` strips the query so refresh/back never reshow it.
+  - **Manual drills remaining (user-run, test mode):** downgrade via portal cancel → grandfathering verified; webhook Replay → idempotency; renewal-failure card `4000 0000 0000 0341` → past_due keeps access; paste photos to quota → paywall → buy Plus → limit lifts.
+
 2026-08-25 (Billing Phase C)
 
 - **Monetization Phase C — Dodo Payments billing wired end-to-end.** Verified: `tsc --noEmit` clean, eslint 0 errors (3 pre-existing warnings), full Vitest **196/196** (+37 new), `pnpm build` clean for BOTH apps (`/pricing` and `/api/webhooks/dodo` in route manifests).

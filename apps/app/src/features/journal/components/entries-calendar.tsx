@@ -8,6 +8,7 @@ import { cn } from "@withink/utils";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { ROUTES } from "@/constants/routes";
+import { UpgradeDialog } from "@/features/billing/components/upgrade-dialog";
 import { backfillWindowStart } from "@/lib/utils/date";
 
 import type { CalendarEntry } from "../actions/entry-actions";
@@ -87,6 +88,9 @@ export function EntriesCalendar({
   const [currentMonth, setCurrentMonth] = useState(
     todayMonth !== undefined ? todayMonth - 1 : new Date().getMonth(),
   );
+  // Gate #1 paywall: clicking a sealed (out-of-window) empty day opens the
+  // upgrade dialog — the dead cell becomes the upsell moment.
+  const [backfillPaywallOpen, setBackfillPaywallOpen] = useState(false);
 
   const handlePrevMonth = () => {
     if (currentMonth === 0) {
@@ -131,7 +135,9 @@ export function EntriesCalendar({
     }
 
     if (isExpired && !hasEntry) {
-      return; // Sealed past day
+      // Sealed past day → paywall moment (Gate #1).
+      setBackfillPaywallOpen(true);
+      return;
     }
 
     router.push(
@@ -197,11 +203,13 @@ export function EntriesCalendar({
               const hasEntry = !!dayEntry;
               const isToday = dateStr === localToday;
               // The writing window is the plan's backfill entitlement;
-              // existing entries stay clickable at any age.
+              // existing entries stay clickable at any age. Sealed days
+              // respond too — with the upgrade dialog instead of navigation.
               const isFuture = dateStr > localToday;
               const isExpired =
                 windowStartStr !== null && dateStr < windowStartStr;
-              const isClickable = !isFuture && (!isExpired || hasEntry);
+              const isSealed = isExpired && !hasEntry;
+              const isClickable = !isFuture;
 
               let cellColorClass = "";
               if (hasEntry) {
@@ -212,6 +220,9 @@ export function EntriesCalendar({
                     : "bg-primary/10 border-primary/20 text-primary hover:bg-primary/20",
                   "hover:scale-105 border",
                 );
+              } else if (isSealed) {
+                cellColorClass =
+                  "text-muted-foreground/25 hover:text-muted-foreground/50 border border-transparent hover:scale-105";
               } else if (isClickable) {
                 cellColorClass =
                   "bg-secondary/15 hover:bg-secondary/40 border border-border/10 text-muted-foreground/60 hover:scale-105";
@@ -222,8 +233,8 @@ export function EntriesCalendar({
 
               const dayLabel = isFuture
                 ? `Locked date: ${dateStr}`
-                : isExpired && !hasEntry
-                  ? `Expired date: ${dateStr}`
+                : isSealed
+                  ? `Writing window ended before ${dateStr} — upgrade to write earlier`
                   : hasEntry
                     ? `Reflection written on ${dateStr}${dayEntry?.mood ? ` • Mood: ${dayEntry.mood}` : ""}`
                     : `Write entry for ${dateStr}`;
@@ -232,7 +243,7 @@ export function EntriesCalendar({
                 <button
                   key={`day-${day}`}
                   type="button"
-                  onClick={() => isClickable && handleDayClick(day)}
+                  onClick={() => handleDayClick(day)}
                   disabled={!isClickable}
                   aria-label={dayLabel}
                   className={cn(
@@ -244,8 +255,8 @@ export function EntriesCalendar({
                   title={
                     isFuture
                       ? "Future locked"
-                      : isExpired && !hasEntry
-                        ? "Grace period expired"
+                      : isSealed
+                        ? "Beyond your writing window"
                         : hasEntry
                           ? `Reflection written on ${dateStr}${dayEntry?.mood ? ` (${dayEntry.mood}/5)` : ""}`
                           : `Write entry for ${dateStr}`
@@ -286,6 +297,12 @@ export function EntriesCalendar({
           </div>
         </CardContent>
       </Card>
+
+      <UpgradeDialog
+        open={backfillPaywallOpen}
+        onOpenChange={setBackfillPaywallOpen}
+        reason="backfill"
+      />
     </div>
   );
 }

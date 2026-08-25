@@ -36,7 +36,7 @@ function paymentEvent(type: string, overrides: AnyPayload = {}): AnyPayload {
       customer: { customer_id: "cus_abc" },
       metadata: { userId: "user-1" },
       subscription_id: null,
-      product_cart: [{ product_id: "pdt_pro_lifetime", quantity: 1 }],
+      product_cart: [{ product_id: "pdt_plus_monthly", quantity: 1 }],
       ...overrides,
     },
   };
@@ -45,7 +45,6 @@ function paymentEvent(type: string, overrides: AnyPayload = {}): AnyPayload {
 const PRODUCT_BY_ID: Record<string, PlanProductKey> = {
   pdt_plus_monthly: "plus-monthly",
   pdt_pro_monthly: "pro-monthly",
-  pdt_pro_lifetime: "pro-lifetime",
 };
 
 const resolve = (productId: string): PlanProductKey | null =>
@@ -71,7 +70,6 @@ describe("mapWebhookEvent", () => {
       expect(result!.patch).toEqual({
         plan: "plus",
         interval: "monthly",
-        lifetime: false,
         status: "active",
         currentPeriodEnd: new Date("2026-09-01T00:00:00Z"),
       } satisfies BillingPatch);
@@ -120,25 +118,10 @@ describe("mapWebhookEvent", () => {
   });
 
   describe("payment events", () => {
-    it("grants lifetime Pro on a lifetime purchase", () => {
-      const result = mapWebhookEvent(
-        paymentEvent("payment.succeeded") as never,
-        resolve,
-      );
-      expect(result!.patch).toEqual({
-        plan: "pro",
-        lifetime: true,
-        interval: null,
-        status: "active",
-      } satisfies BillingPatch);
-      expect(result!.userId).toBe("user-1");
-    });
-
     it("restores an active status on a subscription renewal payment", () => {
       const result = mapWebhookEvent(
         paymentEvent("payment.succeeded", {
           subscription_id: "sub_123",
-          product_cart: [{ product_id: "pdt_plus_monthly", quantity: 1 }],
         }) as never,
         resolve,
       );
@@ -147,11 +130,9 @@ describe("mapWebhookEvent", () => {
       expect(result!.dodoSubscriptionId).toBe("sub_123");
     });
 
-    it("ignores succeeded one-off payments that grant nothing", () => {
+    it("ignores succeeded one-off payments (no subscriptions at launch)", () => {
       const result = mapWebhookEvent(
-        paymentEvent("payment.succeeded", {
-          product_cart: [{ product_id: "pdt_unknown_oneoff", quantity: 1 }],
-        }) as never,
+        paymentEvent("payment.succeeded") as never,
         resolve,
       );
       expect(result).toBeNull();

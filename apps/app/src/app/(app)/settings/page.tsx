@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { ROUTES } from "@/constants/routes";
 import { getRequestSession } from "@/lib/request-cache";
 import { isDateString } from "@/lib/utils/date";
+import { BillingReturnBanner } from "@/features/billing/components/billing-return-banner";
 import { PageHeader } from "@/features/app-shell/components/page-header";
 import { SettingsShell } from "@/features/settings/components/settings-shell";
 
@@ -42,6 +44,11 @@ export default async function SettingsPage() {
         description="Adjust your writing experience and preferences"
         today={today}
       />
+
+      {/* Post-checkout feedback (Dodo return_url lands here) */}
+      <Suspense fallback={null}>
+        <BillingReturnBanner />
+      </Suspense>
 
       <SettingsShell initialUser={settingsUser} />
     </div>

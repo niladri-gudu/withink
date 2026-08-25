@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { memo, useCallback, useEffect, useRef } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import CharacterCount from "@tiptap/extension-character-count";
 import Highlight from "@tiptap/extension-highlight";
 import ImageExt from "@tiptap/extension-image";
@@ -13,6 +13,8 @@ import UnderlineExt from "@tiptap/extension-underline";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { toast } from "sonner";
+
+import { UpgradeDialog } from "@/features/billing/components/upgrade-dialog";
 
 let uploadCounter = 0;
 function generateTempId(): string {
@@ -46,6 +48,9 @@ function TiptapEditor({ content = "", onChange, onEditorReady }: EditorProps) {
   const onEditorReadyRef = useRef(onEditorReady);
   const editorRef = useRef<any>(null);
   const snapshotTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Gate #2 paywall: a photo upload rejected for storage quota opens the
+  // upgrade dialog instead of silently embedding a base64 copy.
+  const [storagePaywallOpen, setStoragePaywallOpen] = useState(false);
 
   useEffect(() => {
     onChangeRef.current = onChange;
@@ -203,6 +208,12 @@ function TiptapEditor({ content = "", onChange, onEditorReady }: EditorProps) {
       });
 
       if (!res.ok) {
+        // Quota rejection: paywall moment, not a generic failure.
+        if (res.status === 507) {
+          removePlaceholder(tempId);
+          setStoragePaywallOpen(true);
+          return;
+        }
         throw new Error("Presigned URL failed");
       }
 
@@ -273,6 +284,11 @@ function TiptapEditor({ content = "", onChange, onEditorReady }: EditorProps) {
       }}
     >
       <EditorContent editor={editor} />
+      <UpgradeDialog
+        open={storagePaywallOpen}
+        onOpenChange={setStoragePaywallOpen}
+        reason="storage"
+      />
     </div>
   );
 }

@@ -7,7 +7,6 @@ type WebhookPayload = DodoPayments.WebhookPayload;
 /** Fields of a billing account a webhook event is allowed to change. */
 export interface BillingPatch {
   plan?: "free" | "plus" | "pro";
-  lifetime?: boolean;
   interval?: "monthly" | "yearly" | null;
   status?: "active" | "canceled" | "past_due";
   currentPeriodEnd?: Date | null;
@@ -44,7 +43,7 @@ export function mapWebhookEvent(
   }
 
   if (data.payload_type === "Payment") {
-    return mapPaymentEvent(event.type, data, resolveProductKey);
+    return mapPaymentEvent(event.type, data);
   }
 
   if (data.payload_type === "Refund" && event.type === "refund.succeeded") {
@@ -79,11 +78,10 @@ function mapSubscriptionEvent(
     case "subscription.unpaused": {
       const productKey = resolveProductKey(subscription.product_id);
       if (!productKey) return null;
-      const { plan, interval, lifetime } = PLAN_SHAPE[productKey];
+      const { plan, interval } = PLAN_SHAPE[productKey];
       base.patch = {
         plan,
         interval,
-        lifetime,
         status: "active",
         currentPeriodEnd: parseDate(subscription.next_billing_date),
       };
@@ -112,7 +110,6 @@ function mapSubscriptionEvent(
 function mapPaymentEvent(
   eventType: string,
   payment: Extract<WebhookPayload["data"], { payload_type: "Payment" }>,
-  resolveProductKey: (productId: string) => PlanProductKey | null,
 ): MappedBillingEvent | null {
   const userId = asString(payment.metadata?.userId);
   const dodoCustomerId = payment.customer.customer_id;
@@ -120,24 +117,6 @@ function mapPaymentEvent(
 
   switch (eventType) {
     case "payment.succeeded": {
-      // Lifetime is a one-time purchase: any cart line carrying the lifetime
-      // product grants Pro forever.
-      const lifetimeLine = (payment.product_cart ?? []).find(
-        (item) => resolveProductKey(item.product_id) === "pro-lifetime",
-      );
-      if (lifetimeLine) {
-        return {
-          userId,
-          dodoCustomerId,
-          patch: {
-            plan: "pro",
-            lifetime: true,
-            interval: null,
-            status: "active",
-          },
-        };
-      }
-
       // Subscription payment: activation/renewal/recovery. The period end is
       // owned by subscription.* events; here we only restore a healthy state.
       if (!dodoSubscriptionId) return null;

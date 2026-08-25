@@ -44,13 +44,13 @@ describe("plans config", () => {
     expect(PLAN_PRODUCTS["plus-monthly"]).toEqual({
       plan: "plus",
       interval: "monthly",
-      lifetime: false,
     });
-    expect(PLAN_PRODUCTS["pro-lifetime"]).toEqual({
+    expect(PLAN_PRODUCTS["pro-yearly"]).toEqual({
       plan: "pro",
-      interval: null,
-      lifetime: true,
+      interval: "yearly",
     });
-    expect(Object.keys(PLAN_PRODUCTS)).toHaveLength(5);
+    // Subscription products only — the one-time Lifetime product was
+    // removed from launch scope (MONETIZATION_PLAN.md §2, deferred).
+    expect(Object.keys(PLAN_PRODUCTS)).toHaveLength(4);
   });
 });

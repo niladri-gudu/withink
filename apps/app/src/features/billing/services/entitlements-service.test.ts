@@ -37,27 +37,13 @@ describe("resolvePlanFromAccount", () => {
     expect(resolvePlanFromAccount(null)).toBe("free");
   });
 
-  it("lifetime always resolves to pro regardless of stored state", () => {
-    expect(
-      resolvePlanFromAccount({ plan: "free", lifetime: true, status: "active" }),
-    ).toBe("pro");
-    expect(
-      resolvePlanFromAccount({
-        plan: "free",
-        lifetime: true,
-        status: "canceled",
-      }),
-    ).toBe("pro");
-  });
-
   it("grants paid access while active or in dunning grace", () => {
     expect(
-      resolvePlanFromAccount({ plan: "plus", lifetime: false, status: "active" }),
+      resolvePlanFromAccount({ plan: "plus", status: "active" }),
     ).toBe("plus");
     expect(
       resolvePlanFromAccount({
         plan: "pro",
-        lifetime: false,
         status: "past_due",
       }),
     ).toBe("pro");
@@ -67,7 +53,6 @@ describe("resolvePlanFromAccount", () => {
     expect(
       resolvePlanFromAccount({
         plan: "plus",
-        lifetime: false,
         status: "canceled",
       }),
     ).toBe("free");
@@ -75,7 +60,7 @@ describe("resolvePlanFromAccount", () => {
 
   it("an explicit free record resolves to free", () => {
     expect(
-      resolvePlanFromAccount({ plan: "free", lifetime: false, status: "active" }),
+      resolvePlanFromAccount({ plan: "free", status: "active" }),
     ).toBe("free");
   });
 });
@@ -99,7 +84,6 @@ describe("EntitlementsService.getEntitlements", () => {
     mockedGetCachedValue.mockResolvedValue(null);
     mockedGetByUserId.mockResolvedValue({
       plan: "plus",
-      lifetime: false,
       status: "active",
     } as never);
 
@@ -146,7 +130,6 @@ describe("EntitlementsService.getEntitlements", () => {
     mockedGetCachedValue.mockResolvedValue("gold" as never);
     mockedGetByUserId.mockResolvedValue({
       plan: "pro",
-      lifetime: false,
       status: "active",
     } as never);
 

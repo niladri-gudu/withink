@@ -75,14 +75,13 @@ export function freeEntitlements(): Entitlements {
  * in env (see features/billing/services/dodo-service.ts).
  */
 export const PLAN_PRODUCTS = {
-  "plus-monthly": { plan: "plus", interval: "monthly", lifetime: false },
-  "plus-yearly": { plan: "plus", interval: "yearly", lifetime: false },
-  "pro-monthly": { plan: "pro", interval: "monthly", lifetime: false },
-  "pro-yearly": { plan: "pro", interval: "yearly", lifetime: false },
-  "pro-lifetime": { plan: "pro", interval: null, lifetime: true },
+  "plus-monthly": { plan: "plus", interval: "monthly" },
+  "plus-yearly": { plan: "plus", interval: "yearly" },
+  "pro-monthly": { plan: "pro", interval: "monthly" },
+  "pro-yearly": { plan: "pro", interval: "yearly" },
 } as const satisfies Record<
   string,
-  { plan: PaidPlan; interval: "monthly" | "yearly" | null; lifetime: boolean }
+  { plan: PaidPlan; interval: "monthly" | "yearly" }
 >;
 
 export type PlanProductKey = keyof typeof PLAN_PRODUCTS;

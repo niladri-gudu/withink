@@ -33,10 +33,17 @@ vi.mock("@/features/billing/services/dodo-service", () => ({
 }));
 
 vi.mock("@/features/billing/services/entitlements-service", () => ({
-  EntitlementsService: {
-    getEntitlements: vi
-      .fn()
-      .mockResolvedValue({ plan: "free", backfillDays: 14 }),
+  // Mirrors the real resolution rules; the summary derives the plan from
+  // the stored record through this function.
+  resolvePlanFromAccount: (account: {
+    plan: string;
+    status: string;
+  } | null) => {
+    if (!account) return "free";
+    if (account.status === "canceled") return "free";
+    if (account.plan === "plus" || account.plan === "pro")
+      return account.plan;
+    return "free";
   },
 }));
 
@@ -53,7 +60,6 @@ import {
   BillingNotConfiguredError,
   DodoService,
 } from "@/features/billing/services/dodo-service";
-import { EntitlementsService } from "@/features/billing/services/entitlements-service";
 import { rateLimit } from "@/server/rate-limit";
 
 import {
@@ -69,10 +75,6 @@ describe("createCheckoutAction", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(rateLimit).mockResolvedValue({ success: true } as any);
-    vi.mocked(EntitlementsService.getEntitlements).mockResolvedValue({
-      plan: "free",
-      backfillDays: 14,
-    } as any);
   });
 
   it("rejects unauthenticated users", async () => {
@@ -93,29 +95,6 @@ describe("createCheckoutAction", () => {
     vi.mocked(getRequestSession).mockResolvedValue(mockSession as any);
     vi.mocked(rateLimit).mockResolvedValue({ success: false } as any);
     const res = await createCheckoutAction("plus-monthly");
-    expect(res.success).toBe(false);
-    expect(DodoService.createCheckoutSession).not.toHaveBeenCalled();
-  });
-
-  it("blocks a second lifetime purchase for lifetime members", async () => {
-    vi.mocked(getRequestSession).mockResolvedValue(mockSession as any);
-    vi.mocked(EntitlementsService.getEntitlements).mockResolvedValue({
-      plan: "pro",
-    } as any);
-    vi.mocked(BillingAccountRepository.getByUserId).mockResolvedValue({
-      userId: mockUserId,
-      plan: "pro",
-      lifetime: true,
-      status: "active",
-      interval: null,
-      dodoCustomerId: "cus_1",
-      dodoSubscriptionId: "",
-      currentPeriodEnd: null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    } as any);
-
-    const res = await createCheckoutAction("pro-lifetime");
     expect(res.success).toBe(false);
     expect(DodoService.createCheckoutSession).not.toHaveBeenCalled();
   });
@@ -189,9 +168,6 @@ describe("openCustomerPortalAction", () => {
 describe("getBillingSummaryAction", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(EntitlementsService.getEntitlements).mockResolvedValue({
-      plan: "plus",
-    } as any);
   });
 
   it("summarizes the account with an ISO period end and portal flag", async () => {
@@ -199,7 +175,6 @@ describe("getBillingSummaryAction", () => {
     vi.mocked(BillingAccountRepository.getByUserId).mockResolvedValue({
       userId: mockUserId,
       plan: "plus",
-      lifetime: false,
       status: "active",
       interval: "yearly",
       dodoCustomerId: "cus_abc",
@@ -214,7 +189,6 @@ describe("getBillingSummaryAction", () => {
     expect(res.success).toBe(true);
     expect(res.summary).toEqual({
       plan: "plus",
-      lifetime: false,
       status: "active",
       interval: "yearly",
       currentPeriodEnd: "2026-09-01T00:00:00.000Z",
@@ -231,8 +205,7 @@ describe("getBillingSummaryAction", () => {
     const res = await getBillingSummaryAction();
 
     expect(res.summary).toMatchObject({
-      plan: "plus",
-      lifetime: false,
+      plan: "free",
       status: null,
       interval: null,
       currentPeriodEnd: null,

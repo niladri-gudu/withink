@@ -2,15 +2,15 @@
 
 import { z } from "zod";
 
+import { LIMITS } from "@/constants/limits";
 import { env } from "@/config/env";
+import { resolvePlanFromAccount } from "@/features/billing/services/entitlements-service";
 import type { ResolvedPlan } from "@/features/billing/config/plans";
 import { BillingAccountRepository } from "@/features/billing/repositories/billing-account-repository";
 import {
   BillingNotConfiguredError,
   DodoService,
 } from "@/features/billing/services/dodo-service";
-import { EntitlementsService } from "@/features/billing/services/entitlements-service";
-import { LIMITS } from "@/constants/limits";
 import { getRequestSession } from "@/lib/request-cache";
 import { handleError } from "@/server/errors";
 import { logger } from "@/server/logger";
@@ -27,7 +27,6 @@ const productKeySchema = z.enum([
   "plus-yearly",
   "pro-monthly",
   "pro-yearly",
-  "pro-lifetime",
 ] as const);
 
 /**
@@ -36,7 +35,6 @@ const productKeySchema = z.enum([
  */
 export interface BillingSummary {
   plan: ResolvedPlan;
-  lifetime: boolean;
   status: "active" | "canceled" | "past_due" | null;
   interval: "monthly" | "yearly" | null;
   currentPeriodEnd: string | null;
@@ -78,19 +76,6 @@ export async function createCheckoutAction(
         success: false,
         error: "Too many attempts. Please try again later.",
       };
-    }
-
-    // Lifetime is forever by definition; buying it twice would just be a
-    // donation. (Plan switches stay allowed — Dodo handles them per-product.)
-    const entitlements = await EntitlementsService.getEntitlements(userId);
-    if (entitlements.plan === "pro") {
-      const account = await BillingAccountRepository.getByUserId(userId);
-      if (account?.lifetime) {
-        return {
-          success: false,
-          error: "You already have Lifetime access to withink.",
-        };
-      }
     }
 
     const url = await DodoService.createCheckoutSession({
@@ -166,16 +151,14 @@ export async function getBillingSummaryAction(): Promise<
     }
 
     const userId = session.user.id;
-    const [entitlements, account] = await Promise.all([
-      EntitlementsService.getEntitlements(userId),
-      BillingAccountRepository.getByUserId(userId),
-    ]);
+    const account = await BillingAccountRepository.getByUserId(userId);
 
     return {
       success: true,
       summary: {
-        plan: entitlements.plan,
-        lifetime: account?.lifetime ?? false,
+        plan: account
+          ? resolvePlanFromAccount(account)
+          : "free",
         status: account?.status ?? null,
         interval: account?.interval ?? null,
         currentPeriodEnd: account?.currentPeriodEnd

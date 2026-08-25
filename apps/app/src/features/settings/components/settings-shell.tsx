@@ -92,12 +92,6 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
 
   // ---- Paper feel ------------------------------------------------------------
   const [paperScale, setPaperScale] = React.useState<number>(INITIAL_SCALE);
-  const [diagonalInches, setDiagonalInches] = React.useState("");
-  const [resolutionWidth, setResolutionWidth] = React.useState("");
-  const [resolutionHeight, setResolutionHeight] = React.useState("");
-  const [isCalibratingCard, setIsCalibratingCard] = React.useState(false);
-  const cardRef = React.useRef<HTMLDivElement>(null);
-  const [cardScale, setCardScale] = React.useState(1);
 
   // Security (Password) Form
   const {
@@ -364,11 +358,6 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
   // Paper Feel helpers
   const handlePaperScaleReset = () => {
     setPaperScale(INITIAL_SCALE);
-    setDiagonalInches("");
-    setResolutionWidth("");
-    setResolutionHeight("");
-    setIsCalibratingCard(false);
-    setCardScale(1);
     toast.info("Paper scale reset to default");
   };
 
@@ -386,86 +375,6 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
 
     setPaperScale(detectedScale);
     toast.success(`Visual scale set to ${detectedScale.toFixed(2)}x`);
-  };
-
-  const handleScreenDiagonalCalibrate = () => {
-    const d = parseFloat(diagonalInches);
-    const w = parseInt(resolutionWidth);
-    const h = parseInt(resolutionHeight);
-
-    if (isNaN(d) || isNaN(w) || isNaN(h) || d <= 0 || w <= 0 || h <= 0) {
-      toast.error("Please enter valid positive numbers");
-      return;
-    }
-
-    const ppi = Math.sqrt(w * w + h * h) / d;
-
-    let calibratedScale = 1.0;
-    if (ppi > 220) calibratedScale = 0.85;
-    else if (ppi > 180) calibratedScale = 0.9;
-    else if (ppi > 140) calibratedScale = 0.95;
-    else if (ppi > 100) calibratedScale = 1.0;
-    else calibratedScale = 1.1;
-
-    setPaperScale(calibratedScale);
-    toast.success(
-      `PPI Calibrated: ${calibratedScale.toFixed(2)}x (${ppi.toFixed(0)} PPI)`,
-    );
-  };
-
-  // Card calibration dragging mouse & touch support
-  const handleCardDragStart = (e: React.MouseEvent | React.TouchEvent) => {
-    if (!isCalibratingCard || !cardRef.current) return;
-    e.preventDefault();
-
-    const clientX =
-      "touches" in e && e.touches && e.touches[0]
-        ? e.touches[0].clientX
-        : (e as React.MouseEvent).clientX;
-    const startX = clientX;
-    const startWidth = cardRef.current.offsetWidth;
-
-    const onMove = (moveEvent: MouseEvent | TouchEvent) => {
-      const currentX =
-        "touches" in moveEvent && moveEvent.touches && moveEvent.touches[0]
-          ? moveEvent.touches[0].clientX
-          : (moveEvent as MouseEvent).clientX;
-      const newWidth = startWidth + (currentX - startX);
-      const pxPerMm = 96 / 25.4; // 96 px per inch, 25.4 mm per inch
-      const standardWidthPx = 85.6 * pxPerMm; // standard credit card size (85.6mm)
-      const scale = newWidth > 0 ? newWidth / standardWidthPx : 0.001;
-      setCardScale(Math.max(0.1, scale));
-    };
-
-    const onEnd = () => {
-      document.removeEventListener("mousemove", onMove);
-      document.removeEventListener("mouseup", onEnd);
-      document.removeEventListener("touchmove", onMove);
-      document.removeEventListener("touchend", onEnd);
-    };
-
-    document.addEventListener("mousemove", onMove);
-    document.addEventListener("mouseup", onEnd);
-    document.addEventListener("touchmove", onMove, { passive: false });
-    document.addEventListener("touchend", onEnd);
-  };
-
-  const handleCompleteCardCalibration = () => {
-    setIsCalibratingCard(false);
-    if (cardScale <= 0) {
-      toast.error("Calibration failed, invalid card size");
-      setCardScale(1);
-      return;
-    }
-
-    const calibratedPaperScale = Math.max(
-      0.8,
-      Math.min(1.2, (1 / cardScale) * 0.95),
-    );
-    setPaperScale(Number(calibratedPaperScale.toFixed(2)));
-    toast.success(
-      `Card calibration applied: ${calibratedPaperScale.toFixed(2)}x`,
-    );
   };
 
   // Security Form Submission
@@ -720,111 +629,6 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
                   <MonitorSmartphone className="h-4 w-4" />
                   Auto-detect device
                 </Button>
-              </div>
-            </div>
-
-            {/* Advanced calibrators */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              {/* Screen PPI Calculator */}
-              <div className="border-border flex flex-col justify-between gap-4 rounded-xl border p-5">
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <MonitorSmartphone className="text-muted-foreground h-4 w-4" />
-                    <span className="text-body-small text-foreground font-medium">
-                      Screen size
-                    </span>
-                  </div>
-                  <p className="text-caption">
-                    Enter your display details for a precise fit.
-                  </p>
-                  <div className="grid grid-cols-3 gap-2">
-                    <Input
-                      type="number"
-                      placeholder="Diag in"
-                      aria-label="Diagonal inches"
-                      value={diagonalInches}
-                      onChange={(e) => setDiagonalInches(e.target.value)}
-                      className="h-11 px-2.5 text-center text-sm sm:h-10"
-                    />
-                    <Input
-                      type="number"
-                      placeholder="Width"
-                      aria-label="Resolution width in pixels"
-                      value={resolutionWidth}
-                      onChange={(e) => setResolutionWidth(e.target.value)}
-                      className="h-11 px-2.5 text-center text-sm sm:h-10"
-                    />
-                    <Input
-                      type="number"
-                      placeholder="Height"
-                      aria-label="Resolution height in pixels"
-                      value={resolutionHeight}
-                      onChange={(e) => setResolutionHeight(e.target.value)}
-                      className="h-11 px-2.5 text-center text-sm sm:h-10"
-                    />
-                  </div>
-                </div>
-                <Button
-                  variant="secondary"
-                  onClick={handleScreenDiagonalCalibrate}
-                  className="h-11 w-full sm:h-9"
-                >
-                  Calculate
-                </Button>
-              </div>
-
-              {/* Credit Card Drag */}
-              <div className="border-border flex flex-col justify-between gap-4 rounded-xl border p-5">
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <CreditCard className="text-muted-foreground h-4 w-4" />
-                    <span className="text-body-small text-foreground font-medium">
-                      Card match
-                    </span>
-                  </div>
-                  <p className="text-caption">
-                    Resize the outline to match a real bank card held to the
-                    screen.
-                  </p>
-                  {isCalibratingCard && (
-                    <div className="flex justify-center py-1">
-                      <div
-                        ref={cardRef}
-                        className="border-accent/60 bg-accent/5 relative flex h-[46px] max-w-full cursor-ew-resize items-center justify-center rounded-md border border-dashed select-none"
-                        style={{
-                          width: `${Math.min(200, 85.6 * cardScale * (96 / 25.4))}px`,
-                        }}
-                        onMouseDown={handleCardDragStart}
-                        onTouchStart={handleCardDragStart}
-                      >
-                        <span className="text-muted-foreground text-[10px] font-medium tracking-widest uppercase">
-                          Drag edge →
-                        </span>
-                        <div className="bg-accent/25 absolute top-0 right-0 bottom-0 w-3 cursor-ew-resize rounded-r-md" />
-                      </div>
-                    </div>
-                  )}
-                </div>
-                {!isCalibratingCard ? (
-                  <Button
-                    variant="secondary"
-                    onClick={() => {
-                      setIsCalibratingCard(true);
-                      setCardScale(1.0);
-                      toast.info("Drag the right edge to match your card.");
-                    }}
-                    className="h-11 w-full sm:h-9"
-                  >
-                    Start matching
-                  </Button>
-                ) : (
-                  <Button
-                    onClick={handleCompleteCardCalibration}
-                    className="h-11 w-full sm:h-9"
-                  >
-                    Apply
-                  </Button>
-                )}
               </div>
             </div>
           </div>

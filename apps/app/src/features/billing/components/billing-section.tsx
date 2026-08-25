@@ -4,7 +4,6 @@ import * as React from "react";
 import { Button } from "@withink/ui/button";
 import { cn } from "@withink/utils";
 import {
-  BadgeCheck,
   ExternalLink,
   Loader2,
   Sparkles,
@@ -12,12 +11,12 @@ import {
 import { toast } from "sonner";
 
 import {
-  createCheckoutAction,
   getBillingSummaryAction,
   openCustomerPortalAction,
   type BillingSummary,
 } from "../actions/billing-actions";
 import type { PaidPlan, ResolvedPlan } from "../config/plans";
+import { useCheckoutRedirect } from "../hooks/use-checkout-redirect";
 
 const PLAN_LABEL: Record<ResolvedPlan, string> = {
   free: "Free",
@@ -79,8 +78,8 @@ function formatDate(iso: string): string {
 export function BillingSection() {
   const [summary, setSummary] = React.useState<BillingSummary | null>(null);
   const [loadFailed, setLoadFailed] = React.useState(false);
-  const [pendingKey, setPendingKey] = React.useState<string | null>(null);
   const [portalOpening, setPortalOpening] = React.useState(false);
+  const { startCheckout, pendingKey } = useCheckoutRedirect();
 
   React.useEffect(() => {
     getBillingSummaryAction()
@@ -90,17 +89,6 @@ export function BillingSection() {
       })
       .catch(() => setLoadFailed(true));
   }, []);
-
-  const handleCheckout = async (productKey: string) => {
-    setPendingKey(productKey);
-    const res = await createCheckoutAction(productKey);
-    if (res.success && res.url) {
-      window.location.assign(res.url);
-      return;
-    }
-    toast.error(res.error || "Checkout could not be started.");
-    setPendingKey(null);
-  };
 
   const handlePortal = async () => {
     setPortalOpening(true);
@@ -114,7 +102,7 @@ export function BillingSection() {
   };
 
   // A paid plan can only move up: Free sees every tier, Plus sees Pro,
-  // Pro sees nothing (Lifetime is handled separately below).
+  // Pro sees nothing.
   const visibleUpgrades = UPGRADES.filter((tier) => {
     if (!summary || summary.plan === "free") return true;
     if (summary.plan === "pro") return false;
@@ -134,9 +122,7 @@ export function BillingSection() {
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <p className="text-body-small text-foreground font-medium">
-                  {summary.lifetime
-                    ? "Lifetime"
-                    : PLAN_LABEL[summary.plan] + " plan"}
+                  {PLAN_LABEL[summary.plan] + " plan"}
                 </p>
                 {summary.status && (
                   <span
@@ -152,11 +138,9 @@ export function BillingSection() {
                 )}
               </div>
               <p className="text-caption">
-                {summary.lifetime
-                  ? "Pro forever. Thank you for supporting withink."
-                  : summary.currentPeriodEnd && summary.status === "active"
-                    ? `Renews on ${formatDate(summary.currentPeriodEnd)}`
-                    : "Everything you write stays unlimited on every plan."}
+                {summary.currentPeriodEnd && summary.status === "active"
+                  ? `Renews on ${formatDate(summary.currentPeriodEnd)}`
+                  : "Everything you write stays unlimited on every plan."}
               </p>
             </div>
             {summary.hasPortal && (
@@ -198,20 +182,8 @@ export function BillingSection() {
             ))}
           </div>
 
-          {/* Upgrades */}
-          {summary.lifetime ? (
-            <div className="border-accent/25 bg-accent/5 flex items-start gap-3 rounded-xl border p-5">
-              <BadgeCheck className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
-              <div className="space-y-1">
-                <p className="text-body-small text-foreground font-medium">
-                  Founding Member
-                </p>
-                <p className="text-caption">
-                  You own withink forever — every future Pro feature included.
-                </p>
-              </div>
-            </div>
-          ) : (
+          {/* Upgrades — Free sees both tiers, Plus sees Pro, Pro sees none */}
+          {summary.plan !== "pro" && (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               {visibleUpgrades.map((tier) => (
                 <div
@@ -240,7 +212,7 @@ export function BillingSection() {
                         size="sm"
                         disabled={pendingKey !== null}
                         onClick={() =>
-                          void handleCheckout(product.productKey)
+                          void startCheckout(product.productKey)
                         }
                         className="justify-between"
                       >
@@ -253,33 +225,6 @@ export function BillingSection() {
                   </div>
                 </div>
               ))}
-
-              {/* Lifetime one-time purchase */}
-              {summary.plan !== "pro" && (
-                <div className="border-border flex flex-col gap-4 rounded-xl border border-dashed p-5 sm:col-span-2">
-                  <div className="space-y-1">
-                    <p className="text-foreground font-serif text-base font-semibold">
-                      Lifetime
-                    </p>
-                    <p className="text-caption">
-                      Pro forever, one payment — Founding Member badge
-                      included.
-                    </p>
-                  </div>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    disabled={pendingKey !== null}
-                    onClick={() => void handleCheckout("pro-lifetime")}
-                    className="sm:self-end"
-                  >
-                    $199 once
-                    {pendingKey === "pro-lifetime" && (
-                      <Loader2 className="ml-2 h-4 w-4 animate-spin" />
-                    )}
-                  </Button>
-                </div>
-              )}
             </div>
           )}
 
