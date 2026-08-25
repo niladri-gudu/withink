@@ -72,7 +72,7 @@ export function TodayReflectionCard({
             day is going. Reflections keep your mind clear and your memories
             alive.
           </p>
-          <Button asChild className="w-fit cursor-pointer">
+          <Button asChild className="h-11 w-full cursor-pointer sm:w-fit">
             <Link
               href={
                 `${ROUTES.APP.ENTRY(today)}?today=${today}` as unknown as ComponentPropsWithoutRef<
@@ -80,7 +80,7 @@ export function TodayReflectionCard({
                 >["href"]
               }
             >
-              Write Reflection
+              Write today&apos;s entry
             </Link>
           </Button>
         </CardContent>
@@ -136,7 +136,10 @@ export function TodayReflectionCard({
               )}
             </div>
             <div className="border-border/10 flex justify-end border-t pt-4">
-              <Button asChild className="cursor-pointer px-6">
+              <Button
+                asChild
+                className="h-11 w-full cursor-pointer px-6 sm:w-fit"
+              >
                 <Link
                   href={
                     `${ROUTES.APP.ENTRY(today)}?today=${today}` as unknown as ComponentPropsWithoutRef<

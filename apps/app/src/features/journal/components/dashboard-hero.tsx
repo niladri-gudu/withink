@@ -1,13 +1,10 @@
-import type { Route } from "next";
-import Link from "next/link";
-import { Button } from "@withink/ui/button";
-import { Calendar, Flame } from "lucide-react";
+import { Flame } from "lucide-react";
 
-import { ROUTES } from "@/constants/routes";
 import { computeCurrentStreak } from "@/lib/utils/date";
 import { JournalService } from "@/features/journal/services/journal-service";
 
 import { TodayReflectionCard } from "./today-reflection-card";
+import { YesterdayBanner } from "./yesterday-banner";
 
 interface DashboardHeroProps {
   userId: string;
@@ -37,35 +34,9 @@ export async function DashboardHero({
 
   return (
     <>
-      {/* Yesterday's Missed Reflection Alert Banner */}
+      {/* Yesterday's missed reflection — calm, dismissible, client-owned */}
       {!yesterdayWritten && (
-        <div className="border-primary/10 bg-primary/5 animate-in slide-in-from-top-2 flex flex-col justify-between gap-4 rounded-xl border p-5 duration-300 sm:flex-row sm:items-center">
-          <div className="flex items-center gap-3">
-            <div className="bg-primary/10 text-primary flex h-10 w-10 shrink-0 items-center justify-center rounded-full">
-              <Calendar className="h-5 w-5" />
-            </div>
-            <div>
-              <h4 className="text-foreground text-sm font-bold">
-                Write Yesterday&apos;s Reflection
-              </h4>
-              <p className="text-muted-foreground text-xs leading-relaxed">
-                It looks like you missed writing yesterday. You still have time
-                to capture your thoughts before the archive seals.
-              </p>
-            </div>
-          </div>
-          <Button
-            asChild
-            size="sm"
-            className="shrink-0 cursor-pointer self-end px-5 sm:self-center"
-          >
-            <Link
-              href={`${ROUTES.APP.ENTRY(yesterday)}?today=${today}` as Route}
-            >
-              Write Yesterday
-            </Link>
-          </Button>
-        </div>
+        <YesterdayBanner yesterday={yesterday} today={today} />
       )}
 
       {/* Today's page + margin note */}
@@ -75,7 +46,7 @@ export async function DashboardHero({
 
         {/* Day-streak margin note */}
         <div className="border-border flex flex-col justify-between rounded-xl border p-6">
-          <p className="text-muted-foreground/70 font-serif text-[11px] font-semibold tracking-[0.2em] uppercase">
+          <p className="text-running-head text-muted-foreground/70">
             Margin note
           </p>
           <div className="my-6 flex items-end gap-3">
@@ -100,9 +71,9 @@ export async function DashboardHero({
 export function DashboardHeroSkeleton() {
   return (
     <>
-      {/* Banner placeholder */}
-      <div className="bg-muted/40 h-24 animate-pulse rounded-xl border" />
-      {/* Today's card + streak note placeholders */}
+      {/* Today's card + streak margin-note placeholders. The yesterday banner
+          is data-dependent, so no placeholder — it streams in without a
+          reserved box to avoid a layout jump when absent. */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
         <div className="bg-muted/40 h-64 animate-pulse rounded-xl border md:col-span-2" />
         <div className="bg-muted/40 h-64 animate-pulse rounded-xl border" />

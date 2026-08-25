@@ -51,7 +51,7 @@ export function MoodSelector({
 }) {
   return (
     <div className="flex items-center gap-1.5 sm:gap-2">
-      <span className="text-muted-foreground/60 mr-1 hidden font-serif text-xs tracking-[0.15em] uppercase sm:inline">
+      <span className="text-running-head text-muted-foreground/60 mr-1 hidden sm:inline">
         Mood
       </span>
       <div
@@ -72,7 +72,7 @@ export function MoodSelector({
             whileTap={{ scale: 0.92 }}
             transition={{ type: "spring", stiffness: 400, damping: 17 }}
             className={cn(
-              "focus-visible:ring-ring relative cursor-pointer rounded-xl border border-transparent p-2 transition-all duration-300 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
+              "focus-visible:ring-ring relative flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl border border-transparent transition-all duration-300 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none sm:h-10 sm:w-10",
               selected === m.value
                 ? m.activeClass
                 : cn("text-muted-foreground/45", m.hoverClass),

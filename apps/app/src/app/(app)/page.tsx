@@ -1,16 +1,12 @@
-import type { Metadata } from "next";
 import { Suspense } from "react";
+import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { ROUTES } from "@/constants/routes";
 import { getRequestSession } from "@/lib/request-cache";
-import {
-  addDays,
-  formatDisplayDate,
-  getLocalDateString,
-  isDateString,
-} from "@/lib/utils/date";
+import { addDays, getLocalDateString, isDateString } from "@/lib/utils/date";
+import { PageHeader } from "@/features/app-shell/components/page-header";
 import {
   DashboardHero,
   DashboardHeroSkeleton,
@@ -42,40 +38,17 @@ export default async function DashboardPage() {
   const firstName = session.user.name
     ? session.user.name.split(" ")[0]
     : "Writer";
-  const todayFormatted = formatDisplayDate(today, {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
 
   return (
     <div className="animate-in fade-in w-full space-y-8 duration-300">
-      {/* Running head + today's page title */}
-      <header>
-        <div className="border-border/70 flex items-baseline justify-between gap-4 border-b pb-3">
-          <span className="text-muted-foreground/70 font-serif text-[11px] font-semibold tracking-[0.2em] uppercase">
-            Today
-          </span>
-          <span className="text-muted-foreground/50 font-hand text-base leading-none">
-            {todayFormatted}
-          </span>
-        </div>
-        <div className="mt-6 space-y-2">
-          <p className="text-muted-foreground/70 font-hand text-lg leading-snug">
-            {firstName}&apos;s page, one day at a time
-          </p>
-          <h1 className="text-foreground font-serif text-3xl leading-none font-bold tracking-tight sm:text-4xl">
-            Good morning,{" "}
-            <span className="text-accent pl-1 text-4xl font-normal italic sm:text-5xl">
-              {firstName}.
-            </span>
-          </h1>
-          <p className="text-body-small text-muted-foreground mt-1">
-            A fresh page for today&apos;s reflection
-          </p>
-        </div>
-      </header>
+      <PageHeader
+        runningHead="Today"
+        note={`${firstName}'s page, one day at a time`}
+        title="Good morning,"
+        accent={`${firstName}.`}
+        description="A fresh page for today's reflection"
+        today={today}
+      />
 
       {/* Above-the-fold hero (streamed) */}
       <Suspense fallback={<DashboardHeroSkeleton />}>

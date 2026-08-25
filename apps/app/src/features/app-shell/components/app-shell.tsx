@@ -1,9 +1,10 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { toast } from "sonner";
 
+import { EDITOR_ROUTE_PATTERN } from "@/constants/routes";
 import { safeStorage } from "@/lib/safe-storage";
 import { getLocalDateString } from "@/lib/utils/date";
 import { useEncryption } from "@/providers/encryption-provider";
@@ -17,6 +18,7 @@ import { UnlockProofBindCard } from "../../lock/components/unlock-proof-bind-car
 import { useLockTimer } from "../../lock/hooks/use-lock-timer";
 import { Header } from "./header";
 import { Sidebar } from "./sidebar";
+import { TabBar } from "./tab-bar";
 
 interface LockSettingsSeed {
   isLockEnabled: boolean;
@@ -54,9 +56,15 @@ export function AppShell({
   initialEncryptionSettings = null,
 }: AppShellProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = React.useState(false);
-  const [isMobileOpen, setIsMobileOpen] = React.useState(false);
   const [mounted, setMounted] = React.useState(false);
+
+  // The editor route is a TRUE fullscreen writing surface: no mobile
+  // masthead, no tab bar, and none of the page-content padding — the editor
+  // owns its entire layout (header, overlays, scroll affordances). See the
+  // journal surface brief and the z-index contract in globals.css.
+  const isFullscreenRoute = EDITOR_ROUTE_PATTERN.test(pathname ?? "");
 
   const {
     isClientEncrypted,
@@ -348,13 +356,11 @@ export function AppShell({
         <Sidebar
           isCollapsed={mounted ? isCollapsed : false}
           onToggleCollapse={handleToggleCollapse}
-          isMobileOpen={isMobileOpen}
-          onCloseMobile={() => setIsMobileOpen(false)}
           user={user}
         />
 
         <div className="relative flex min-w-0 flex-1 flex-col overflow-hidden">
-          <Header onOpenMobile={() => setIsMobileOpen(true)} />
+          {!isFullscreenRoute && <Header />}
 
           <main
             id="main-content"
@@ -362,12 +368,24 @@ export function AppShell({
             tabIndex={-1}
             className="no-scrollbar flex min-w-0 flex-1 flex-col overflow-y-auto focus:outline-none"
           >
-            <div className="flex w-full flex-1 flex-col items-center">
-              <div className="w-full max-w-4xl flex-1 px-6 py-8 md:py-12 lg:px-8">
-                {children}
+            {/* Fullscreen routes (the journal editor) render full-bleed and
+                own their entire layout; every other page sits in the shared
+                centered content column. This branch — not negative-margin
+                hacks — is the documented escape hatch from shell padding. */}
+            {isFullscreenRoute ? (
+              children
+            ) : (
+              <div className="flex w-full flex-1 flex-col items-center">
+                {/* Phones reserve clearance for the bottom tab bar (plus the
+                    iOS home indicator). */}
+                <div className="w-full max-w-4xl flex-1 px-6 pt-8 pb-[calc(4.75rem+env(safe-area-inset-bottom))] md:py-12 lg:px-8">
+                  {children}
+                </div>
               </div>
-            </div>
+            )}
           </main>
+
+          {!isGated && !isFullscreenRoute && <TabBar user={user} />}
         </div>
       </div>
     </>

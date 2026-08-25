@@ -67,6 +67,10 @@ export function LockScreen({
 
   const handleKeyPress = React.useCallback(
     (digit: string) => {
+      // Quiet tactile tick, matching the editor toolbar's haptics.
+      if (typeof navigator !== "undefined" && navigator.vibrate) {
+        navigator.vibrate(10);
+      }
       if (pin.length < 6 && /^\d$/.test(digit)) {
         setPin((prev) => prev + digit);
       }
@@ -75,6 +79,9 @@ export function LockScreen({
   );
 
   const handleBackspace = React.useCallback(() => {
+    if (typeof navigator !== "undefined" && navigator.vibrate) {
+      navigator.vibrate(10);
+    }
     setPin((prev) => prev.slice(0, -1));
   }, []);
 
@@ -248,7 +255,7 @@ export function LockScreen({
               <h1 className="text-h2 text-foreground font-serif font-bold">
                 Welcome back
               </h1>
-              <p className="text-caption font-serif tracking-[0.16em] uppercase">
+              <p className="text-running-head text-muted-foreground">
                 Diary Lock
               </p>
             </div>
@@ -361,7 +368,7 @@ export function LockScreen({
               <h1 className="text-h2 text-foreground font-serif font-bold">
                 Verify Diary Password
               </h1>
-              <p className="text-caption font-serif tracking-[0.16em] uppercase">
+              <p className="text-running-head text-muted-foreground">
                 Diary Lock
               </p>
             </div>

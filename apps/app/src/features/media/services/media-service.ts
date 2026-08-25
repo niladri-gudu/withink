@@ -41,9 +41,7 @@ export async function getMediaLibraryAndStats(userId: string): Promise<{
       size: obj.size,
       lastModified: obj.lastModified?.toISOString() || null,
     }))
-    .sort((a, b) =>
-      (b.lastModified || "").localeCompare(a.lastModified || ""),
-    );
+    .sort((a, b) => (b.lastModified || "").localeCompare(a.lastModified || ""));
 
   const totalSizeBytes = objects.reduce((acc, obj) => acc + obj.size, 0);
   const totalSizeMB = Number((totalSizeBytes / (1024 * 1024)).toFixed(2));

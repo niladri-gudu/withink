@@ -244,7 +244,9 @@ export class JournalService {
    * Returns every entry without the bulky `contentJson` blob, for the media
    * lightbox which only scans `contentHtml` for image URLs.
    */
-  static async getAllEntriesForMedia(userId: string): Promise<DecryptedEntry[]> {
+  static async getAllEntriesForMedia(
+    userId: string,
+  ): Promise<DecryptedEntry[]> {
     const entries = await EntryRepository.getAllEntriesForMedia(userId);
     return entries.map((entry) => this.decryptEntry(entry));
   }

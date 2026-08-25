@@ -20,3 +20,34 @@ export {
 export { BrandLoader } from "./brand-loader";
 export { ThemeToggle } from "./theme-toggle";
 export { useMounted } from "./use-mounted";
+export {
+  Sheet,
+  SheetPortal,
+  SheetOverlay,
+  SheetTrigger,
+  SheetClose,
+  SheetContent,
+  SheetHeader,
+  SheetFooter,
+  SheetTitle,
+  SheetDescription,
+  type SheetContentProps,
+} from "./sheet";
+export {
+  Dialog,
+  DialogPortal,
+  DialogOverlay,
+  DialogTrigger,
+  DialogClose,
+  DialogContent,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+  DialogDescription,
+  type DialogContentProps,
+} from "./dialog";
+export {
+  IconButton,
+  iconButtonVariants,
+  type IconButtonProps,
+} from "./icon-button";

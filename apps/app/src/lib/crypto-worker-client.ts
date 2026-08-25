@@ -2,8 +2,11 @@
 // KDF runs never block the main thread. Falls back to the main thread when
 // workers are unavailable (older browsers, strict CSP, non-browser contexts).
 
-import { bytesToHex, importKeyFromHex } from "./crypto-client";
-import { deriveKeyFromPassword } from "./crypto-client";
+import {
+  bytesToHex,
+  deriveKeyFromPassword,
+  importKeyFromHex,
+} from "./crypto-client";
 
 const workerCode = `
   function hexToBytes(hex) {

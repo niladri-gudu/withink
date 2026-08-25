@@ -1,7 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { CachedMetadata } from "./diary-cache-service";
-import { diaryCacheService, filterLocalTimeline } from "./diary-cache-service";
+import {
+  diaryCacheService,
+  filterLocalTimeline,
+  type CachedMetadata,
+} from "./diary-cache-service";
 
 const { dbMock } = vi.hoisted(() => ({
   dbMock: {

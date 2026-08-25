@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@withink/ui/button";
+import { IconButton } from "@withink/ui/icon-button";
 
 export default function ContactPage() {
   const [name, setName] = React.useState("");
@@ -39,11 +40,11 @@ export default function ContactPage() {
   };
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-2xl flex-1 flex-col justify-center space-y-8 px-6 py-16">
+    <div className="mx-auto flex max-w-2xl flex-1 flex-col space-y-8 px-6 py-10 md:py-16">
       <div className="space-y-4">
         <Link
           href="/"
-          className="text-muted-foreground/80 hover:text-foreground focus-visible:ring-ring inline-flex items-center gap-1.5 rounded pb-2 font-mono text-xs tracking-widest uppercase transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+          className="text-muted-foreground/80 hover:text-foreground focus-visible:ring-ring inline-flex min-h-11 items-center gap-1.5 rounded p-0.5 px-2 -ml-2 font-mono text-xs tracking-widest uppercase transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
         >
           <ArrowLeft className="h-3 w-3" /> Back to Diary
         </Link>
@@ -76,6 +77,7 @@ export default function ContactPage() {
                   setEmail("");
                   setMessage("");
                 }}
+                className="h-11 sm:h-9"
               >
                 Send Another Message
               </Button>
@@ -96,7 +98,7 @@ export default function ContactPage() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   autoComplete="name"
-                  className="border-border bg-card text-foreground focus-visible:ring-ring h-10 w-full rounded-lg border px-3 text-sm transition-all focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+                  className="border-border bg-card text-foreground focus-visible:ring-ring h-11 w-full rounded-lg border px-3 text-sm transition-all focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
                   placeholder="John Doe"
                 />
               </div>
@@ -116,7 +118,7 @@ export default function ContactPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   autoComplete="email"
                   spellCheck="false"
-                  className="border-border bg-card text-foreground focus-visible:ring-ring h-10 w-full rounded-lg border px-3 text-sm transition-all focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+                  className="border-border bg-card text-foreground focus-visible:ring-ring h-11 w-full rounded-lg border px-3 text-sm transition-all focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
                   placeholder="john@example.com"
                 />
               </div>
@@ -142,7 +144,7 @@ export default function ContactPage() {
 
               <Button
                 type="submit"
-                className="focus-visible:ring-ring flex h-10 w-full items-center justify-center gap-2 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+                className="focus-visible:ring-ring flex h-11 w-full items-center justify-center gap-2 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
               >
                 <Send className="h-4 w-4" /> Send Message
               </Button>
@@ -160,23 +162,24 @@ export default function ContactPage() {
               <p className="text-muted-foreground text-xs">
                 Email us directly anytime:
               </p>
-              <div className="bg-background border-border flex items-center justify-between rounded-lg border px-3 py-2 text-xs">
+              <div className="bg-background border-border flex items-center justify-between gap-2 rounded-lg border py-1 pl-3 pr-1 text-xs">
                 <span className="text-foreground truncate font-mono select-all">
                   {supportEmail}
                 </span>
-                <button
+                <IconButton
                   type="button"
+                  variant="ghost"
+                  size="lg"
                   onClick={handleCopyEmail}
-                  className="text-muted-foreground hover:text-foreground focus-visible:ring-ring rounded-md p-1 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
-                  title="Copy email"
                   aria-label="Copy support email address"
+                  className="text-muted-foreground hover:text-foreground shrink-0"
                 >
                   {copied ? (
-                    <Check className="text-accent h-3.5 w-3.5" />
+                    <Check className="text-accent h-4 w-4" />
                   ) : (
-                    <Copy className="h-3.5 w-3.5" />
+                    <Copy className="h-4 w-4" />
                   )}
-                </button>
+                </IconButton>
               </div>
             </div>
           </div>
@@ -186,12 +189,12 @@ export default function ContactPage() {
               <MessageSquare className="text-muted-foreground h-4 w-4" /> Social
               Channels
             </h2>
-            <div className="flex flex-col gap-2 text-xs">
+            <div className="flex flex-col gap-1 text-xs">
               <a
                 href="https://twitter.com/withinkme"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-foreground transition-colors"
+                className="text-muted-foreground hover:text-foreground focus-visible:ring-ring inline-flex min-h-11 items-center rounded transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
               >
                 Twitter / X: @withinkme
               </a>
@@ -199,7 +202,7 @@ export default function ContactPage() {
                 href="https://github.com/withinkme"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-foreground transition-colors"
+                className="text-muted-foreground hover:text-foreground focus-visible:ring-ring inline-flex min-h-11 items-center rounded transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
               >
                 GitHub: @withinkme
               </a>

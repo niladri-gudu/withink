@@ -184,11 +184,7 @@ export function FeedbackForm() {
           calmer and more thoughtful.
         </p>
         <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <Button
-            onClick={startAnother}
-            variant="outline"
-            className="px-6"
-          >
+          <Button onClick={startAnother} variant="outline" className="px-6">
             Send another
           </Button>
           <Button asChild className="px-6">
@@ -342,7 +338,7 @@ export function FeedbackForm() {
                 type="button"
                 onClick={removeImage}
                 aria-label="Remove screenshot"
-                className="bg-foreground/60 text-background hover:bg-foreground/80 absolute top-2 right-2 flex h-7 w-7 items-center justify-center rounded-full backdrop-blur-sm transition-colors"
+                className="bg-foreground/60 text-background hover:bg-foreground/80 absolute top-2 right-2 flex h-11 w-11 items-center justify-center rounded-full backdrop-blur-sm transition-colors sm:h-8 sm:w-8"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -376,7 +372,7 @@ export function FeedbackForm() {
         <Button
           type="submit"
           disabled={isSubmitting || imageUploading}
-          className="gap-2 px-6"
+          className="w-full gap-2 px-6 sm:w-auto"
         >
           {isSubmitting ? (
             <>

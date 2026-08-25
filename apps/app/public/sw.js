@@ -45,7 +45,7 @@ self.addEventListener("message", (event) => {
   }
 });
 
-function isStaticAsset(url: URL): boolean {
+function isStaticAsset(url) {
   return (
     url.pathname.startsWith("/_next/static/") ||
     url.pathname.startsWith("/fonts/") ||

@@ -2,8 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@withink/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@withink/ui/card";
+import { IconButton } from "@withink/ui/icon-button";
 import { cn } from "@withink/utils";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -14,13 +14,8 @@ import type { CalendarEntry } from "../actions/entry-actions";
 
 interface EntriesCalendarProps {
   calendarEntries: CalendarEntry[];
-  streakData: {
-    currentStreak: number;
-    totalEntries: number;
-    totalWords: number;
-    averageWords: number;
-  };
   localToday: string;
+  className?: string;
 }
 
 const MONTH_NAMES = [
@@ -48,10 +43,16 @@ const moodCellClasses: Record<number, string> = {
   5: "bg-mood-5-bg border-mood-5-border hover:bg-mood-5/30 text-mood-5",
 };
 
+/**
+ * The month pager. Phones read it as a compact strip directly under the
+ * sticky search — chevron pagers are 44px touch targets and any tappable day
+ * opens that page in the editor; md+ keeps the original mood-colored month
+ * grid presentation inside the sticky rail.
+ */
 export function EntriesCalendar({
   calendarEntries,
-  streakData,
   localToday,
+  className,
 }: EntriesCalendarProps) {
   const router = useRouter();
 
@@ -131,37 +132,7 @@ export function EntriesCalendar({
   };
 
   return (
-    <div className="space-y-6">
-      {/* At-a-glance folio row */}
-      <Card className="border-border overflow-hidden rounded-xl border">
-        <div className="grid grid-cols-3">
-          <div className="border-border/70 p-4 text-center">
-            <span className="text-foreground font-serif text-3xl font-bold">
-              {streakData.currentStreak}
-            </span>
-            <p className="text-muted-foreground/70 mt-1 font-serif text-[11px] font-semibold tracking-[0.16em] uppercase">
-              Streak
-            </p>
-          </div>
-          <div className="border-border/70 border-l p-4 text-center">
-            <span className="text-foreground font-serif text-3xl font-bold">
-              {streakData.totalEntries}
-            </span>
-            <p className="text-muted-foreground/70 mt-1 font-serif text-[11px] font-semibold tracking-[0.16em] uppercase">
-              Entries
-            </p>
-          </div>
-          <div className="border-border/70 border-l p-4 text-center">
-            <span className="text-foreground font-serif text-3xl font-bold">
-              {streakData.averageWords}
-            </span>
-            <p className="text-muted-foreground/70 mt-1 font-serif text-[11px] font-semibold tracking-[0.16em] uppercase">
-              Avg words
-            </p>
-          </div>
-        </div>
-      </Card>
-
+    <div className={cn("space-y-6", className)}>
       {/* Calendar Card */}
       <span className="sr-only" aria-live="polite" aria-atomic="true">
         Showing {MONTH_NAMES[currentMonth]} {currentYear}
@@ -169,32 +140,28 @@ export function EntriesCalendar({
       <Card className="border-border border">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <div className="flex flex-col">
-            <span className="text-muted-foreground/60 font-serif text-[11px] tracking-[0.16em] uppercase">
+            <span className="text-running-head text-muted-foreground/60">
               The year, kept in order
             </span>
             <CardTitle className="text-foreground font-serif text-xl font-semibold">
               {MONTH_NAMES[currentMonth]} {currentYear}
             </CardTitle>
           </div>
-          <div className="flex items-center gap-1.5">
-            <Button
+          <div className="flex items-center gap-1">
+            <IconButton
               variant="outline"
-              size="icon"
-              className="focus-visible:ring-ring h-8 w-8 cursor-pointer rounded-lg focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
               onClick={handlePrevMonth}
               aria-label="Previous month"
             >
               <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button
+            </IconButton>
+            <IconButton
               variant="outline"
-              size="icon"
-              className="focus-visible:ring-ring h-8 w-8 cursor-pointer rounded-lg focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
               onClick={handleNextMonth}
               aria-label="Next month"
             >
               <ChevronRight className="h-4 w-4" />
-            </Button>
+            </IconButton>
           </div>
         </CardHeader>
         <CardContent>

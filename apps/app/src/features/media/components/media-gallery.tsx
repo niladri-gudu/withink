@@ -6,7 +6,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@withink/ui/button";
 import { Card, CardContent } from "@withink/ui/card";
+import { IconButton } from "@withink/ui/icon-button";
 import { Input } from "@withink/ui/input";
+import { Select } from "@withink/ui/select";
 import {
   Calendar,
   ChevronRight,
@@ -122,63 +124,56 @@ export function MediaGallery({
 
   return (
     <div className="space-y-6">
-      {/* Storage stats card */}
+      {/* Storage stats card — compact single row on phones, two-part on md+ */}
       <Card className="border-border overflow-hidden rounded-xl border">
-        <CardContent className="flex flex-col justify-between gap-5 p-5 select-none md:flex-row md:items-center">
-          <div className="flex items-start gap-4">
-            <div className="bg-accent/10 text-accent mt-1 rounded-xl p-3 md:mt-0">
+        <CardContent className="flex flex-col gap-3 p-4 select-none sm:p-5 md:flex-row md:items-center md:gap-5">
+          <div className="flex min-w-0 flex-1 items-center gap-3.5">
+            <span className="bg-accent/10 text-accent hidden shrink-0 rounded-xl p-3 md:block">
               <HardDrive className="h-5 w-5" />
-            </div>
-            <div className="space-y-1">
-              <p className="text-muted-foreground font-serif text-[11px] tracking-[0.16em] uppercase">
-                Diary Archives
-              </p>
-              <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-semibold tracking-tight">
+            </span>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-baseline justify-between gap-2">
+                <p className="text-running-head text-muted-foreground">
+                  Diary Archives
+                </p>
+                <p className="text-muted-foreground shrink-0 text-xs">
+                  {statsLoading ? "…" : `${stats?.fileCount || 0} objects`}
+                </p>
+              </div>
+              <div className="mt-1 flex items-baseline gap-2">
+                <span className="text-xl font-semibold tracking-tight sm:text-2xl">
                   {statsLoading ? "…" : `${stats?.usedMB || 0} MB`}
                 </span>
                 <span className="text-muted-foreground text-sm">
-                  of {stats?.limitMB || 50} MB used
+                  of {stats?.limitMB || 50} MB
                 </span>
+              </div>
+              <div className="bg-secondary mt-2 h-1.5 w-full overflow-hidden rounded-full">
+                <div
+                  className="bg-accent h-full transition-all duration-500 ease-out"
+                  style={{
+                    width: `${statsLoading ? 0 : stats?.percentUsed || 0}%`,
+                  }}
+                />
               </div>
             </div>
           </div>
 
-          <div className="flex-1 space-y-2 md:max-w-md">
-            <div className="text-muted-foreground flex items-center justify-between text-xs">
-              <span>
-                {statsLoading
-                  ? "Loading storage..."
-                  : `${stats?.fileCount || 0} objects`}
-              </span>
-              <span>{statsLoading ? "0%" : `${stats?.percentUsed || 0}%`}</span>
-            </div>
-            <div className="bg-secondary h-1.5 w-full overflow-hidden rounded-full">
-              <div
-                className="bg-accent h-full transition-all duration-500 ease-out"
-                style={{
-                  width: `${statsLoading ? 0 : stats?.percentUsed || 0}%`,
-                }}
-              />
-            </div>
-          </div>
-
-          <Button
+          <IconButton
             variant="ghost"
-            size="icon"
             onClick={() => {
               void refresh();
               toast.success("Refreshed gallery");
             }}
             disabled={loading || statsLoading}
-            className="text-muted-foreground hover:text-foreground h-9 w-9 self-end rounded-xl md:self-auto"
-            title="Refresh gallery"
             aria-label="Refresh gallery"
+            title="Refresh gallery"
+            className="text-muted-foreground hover:text-foreground self-end md:self-auto"
           >
             <RefreshCw
               className={`h-4 w-4 ${loading || statsLoading ? "animate-spin" : ""}`}
             />
-          </Button>
+          </IconButton>
         </CardContent>
       </Card>
 
@@ -204,7 +199,7 @@ export function MediaGallery({
         </div>
 
         <div className="flex items-center gap-3">
-          <select
+          <Select
             value={sortBy}
             onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
               setSortBy(
@@ -216,43 +211,40 @@ export function MediaGallery({
               )
             }
             aria-label="Sort files"
-            className="border-border/60 bg-card/60 text-foreground/80 focus-visible:ring-ring h-10 cursor-pointer rounded-xl border px-3 text-sm transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
           >
             <option value="date-desc">Newest First</option>
             <option value="date-asc">Oldest First</option>
             <option value="size-desc">Largest Size</option>
             <option value="size-asc">Smallest Size</option>
-          </select>
+          </Select>
 
           <div className="bg-secondary/50 border-border/30 flex items-center gap-1 rounded-xl border p-1">
-            <Button
+            <IconButton
               variant="ghost"
-              size="icon"
               onClick={() => setViewMode("grid")}
               aria-label="Grid view"
               aria-pressed={viewMode === "grid"}
-              className={`focus-visible:ring-ring h-8 w-8 rounded-lg p-0 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none ${
+              className={
                 viewMode === "grid"
                   ? "bg-background text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
-              }`}
+              }
             >
               <Grid className="h-4 w-4" />
-            </Button>
-            <Button
+            </IconButton>
+            <IconButton
               variant="ghost"
-              size="icon"
               onClick={() => setViewMode("list")}
               aria-label="List view"
               aria-pressed={viewMode === "list"}
-              className={`focus-visible:ring-ring h-8 w-8 rounded-lg p-0 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none ${
+              className={
                 viewMode === "list"
                   ? "bg-background text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
-              }`}
+              }
             >
               <List className="h-4 w-4" />
-            </Button>
+            </IconButton>
           </div>
         </div>
       </div>
@@ -289,16 +281,24 @@ export function MediaGallery({
           </CardContent>
         </Card>
       ) : viewMode === "grid" ? (
-        /* Grid Layout */
-        <div className="animate-in fade-in grid grid-cols-2 gap-4 duration-300 sm:grid-cols-3 md:grid-cols-4">
+        /* Grid Layout — captions always visible (no hover-only overlay) */
+        <div className="animate-in fade-in grid grid-cols-2 gap-3 duration-300 sm:grid-cols-3 sm:gap-4 md:grid-cols-4">
           {filteredFiles.map((file, index) => {
             const filename = file.key.split("/").pop() || "";
+            const dateStr = file.lastModified
+              ? new Date(file.lastModified).toLocaleDateString(undefined, {
+                  year: "numeric",
+                  month: "short",
+                  day: "numeric",
+                })
+              : "Unknown date";
+
             return (
               <button
                 key={file.key}
                 type="button"
                 onClick={() => setLightboxIndex(index)}
-                aria-label={`View memory: ${filename}`}
+                aria-label={`View memory: ${filename}, ${dateStr}`}
                 className="border-border/60 bg-card focus-visible:ring-ring group relative aspect-square cursor-pointer overflow-hidden rounded-xl border text-left shadow-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
               >
                 <Image
@@ -308,11 +308,15 @@ export function MediaGallery({
                   sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                   className="object-cover transition-transform duration-300 ease-out group-hover:scale-103 group-hover:brightness-95"
                 />
-                <div className="absolute inset-0 flex items-center justify-center bg-black/35 opacity-0 backdrop-blur-[1px] transition-opacity group-hover:opacity-100">
-                  <span className="flex items-center gap-1.5 rounded-full bg-black/40 px-3 py-1.5 text-[10px] font-bold tracking-widest text-white uppercase shadow-sm backdrop-blur-sm">
-                    View Memory <ChevronRight className="h-3 w-3" />
+                {/* Caption scrim: readable at rest on every breakpoint */}
+                <span className="absolute inset-x-0 bottom-0 flex flex-col gap-0.5 bg-gradient-to-t from-black/75 via-black/45 to-transparent px-2.5 pt-6 pb-2">
+                  <span className="truncate text-[11px] font-medium text-white">
+                    {filename}
                   </span>
-                </div>
+                  <span className="text-[10px] tracking-wide text-white/70">
+                    {dateStr}
+                  </span>
+                </span>
               </button>
             );
           })}

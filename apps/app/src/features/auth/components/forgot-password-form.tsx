@@ -71,7 +71,7 @@ export function ForgotPasswordForm() {
             <h2 className="text-h2 text-foreground font-serif font-bold">
               Check your inbox.
             </h2>
-            <p className="text-caption font-serif tracking-[0.16em] uppercase">
+            <p className="text-running-head text-muted-foreground">
               Instructions dispatched • Action required
             </p>
           </div>
@@ -96,7 +96,7 @@ export function ForgotPasswordForm() {
             <h1 className="text-h2 text-foreground font-serif font-bold">
               Forgot secret.
             </h1>
-            <p className="text-caption font-serif tracking-[0.16em] uppercase">
+            <p className="text-running-head text-muted-foreground">
               We&apos;ll send recovery instructions to your email
             </p>
           </div>
@@ -122,6 +122,7 @@ export function ForgotPasswordForm() {
               <Input
                 id="email"
                 type="email"
+                autoComplete="email"
                 placeholder="name@example.com"
                 aria-invalid={!!errors.email}
                 aria-describedby={errors.email ? "email-error" : undefined}
@@ -137,7 +138,7 @@ export function ForgotPasswordForm() {
             <div className="space-y-3 pt-2 text-center">
               <Button
                 type="submit"
-                className="relative h-11 w-full cursor-pointer overflow-hidden font-serif text-sm font-medium uppercase tracking-[0.15em] transition-transform hover:scale-[1.01] active:scale-[0.99]"
+                className="relative h-11 w-full cursor-pointer overflow-hidden font-serif text-sm font-medium tracking-[0.15em] uppercase transition-transform hover:scale-[1.01] active:scale-[0.99]"
                 disabled={isLoading}
               >
                 {isLoading ? (

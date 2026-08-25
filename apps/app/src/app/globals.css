@@ -7,6 +7,25 @@
 @source "../../../../packages/theme/src";
 @source "../../../../packages/config/src";
 
+/* ─── Z-index contract ──────────────────────────────────────────────────────
+   One scale for every layer in the app. New UI MUST use the matching tier;
+   do not invent in-between values.
+
+   0        content                page flow, cards, editor surface
+   20       sticky header          mobile running bar (header.tsx); also
+                                    the editor's sticky top row
+   30       desktop margin rail    sidebar.tsx aside
+   40       editor overlays        ONE owner per route: journal-editor-shell
+                                    renders the scroll-progress hairline,
+                                    floating toolbar, and save pill
+   60       navigation chrome      bottom tab bar, sheets, dialogs, drawers
+                                    (Radix portals land on <body>; give both
+                                     Overlay and Content z-[60])
+   9999     lock gates             gate-layout.tsx and everything it renders
+
+   Anything at 60+ must be focus-trapped and Escape-closable.
+   ───────────────────────────────────────────────────────────────────────── */
+
 /* The Field Ledger — the app surface's own visual world (see the direction
    contract comment in layout.tsx). The docs site carries the same world;
    these overrides re-theme the app into the inside of that notebook. */
@@ -108,7 +127,9 @@
     --accent: oklch(0.74 0.11 75);
     --accent-foreground: oklch(0.21 0.018 70);
 
-    --destructive: oklch(0.62 0.13 30);
+    /* Hardened for AA text contrast against the dark card (4.76:1 measured;
+       the filled destructive Button variant is unused app-side). */
+    --destructive: oklch(0.66 0.13 30);
     --destructive-foreground: oklch(0.92 0.015 80);
 
     --border: oklch(0.34 0.016 70);

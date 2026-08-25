@@ -4,8 +4,9 @@ import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { Card } from "@withink/ui/card";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
-import { formatDisplayDate } from "@/lib/utils/date";
+import { PageHeader } from "@/features/app-shell/components/page-header";
 
 import { getInsightsAction } from "../actions/insights-actions";
 import type { InsightsPayload } from "../services/insights-service";
@@ -58,6 +59,9 @@ export function InsightsDashboard({
           }
         } catch (e) {
           console.error("Failed to fetch timezone-adjusted insights", e);
+          toast.error("Couldn't adjust insights for your timezone", {
+            description: "Showing the times as they were written.",
+          });
         } finally {
           setIsLoading(false);
         }
@@ -68,21 +72,6 @@ export function InsightsDashboard({
 
   const { streaks, heatmap, wordCountStats } = data;
 
-  // Computed after mount: the local date depends on the viewer's timezone, so
-  // computing it during render would mismatch the server-rendered HTML.
-  const [displayDate, setDisplayDate] = useState("");
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setDisplayDate(
-      formatDisplayDate(localToday, {
-        weekday: "long",
-        month: "long",
-        day: "numeric",
-        year: "numeric",
-      }),
-    );
-  }, [localToday]);
-
   return (
     <div className="relative w-full space-y-10">
       {isLoading && (
@@ -92,74 +81,56 @@ export function InsightsDashboard({
         </div>
       )}
 
-      {/* Running head + page title */}
-      <header>
-        <div className="border-border/70 flex items-baseline justify-between gap-4 border-b pb-3">
-          <span className="text-muted-foreground/70 font-serif text-[11px] font-semibold tracking-[0.2em] uppercase">
-            Insights
-          </span>
-          <span className="text-muted-foreground/50 font-hand text-base leading-none">
-            {displayDate}
-          </span>
-        </div>
-        <div className="mt-6 space-y-2">
-          <p className="text-muted-foreground/70 font-hand text-lg leading-snug">
-            a quiet look at your year
-          </p>
-          <h1 className="text-foreground font-serif text-3xl leading-none font-bold tracking-tight sm:text-4xl">
-            Private{" "}
-            <span className="text-accent mt-1 block pl-1 text-4xl font-normal italic sm:mt-0 sm:inline sm:text-5xl">
-              insights.
-            </span>
-          </h1>
-          <p className="text-body-small text-muted-foreground mt-1">
-            A calm, private analysis of your writing patterns and moods. These
-            statistics remain entirely local to your account.
-          </p>
-        </div>
-      </header>
+      <PageHeader
+        runningHead="Insights"
+        note="a quiet look at your year"
+        title="Private"
+        accent="insights."
+        description="A calm, private analysis of your writing patterns and moods. These statistics remain entirely local to your account."
+        today={localToday}
+      />
 
       {/* At a glance — one ruled passage, four entries */}
       <Card className="border-border overflow-hidden rounded-xl border">
         <div className="grid grid-cols-2 md:grid-cols-4">
-          <div className="border-border/70 p-6">
-            <p className="text-muted-foreground/70 font-serif text-[11px] font-semibold tracking-[0.2em] uppercase">
+          <div className="border-border/70 p-4 sm:p-6">
+            <p className="text-running-head text-muted-foreground/70">
               Current streak
             </p>
-            <p className="text-foreground mt-2 font-serif text-4xl font-bold tracking-tight">
+            <p className="text-foreground mt-2 font-serif text-3xl font-bold tracking-tight sm:text-4xl">
               {streaks.currentStreak}
             </p>
             <p className="text-muted-foreground/60 font-hand mt-1 text-base">
               days in a row
             </p>
           </div>
-          <div className="border-border/70 border-t p-6 md:border-t-0 md:border-l">
-            <p className="text-muted-foreground/70 font-serif text-[11px] font-semibold tracking-[0.2em] uppercase">
+          <div className="border-border/70 border-t border-l p-4 sm:p-6 md:border-t-0">
+            <p className="text-running-head text-muted-foreground/70">
               Longest streak
             </p>
-            <p className="text-foreground mt-2 font-serif text-4xl font-bold tracking-tight">
+            <p className="text-foreground mt-2 font-serif text-3xl font-bold tracking-tight sm:text-4xl">
               {streaks.longestStreak}
             </p>
             <p className="text-muted-foreground/60 font-hand mt-1 text-base">
               consecutive days max
             </p>
           </div>
-          <div className="border-border/70 border-t p-6 md:border-t-0 md:border-l">
-            <p className="text-muted-foreground/70 font-serif text-[11px] font-semibold tracking-[0.2em] uppercase">
+          <div className="border-border/70 border-t p-4 sm:p-6 md:border-l">
+            <p className="text-running-head text-muted-foreground/70">
               Total words
             </p>
-            <p className="text-foreground mt-2 font-serif text-4xl font-bold tracking-tight">
+            <p className="text-foreground mt-2 font-serif text-3xl font-bold tracking-tight sm:text-4xl">
               {wordCountStats.total.toLocaleString()}
             </p>
             <p className="text-muted-foreground/60 font-hand mt-1 text-base">
               written in total
             </p>
           </div>
-          <div className="border-border/70 border-t p-6 md:border-t-0 md:border-l">
-            <p className="text-muted-foreground/70 font-serif text-[11px] font-semibold tracking-[0.2em] uppercase">
+          <div className="border-border/70 border-t border-l p-4 sm:p-6">
+            <p className="text-running-head text-muted-foreground/70">
               Entries
             </p>
-            <p className="text-foreground mt-2 font-serif text-4xl font-bold tracking-tight">
+            <p className="text-foreground mt-2 font-serif text-3xl font-bold tracking-tight sm:text-4xl">
               {heatmap.filter((d) => d.count > 0).length}
             </p>
             <p className="text-muted-foreground/60 font-hand mt-1 text-base">
@@ -171,7 +142,7 @@ export function InsightsDashboard({
 
       {/* Below-fold visualizations: heatmap, mood/word charts, activity, monthly.
           Lazy-loaded as one async chunk so the header + stat cards render first. */}
-      <InsightsCharts data={data} />
+      <InsightsCharts data={data} localToday={localToday} />
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Alegreya, Caveat } from "next/font/google";
 import Script from "next/script";
 import { cn } from "@withink/utils";
@@ -111,6 +111,13 @@ interface RootLayoutProps {
   children: React.ReactNode;
 }
 
+/* viewport-fit=cover lets env(safe-area-inset-*) report the iOS home
+   indicator / notch, which the bottom tab bar and its content clearance
+   respect. */
+export const viewport: Viewport = {
+  viewportFit: "cover",
+};
+
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html
@@ -130,24 +137,33 @@ export default function RootLayout({ children }: RootLayoutProps) {
           content="#1e170f"
           media="(prefers-color-scheme: dark)"
         />
+        {/* Service worker: register in production, self-unregister in dev.
+            The branch is resolved at SSR — inline scripts can't reference
+            `process` (undefined in the browser; threw a ReferenceError on
+            every production load before this was hoisted server-side). */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `
+            __html:
+              process.env.NODE_ENV === "production"
+                ? `
               if ('serviceWorker' in navigator) {
                 window.addEventListener('load', function() {
-                  if (process.env.NODE_ENV === 'production') {
-                    navigator.serviceWorker.register('/sw.js').catch(function(err) {
-                      console.error('Service worker registration failed:', err);
+                  navigator.serviceWorker.register('/sw.js').catch(function(err) {
+                    console.error('Service worker registration failed:', err);
+                  });
+                });
+              }
+            `
+                : `
+              if ('serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                  navigator.serviceWorker.getRegistrations().then(function(regs) {
+                    regs.forEach(function(r) { r.unregister(); });
+                  });
+                  if (window.caches && caches.keys) {
+                    caches.keys().then(function(keys) {
+                      keys.forEach(function(k) { caches.delete(k); });
                     });
-                  } else {
-                    navigator.serviceWorker.getRegistrations().then(function(regs) {
-                      regs.forEach(function(r) { r.unregister(); });
-                    });
-                    if (window.caches && caches.keys) {
-                      caches.keys().then(function(keys) {
-                        keys.forEach(function(k) { caches.delete(k); });
-                      });
-                    }
                   }
                 });
               }
@@ -184,6 +200,7 @@ OWN-WORLD: Same manila/umber desk, ledger-paper sheets, iron-gall ink, one old-p
 STORY: A writer opens their diary and finds the index in the margin, the day's page open before them, and every control either marginalia or a printed rule. The interface is a book, not a dashboard.
 FIRST VIEWPORT: The margin rail (wordmark + folio index + colophon) at left; the open page centered at a manuscript measure — running head ruled above, hand note + serif title with italic gold accent, then the writing surface with its 2px gold hairline.
 FORM: The Annotated Codex, candidate 4 of the grounded surface list (seed be2a53bd), assigned by the surface roll.
+MOBILE-FIRST REVISION (2026-08-23): phones become the primary desk — navigation moves to a native-style bottom tab bar (Today · Entries · Insights · More, with More as a bottom sheet) while the desktop margin rail stands unchanged; the editor route stays chrome-minimal. Same world, same identity, thumb-reach hierarchy.
 FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md -->`,
           }}
         />

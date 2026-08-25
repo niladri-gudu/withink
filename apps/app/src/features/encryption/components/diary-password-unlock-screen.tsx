@@ -62,7 +62,7 @@ export function DiaryPasswordUnlockScreen({
           <h1 className="text-h2 text-foreground font-serif font-bold">
             Unlock Your Diary
           </h1>
-          <p className="text-caption font-serif tracking-[0.16em] uppercase">
+          <p className="text-running-head text-muted-foreground">
             Diary Encrypted
           </p>
         </div>

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Alegreya, Caveat } from "next/font/google";
 import Script from "next/script";
 
@@ -105,6 +105,16 @@ export const metadata: Metadata = {
     creator: "@withinkme",
     images: ["/og-image.png"],
   },
+};
+
+/* Safe-area-aware viewport (notch devices) + theme-colored browser chrome
+   matching the docs tokens: manila oklch(0.925 0.022 82) / umber oklch(0.21 0.018 70). */
+export const viewport: Viewport = {
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#eee5d6" },
+    { media: "(prefers-color-scheme: dark)", color: "#1e170f" },
+  ],
 };
 
 interface RootLayoutProps {

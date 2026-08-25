@@ -32,6 +32,26 @@
       "types": "./src/tooltip.tsx",
       "default": "./src/tooltip.tsx"
     },
+    "./sheet": {
+      "types": "./src/sheet.tsx",
+      "default": "./src/sheet.tsx"
+    },
+    "./dialog": {
+      "types": "./src/dialog.tsx",
+      "default": "./src/dialog.tsx"
+    },
+    "./icon-button": {
+      "types": "./src/icon-button.tsx",
+      "default": "./src/icon-button.tsx"
+    },
+    "./select": {
+      "types": "./src/select.tsx",
+      "default": "./src/select.tsx"
+    },
+    "./popover": {
+      "types": "./src/popover.tsx",
+      "default": "./src/popover.tsx"
+    },
     "./brand-loader": {
       "types": "./src/brand-loader.tsx",
       "default": "./src/brand-loader.tsx"
@@ -53,6 +73,7 @@
     "clsx": "catalog:",
     "lucide-react": "catalog:",
     "next-themes": "^0.4.6",
+    "radix-ui": "^1.4.3",
     "tailwind-merge": "catalog:"
   },
   "peerDependencies": {

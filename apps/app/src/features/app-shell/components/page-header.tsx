@@ -46,7 +46,7 @@ export function PageHeader({
     <header>
       {/* Running head: folio name + date, ruled below */}
       <div className="border-border/70 flex items-baseline justify-between gap-4 border-b pb-3">
-        <span className="text-muted-foreground/70 font-serif text-[11px] font-semibold tracking-[0.2em] uppercase">
+        <span className="text-running-head text-muted-foreground/70">
           {runningHead}
         </span>
         <span className="text-muted-foreground/50 font-hand text-base leading-none">

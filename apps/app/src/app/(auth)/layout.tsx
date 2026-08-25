@@ -6,7 +6,9 @@ interface AuthLayoutProps {
 
 export default function AuthLayout({ children }: AuthLayoutProps) {
   return (
-    <div className="bg-background relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-12 sm:px-6 lg:px-8">
+    // No overflow-hidden here: tall cards (registration) must be able to
+    // extend past a short phone viewport and scroll, never clip.
+    <div className="bg-background relative flex min-h-dvh w-full items-center justify-center px-4 py-12 sm:px-6 lg:px-8">
       {/* Ruled ledger paper behind the auth card */}
       <div
         aria-hidden="true"

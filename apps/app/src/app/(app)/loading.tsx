@@ -11,13 +11,13 @@ export default function DashboardLoading() {
     <PageLoadingShell>
       <PageLoadingHeader
         runningHead="Today"
-        eyebrow="a fresh page for today"
+        eyebrow="writer's page, one day at a time"
         title="Good morning,"
         accent="writer."
-        description="Welcome back to your private writing diary"
+        description="A fresh page for today's reflection"
       />
 
-      {/* Dashboard Grid */}
+      {/* Dashboard hero: Today card (dominant) + streak margin note */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
         {/* Today's Reflection card */}
         <Card className="border-border/60 bg-card/60 relative flex flex-col overflow-hidden border md:col-span-2">
@@ -31,21 +31,22 @@ export default function DashboardLoading() {
               <Skeleton className="h-4 w-[92%]" />
               <Skeleton className="h-4 w-[85%]" />
             </div>
-            <Skeleton className="h-10 w-36 rounded-full" />
+            {/* Thumb-sized primary CTA */}
+            <Skeleton className="h-11 w-full rounded-xl sm:h-10 sm:w-36" />
           </CardContent>
         </Card>
 
-        {/* Quick stats/streak */}
+        {/* Streak margin note */}
         <Card className="border-border/60 bg-card/60 flex flex-col justify-between border p-6">
           <div className="space-y-2">
-            <Skeleton className="h-6 w-32" />
-            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-3.5 w-24" />
           </div>
-          <div className="flex flex-grow flex-col items-center justify-center space-y-3 py-6">
-            <Skeleton className="h-16 w-16 rounded-full" />
-            <Skeleton className="h-8 w-12 animate-pulse" />
-            <Skeleton className="h-3 w-16" />
+          <div className="my-6 flex items-end gap-3">
+            <Skeleton className="h-6 w-6" />
+            <Skeleton className="h-10 w-12 animate-pulse" />
+            <Skeleton className="h-4 w-20 pb-1" />
           </div>
+          <Skeleton className="h-3 w-full" />
         </Card>
       </div>
 

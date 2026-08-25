@@ -13,7 +13,7 @@ export function VerifiedContent() {
         <h1 className="text-h2 text-foreground font-serif font-bold">
           Identity verified.
         </h1>
-        <p className="text-caption font-serif tracking-[0.2em] uppercase">
+        <p className="text-running-head text-muted-foreground">
           Your notebook is ready for its first page
         </p>
       </div>
@@ -21,7 +21,7 @@ export function VerifiedContent() {
       <div className="space-y-4 pt-2">
         <Button
           asChild
-          className="relative h-11 w-full cursor-pointer overflow-hidden font-serif text-sm font-medium uppercase tracking-[0.15em] transition-transform hover:scale-[1.01] active:scale-[0.99]"
+          className="relative h-11 w-full cursor-pointer overflow-hidden font-serif text-sm font-medium tracking-[0.15em] uppercase transition-transform hover:scale-[1.01] active:scale-[0.99]"
         >
           <Link href={ROUTES.APP.DASHBOARD}>
             Go to Journal <ArrowRight className="ml-2 h-4 w-4" />

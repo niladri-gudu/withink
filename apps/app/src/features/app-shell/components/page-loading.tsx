@@ -34,7 +34,7 @@ export function PageLoadingHeader({
   return (
     <header>
       <div className="border-border/70 flex items-baseline justify-between gap-4 border-b pb-3">
-        <span className="text-muted-foreground/70 font-serif text-[11px] font-semibold tracking-[0.2em] uppercase">
+        <span className="text-running-head text-muted-foreground/70">
           {runningHead}
         </span>
         <span className="text-muted-foreground/50 font-hand text-base leading-none">
@@ -43,7 +43,7 @@ export function PageLoadingHeader({
       </div>
       <div className="mt-6 flex items-start justify-between gap-4">
         <div className="space-y-2">
-          <span className="text-muted-foreground/70 block font-hand text-lg">
+          <span className="text-muted-foreground/70 font-hand block text-lg">
             {eyebrow}
           </span>
           <h1 className="text-foreground font-serif text-3xl leading-none font-bold tracking-tight sm:text-4xl">

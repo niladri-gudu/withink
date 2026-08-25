@@ -4,14 +4,16 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { Button } from "@withink/ui/button";
-import { ChevronLeft, Loader2 } from "lucide-react";
+import { IconButton } from "@withink/ui/icon-button";
+import { ChevronLeft, Loader2, Maximize2, Minimize2 } from "lucide-react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 
 import { ROUTES } from "@/constants/routes";
 import { decryptText } from "@/lib/crypto-client";
 import { safeStorage } from "@/lib/safe-storage";
 import { formatDisplayDate } from "@/lib/utils/date";
 import { zenAudioService } from "@/lib/zen-audio";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import { useEncryption } from "@/providers/encryption-provider";
 
 import { useAutoSave } from "../hooks/use-auto-save";
@@ -41,6 +43,11 @@ interface Props {
   initialMood: number | null;
 }
 
+/** How long the revealed toolbar lingers on a phone in zen mode. */
+const ZEN_REVEAL_HIDE_MS = 3000;
+/** The app's one scroll container (the shell's <main id="main-content">). */
+const SCROLL_ROOT_ID = "main-content";
+
 export function JournalEditorShell({
   date,
   initialTitle,
@@ -56,7 +63,7 @@ export function JournalEditorShell({
   });
   const [editorInstance, setEditorInstance] = useState<any>(null);
   const [editorReady, setEditorReady] = useState(false);
-  const [toolbarBottom, setToolbarBottom] = useState(24);
+  const [toolbarBottom, setToolbarBottom] = useState(20);
   const [isFocusMode, setIsFocusMode] = useState(false);
 
   const [typewriterEnabled, setTypewriterEnabled] = useState(() => {
@@ -71,6 +78,54 @@ export function JournalEditorShell({
 
   const [scrollProgress, setScrollProgress] = useState(0);
 
+  // Zen on phones: all floating chrome hides; tapping the page reveals the
+  // toolbar for a few seconds. Desktop keeps today's always-visible zen.
+  const isMobile = useMediaQuery("(max-width: 767px)");
+  const [toolbarRevealed, setToolbarRevealed] = useState(false);
+  const revealTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const scheduleZenHide = useCallback(() => {
+    if (revealTimerRef.current) clearTimeout(revealTimerRef.current);
+    revealTimerRef.current = setTimeout(
+      () => setToolbarRevealed(false),
+      ZEN_REVEAL_HIDE_MS,
+    );
+  }, []);
+
+  const revealZenToolbar = useCallback(() => {
+    setToolbarRevealed(true);
+    scheduleZenHide();
+  }, [scheduleZenHide]);
+
+  // Both entry points (header button, toolbar exit) route through here so a
+  // fresh zen session always starts with chrome hidden — no reset effect.
+  const toggleFocusMode = useCallback(() => {
+    setToolbarRevealed(false);
+    if (revealTimerRef.current) clearTimeout(revealTimerRef.current);
+    setIsFocusMode((prev) => !prev);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (revealTimerRef.current) clearTimeout(revealTimerRef.current);
+    };
+  }, []);
+
+  // Typing (each snapshot tick) keeps the revealed toolbar alive; it tucks
+  // itself away once the writer settles back into the page.
+  useEffect(() => {
+    if (isFocusMode && isMobile && toolbarRevealed && editorContent.text) {
+      scheduleZenHide();
+    }
+  }, [
+    editorContent.html,
+    editorContent.text,
+    isFocusMode,
+    isMobile,
+    toolbarRevealed,
+    scheduleZenHide,
+  ]);
+
   // Sync settings to local storage
   useEffect(() => {
     safeStorage.setItem(
@@ -83,9 +138,13 @@ export function JournalEditorShell({
     safeStorage.setItem("withink-ambient-sound", ambientSound);
   }, [ambientSound]);
 
-  // Track window scroll progress, rAF-throttled so we only re-render when the
-  // value actually changes (scroll fires at up to 60Hz+).
+  // Scroll progress of THE scroll container (the shell's <main> — the window
+  // itself never scrolls in this layout), rAF-throttled so we only re-render
+  // when the value actually changes.
   useEffect(() => {
+    const scroller = document.getElementById(SCROLL_ROOT_ID);
+    if (!scroller) return;
+
     let rafId: number | null = null;
     let lastProgress = -1;
 
@@ -93,12 +152,11 @@ export function JournalEditorShell({
       if (rafId !== null) return;
       rafId = requestAnimationFrame(() => {
         rafId = null;
-        const totalHeight =
-          document.documentElement.scrollHeight - window.innerHeight;
+        const totalHeight = scroller.scrollHeight - scroller.clientHeight;
         const progress =
           totalHeight <= 0
             ? 0
-            : Math.min((window.scrollY / totalHeight) * 100, 100);
+            : Math.min((scroller.scrollTop / totalHeight) * 100, 100);
         if (progress !== lastProgress) {
           lastProgress = progress;
           setScrollProgress(progress);
@@ -106,13 +164,25 @@ export function JournalEditorShell({
       });
     };
 
-    window.addEventListener("scroll", handleScroll, { passive: true });
+    scroller.addEventListener("scroll", handleScroll, { passive: true });
     handleScroll();
     return () => {
-      window.removeEventListener("scroll", handleScroll);
+      scroller.removeEventListener("scroll", handleScroll);
       if (rafId !== null) cancelAnimationFrame(rafId);
     };
   }, []);
+
+  // Escape leaves zen (keyboard users shouldn't have to hunt for the exit).
+  useEffect(() => {
+    if (!isFocusMode) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsFocusMode(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isFocusMode]);
 
   // Ambient sound management
   useEffect(() => {
@@ -132,6 +202,7 @@ export function JournalEditorShell({
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.ctrlKey || e.metaKey || e.altKey) return;
+      if (e.key === "Escape") return;
       const ignoreKeys = [
         "Shift",
         "Control",
@@ -240,7 +311,7 @@ export function JournalEditorShell({
   // appended/removed on every toolbar/viewport change.
   const scrollPaddingStyleRef = useRef<HTMLStyleElement | null>(null);
   useEffect(() => {
-    const topBuffer = isFocusMode ? 40 : 120;
+    const topBuffer = isFocusMode ? 40 : 72;
     const bottomBuffer = toolbarBottom + 120;
     document.documentElement.style.scrollPaddingTop = `${topBuffer}px`;
     document.documentElement.style.scrollPaddingBottom = `${bottomBuffer}px`;
@@ -325,72 +396,119 @@ export function JournalEditorShell({
   );
   const syncState = useSyncStatus(date);
 
+  const reduceMotion = useReducedMotion();
+
+  // On phones in zen, ALL floating chrome hides until the page is tapped;
+  // desktop keeps its familiar dimmed-but-present chrome.
+  const zenHidesChrome = isFocusMode && isMobile;
+  const toolbarVisible = !zenHidesChrome || toolbarRevealed;
+  const headerVisible = !zenHidesChrome;
+
   return (
-    <div className="bg-background text-foreground relative flex min-h-screen w-full flex-col transition-colors duration-500">
-      {/* Scroll Progress Indicator Bar */}
-      <div className="bg-secondary/30 pointer-events-none fixed top-0 right-0 left-0 z-50 h-1">
+    <div className="relative flex min-h-full w-full flex-col">
+      {/* Ruled ledger paper, scoped to the writing surface */}
+      <div
+        aria-hidden="true"
+        className="ledger-rules pointer-events-none absolute inset-0"
+      />
+
+      {/* Single scroll-progress hairline (the only fixed top layer) */}
+      <div className="pointer-events-none fixed inset-x-0 top-0 z-40 h-0.5">
         <div
           className="bg-accent h-full transition-all duration-100 ease-out"
           style={{ width: `${scrollProgress}%` }}
         />
       </div>
 
-      {/* Top fading gradient header spacer (hidden in focus mode) */}
-      {!isFocusMode && (
-        <div className="from-background via-background/80 pointer-events-none fixed top-0 right-0 left-0 z-20 h-20 bg-gradient-to-b to-transparent transition-opacity duration-300 sm:h-28" />
-      )}
-
-      {/* Ruled ledger paper behind the writing */}
-      <div
-        aria-hidden="true"
-        className="ledger-rules pointer-events-none fixed top-0 right-0 bottom-0 left-0"
-      />
-
-      <main
-        className={`relative z-30 mx-auto w-full max-w-3xl flex-grow px-4 transition-all duration-300 sm:px-6 ${
-          isFocusMode ? "pt-12 pb-[30vh] sm:pt-16" : "pt-16 pb-[40vh] sm:pt-24"
-        }`}
-      >
-        <div className="flex flex-col">
-          {/* Header Row */}
-          <div className="flex items-start justify-between gap-3 sm:gap-6">
-            <div className="flex-grow">
-              <input
-                placeholder="Untitled Log"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                aria-label="Journal entry title"
-                className={`text-foreground placeholder:text-muted-foreground/30 mb-2 w-full bg-transparent font-serif leading-tight font-bold tracking-tight transition-all outline-none sm:mb-4 ${
-                  isFocusMode
-                    ? "text-3xl opacity-80 focus:opacity-100 sm:text-4xl"
-                    : "text-4xl sm:text-5xl"
-                }`}
-              />
-            </div>
-
-            {!isFocusMode && (
-              <Button
+      {/* Editor header row: back · date · save state (phones) · zen.
+          Sticky inside the shell's scroll container; hides entirely on
+          phones in zen. */}
+      <AnimatePresence>
+        {headerVisible && (
+          <motion.header
+            key="editor-header"
+            initial={false}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: reduceMotion ? 0 : 0.15 }}
+            className="border-border/40 bg-background/85 sticky top-0 z-20 w-full border-b backdrop-blur-md"
+          >
+            <div className="mx-auto flex h-12 w-full max-w-3xl items-center gap-1.5 px-3 sm:px-6">
+              <IconButton
                 asChild
                 variant="ghost"
                 aria-label="Back to dashboard"
-                className="border-border/40 bg-background/50 hover:bg-foreground hover:text-background group mt-1 h-9 w-9 shrink-0 rounded-full border p-0 transition-all sm:h-12 sm:w-12"
+                className="-ml-2 shrink-0"
               >
                 <Link href={ROUTES.APP.DASHBOARD}>
-                  <ChevronLeft className="h-5 w-5 transition-transform group-hover:-translate-x-0.5" />
+                  <ChevronLeft className="h-5 w-5" />
                 </Link>
-              </Button>
-            )}
-          </div>
+              </IconButton>
 
-          {/* Metadata Bar (hidden in focus mode) */}
+              <time className="text-muted-foreground/70 font-hand truncate text-lg leading-none">
+                {formatDisplayDate(date)}
+              </time>
+
+              <div className="min-w-2 flex-1" />
+
+              {/* Quiet inline save state lives up here on phones — the
+                  bottom-right pill competes with the toolbar and keyboard. */}
+              <span className="sm:hidden">
+                <SaveIndicator
+                  status={saveStatus}
+                  syncState={syncState}
+                  variant="inline"
+                />
+              </span>
+
+              <IconButton
+                variant="ghost"
+                aria-label={
+                  isFocusMode ? "Exit Zen focus mode" : "Enter Zen focus mode"
+                }
+                title={isFocusMode ? "Exit Focus Mode" : "Zen Focus Mode"}
+                onClick={toggleFocusMode}
+                className="shrink-0"
+              >
+                {isFocusMode ? (
+                  <Minimize2 className="text-accent h-5 w-5" />
+                ) : (
+                  <Maximize2 className="h-5 w-5" />
+                )}
+              </IconButton>
+            </div>
+          </motion.header>
+        )}
+      </AnimatePresence>
+
+      {/* Writing column — the editor owns this surface end to end; the
+          max-w-3xl measure below is reading comfort, not shell padding.
+          (A div, not <main>: the shell's skip-link target is the landmark.) */}
+      <div
+        className="relative z-10 mx-auto w-full max-w-3xl flex-grow px-4 pt-5 pb-[32vh] sm:px-6 sm:pt-8"
+        onPointerUp={() => {
+          if (zenHidesChrome) {
+            revealZenToolbar();
+          }
+        }}
+      >
+        <div className="flex flex-col">
+          <input
+            placeholder="Untitled Log"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            aria-label="Journal entry title"
+            className={`text-foreground placeholder:text-muted-foreground/30 mb-3 w-full bg-transparent font-serif leading-tight font-bold tracking-tight transition-all outline-none ${
+              isFocusMode
+                ? "text-3xl opacity-80 focus:opacity-100 sm:text-4xl"
+                : "text-4xl sm:text-5xl"
+            }`}
+          />
+
+          {/* Mood sits directly beneath the title, comfortably above the
+              fold, with full 44px thumb targets. */}
           {!isFocusMode && (
-            <div className="border-border/10 flex flex-col justify-between gap-4 border-y py-4 transition-opacity duration-300 sm:flex-row sm:items-center">
-              <div className="flex items-center gap-3">
-                <time className="text-muted-foreground/70 font-hand text-lg">
-                  {formatDisplayDate(date)}
-                </time>
-              </div>
-
+            <div className="mb-2 flex items-center">
               <MoodSelector selected={mood} onSelect={setMood} />
             </div>
           )}
@@ -411,33 +529,55 @@ export function JournalEditorShell({
             )}
           </div>
         </div>
-      </main>
-
-      {/* Floating Formatting Toolbar */}
-      <div
-        className="pointer-events-none fixed right-0 left-0 z-40 flex justify-center px-3 transition-[bottom,left] duration-300 ease-out sm:px-4 md:left-[var(--sidebar-width)]"
-        style={{ bottom: toolbarBottom }}
-      >
-        {editorInstance && (
-          <div className="border-border/60 bg-card/95 pointer-events-auto flex w-full max-w-full items-center overflow-hidden rounded-xl border p-1.5 shadow-lg backdrop-blur-md sm:w-auto">
-            <EditorToolbar
-              editor={editorInstance}
-              isFocusMode={isFocusMode}
-              onToggleFocusMode={() => setIsFocusMode(!isFocusMode)}
-              typewriterEnabled={typewriterEnabled}
-              onToggleTypewriter={() =>
-                setTypewriterEnabled(!typewriterEnabled)
-              }
-              ambientSound={ambientSound}
-              onChangeAmbientSound={setAmbientSound}
-            />
-          </div>
-        )}
       </div>
 
-      {/* Save Status Indicator (hidden in focus mode unless saving/error) */}
+      {/* Floating formatting toolbar — the ONE owner of fixed bottom chrome.
+          Repositions above the mobile keyboard via visualViewport; clears
+          the tab-bar band and the home indicator even though the tab bar is
+          hidden on this route. On phones in zen it stays hidden until the
+          page is tapped. */}
       <div
-        className={`pointer-events-none fixed right-6 bottom-6 z-50 transition-opacity duration-300 sm:pointer-events-auto ${isFocusMode ? "opacity-30 hover:opacity-100" : "opacity-100"}`}
+        className={`fixed right-0 left-0 z-40 flex justify-center px-2 transition-[bottom] duration-300 ease-out sm:px-4 md:left-[var(--sidebar-width)] ${zenHidesChrome ? "pointer-events-none" : ""}`}
+        style={{
+          bottom: `calc(${toolbarBottom}px + env(safe-area-inset-bottom))`,
+        }}
+      >
+        <AnimatePresence>
+          {editorInstance && toolbarVisible && (
+            <motion.div
+              key="editor-toolbar"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 8 }}
+              transition={
+                reduceMotion
+                  ? { duration: 0 }
+                  : { duration: 0.18, ease: "easeOut" }
+              }
+              className="border-border/60 bg-card/95 pointer-events-auto w-full max-w-full overflow-hidden rounded-xl border p-1 shadow-lg backdrop-blur-md sm:w-auto"
+            >
+              <EditorToolbar
+                editor={editorInstance}
+                isFocusMode={isFocusMode}
+                onToggleFocusMode={toggleFocusMode}
+                typewriterEnabled={typewriterEnabled}
+                onToggleTypewriter={() =>
+                  setTypewriterEnabled(!typewriterEnabled)
+                }
+                ambientSound={ambientSound}
+                onChangeAmbientSound={setAmbientSound}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* Save status pill — sm+ only (phones read the quiet inline line in
+          the header). Dims but stays findable in zen. */}
+      <div
+        className={`pointer-events-auto fixed right-6 bottom-6 z-40 hidden transition-opacity duration-300 sm:block ${
+          isFocusMode ? "opacity-30 hover:opacity-100" : "opacity-100"
+        }`}
       >
         <SaveIndicator status={saveStatus} syncState={syncState} />
       </div>
