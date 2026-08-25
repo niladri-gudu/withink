@@ -378,7 +378,7 @@ Final Polish
 
 # Current Goals
 
-- Mobile-first redesign (Phases 1–4) shipped and verified. Next candidate: marketing site phone-first pass (apps/docs — see REDESIGN_PROMPTS.md Phase 5).
+- Mobile-first redesign (Phases 1–4) and the marketing-site phone-first pass (Phase 5, apps/docs) shipped and verified. No queued phase.
 
 ---
 
@@ -391,6 +391,17 @@ Note: MongoDB (`mongodb+srv://`) now connects. The earlier `querySrv ECONNREFUSE
 ---
 
 # Recent Decisions
+
+2026-08-25 (Phase 5)
+
+- **Mobile-first redesign, Phase 5 — Public site (apps/docs) phone-first pass.** Presentation-only; copy, claims, product truth byte-identical. All verified: `pnpm --filter @withink/docs exec tsc --noEmit` clean, eslint 0 errors, `pnpm build` clean for BOTH apps, impeccable detector `[]` on all 8 changed files, batched browser pass at 375×812, 320×700, and 1440×900 (light/dark tokens untouched).
+  - **Demo apparatus works by pure touch.** Plates are full-width stacked cards on phones (desktop-tile `min-h-95/80/75` now `md:`-only). Mood selector is `grid-cols-5` at every width (53px targets; labels drop to 10px/untracked below `sm:` so "RADIANT" fits at 320 — verified no wrap). PIN pad keys `h-12` on phones / `h-10` from `sm:` (verified unlock flow 1-2-3-4 by tap). Flashback note input + submit ≥44px (verified save-by-tap). Export progress unchanged (automatic, verified running). Heatmap day details open by TAP only — the group-hover tooltip is deleted (cells keep the sanctioned `clamp(1.5rem,7vw,2.5rem)`; 26px at 375, tap opens the vignette).
+  - **Hover-only affordances eliminated.** Polaroid keepsakes: "Hover to tilt · Click to enlarge" replaced by a gentle staggered idle sway (motion, `useReducedMotion`-gated; verified animating and clipped within the plate) + honest caption "Tap any keepsake to enlarge"; pointer hover still lifts/straightens as a non-essential enhancement; the hover-only dim overlay on thumbnails was removed with it.
+  - **Both hand-rolled overlays replaced by `@withink/ui/dialog`** (user decision: Dialog for both — centered card preserves the desktop presentation at every width). Radix now owns focus trap, Escape, and scroll lock; the Phase-1 overlay motion system owns the 200ms/150ms movement; the manual focus-ref/scroll-lock/Escape effects are deleted. `keepsake-lightbox.tsx` (new): index-based state, motion `drag="x"` swipe between photos (64px + velocity threshold, same contract as the app's media lightbox — verified 1/3→2/3 by synthetic touch drag), "n / N" counter chip, 44px prev/next IconButtons, ArrowLeft/Right keys, `next/image` (fill, priority-while-open). `day-vignette-dialog.tsx` (new): July-N header + mood badge, entry title as DialogTitle, quote as DialogDescription, words + "kept for later." hand note. The editor-quote AnimatePresence keeps its required Suspense boundary (build green proves the invariant held); the two overlay AnimatePresence blocks no longer exist.
+  - **Hero + chrome.** Headline moved to the fluid `text-hero md:text-display` utilities (no fixed `text-5xl` step; verified at 375 and 60px at 1440); `initial={false}` LCP behavior preserved (hero rendered in first screenshot pre-hydration). Header CTA `h-11 md:h-10`; header pads `env(safe-area-inset-top)`, footer `env(safe-area-inset-bottom)`; footer links are 44px rows; CTA-section button full-width on phones. Docs root layout gained a `viewport` export: `viewportFit: "cover"` + dual theme-color metas (#eee5d6 light / #1e170f dark, matching the shared token values).
+  - **Reading pages top-anchored.** `/about`, `/privacy`, `/terms`, `/contact` drop `justify-center min-h-screen` for bounded `py-10 md:py-16` (verified h1 near the top at 320/375). Contact form: 44px name/email/submit (verified computed heights), autocomplete attributes already correct, copy-email is now a 44px `IconButton size="lg"` with the gold-check copied state (verified by tap), social rows 44px, "Send Another Message" 44px on phones.
+  - **Surface brief.** Phone-first decisions written via `surface-brief.mjs write` → `apps/docs/.impeccable/surfaces/apps-docs-src-components-landing-page-content-tsx.md` (file-scoped brief alongside the existing app-level `apps-docs.md`).
+  - Deferred (documented, not regressions): inert `animate-in fade-in` utility classes on the about page and contact success card (no tailwindcss-animate in docs — silent no-ops, cosmetic); built-in DialogContent close is the primitive's 36px (system convention; primary closes all work via Escape/veil/44px alternatives); lightbox double-tap zoom (native pinch works); splitting the remaining ~1,230-line landing component (overlays extracted this pass; further splitting deliberately deferred as before — high regression risk on a marketing page); heatmap cells are 26px tap targets at 375 by the DESIGN.md-sanctioned clamp (tap path exists and is verified).
 
 2026-08-25
 

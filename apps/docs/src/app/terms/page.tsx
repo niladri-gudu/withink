@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 
 export default function TermsPage() {
   return (
-    <div className="mx-auto flex max-w-2xl flex-1 flex-col justify-center space-y-8 px-6 py-16">
+    <div className="mx-auto flex max-w-2xl flex-1 flex-col space-y-8 px-6 py-10 md:py-16">
       <div className="space-y-4">
         <h1 className="text-h1 text-foreground">Terms of Service</h1>
         <p className="text-caption text-muted-foreground">
@@ -46,7 +46,11 @@ export default function TermsPage() {
       </div>
 
       <div className="border-border flex items-center justify-between border-t pt-6">
-        <Button variant="ghost" asChild>
+        <Button
+          variant="ghost"
+          asChild
+          className="h-11 md:h-10"
+        >
           <Link href="/">Back to Diary</Link>
         </Button>
       </div>

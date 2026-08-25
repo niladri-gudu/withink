@@ -31,12 +31,14 @@ import {
   Sparkles,
   TrendingUp,
   Unlock,
-  X,
 } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 
 import { Button } from "@withink/ui/button";
 import { ThemeToggle } from "@withink/ui/theme-toggle";
+
+import { DayVignetteDialog } from "@/components/day-vignette-dialog";
+import { KeepsakeLightbox } from "@/components/keepsake-lightbox";
 
 interface LandingPageContentProps {
   APP_URL: string;
@@ -170,7 +172,7 @@ export function LandingPageContent({
   };
 
   // --- Tile 4: Polaroid Lightbox State ---
-  const [lightboxImg, setLightboxImg] = React.useState<string | null>(null);
+  const [lightboxIndex, setLightboxIndex] = React.useState<number | null>(null);
 
   // --- Tile 5: Writing calendar day vignette State ---
   const [vignetteDay, setVignetteDay] = React.useState<number | null>(null);
@@ -179,17 +181,17 @@ export function LandingPageContent({
     {
       src: "https://images.unsplash.com/photo-1544787219-7f47ccb76574?auto=format&fit=crop&w=600&q=80",
       caption: "Misty morning reflection and tea",
-      rotation: "-rotate-6 hover:-rotate-1",
+      tilt: -6,
     },
     {
       src: "https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?auto=format&fit=crop&w=600&q=80",
       caption: "Rain hitting the study glass window",
-      rotation: "rotate-3 hover:rotate-6",
+      tilt: 3,
     },
     {
       src: "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=600&q=80",
       caption: "A quiet path in the redwoods",
-      rotation: "-rotate-2 hover:rotate-2",
+      tilt: -2,
     },
   ];
 
@@ -297,38 +299,6 @@ export function LandingPageContent({
     return { key, vignette: pool[(dayVal - 1) % pool.length]! };
   };
 
-  // --- Overlay a11y: Escape, scroll-lock, focus (lightbox + day vignette) ---
-  const closeOverlay = React.useCallback(() => {
-    setLightboxImg(null);
-    setVignetteDay(null);
-  }, []);
-
-  const lightboxCloseRef = React.useRef<HTMLButtonElement>(null);
-  const vignetteCloseRef = React.useRef<HTMLButtonElement>(null);
-
-  React.useEffect(() => {
-    if (lightboxImg !== null) lightboxCloseRef.current?.focus();
-  }, [lightboxImg]);
-
-  React.useEffect(() => {
-    if (vignetteDay !== null) vignetteCloseRef.current?.focus();
-  }, [vignetteDay]);
-
-  React.useEffect(() => {
-    const open = lightboxImg !== null || vignetteDay !== null;
-    if (!open) return;
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") closeOverlay();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => {
-      document.body.style.overflow = prevOverflow;
-      window.removeEventListener("keydown", onKey);
-    };
-  }, [lightboxImg, vignetteDay, closeOverlay]);
-
   // --- Tile 6: Zip Export Simulation ---
   const [exportProgress, setExportProgress] = React.useState<number>(-1); // -1 = idle
   const [exportStage, setExportStage] = React.useState<string>("");
@@ -383,21 +353,21 @@ export function LandingPageContent({
   return (
     <div className="bg-background selection:bg-accent selection:text-accent-foreground relative flex min-h-screen flex-1 flex-col overflow-hidden">
       {/* Navbar */}
-      <header className="border-border/70 bg-background/85 sticky top-0 z-40 border-b backdrop-blur-md">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
+      <header className="border-border/70 bg-background/85 sticky top-0 z-40 border-b pt-[env(safe-area-inset-top)] backdrop-blur-md">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
           <Link
             href="/"
             className="text-foreground focus-visible:ring-ring rounded p-0.5 font-serif text-2xl font-bold tracking-tight select-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
           >
             withink.
           </Link>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <ThemeToggle />
             {hasSession ? (
               <Button
                 variant="default"
                 asChild
-                className="focus-visible:ring-ring rounded-xl px-4 font-serif text-xs font-medium tracking-[0.2em] uppercase shadow-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+                className="focus-visible:ring-ring h-11 rounded-xl px-4 font-serif text-xs font-medium tracking-[0.2em] uppercase shadow-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none md:h-10"
               >
                 <a href={APP_URL}>Open</a>
               </Button>
@@ -405,7 +375,7 @@ export function LandingPageContent({
               <Button
                 variant="default"
                 asChild
-                className="focus-visible:ring-ring rounded-xl px-4 font-serif text-xs font-medium tracking-[0.2em] uppercase shadow-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+                className="focus-visible:ring-ring h-11 rounded-xl px-4 font-serif text-xs font-medium tracking-[0.2em] uppercase shadow-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none md:h-10"
               >
                 <a href={`${APP_URL}/login`}>Sign In</a>
               </Button>
@@ -430,7 +400,7 @@ export function LandingPageContent({
             <motion.h1
               variants={fadeInVariants}
               custom={0}
-              className="text-foreground sm:text-hero md:text-display mx-auto max-w-xl font-serif text-5xl leading-[1.12] tracking-tight text-balance"
+              className="text-hero text-foreground mx-auto max-w-xl font-serif tracking-tight text-balance md:text-display"
             >
               Your ordinary days are{" "}
               <em className="font-normal italic">worth keeping.</em>
@@ -586,7 +556,7 @@ export function LandingPageContent({
               <motion.div
                 variants={fadeInVariants}
                 custom={0}
-                className="border-border/80 bg-card relative flex min-h-95 flex-col justify-between rounded-xl border shadow-sm md:col-span-2"
+                className="border-border/80 bg-card relative flex flex-col justify-between rounded-xl border shadow-sm md:min-h-95 md:col-span-2"
               >
                 {/*<div className="from-accent/40 via-foreground/25 to-accent/40 absolute left-0 right-0 top-0 h-[2px] rounded-t-xl bg-gradient-to-r" />*/}
 
@@ -680,11 +650,11 @@ export function LandingPageContent({
                 </div>
 
                 {/* Mood selector */}
-                <div className="border-border/70 mt-4 border-t p-6 pt-4 md:px-7">
+                <div className="border-border/70 mt-4 border-t px-3 pt-4 pb-5 sm:p-6 sm:pt-4 md:px-7">
                   <span className="text-muted-foreground block font-serif text-xs tracking-[0.16em] uppercase">
                     How are you feeling today?
                   </span>
-                  <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-5">
+                  <div className="mt-3 grid grid-cols-5 gap-1.5 sm:gap-2">
                     {moodData.map((mood) => {
                       const MoodIcon = mood.Icon;
                       return (
@@ -692,14 +662,14 @@ export function LandingPageContent({
                           key={mood.level}
                           onClick={() => handleMoodSelect(mood.level)}
                           aria-label={`Select ${mood.label}`}
-                          className={`focus-visible:ring-ring flex flex-col items-center justify-center gap-1 rounded-xl border p-2 transition-all focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95 ${
+                          className={`focus-visible:ring-ring flex min-h-11 flex-col items-center justify-center gap-1 rounded-xl border p-2 transition-all focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95 ${
                             selectedMood === mood.level
                               ? "bg-primary text-primary-foreground border-primary shadow-sm"
                               : "bg-secondary/30 border-border/60 text-muted-foreground/80 hover:bg-secondary/70 hover:text-foreground"
                           }`}
                         >
                           <MoodIcon className="h-4 w-4" />
-                          <span className="font-serif text-xs font-medium tracking-widest uppercase">
+                          <span className="font-serif text-[10px] font-medium tracking-normal uppercase sm:text-xs sm:tracking-widest">
                             {mood.label}
                           </span>
                         </button>
@@ -713,7 +683,7 @@ export function LandingPageContent({
               <motion.div
                 variants={fadeInVariants}
                 custom={1}
-                className="border-border/80 bg-card relative flex min-h-95 flex-col justify-between rounded-xl border shadow-sm"
+                className="border-border/80 bg-card relative flex flex-col justify-between rounded-xl border shadow-sm md:min-h-95"
               >
                 <div className="p-6 md:p-7">
                   <div className="border-border/70 flex items-center justify-between border-b pb-3">
@@ -785,21 +755,21 @@ export function LandingPageContent({
                       key={num}
                       onClick={() => handlePinPress(num)}
                       disabled={isPinUnlocked}
-                      className="bg-secondary/20 hover:bg-secondary/55 text-foreground border-border/40 focus-visible:ring-ring flex h-10 items-center justify-center rounded-xl border font-serif text-xs font-bold transition-all focus-visible:ring-1 focus-visible:outline-none active:scale-95"
+                      className="bg-secondary/20 hover:bg-secondary/55 text-foreground border-border/40 focus-visible:ring-ring flex h-12 items-center justify-center rounded-xl border font-serif text-xs font-bold transition-all focus-visible:ring-1 focus-visible:outline-none active:scale-95 sm:h-10"
                     >
                       {num}
                     </button>
                   ))}
                   <button
                     onClick={handlePinClear}
-                    className="bg-secondary/15 hover:bg-secondary/35 border-border/40 focus-visible:ring-ring flex h-10 items-center justify-center rounded-xl border font-serif text-xs font-bold tracking-wider uppercase transition-all focus-visible:ring-1 focus-visible:outline-none active:scale-95"
+                    className="bg-secondary/15 hover:bg-secondary/35 border-border/40 focus-visible:ring-ring flex h-12 items-center justify-center rounded-xl border font-serif text-xs font-bold tracking-wider uppercase transition-all focus-visible:ring-1 focus-visible:outline-none active:scale-95 sm:h-10"
                   >
                     Clear
                   </button>
                   <button
                     onClick={() => handlePinPress("0")}
                     disabled={isPinUnlocked}
-                    className="bg-secondary/20 hover:bg-secondary/55 text-foreground border-border/40 focus-visible:ring-ring flex h-10 items-center justify-center rounded-xl border font-serif text-xs font-bold transition-all focus-visible:ring-1 focus-visible:outline-none active:scale-95"
+                    className="bg-secondary/20 hover:bg-secondary/55 text-foreground border-border/40 focus-visible:ring-ring flex h-12 items-center justify-center rounded-xl border font-serif text-xs font-bold transition-all focus-visible:ring-1 focus-visible:outline-none active:scale-95 sm:h-10"
                   >
                     0
                   </button>
@@ -807,7 +777,7 @@ export function LandingPageContent({
                     onClick={handlePinBackspace}
                     disabled={isPinUnlocked || pinDigits.length === 0}
                     aria-label="Delete last digit"
-                    className="bg-secondary/15 hover:bg-secondary/35 border-border/40 focus-visible:ring-ring text-muted-foreground/70 flex h-10 items-center justify-center rounded-xl border text-xs transition-all focus-visible:ring-1 focus-visible:outline-none active:scale-95 disabled:opacity-40 disabled:active:scale-100"
+                    className="bg-secondary/15 hover:bg-secondary/35 border-border/40 focus-visible:ring-ring text-muted-foreground/70 flex h-12 items-center justify-center rounded-xl border text-xs transition-all focus-visible:ring-1 focus-visible:outline-none active:scale-95 disabled:opacity-40 disabled:active:scale-100 sm:h-10"
                   >
                     <Delete className="h-3.5 w-3.5" />
                   </button>
@@ -818,7 +788,7 @@ export function LandingPageContent({
               <motion.div
                 variants={fadeInVariants}
                 custom={2}
-                className="border-border/80 bg-card flex min-h-80 flex-col justify-between rounded-xl border shadow-sm"
+                className="border-border/80 bg-card flex flex-col justify-between rounded-xl border shadow-sm md:min-h-80"
               >
                 <div className="space-y-4 p-6">
                   <div className="text-muted-foreground border-border/70 flex items-center space-x-2 border-b pb-3 font-serif text-xs tracking-[0.16em] uppercase">
@@ -865,13 +835,13 @@ export function LandingPageContent({
                         placeholder="Write a note on this memory…"
                         value={flashbackReflection}
                         onChange={(e) => setFlashbackReflection(e.target.value)}
-                        className="bg-secondary/15 border-border/40 focus:border-border/80 focus:bg-secondary/30 text-foreground placeholder-muted-foreground/50 w-full rounded-xl border px-3 py-2.5 font-serif text-sm transition-colors focus-visible:outline-none"
+                        className="bg-secondary/15 border-border/40 focus:border-border/80 focus:bg-secondary/30 text-foreground placeholder-muted-foreground/50 min-h-11 w-full rounded-xl border px-3 py-2.5 font-serif text-sm transition-colors focus-visible:outline-none"
                       />
                       <Button
                         type="submit"
                         variant="outline"
                         size="sm"
-                        className="border-border/60 hover:bg-secondary/40 w-full rounded-xl font-serif text-xs font-medium tracking-[0.14em] uppercase"
+                        className="border-border/60 hover:bg-secondary/40 h-11 w-full rounded-xl font-serif text-xs font-medium tracking-[0.14em] uppercase"
                       >
                         Keep the note
                       </Button>
@@ -884,23 +854,42 @@ export function LandingPageContent({
               <motion.div
                 variants={fadeInVariants}
                 custom={3}
-                className="border-border/80 bg-card flex min-h-80 flex-col justify-between rounded-xl border shadow-sm"
+                className="border-border/80 bg-card flex flex-col justify-between rounded-xl border shadow-sm md:min-h-80"
               >
                 <div className="text-muted-foreground border-border/70 flex items-center space-x-2 border-b p-6 pb-3 font-serif text-xs tracking-[0.16em] uppercase">
                   <ImageIcon className="h-3 w-3" />
                   <span>Memory pages</span>
                 </div>
 
-                <div className="relative my-auto flex h-36 items-center justify-center px-6">
+                <div className="relative my-auto flex h-40 items-center justify-center px-6 sm:h-36">
                   {polaroids.map((p, idx) => (
                     <motion.button
                       key={idx}
-                      onClick={() => setLightboxImg(p.src)}
+                      onClick={() => setLightboxIndex(idx)}
+                      animate={
+                        prefersReduced
+                          ? { rotate: p.tilt }
+                          : {
+                              rotate: [p.tilt - 1.5, p.tilt + 1.5, p.tilt - 1.5],
+                            }
+                      }
+                      transition={
+                        prefersReduced
+                          ? { duration: 0 }
+                          : {
+                              duration: 5.5,
+                              repeat: Infinity,
+                              ease: "easeInOut",
+                              delay: idx * 1.3,
+                            }
+                      }
                       whileHover={
-                        prefersReduced ? {} : { scale: 1.05, y: -8, zIndex: 10 }
+                        prefersReduced
+                          ? undefined
+                          : { scale: 1.06, y: -8, rotate: p.tilt / 4 }
                       }
                       style={{ left: `calc(50% - 60px + ${idx * 16 - 16}px)` }}
-                      className={`bg-card border-border/40 absolute w-32 cursor-zoom-in rounded-xl border p-2 pb-3 shadow-md transition-shadow duration-300 hover:shadow-xl ${p.rotation} focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none`}
+                      className="bg-card border-border/40 absolute w-32 cursor-zoom-in rounded-xl border p-2 pb-3 shadow-md transition-shadow duration-300 hover:shadow-xl focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none"
                       aria-label={`Enlarge: ${p.caption}`}
                     >
                       <div className="bg-secondary/20 relative aspect-4/3 w-full overflow-hidden rounded-md">
@@ -912,7 +901,6 @@ export function LandingPageContent({
                           loading="lazy"
                           className="object-cover grayscale-10 transition-all duration-300 hover:grayscale-0"
                         />
-                        <div className="bg-primary/5 absolute inset-0 transition-colors hover:bg-transparent" />
                         <div className="absolute right-1 bottom-1 rounded bg-black/40 p-0.5 text-white backdrop-blur-[2px]">
                           <Maximize2 className="h-2 w-2" />
                         </div>
@@ -925,7 +913,7 @@ export function LandingPageContent({
                 </div>
 
                 <div className="text-muted-foreground/50 border-border/70 border-t p-6 pt-3 text-center font-serif text-[11px] tracking-[0.12em] uppercase">
-                  Hover to tilt · Click to enlarge
+                  Tap any keepsake to enlarge
                 </div>
               </motion.div>
 
@@ -933,7 +921,7 @@ export function LandingPageContent({
               <motion.div
                 variants={fadeInVariants}
                 custom={4}
-                className="border-border/80 bg-card flex min-h-80 flex-col justify-between rounded-xl border shadow-sm"
+                className="border-border/80 bg-card flex flex-col justify-between rounded-xl border shadow-sm md:min-h-80"
               >
                 <div className="text-muted-foreground border-border/70 flex items-center space-x-2 border-b p-6 pb-3 font-serif text-xs tracking-[0.16em] uppercase">
                   <Archive className="h-3 w-3" />
@@ -978,7 +966,7 @@ export function LandingPageContent({
                   ) : (
                     <Button
                       onClick={triggerExport}
-                      className="focus-visible:ring-ring w-full gap-1.5 rounded-xl py-1 font-serif text-xs tracking-[0.16em] uppercase focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+                      className="focus-visible:ring-ring h-11 w-full gap-1.5 rounded-xl font-serif text-xs tracking-[0.16em] uppercase focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
                     >
                       <Download className="h-3.5 w-3.5" />
                       Export My Diary
@@ -991,7 +979,7 @@ export function LandingPageContent({
               <motion.div
                 variants={fadeInVariants}
                 custom={5}
-                className="border-border/80 bg-card relative flex min-h-75 flex-col justify-between rounded-xl border shadow-sm md:col-span-3"
+                className="border-border/80 bg-card relative flex flex-col justify-between rounded-xl border shadow-sm md:min-h-75 md:col-span-3"
               >
                 <div className="border-border/70 border-b-2 p-6 pb-4 md:p-7 md:pb-4">
                   <div className="flex flex-wrap items-center justify-between gap-3">
@@ -1033,18 +1021,6 @@ export function LandingPageContent({
 
                         const { key, vignette } = dayVignetteFor(dayVal);
                         const mood = moodByKey[key];
-                        const tooltipLabel = `${mood.label} · ${vignette.words} words`;
-
-                        const cellColor =
-                          key === "angry"
-                            ? "bg-mood-1-bg border-mood-1-border hover:bg-mood-1/30 text-mood-1"
-                            : key === "sad"
-                              ? "bg-mood-2-bg border-mood-2-border hover:bg-mood-2/30 text-mood-2"
-                              : key === "neutral"
-                                ? "bg-mood-3-bg border-mood-3-border hover:bg-mood-3/20 text-mood-3"
-                                : key === "happy"
-                                  ? "bg-mood-4-bg border-mood-4-border hover:bg-mood-4/30 text-mood-4"
-                                  : "bg-mood-5-bg border-mood-5-border hover:bg-mood-5/30 text-mood-5";
 
                         return (
                           <button
@@ -1052,15 +1028,11 @@ export function LandingPageContent({
                             type="button"
                             onClick={() => setVignetteDay(dayVal)}
                             aria-label={`July ${dayVal}, 2026 — ${mood.label}, ${vignette.words} words. Open this day's entry`}
-                            className={`group/cell focus-visible:ring-ring relative flex size-[clamp(1.5rem,7vw,2.5rem)] cursor-pointer items-center justify-center rounded-md border transition-all duration-200 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95 ${cellColor}`}
+                            className="focus-visible:ring-ring relative flex size-[clamp(1.5rem,7vw,2.5rem)] cursor-pointer items-center justify-center rounded-md border transition-all duration-200 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95"
                           >
                             <span className="text-muted-foreground/45 pointer-events-none font-serif text-[10px] select-none">
                               {dayVal}
                             </span>
-
-                            <div className="bg-primary text-primary-foreground absolute bottom-full left-1/2 z-20 mb-1.5 hidden -translate-x-1/2 rounded-md px-2 py-1 font-serif text-[10px] whitespace-nowrap shadow-lg group-hover/cell:block">
-                              July {dayVal}: {tooltipLabel}
-                            </div>
                           </button>
                         );
                       })}
@@ -1209,11 +1181,11 @@ export function LandingPageContent({
             <h2 className="text-h2 text-foreground mx-auto max-w-2xl font-serif">
               Build your private diary.
             </h2>
-            <div className="flex items-center justify-center">
+            <div className="flex justify-center">
               <Button
                 size="lg"
                 asChild
-                className="focus-visible:ring-ring gap-1.5 rounded-xl px-8 font-serif text-xs tracking-[0.2em] uppercase shadow-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+                className="focus-visible:ring-ring w-full gap-1.5 rounded-xl px-8 font-serif text-xs tracking-[0.2em] uppercase shadow-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none sm:w-auto"
               >
                 <a href={`${APP_URL}/register`}>
                   Open Your Diary <ChevronRight className="h-4 w-4" />
@@ -1228,33 +1200,33 @@ export function LandingPageContent({
       </main>
 
       {/* Footer */}
-      <footer className="border-border/70 bg-background/60 border-t py-8">
-        <div className="text-muted-foreground mx-auto flex max-w-5xl flex-col items-center justify-between gap-4 px-6 text-xs sm:flex-row sm:gap-0">
+      <footer className="border-border/70 bg-background/60 border-t pt-8 pb-[calc(2rem+env(safe-area-inset-bottom))]">
+        <div className="text-muted-foreground mx-auto flex max-w-5xl flex-col items-center justify-between gap-2 px-4 text-xs sm:flex-row sm:gap-0 sm:px-6">
           <p className="order-2 text-center sm:order-1 sm:text-left">
             © 2026 withink. All rights reserved.
           </p>
-          <div className="order-1 flex flex-wrap justify-center gap-x-6 gap-y-3 sm:order-2 sm:gap-y-0">
+          <div className="order-1 flex flex-wrap justify-center gap-x-4 gap-y-1 sm:order-2 sm:gap-x-6 sm:gap-y-0">
             <Link
               href="/about"
-              className="hover:text-foreground focus-visible:ring-ring rounded p-0.5 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+              className="hover:text-foreground focus-visible:ring-ring inline-flex min-h-11 items-center rounded p-0.5 px-2 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
             >
               About Us
             </Link>
             <Link
               href="/contact"
-              className="hover:text-foreground focus-visible:ring-ring rounded p-0.5 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+              className="hover:text-foreground focus-visible:ring-ring inline-flex min-h-11 items-center rounded p-0.5 px-2 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
             >
               Contact Us
             </Link>
             <Link
               href="/terms"
-              className="hover:text-foreground focus-visible:ring-ring rounded p-0.5 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+              className="hover:text-foreground focus-visible:ring-ring inline-flex min-h-11 items-center rounded p-0.5 px-2 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
             >
               Terms of Service
             </Link>
             <Link
               href="/privacy"
-              className="hover:text-foreground focus-visible:ring-ring rounded p-0.5 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+              className="hover:text-foreground focus-visible:ring-ring inline-flex min-h-11 items-center rounded p-0.5 px-2 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
             >
               Privacy Philosophy
             </Link>
@@ -1262,119 +1234,19 @@ export function LandingPageContent({
         </div>
       </footer>
 
-      {/* Lightbox Portal Overlay */}
-      <React.Suspense fallback={null}>
-        <AnimatePresence>
-          {lightboxImg && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              role="dialog"
-              aria-modal="true"
-              aria-label="Pressed keepsake"
-              className="bg-background/95 fixed inset-0 z-50 flex items-center justify-center p-6 backdrop-blur-md"
-              onClick={closeOverlay}
-            >
-              <motion.div
-                initial={{ scale: 0.95 }}
-                animate={{ scale: 1 }}
-                exit={{ scale: 0.95 }}
-                transition={springTransition}
-                className="bg-card border-border relative w-full max-w-2xl rounded-xl border p-3 shadow-2xl"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <button
-                  ref={lightboxCloseRef}
-                  onClick={closeOverlay}
-                  aria-label="Close Lightbox"
-                  className="bg-secondary/80 border-border hover:bg-secondary text-foreground focus-visible:ring-ring absolute top-4 right-4 flex h-8 w-8 items-center justify-center rounded-full border transition-all focus-visible:ring-2 focus-visible:outline-none active:scale-95"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-
-                <div className="bg-secondary/20 relative aspect-4/3 w-full overflow-hidden rounded-md">
-                  <Image
-                    src={lightboxImg ?? ""}
-                    alt="Enlarged gallery preview"
-                    fill
-                    sizes="100vw"
-                    className="object-cover"
-                  />
-                </div>
-                <div className="text-muted-foreground font-hand px-2 pt-4 pb-2 text-center text-xl">
-                  {polaroids.find((p) => p.src === lightboxImg)?.caption ??
-                    "Pressed keepsake"}
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </React.Suspense>
-
-      {/* Day Vignette Overlay */}
-      <React.Suspense fallback={null}>
-        <AnimatePresence>
-          {vignetteDay !== null && openVignette && vignetteMood && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="vignette-title"
-              className="bg-background/95 fixed inset-0 z-50 flex items-center justify-center p-6 backdrop-blur-md"
-              onClick={closeOverlay}
-            >
-              <motion.div
-                initial={{ scale: 0.95 }}
-                animate={{ scale: 1 }}
-                exit={{ scale: 0.95 }}
-                transition={springTransition}
-                className="bg-card border-border relative w-full max-w-md rounded-xl border p-6 shadow-2xl md:p-7"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <button
-                  ref={vignetteCloseRef}
-                  onClick={closeOverlay}
-                  aria-label="Close day entry"
-                  className="bg-secondary/80 border-border hover:bg-secondary text-foreground focus-visible:ring-ring absolute top-4 right-4 flex h-8 w-8 items-center justify-center rounded-full border transition-all focus-visible:ring-2 focus-visible:outline-none active:scale-95"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-
-                <div className="border-border/70 flex items-center gap-3 border-b pb-4">
-                  <span className="text-foreground font-serif text-base font-bold">
-                    July {vignetteDay}
-                  </span>
-                  <span
-                    className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${vignetteMood.bgClass}`}
-                  >
-                    {vignetteMood.label}
-                  </span>
-                </div>
-
-                <div className="mt-4">
-                  <h3
-                    id="vignette-title"
-                    className="text-foreground font-serif text-xl font-bold"
-                  >
-                    {openVignette.vignette.title}
-                  </h3>
-                  <p className="text-muted-foreground border-border/70 mt-3 border-l pl-4 font-serif text-sm leading-relaxed italic">
-                    &ldquo;{openVignette.vignette.quote}&rdquo;
-                  </p>
-                </div>
-
-                <div className="text-muted-foreground border-border/70 mt-5 flex items-center justify-between border-t pt-4 font-serif text-xs">
-                  <span>{openVignette.vignette.words} words</span>
-                  <span className="font-hand text-lg">kept for later.</span>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </React.Suspense>
+      {/* Overlays (Radix-owned: focus trap, Escape, scroll lock) */}
+      <KeepsakeLightbox
+        photos={polaroids}
+        index={lightboxIndex}
+        onIndexChange={setLightboxIndex}
+      />
+      <DayVignetteDialog
+        day={vignetteDay}
+        vignette={openVignette?.vignette ?? null}
+        moodLabel={vignetteMood?.label ?? null}
+        moodBadgeClass={vignetteMood?.bgClass ?? null}
+        onClose={() => setVignetteDay(null)}
+      />
     </div>
   );
 }

@@ -14,11 +14,11 @@ export const metadata: Metadata = {
 
 export default function AboutPage() {
   return (
-    <div className="animate-in fade-in mx-auto flex max-w-2xl flex-1 flex-col justify-center space-y-8 px-6 py-16 duration-300">
+    <div className="animate-in fade-in mx-auto flex max-w-2xl flex-1 flex-col space-y-8 px-6 py-10 duration-300 md:py-16">
       <div className="space-y-4">
         <Link
           href="/"
-          className="text-muted-foreground/80 hover:text-foreground focus-visible:ring-ring inline-flex items-center rounded p-0.5 font-mono text-xs tracking-widest uppercase transition-colors focus-visible:ring-1"
+          className="text-muted-foreground/80 hover:text-foreground focus-visible:ring-ring inline-flex min-h-11 items-center rounded p-0.5 px-2 -ml-2 font-mono text-xs tracking-widest uppercase transition-colors focus-visible:ring-1"
         >
           ← Back to Diary
         </Link>
@@ -88,7 +88,7 @@ export default function AboutPage() {
         <Button
           variant="ghost"
           asChild
-          className="focus-visible:ring-ring focus-visible:ring-2"
+          className="focus-visible:ring-ring h-11 focus-visible:ring-2 md:h-10"
         >
           <Link href="/">Back to Diary</Link>
         </Button>
