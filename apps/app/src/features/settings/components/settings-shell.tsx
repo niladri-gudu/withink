@@ -33,6 +33,7 @@ import { deriveUnlockProofHex } from "@/lib/crypto-client";
 import { safeStorage } from "@/lib/safe-storage";
 import { clearSwCaches } from "@/lib/sw-cache";
 import { useEncryption } from "@/providers/encryption-provider";
+import { BillingSection } from "@/features/billing/components/billing-section";
 import { ZkChangeDialog } from "@/features/encryption/components/zk-change-dialog";
 import { ZkSetupDialog } from "@/features/encryption/components/zk-setup-dialog";
 import { DataExportCard } from "@/features/export/components/data-export-card";
@@ -1240,6 +1241,15 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
               Sign out
             </Button>
           </div>
+        </SettingsGroup>
+
+        {/* ---- Plan & billing ---- */}
+        <SettingsGroup
+          icon={CreditCard}
+          title="Plan & billing"
+          description="Your plan, usage limits, and subscription management."
+        >
+          <BillingSection />
         </SettingsGroup>
       </div>
 

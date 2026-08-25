@@ -392,6 +392,18 @@ Note: MongoDB (`mongodb+srv://`) now connects. The earlier `querySrv ECONNREFUSE
 
 # Recent Decisions
 
+2026-08-25 (Billing Phase C)
+
+- **Monetization Phase C — Dodo Payments billing wired end-to-end.** Verified: `tsc --noEmit` clean, eslint 0 errors (3 pre-existing warnings), full Vitest **196/196** (+37 new), `pnpm build` clean for BOTH apps (`/pricing` and `/api/webhooks/dodo` in route manifests).
+  - **Deps:** `dodopayments` SDK (server-only; typed checkout/portal/webhook payload unions) + `standardwebhooks` (spec-official HMAC webhook verification — hand-rolled crypto rejected for security-critical code).
+  - **Env:** `DODO_API_KEY`, `DODO_WEBHOOK_SECRET`, five `DODO_PRODUCT_*` ids added to `config/env.ts` as **optional** (Redis pattern): app boots Free-tier without them, checkout/portal/webhook degrade with a clear message instead of crashing; `.env.*.example` + vitest env mock updated.
+  - **Checkout:** `createCheckoutAction(productKey)` — auth → zod enum over `PLAN_PRODUCTS` keys → rate limit 10/h/user (`LIMITS.BILLING`) → blocks duplicate lifetime purchase → `dodo-service.ts` creates hosted session (`product_cart` from server-side env product ids, `metadata:{userId,productKey}` is the webhook's attribution path, `return_url=BETTER_AUTH_URL/settings`) → single-use URL. `openCustomerPortalAction()` opens Dodo's customer portal when a `dodoCustomerId` exists.
+  - **Webhook** (`app/api/webhooks/dodo/route.ts`): raw-body read (1MB bound) → `standardwebhooks.verify` (timing-safe) before any parse → JSON.parse bounded → Redis SET-NX dedupe on `webhook-id` (7d TTL; fail-open because all writes are idempotent upserts) → pure mapping → upsert via repository → `EntitlementsService.invalidateCache`. Unconfigured secret ⇒ 503. Processing failure releases the claim so Dodo retries apply it.
+  - **Event mapping** (`services/dodo-webhook-mapping.ts`, pure + unit-tested): subscription active/renewed/plan_changed/updated/unpaused → plan shape from our product id + status active + period end from `next_billing_date`; failed/on_hold/paused → past_due (still grants paid access per Phase A rules); cancelled/expired & refund.succeeded → canceled. payment.succeeded: lifetime line in cart grants Pro forever (`lifetime=true`, interval null); subscription payments only restore status=active (period end owned by subscription events); unknown products ignored.
+  - **Settings Plan card:** new client `features/billing/components/billing-section.tsx` mounted as a "Plan & billing" SettingsGroup (between Your data and danger zone). Loads via `getBillingSummaryAction` (plan/status badge/renewal date, entitlements-at-a-glance row, portal "Manage subscription" button, upgrade cards Plus/Pro with monthly+yearly buttons, dashed Lifetime $199 row, Founding Member state for lifetime). Redirects use `window.location.assign`.
+  - **Docs `/pricing`:** static marketing page mirroring the §2 matrix (Free/Plus/Pro/Lifetime cards, featured Pro, privacy guarantees block), APP_URL resolved like the landing page; canonical tier source remains MONETIZATION_PLAN §2.
+  - Next: Phase D — paywall/upgrade dialogs on gate trips (upload 507 + backfill window), downgrade-path test + webhook replay drill in Dodo test mode, then ship.
+
 2026-08-25 (Billing Phase B)
 
 - **Monetization Phase B — all three launch gates wired to entitlements.** Verified: `tsc --noEmit` clean, eslint 0 errors (3 pre-existing warnings), full Vitest **159/159**, production build clean.

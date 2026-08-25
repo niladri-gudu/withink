@@ -20,6 +20,13 @@ vi.mock("@/config/env", () => ({
     CONTACT_EMAIL: "contact@example.com",
     ENCRYPTION_KEY:
       "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+    DODO_API_KEY: "dodo-api-key",
+    DODO_WEBHOOK_SECRET: "whsec_test-secret",
+    DODO_PRODUCT_PLUS_MONTHLY: "pdt_plus_monthly",
+    DODO_PRODUCT_PLUS_YEARLY: "pdt_plus_yearly",
+    DODO_PRODUCT_PRO_MONTHLY: "pdt_pro_monthly",
+    DODO_PRODUCT_PRO_YEARLY: "pdt_pro_yearly",
+    DODO_PRODUCT_PRO_LIFETIME: "pdt_pro_lifetime",
   },
   validateServerEnv: () => {},
 }));

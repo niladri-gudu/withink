@@ -27,6 +27,11 @@ export const LIMITS = {
     RATE_LIMIT_MAX: 5,
     RATE_LIMIT_WINDOW_SECONDS: 60 * 60, // 1 hour
   },
+  BILLING: {
+    // Checkout session creation is an expensive third-party API call.
+    CHECKOUT_RATE_LIMIT_MAX: 10,
+    CHECKOUT_RATE_LIMIT_WINDOW_SECONDS: 60 * 60, // 1 hour
+  },
 } as const;
 
 export type Limits = typeof LIMITS;

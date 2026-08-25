@@ -41,6 +41,18 @@ const serverEnvSchema = z.object({
   ENCRYPTION_KEY: z
     .string()
     .regex(/^[0-9a-fA-F]{64}$/, "ENCRYPTION_KEY must be 64 hex characters"),
+
+  // Dodo Payments (billing). Optional like Redis: the app boots and runs on
+  // the Free tier without it; checkout/portal/webhook surfaces degrade with a
+  // clear error until configured. Product ids map to PLAN_PRODUCTS keys in
+  // features/billing/config/plans.ts.
+  DODO_API_KEY: z.string().min(1).optional(),
+  DODO_WEBHOOK_SECRET: z.string().min(1).optional(),
+  DODO_PRODUCT_PLUS_MONTHLY: z.string().min(1).optional(),
+  DODO_PRODUCT_PLUS_YEARLY: z.string().min(1).optional(),
+  DODO_PRODUCT_PRO_MONTHLY: z.string().min(1).optional(),
+  DODO_PRODUCT_PRO_YEARLY: z.string().min(1).optional(),
+  DODO_PRODUCT_PRO_LIFETIME: z.string().min(1).optional(),
 });
 
 export type ServerEnv = z.infer<typeof serverEnvSchema>;
