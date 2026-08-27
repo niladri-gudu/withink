@@ -68,7 +68,6 @@ export function AppShell({
 
   const {
     isClientEncrypted,
-    encryptionSettingsSeeded,
     masterKey,
     setEncryptionSettings,
     proofBindingRequired,
@@ -299,21 +298,22 @@ export function AppShell({
   // Wait for the server-seeded encryption settings before deciding this is a
   // legacy (non-ZK) account: mounting MandatoryDiarySetup during the pre-seed
   // window flashed the wrong screen and fired migration actions on every load.
-  if (user && !isClientEncrypted && encryptionSettingsSeeded) {
+  // Known-unencrypted account (no settings doc yet, or a legacy doc with the
+  // flag off). Decide from the server-provided prop, NOT the client-only
+  // seeded flag: during SSR/hydration the provider hasn't been seeded yet, so
+  // gating on it emitted the pulsing placeholder in the initial HTML and left
+  // every fresh signup staring at it until JavaScript finished loading.
+  if (
+    user &&
+    !isClientEncrypted &&
+    (!initialEncryptionSettings || !initialEncryptionSettings.isClientEncrypted)
+  ) {
     return (
       <MandatoryDiarySetup
         diaryLockEnabled={isLockEnabled}
         diaryHasPasscode={hasPasscode}
         onSetupSuccess={handleSetupSuccess}
       />
-    );
-  }
-
-  if (user && !isClientEncrypted && !encryptionSettingsSeeded) {
-    return (
-      <div className="bg-background flex h-screen w-full items-center justify-center">
-        <div className="border-border bg-card w-full max-w-md animate-pulse rounded-xl border p-8" />
-      </div>
     );
   }
 
