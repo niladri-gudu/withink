@@ -200,22 +200,20 @@ export function FeedbackForm() {
       onSubmit={handleSubmit(onSubmit)}
       className="border-border bg-card rounded-xl border p-6 shadow-sm sm:p-8"
     >
-      {/* Category picker */}
-      <fieldset className="space-y-3">
-        <legend className="text-body-small text-foreground font-medium">
+      {/* Category picker — ruled selector rows, not a card grid */}
+      <fieldset className="space-y-2">
+        <legend className="text-running-head text-muted-foreground/70">
           What kind of message is this?
         </legend>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div className="border-border/60 divide-border/60 divide-y rounded-xl border">
           {CATEGORIES.map((c) => {
             const active = category === c.id;
             return (
               <label
                 key={c.id}
                 className={cn(
-                  "has-[:focus-visible]:ring-accent flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition-all duration-200 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-offset-1",
-                  active
-                    ? "border-accent bg-accent/5 ring-accent/30 ring-1"
-                    : "border-border hover:border-accent/50 hover:bg-secondary/40",
+                  "has-[:focus-visible]:ring-ring relative flex cursor-pointer items-center gap-3 px-4 py-3 transition-colors first:rounded-t-xl last:rounded-b-xl has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-inset",
+                  active ? "bg-accent/5" : "hover:bg-secondary/40",
                 )}
               >
                 <input
@@ -224,22 +222,30 @@ export function FeedbackForm() {
                   {...register("category")}
                   className="sr-only"
                 />
-                <span
+                <c.icon
+                  aria-hidden="true"
                   className={cn(
-                    "mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border",
-                    active
-                      ? "border-accent/30 bg-accent/10 text-accent-foreground"
-                      : "border-border bg-secondary/60 text-muted-foreground",
+                    "h-4 w-4 shrink-0",
+                    active ? "text-accent" : "text-muted-foreground",
                   )}
-                >
-                  <c.icon className="h-4 w-4" />
-                </span>
-                <span className="min-w-0">
-                  <span className="text-body-small text-foreground block font-medium">
+                />
+                <span className="min-w-0 flex-1">
+                  <span
+                    className={cn(
+                      "block font-serif text-sm font-semibold",
+                      active ? "text-foreground" : "text-foreground/80",
+                    )}
+                  >
                     {c.label}
                   </span>
                   <span className="text-caption block">{c.description}</span>
                 </span>
+                {active && (
+                  <Check
+                    aria-hidden="true"
+                    className="text-accent h-4 w-4 shrink-0"
+                  />
+                )}
               </label>
             );
           })}

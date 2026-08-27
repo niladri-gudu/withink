@@ -88,13 +88,14 @@ export function RecentReflectionsList({
 
   if (!ready) {
     return (
-      <div className="space-y-4">
+      <div className="divide-border/60 divide-y">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="flex items-center gap-3 p-3">
-            <Skeleton className="h-8 w-8 shrink-0 rounded-full" />
-            <div className="min-w-0 flex-1 space-y-2">
+          <div key={i} className="flex items-center gap-3 py-3">
+            <Skeleton className="text-running-head h-3 w-5 shrink-0" />
+            <Skeleton className="h-7 w-7 shrink-0 rounded-full" />
+            <div className="min-w-0 flex-1 space-y-1.5">
               <Skeleton className="h-4 w-3/5" />
-              <Skeleton className="h-3 w-2/5" />
+              <Skeleton className="h-2.5 w-2/5" />
             </div>
           </div>
         ))}
@@ -104,48 +105,53 @@ export function RecentReflectionsList({
 
   if (entries.length === 0) {
     return (
-      <div className="text-muted-foreground py-10 text-center font-serif text-sm">
-        No entries found.
-      </div>
+      <p className="text-muted-foreground/70 py-8 text-center font-serif text-sm italic">
+        The index is empty — today&apos;s page starts it.
+      </p>
     );
   }
 
   return (
-    <div className="space-y-4">
-      {entries.map((entry) => {
-        const MoodIcon = (entry.mood && moodIcons[entry.mood]) || FileText;
-        const moodColor = entry.mood
-          ? moodColors[entry.mood]
-          : "text-muted-foreground/60 bg-muted/10 border-border/10";
+    <div>
+      {/* The codex index: ruled rows, shelf numerals, quiet mood markers */}
+      <ul className="divide-border/60 divide-y">
+        {entries.map((entry, index) => {
+          const MoodIcon = (entry.mood && moodIcons[entry.mood]) || FileText;
+          const moodColor = entry.mood
+            ? moodColors[entry.mood]
+            : "text-muted-foreground/60 bg-muted/10 border-border/10";
 
-        return (
-          <Link
-            key={entry.date}
-            href={`${ROUTES.APP.ENTRY(entry.date)}?today=${today}` as Route}
-            className="block"
-          >
-            <div className="hover:bg-muted/30 hover:border-border/5 flex items-center justify-between rounded-xl border border-transparent p-3 transition-colors">
-              <div className="flex min-w-0 items-center gap-3">
-                <div
-                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border ${moodColor}`}
+          return (
+            <li key={entry.date}>
+              <Link
+                href={`${ROUTES.APP.ENTRY(entry.date)}?today=${today}` as Route}
+                className="group hover:bg-secondary/50 -mx-2 flex items-center gap-3 rounded-lg px-2 py-2.5 transition-colors"
+              >
+                <span
+                  aria-hidden="true"
+                  className="text-running-head text-muted-foreground/50 w-5 shrink-0"
                 >
-                  <MoodIcon className="h-4.5 w-4.5" />
-                </div>
-                <div className="min-w-0">
-                  <h4 className="text-foreground truncate font-serif text-sm font-bold">
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+                <span
+                  className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border ${moodColor}`}
+                >
+                  <MoodIcon className="h-3.5 w-3.5" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="text-foreground group-hover:text-accent block truncate font-serif text-sm font-semibold transition-colors">
                     {entry.title || "Untitled Entry"}
-                  </h4>
+                  </span>
                   <span className="text-running-head text-muted-foreground/60">
                     {formatDisplayDate(entry.date)}
                   </span>
-                </div>
-              </div>
-              <ArrowRight className="text-muted-foreground/40 h-4 w-4 shrink-0" />
-            </div>
-          </Link>
-        );
-      })}
-      <div className="flex justify-end pt-2">
+                </span>
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+      <div className="border-border/60 mt-1 flex justify-end border-t pt-3">
         <Button
           asChild
           variant="ghost"

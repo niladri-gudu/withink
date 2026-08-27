@@ -56,7 +56,7 @@ export function TodayReflectionCard({
       <Card className="border-border relative flex flex-col overflow-hidden border md:col-span-2">
         <div className="from-accent/60 via-accent/25 absolute top-0 right-0 left-0 h-[2px] bg-gradient-to-r to-transparent" />
         <CardHeader>
-          <span className="text-accent font-serif text-[11px] font-semibold tracking-[0.2em] uppercase">
+          <span className="text-running-head text-accent">
             Today&apos;s page
           </span>
           <CardTitle className="text-foreground font-serif text-2xl font-bold">
@@ -66,12 +66,20 @@ export function TodayReflectionCard({
             Begin writing your reflection for today
           </CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-1 flex-col justify-between space-y-6 pt-2">
+        <CardContent className="flex flex-1 flex-col justify-between gap-6 pt-2">
           <p className="text-muted-foreground font-serif text-sm leading-relaxed">
             Take a brief moment to sit back, breathe, and write about how your
             day is going. Reflections keep your mind clear and your memories
             alive.
           </p>
+
+          {/* The blank page: faint ruled lines waiting for ink */}
+          <div className="space-y-3 pt-2" aria-hidden="true">
+            <div className="border-border/80 border-t" />
+            <div className="border-border/50 border-t" />
+            <div className="border-border/30 border-t" />
+          </div>
+
           <Button asChild className="h-11 w-full cursor-pointer sm:w-fit">
             <Link
               href={
@@ -97,8 +105,8 @@ export function TodayReflectionCard({
       <div className="animate-in fade-in zoom-in absolute top-0 right-0 p-4 duration-300">
         <CheckCircle2 className="text-accent h-6 w-6" />
       </div>
-      <CardHeader className="border-border/10 border-b pb-4">
-        <span className="text-accent mb-1 font-serif text-[11px] font-semibold tracking-[0.2em] uppercase">
+      <CardHeader className="border-border/60 border-b pb-4">
+        <span className="text-running-head text-accent mb-1">
           Today&apos;s page
         </span>
         <CardTitle className="text-foreground font-serif text-2xl font-bold">
@@ -135,7 +143,7 @@ export function TodayReflectionCard({
                 </p>
               )}
             </div>
-            <div className="border-border/10 flex justify-end border-t pt-4">
+            <div className="border-border/60 flex justify-end border-t pt-4">
               <Button
                 asChild
                 className="h-11 w-full cursor-pointer px-6 sm:w-fit"
