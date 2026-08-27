@@ -7,6 +7,12 @@ import { Button } from "@withink/ui/button";
 
 import { ROUTES } from "@/constants/routes";
 import { EntitlementsService } from "@/features/billing/services/entitlements-service";
+import {
+  NotebookRepository,
+} from "@/features/notebooks/repositories/notebook-repository";
+import {
+  NotebooksService,
+} from "@/features/notebooks/services/notebook-service";
 import { getRequestSession } from "@/lib/request-cache";
 import { backfillWindowStart, getLocalDateString, isDateString } from "@/lib/utils/date";
 import { EditorSkeleton } from "@/features/journal/components/editor-skeleton";
@@ -35,6 +41,8 @@ interface EntryPageProps {
   }>;
   searchParams: Promise<{
     today?: string;
+    /** Filing target for a not-yet-written day (from the notebooks UI). */
+    notebook?: string;
   }>;
 }
 
@@ -43,7 +51,8 @@ export default async function EntryPage({
   searchParams,
 }: EntryPageProps) {
   const { date } = await params;
-  const { today: searchParamsToday } = await searchParams;
+  const { today: searchParamsToday, notebook: notebookParam } =
+    await searchParams;
 
   if (!isDateString(date)) {
     redirect(ROUTES.APP.DASHBOARD);
@@ -125,7 +134,22 @@ export default async function EntryPage({
     );
   }
 
-  // 4. Render the fully-functional JournalEditorShell
+  // 4. Resolve the filing target server-side (never trust a client id):
+  //    an existing entry keeps its own notebook; a new day files into the
+  //    ?notebook= param when the user owns it, else the default notebook.
+  const notebooks = await NotebooksService.listNotebooks(session.user.id);
+  let filingNotebookId = entry?.notebookId ?? null;
+  if (!filingNotebookId) {
+    const requested =
+      notebookParam && /^[a-f\d]{24}$/i.test(notebookParam)
+        ? await NotebookRepository.getById(session.user.id, notebookParam)
+        : null;
+    filingNotebookId = requested
+      ? requested.id
+      : (notebooks.find((n) => n.isDefault)?.id ?? notebooks[0]?.id ?? null);
+  }
+
+  // 5. Render the fully-functional JournalEditorShell
   return (
     <JournalEditorShell
       key={date}
@@ -133,6 +157,11 @@ export default async function EntryPage({
       initialTitle={entry?.title ?? ""}
       initialContent={entry?.contentJson ?? ""}
       initialMood={entry?.mood ?? null}
+      initialNotebookId={filingNotebookId}
+      notebooks={notebooks.map((notebook) => ({
+        id: notebook.id,
+        name: notebook.name,
+      }))}
     />
   );
 }

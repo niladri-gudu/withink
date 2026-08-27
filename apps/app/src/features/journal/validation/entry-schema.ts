@@ -17,6 +17,15 @@ export const saveEntrySchema = z.object({
   contentText: z.string().max(1_000_000).default(""),
   contentJson: z.any().optional(),
   wordCount: z.number().int().min(0).max(1_000_000).optional(),
+  /**
+   * Notebook filing target for NEW entries. Omitted by legacy clients and
+   * older offline queue items (no filing change); ownership + fallback to
+   * the default notebook are resolved server-side in saveEntryAction.
+   */
+  notebookId: z
+    .string()
+    .regex(/^[a-f\d]{24}$/i, "Invalid notebook.")
+    .optional(),
 });
 
 export type SaveEntryInput = z.infer<typeof saveEntrySchema>;

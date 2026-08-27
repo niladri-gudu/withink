@@ -45,6 +45,7 @@ const PLANS: PlanCard[] = [
       "Read & edit anytime",
       "14-day backfill window",
       "1 device at a time",
+      "1 notebook",
       "100MB photos",
       "Zero-knowledge encryption",
       "Search, tags & offline",
@@ -59,6 +60,7 @@ const PLANS: PlanCard[] = [
     features: [
       "90-day backfill window",
       "3 devices",
+      "3 notebooks",
       "10GB photos",
       "Weekly digest & reminders*",
       "Standard PDF export*",
@@ -75,6 +77,7 @@ const PLANS: PlanCard[] = [
     features: [
       "Unlimited backfill",
       "Unlimited devices",
+      "10 notebooks",
       "50GB photos",
       "Custom PDF layouts*",
       "Voice notes, E2EE audio*",
@@ -108,7 +111,9 @@ export default function PricingPage() {
             key={plan.name}
             aria-label={`${plan.name} plan`}
             className={`border-border bg-card flex flex-col rounded-2xl border p-6 ${
-              plan.featured ? "border-accent ring-accent/25 shadow-sm ring-1" : ""
+              plan.featured
+                ? "border-accent ring-accent/25 shadow-sm ring-1"
+                : ""
             }`}
           >
             <div className="space-y-1 pb-4">
@@ -138,7 +143,7 @@ export default function PricingPage() {
               ))}
             </ul>
 
-            <div className="pt-6 mt-auto">
+            <div className="mt-auto pt-6">
               <Button
                 variant={plan.featured ? "default" : "outline"}
                 asChild
@@ -155,8 +160,8 @@ export default function PricingPage() {
         <p>
           Every plan includes full cloud sync and backup, zero-knowledge
           encryption, diary lock, offline writing, search, tags, and basic
-          export. Reading and editing your past entries stays free on every
-          tier — forever.
+          export. Reading and editing your past entries stays free on every tier
+          — forever.
         </p>
         <p>
           Downgrading never locks anything you already made; only new actions

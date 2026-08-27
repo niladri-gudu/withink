@@ -74,6 +74,7 @@ describe("FlashbackService", () => {
       contentJson: {},
       wordCount: 5,
       mood: 4,
+      notebookId: null,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -114,6 +115,7 @@ describe("FlashbackService", () => {
       contentJson: {},
       wordCount: 5,
       mood: 3,
+      notebookId: null,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -148,6 +150,7 @@ describe("FlashbackService", () => {
       contentJson: {},
       wordCount: 4,
       mood: 5,
+      notebookId: null,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -184,6 +187,7 @@ describe("FlashbackService", () => {
       contentJson: {},
       wordCount: 2,
       mood: 3,
+      notebookId: null,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -223,6 +227,7 @@ describe("FlashbackService", () => {
       contentJson: {},
       wordCount: 1,
       mood: 4,
+      notebookId: null,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -270,6 +275,7 @@ describe("FlashbackService", () => {
       contentJson: {},
       wordCount: 2,
       mood: 5,
+      notebookId: null,
       createdAt: new Date(),
       updatedAt: new Date(),
     };

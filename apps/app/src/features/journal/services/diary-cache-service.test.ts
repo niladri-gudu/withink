@@ -54,8 +54,9 @@ const localEntry = {
   contentText: "Local full text used for searching beyond the preview snippet.",
   wordCount: 3,
   mood: null,
+  notebookId: "nb-1",
   updatedAt: "2026-01-01T00:00:00.000Z",
-  v: 2,
+  v: 3,
 };
 
 function localEntryValue(overrides: Partial<typeof localEntry> = {}) {
@@ -180,6 +181,45 @@ describe("diaryCacheService.syncDiaryCache", () => {
     expect(actionsMock.getEntryAction).not.toHaveBeenCalled();
     expect(dbMock.delete).not.toHaveBeenCalled();
   });
+
+  it("re-fetches v2 records once so the notebooks field is backfilled", async () => {
+    // Same updatedAt, but the record predates METADATA_VERSION 3 — it must
+    // be treated as stale so the pull backfills `notebookId`.
+    dbMock.getAllEntries.mockResolvedValue([
+      {
+        key: "2026-01-01",
+        value: JSON.stringify({ ...localEntry, v: 2, notebookId: undefined }),
+      },
+    ]);
+    actionsMock.getEntrySyncListAction.mockResolvedValue({
+      success: true,
+      data: [{ date: "2026-01-01", updatedAt: localEntry.updatedAt }],
+    });
+    actionsMock.getEntryAction.mockResolvedValue({
+      success: true,
+      data: {
+        date: "2026-01-01",
+        title: "enc:title",
+        contentText: "enc:text",
+        contentHtml: "enc:html",
+        contentJson: "{}",
+        mood: null,
+        wordCount: 5,
+        notebookId: "nb-1",
+        updatedAt: new Date(localEntry.updatedAt),
+      },
+    });
+
+    const ok = await diaryCacheService.syncDiaryCache(masterKey, "2026-01-02");
+
+    expect(ok).toBe(true);
+    expect(actionsMock.getEntryAction).toHaveBeenCalled();
+    const savedMetadata = JSON.parse(
+      dbMock.set.mock.calls[0]?.[1] ?? "{}",
+    ) as CachedMetadata;
+    expect(savedMetadata.v).toBe(3);
+    expect(savedMetadata.notebookId).toBe("nb-1");
+  });
 });
 
 describe("filterLocalTimeline", () => {
@@ -190,8 +230,9 @@ describe("filterLocalTimeline", () => {
     contentText: `It has been raining all day. ${"x".repeat(300)} END_MARKER`,
     wordCount: 12,
     mood: 3,
+    notebookId: "nb-1",
     updatedAt: "2026-01-01T14:00:00.000Z",
-    v: 2,
+    v: 3,
     ...overrides,
   });
 

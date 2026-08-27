@@ -19,6 +19,7 @@ export const ROUTES = {
     DASHBOARD: "/",
     ENTRIES: "/entries",
     ENTRY: (date: string) => `/entries/${date}`,
+    NOTEBOOKS: "/notebooks",
     FLASHBACKS: "/flashbacks",
     INSIGHTS: "/insights",
     MEDIA: "/media",

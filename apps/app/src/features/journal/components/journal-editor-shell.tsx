@@ -5,7 +5,13 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { IconButton } from "@withink/ui/icon-button";
-import { ChevronLeft, Loader2, Maximize2, Minimize2 } from "lucide-react";
+import {
+  ChevronLeft,
+  Loader2,
+  Maximize2,
+  Minimize2,
+  Notebook,
+} from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 
 import { ROUTES } from "@/constants/routes";
@@ -15,6 +21,7 @@ import { formatDisplayDate } from "@/lib/utils/date";
 import { zenAudioService } from "@/lib/zen-audio";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { useEncryption } from "@/providers/encryption-provider";
+import { MoveEntryDialog } from "@/features/notebooks/components/move-entry-dialog";
 
 import { useAutoSave } from "../hooks/use-auto-save";
 import { useSyncStatus } from "../hooks/use-sync-status";
@@ -41,6 +48,13 @@ interface Props {
   initialTitle: string;
   initialContent: any;
   initialMood: number | null;
+  /**
+   * Notebook filing target for this day: an existing entry's notebook, or
+   * the resolved default/param choice for a not-yet-written day.
+   */
+  initialNotebookId?: string | null;
+  /** The viewer's notebooks (id + name); the chip/move UI shows when > 1. */
+  notebooks?: { id: string; name: string }[];
 }
 
 /** How long the revealed toolbar lingers on a phone in zen mode. */
@@ -53,9 +67,15 @@ export function JournalEditorShell({
   initialTitle,
   initialContent,
   initialMood,
+  initialNotebookId,
+  notebooks = [],
 }: Props) {
   const [title, setTitle] = useState(initialTitle);
   const [mood, setMood] = useState<number | null>(initialMood);
+  const [notebookId, setNotebookId] = useState<string | null>(
+    initialNotebookId ?? null,
+  );
+  const [moveOpen, setMoveOpen] = useState(false);
   const [editorContent, setEditorContent] = useState({
     html: "",
     text: "",
@@ -248,6 +268,7 @@ export function JournalEditorShell({
         if (cachedDoc) {
           setTitle(cachedDoc.title);
           setMood(cachedDoc.mood);
+          setNotebookId(cachedDoc.notebookId ?? initialNotebookId ?? null);
           setDecryptedContent(cachedDoc.contentJson);
           setEditorContent({
             html: cachedDoc.contentHtml,
@@ -304,7 +325,14 @@ export function JournalEditorShell({
     return () => {
       cancelled = true;
     };
-  }, [initialTitle, initialContent, isClientEncrypted, masterKey, date]);
+  }, [
+    initialTitle,
+    initialContent,
+    initialNotebookId,
+    isClientEncrypted,
+    masterKey,
+    date,
+  ]);
 
   // Setup scroll-padding for visual viewport (keyboard avoidance on mobile/Safari).
   // The <style> element is created once and mutated in place instead of being
@@ -390,6 +418,7 @@ export function JournalEditorShell({
       contentHtml: editorContent.html,
       contentText: editorContent.text,
       contentJson: editorContent.json,
+      notebookId: notebookId ?? undefined,
     },
     1500,
     isUnlocked && canEncrypt,
@@ -448,6 +477,26 @@ export function JournalEditorShell({
               <time className="text-muted-foreground/70 font-hand truncate text-lg leading-none">
                 {formatDisplayDate(date)}
               </time>
+
+              {/* Quiet filing chip: which notebook this page belongs to.
+                  Tap to move — only offered when there's more than one. */}
+              {notebooks.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => setMoveOpen(true)}
+                  aria-label={`Filed under ${
+                    notebooks.find((n) => n.id === notebookId)?.name ??
+                    "notebook"
+                  }. Change notebook`}
+                  className="text-muted-foreground/60 hover:text-accent focus-visible:ring-ring hover:border-accent/40 inline-flex h-8 min-w-0 cursor-pointer items-center gap-1 rounded-full border border-transparent px-1.5 font-serif text-xs transition-colors focus-visible:ring-2 focus-visible:outline-none"
+                >
+                  <Notebook aria-hidden="true" className="h-3 w-3 shrink-0" />
+                  <span className="max-w-[7rem] truncate sm:max-w-[10rem]">
+                    {notebooks.find((n) => n.id === notebookId)?.name ??
+                      "Notebook"}
+                  </span>
+                </button>
+              )}
 
               <div className="min-w-2 flex-1" />
 
@@ -581,6 +630,18 @@ export function JournalEditorShell({
       >
         <SaveIndicator status={saveStatus} syncState={syncState} />
       </div>
+
+      {/* Move-to-notebook dialog (the ONE shared implementation): re-filing
+          is an explicit server action — autosave never moves an existing
+          entry between notebooks. */}
+      <MoveEntryDialog
+        open={moveOpen}
+        onOpenChange={setMoveOpen}
+        date={date}
+        notebooks={notebooks}
+        currentNotebookId={notebookId}
+        onMoved={setNotebookId}
+      />
     </div>
   );
 }

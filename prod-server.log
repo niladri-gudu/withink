@@ -1,0 +1,27 @@
+▲ Next.js 16.2.9
+- Local:         http://localhost:3000
+- Network:       http://172.16.0.2:3000
+✓ Ready in 453ms
+{"message":"[Web Vitals] FCP: 460 (good)","level":"info","timestamp":"2026-08-27T05:28:46.208Z","context":{"userId":"6a8a9d4ec380096068b5ea0b","metricId":"v4-1787808525466-8363787442242","metricName":"FCP","value":460,"rating":"good","delta":460}}
+{"message":"Initializing Mongoose connection","level":"info","timestamp":"2026-08-27T05:28:46.277Z","context":{"dbName":"withink_dev"}}
+{"message":"Mongoose connected successfully","level":"info","timestamp":"2026-08-27T05:28:47.072Z","context":{"dbName":"withink_dev"}}
+{"message":"[Web Vitals] TTFB: 241.20000004768372 (good)","level":"info","timestamp":"2026-08-27T05:28:48.190Z","context":{"userId":"6a8a9d4ec380096068b5ea0b","metricId":"v4-1787808525466-5528867848195","metricName":"TTFB","value":241.20000004768372,"rating":"good","delta":241.20000004768372}}
+{"message":"[Web Vitals] LCP: 3244 (needs-improvement)","level":"warn","timestamp":"2026-08-27T05:29:02.423Z","context":{"userId":"6a8a9d4ec380096068b5ea0b","metricId":"v4-1787808525465-9962848554154","metricName":"LCP","value":3244,"rating":"needs-improvement","delta":3244}}
+{"message":"[Web Vitals] CLS: 0 (good)","level":"info","timestamp":"2026-08-27T05:29:05.273Z","context":{"userId":"6a8a9d4ec380096068b5ea0b","metricId":"v4-1787777515443-2445859207094","metricName":"CLS","value":0,"rating":"good","delta":0}}
+{"message":"[Web Vitals] INP: 32 (good)","level":"info","timestamp":"2026-08-27T05:29:05.276Z","context":{"userId":"6a8a9d4ec380096068b5ea0b","metricId":"v4-1787777515426-8937720083071","metricName":"INP","value":32,"rating":"good","delta":32}}
+Error: Failed to find Server Action "0058525d4569d0b0325311c37fdb665d5321d4a7da". This request might be from an older or newer deployment.
+Read more: https://nextjs.org/docs/messages/failed-to-find-server-action
+    at ignore-listed frames
+{"message":"[Web Vitals] FCP: 192 (good)","level":"info","timestamp":"2026-08-27T05:29:15.509Z","context":{"userId":"6a891f4b214354724f45c627","metricId":"v4-1787808555383-9241037445946","metricName":"FCP","value":192,"rating":"good","delta":192}}
+{"message":"[Web Vitals] TTFB: 39.89999997615814 (good)","level":"info","timestamp":"2026-08-27T05:29:15.955Z","context":{"userId":"6a891f4b214354724f45c627","metricId":"v4-1787808555383-7089396171240","metricName":"TTFB","value":39.89999997615814,"rating":"good","delta":39.89999997615814}}
+{"message":"[Web Vitals] LCP: 760 (good)","level":"info","timestamp":"2026-08-27T05:29:17.118Z","context":{"userId":"6a891f4b214354724f45c627","metricId":"v4-1787808555383-3032550580682","metricName":"LCP","value":760,"rating":"good","delta":760}}
+{"message":"[Web Vitals] CLS: 0.0020543022863312487 (good)","level":"info","timestamp":"2026-08-27T05:29:49.942Z","context":{"userId":"6a891f4b214354724f45c627","metricId":"v4-1787808555387-2131449350822","metricName":"CLS","value":0.0020543022863312487,"rating":"good","delta":0.0020543022863312487}}
+{"message":"[Web Vitals] INP: 48 (good)","level":"info","timestamp":"2026-08-27T05:29:49.945Z","context":{"userId":"6a891f4b214354724f45c627","metricId":"v4-1787808555383-6897875508769","metricName":"INP","value":48,"rating":"good","delta":48}}
+{"message":"[Web Vitals] INP: 40 (good)","level":"info","timestamp":"2026-08-27T05:31:07.523Z","context":{"userId":"6a8a9d4ec380096068b5ea0b","metricId":"v4-1787808525465-5223188345445","metricName":"INP","value":40,"rating":"good","delta":40}}
+{"message":"[Web Vitals] FCP: 104 (good)","level":"info","timestamp":"2026-08-27T05:31:07.674Z","context":{"userId":"6a8a9d4ec380096068b5ea0b","metricId":"v4-1787808667563-7592459232025","metricName":"FCP","value":104,"rating":"good","delta":104}}
+{"message":"[Web Vitals] CLS: 0.00015629858877513352 (good)","level":"info","timestamp":"2026-08-27T05:31:08.171Z","context":{"userId":"6a8a9d4ec380096068b5ea0b","metricId":"v4-1787808525472-3885609488991","metricName":"CLS","value":0.00015629858877513352,"rating":"good","delta":0.00015629858877513352}}
+{"message":"[Web Vitals] TTFB: 28.600000023841858 (good)","level":"info","timestamp":"2026-08-27T05:31:08.361Z","context":{"userId":"6a8a9d4ec380096068b5ea0b","metricId":"v4-1787808667563-3234871423166","metricName":"TTFB","value":28.600000023841858,"rating":"good","delta":28.600000023841858}}
+{"message":"[Web Vitals] LCP: 920 (good)","level":"info","timestamp":"2026-08-27T05:32:21.980Z","context":{"userId":"6a8a9d4ec380096068b5ea0b","metricId":"v4-1787808667562-1164628069729","metricName":"LCP","value":920,"rating":"good","delta":920}}
+undefined
+D:\code\saas\withink.me\apps\app:
+ ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 4294967295: next start

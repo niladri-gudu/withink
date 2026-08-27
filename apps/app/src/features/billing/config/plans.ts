@@ -2,9 +2,9 @@
  * Single source of truth for Withink's pricing tiers and entitlements.
  *
  * This mirrors internal-docs/MONETIZATION_PLAN.md §2 — update both together.
- * Only the launch gates consume these values today (backfill window, media
- * quota, concurrent sessions); the remaining fields are reserved for
- * fast-follow features so the whole matrix lives in one place.
+ * The launch gates consume backfill window, media quota, concurrent sessions,
+ * and (as of the Notebooks fast-follow) notebookLimit; the remaining fields
+ * are reserved so the whole matrix lives in one place.
  */
 
 export const KB = 1024;
@@ -25,7 +25,10 @@ export interface Entitlements {
    * oldest session; Infinity = unlimited devices.
    */
   maxConcurrentSessions: number;
-  /** Reserved (fast-follow): maximum notebooks per user. */
+  /**
+   * Maximum notebooks a user may CREATE (grandfathering: existing notebooks
+   * stay fully usable on downgrade; only new creation is gated).
+   */
   notebookLimit: number;
   /** Reserved (fast-follow): revision history retention in days. */
   revisionRetentionDays: number;
@@ -48,7 +51,7 @@ export const ENTITLEMENTS: Record<ResolvedPlan, Entitlements> = {
     backfillDays: 90,
     mediaStorageBytes: 10 * GB,
     maxConcurrentSessions: 3,
-    notebookLimit: 10,
+    notebookLimit: 3,
     revisionRetentionDays: 90,
     futureLetterLimit: 3,
   },
@@ -57,7 +60,7 @@ export const ENTITLEMENTS: Record<ResolvedPlan, Entitlements> = {
     backfillDays: Number.POSITIVE_INFINITY,
     mediaStorageBytes: 50 * GB,
     maxConcurrentSessions: Number.POSITIVE_INFINITY,
-    notebookLimit: Number.POSITIVE_INFINITY,
+    notebookLimit: 10,
     revisionRetentionDays: Number.POSITIVE_INFINITY,
     futureLetterLimit: Number.POSITIVE_INFINITY,
   },

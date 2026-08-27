@@ -1,4 +1,5 @@
 import { revalidateTag } from "next/cache";
+import type { Model } from "mongoose";
 
 import { connectDB } from "@/lib/db/mongoose";
 import {
@@ -59,11 +60,24 @@ export class EntryRepository {
    * reads, page lists, stats, dates) are re-read from Mongo on their next
    * access. Returns the new version so callers can write hot entries under it
    * without an extra Redis GET.
+   *
+   * Render-safe: contains no Next cache APIs, so it may run inside RSC
+   * renders (e.g. the notebooks bootstrap backfill).
+   */
+  static async bumpUserEntryVersion(userId: string): Promise<number | null> {
+    return await incrementCachedValue(`entries:${userId}:version`);
+  }
+
+  /**
+   * Bumps the version AND invalidates derived `use cache` views (insights).
+   * The tag call is illegal during render, so render-time paths (bootstrap
+   * backfill) use bumpUserEntryVersion instead — entry writes go through
+   * this one from actions/route handlers only.
    */
   static async invalidateUserEntryCache(
     userId: string,
   ): Promise<number | null> {
-    const newVersion = await incrementCachedValue(`entries:${userId}:version`);
+    const newVersion = await this.bumpUserEntryVersion(userId);
     // Invalidate any cached derived views (e.g. insights) for this user. The
     // profile arg is required by Next 16's revalidateTag signature; the
     // re-fetched entry re-applies its own cacheLife on the next render.
@@ -148,6 +162,8 @@ export class EntryRepository {
       mood?: number | null;
       timeFilter?: "all" | "week" | "month";
       today?: string;
+      /** Timeline scoped to one notebook (entries-page filter). */
+      notebookId?: string;
     },
   ): Promise<{ entries: IEntry[]; total: number }> {
     await connectDB();
@@ -156,6 +172,10 @@ export class EntryRepository {
 
     if (filters?.mood) {
       query.mood = filters.mood;
+    }
+
+    if (filters?.notebookId) {
+      query.notebookId = filters.notebookId;
     }
 
     if (filters?.timeFilter && filters.timeFilter !== "all") {
@@ -170,7 +190,8 @@ export class EntryRepository {
     const hasFilters = !!(
       filters?.mood ||
       (filters?.timeFilter && filters.timeFilter !== "all") ||
-      filters?.search
+      filters?.search ||
+      filters?.notebookId
     );
 
     if (filters?.search) {
@@ -396,5 +417,106 @@ export class EntryRepository {
     }
 
     return deleted;
+  }
+
+  // ---------------------------------------------------------------------
+  // Notebook filing (see features/notebooks). Entries stay unique per
+  // (userId, date); notebookId only records which notebook an entry is
+  // filed under and never participates in the save/upsert path — it is
+  // set at creation via saveEntry's payload or by explicit moves below.
+  // ---------------------------------------------------------------------
+
+  /** Entries filed in one notebook (delete-notebook guard). */
+  static async countByNotebook(
+    userId: string,
+    notebookId: string,
+  ): Promise<number> {
+    if (!notebookId) return 0;
+    await connectDB();
+    const count = await (EntryModel as Model<IEntry>).countDocuments({
+      userId,
+      notebookId,
+    });
+    return count;
+  }
+
+  /**
+   * Per-notebook entry counts + last-written timestamps for the notebooks
+   * page. Legacy rows (notebookId null) are backfilled to the default
+   * notebook during bootstrap, so a null group here is defensive only.
+   */
+  static async getNotebookUsage(
+    userId: string,
+  ): Promise<Map<string, { count: number; lastWrittenAt: string | null }>> {
+    await connectDB();
+    const rows = await (EntryModel as Model<IEntry>).aggregate<{
+      _id: string | null;
+      count: number;
+      lastWrittenAt: Date | null;
+    }>([
+      { $match: { userId: { $eq: userId } } },
+      {
+        $group: {
+          _id: "$notebookId",
+          count: { $sum: 1 },
+          lastWrittenAt: { $max: "$updatedAt" },
+        },
+      },
+    ]);
+
+    const usage = new Map<
+      string,
+      { count: number; lastWrittenAt: string | null }
+    >();
+    for (const row of rows) {
+      if (!row?._id) continue;
+      usage.set(String(row._id), {
+        count: row.count ?? 0,
+        lastWrittenAt: row.lastWrittenAt
+          ? new Date(row.lastWrittenAt).toISOString()
+          : null,
+      });
+    }
+    return usage;
+  }
+
+  /**
+   * One-time legacy backfill: files pre-notebooks entries (notebookId null)
+   * into the user's default notebook. Indexed by the {userId, notebookId}
+   * compound index; a no-op once every row has been claimed.
+   */
+  static async backfillNullNotebooks(
+    userId: string,
+    defaultNotebookId: string,
+  ): Promise<number> {
+    await connectDB();
+    const result = await (EntryModel as Model<IEntry>).updateMany(
+      { userId, notebookId: null },
+      { $set: { notebookId: defaultNotebookId } },
+    );
+    return result?.modifiedCount ?? 0;
+  }
+
+  /**
+   * Moves an entry between notebooks. Only ever called from the explicit
+   * move action — autosave payloads never change an existing entry's
+   * notebook (edit-grandfathering for filing, mirroring the date rules).
+   * Bumps the entries version so timeline/calendar caches re-read.
+   */
+  static async setEntryNotebook(
+    userId: string,
+    date: string,
+    notebookId: string,
+  ): Promise<boolean> {
+    await connectDB();
+    const updated = await (EntryModel as Model<IEntry>).findOneAndUpdate(
+      { userId, date },
+      { $set: { notebookId } },
+      { new: true },
+    );
+    if (!updated) return false;
+
+    await this.invalidateUserEntryCache(userId);
+    return true;
   }
 }

@@ -31,7 +31,7 @@ Guiding rules (non-negotiable):
 | Read & edit past entries | Anytime | Anytime | Anytime | Anytime |
 | Revision history (fast-follow) | 7 days | 90 days | Forever | Forever |
 | Backfill missed days | 14 days | 90 days | Unlimited | Unlimited |
-| Notebooks (fast-follow) | 1 | 10 | Unlimited | Unlimited |
+| Notebooks | 1 | 3 | 10 | 10 |
 | Active devices | 1 at a time* | 3 | Unlimited | Unlimited |
 | Photo storage | 100MB | 10GB | 50GB | 50GB |
 | Themes & typography (fast-follow) | Standard | All curated styles | Curated custom accents & fonts | Same as Pro |
@@ -46,6 +46,13 @@ Full cloud sync and backup included on every plan.
 
 Lifetime = Pro forever, plus cosmetic perks (Founding Member badge,
 supporters page opt-in). No storage delta over Pro (margin protection).
+
+**Tier decision (2026-08-26): Notebooks are capped 1 / 3 / 10 — not
+unlimited.** Entries and words are already unlimited on every tier, so a
+finite ladder keeps the perk honest and differentiable. A Pro user at 10
+sees a calm informational dialog (nothing to sell), Free/Plus see the
+standard upgrade paywall. Grandfathering is unchanged: existing notebooks
+stay fully usable on downgrade; only creation is gated.
 
 **Launch decision (2026-08-26): Lifetime is deferred to a fast-follow.**
 Launch scope is the three subscription products only
@@ -76,7 +83,7 @@ Explicitly deferred:
 
 | Feature | When | Why |
 |---|---|---|
-| Notebooks | Fast-follow | Schema addition + entry migration |
+| ~~Notebooks~~ | **Shipped 2026-08-26** | Entries gained `notebookId`; default notebook bootstrapped lazily with a one-time backfill; gates on creation only (1/3/10), full downgrade grandfathering. |
 | Revision history | Fast-follow | Snapshot pipeline; start with single previous-version slot |
 | Letters to future self | Fast-follow | Read-path seal logic |
 | Premium themes/fonts | Fast-follow | Curated asset work over token system |
@@ -247,8 +254,8 @@ a11y, responsive, tests, no TODOs, docs updated).
 ## 10. Post-Launch Roadmap
 
 Fast-follow order (perceived value ÷ effort):
-notebooks → revision history (slot → retention tiers) → future letters →
-curated themes/fonts.
+~~notebooks~~ (shipped) → revision history (slot → retention tiers) →
+future letters → curated themes/fonts.
 
 Later: voice notes (E2EE audio; transcripts once privacy story solved) →
 PDF/book export → reminders + weekly digest (needs scheduler infra).

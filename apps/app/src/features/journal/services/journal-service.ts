@@ -16,6 +16,8 @@ export interface DecryptedEntry {
   contentJson: any; // eslint-disable-line @typescript-eslint/no-explicit-any
   wordCount: number;
   mood: number | null;
+  /** Notebook the entry is filed under (null only pre-bootstrap). */
+  notebookId: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -53,6 +55,7 @@ export class JournalService {
       contentJson,
       wordCount: entry.wordCount || 0,
       mood: entry.mood ?? null,
+      notebookId: entry.notebookId ?? null,
       createdAt: entry.createdAt,
       updatedAt: entry.updatedAt,
     };
@@ -99,7 +102,15 @@ export class JournalService {
       wordCount?: number;
     },
     userLocalToday: string,
-    options?: { backfillDays?: number },
+    options?: {
+      backfillDays?: number;
+      /**
+       * Notebook filing target for NEW entries only (already validated as
+       * owned by the caller). Edits never re-file an entry — autosave
+       * payloads from any era cannot move an existing day's notebook.
+       */
+      notebookId?: string;
+    },
   ): Promise<DecryptedEntry> {
     if (!isDateString(date) || !isDateString(userLocalToday)) {
       throw new ValidationError("Invalid date strings provided.");
@@ -159,6 +170,12 @@ export class JournalService {
           : JSON.stringify(data.contentJson);
     }
 
+    // Filing is create-only: an existing entry keeps its notebook no matter
+    // what the payload carries (mirrors the edit-grandfathering date rule).
+    if (!existingEntry && options?.notebookId) {
+      updatePayload.notebookId = options.notebookId;
+    }
+
     // 4. Save through the repository
     const entry = await EntryRepository.saveEntry(
       userId,
@@ -182,6 +199,8 @@ export class JournalService {
       mood?: number | null;
       timeFilter?: "all" | "week" | "month";
       today?: string;
+      /** Timeline scoped to one notebook (entries-page filter). */
+      notebookId?: string;
     },
   ): Promise<{ entries: DecryptedEntry[]; total: number }> {
     if (filters?.search) {

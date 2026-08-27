@@ -21,6 +21,7 @@ import {
   Image as ImageIcon,
   LogOut,
   MessageSquare,
+  Notebook as NotebookIcon,
   Settings,
   Sparkles,
   Sun,
@@ -58,29 +59,36 @@ const tabItems = [
 /** Secondary destinations, numbered to match the desktop margin rail. */
 const moreItems = [
   {
-    label: "Flashbacks",
+    label: "Notebooks",
     folio: "03",
+    href: ROUTES.APP.NOTEBOOKS,
+    icon: NotebookIcon,
+    isActive: (pathname: string) => pathname.startsWith(ROUTES.APP.NOTEBOOKS),
+  },
+  {
+    label: "Flashbacks",
+    folio: "04",
     href: ROUTES.APP.FLASHBACKS,
     icon: Sparkles,
     isActive: (pathname: string) => pathname === ROUTES.APP.FLASHBACKS,
   },
   {
     label: "Media",
-    folio: "05",
+    folio: "06",
     href: ROUTES.APP.MEDIA,
     icon: ImageIcon,
     isActive: (pathname: string) => pathname === ROUTES.APP.MEDIA,
   },
   {
     label: "Settings",
-    folio: "06",
+    folio: "07",
     href: ROUTES.APP.SETTINGS,
     icon: Settings,
     isActive: (pathname: string) => pathname === ROUTES.APP.SETTINGS,
   },
   {
     label: "Feedback",
-    folio: "07",
+    folio: "08",
     href: ROUTES.APP.FEEDBACK,
     icon: MessageSquare,
     isActive: (pathname: string) => pathname === ROUTES.APP.FEEDBACK,

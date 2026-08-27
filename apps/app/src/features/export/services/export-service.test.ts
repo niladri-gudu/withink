@@ -22,6 +22,24 @@ vi.mock("@/features/journal/services/journal-service", () => ({
   },
 }));
 
+// Export reads notebook names for metadata.json; the notebooks service hits
+// Mongo through its repositories, which these tests don't exercise.
+vi.mock("@/features/notebooks/services/notebook-service", () => ({
+  NotebooksService: {
+    listNotebooks: vi
+      .fn()
+      .mockResolvedValue([
+        {
+          id: "nb-1",
+          name: "Journal",
+          isDefault: true,
+          entryCount: 0,
+          lastWrittenAt: null,
+        },
+      ]),
+  },
+}));
+
 function makeEntry(overrides: Partial<any> = {}): any {
   return {
     id: "id",

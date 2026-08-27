@@ -8,6 +8,8 @@ import { handleError } from "@/server/errors";
 import { rateLimit } from "@/server/rate-limit";
 import { EntitlementsService } from "@/features/billing/services/entitlements-service";
 import { LockService } from "@/features/lock/services/lock-service";
+import { NotebookRepository } from "@/features/notebooks/repositories/notebook-repository";
+import { NotebooksService } from "@/features/notebooks/services/notebook-service";
 
 import {
   JournalService,
@@ -65,7 +67,21 @@ export async function saveEntryAction(
       session.user.id,
     );
 
-    // 3. Delegate to JournalService
+    // 3. Resolve the filing target server-side — never trust a client id.
+    //    Owned ids pass through; unknown/foreign ids coerce to the default
+    //    notebook so an offline save can never fail (or land cross-tenant).
+    let filingTarget: string | undefined;
+    if (validated.notebookId) {
+      const owned = await NotebookRepository.getById(
+        session.user.id,
+        validated.notebookId,
+      );
+      filingTarget = owned
+        ? owned.id
+        : await NotebooksService.getDefaultNotebookId(session.user.id);
+    }
+
+    // 4. Delegate to JournalService
     const entry = await JournalService.saveJournalEntry(
       session.user.id,
       validated.date,
@@ -78,7 +94,10 @@ export async function saveEntryAction(
         wordCount: validated.wordCount,
       },
       userLocalToday,
-      { backfillDays: entitlements.backfillDays },
+      {
+        backfillDays: entitlements.backfillDays,
+        notebookId: filingTarget,
+      },
     );
 
     return { success: true, data: entry };
@@ -103,6 +122,10 @@ const entriesListArgsSchema = z.object({
         .string()
         .regex(/^\d{4}-\d{2}-\d{2}$/)
         .optional(),
+      notebookId: z
+        .string()
+        .regex(/^[a-f\d]{24}$/i)
+        .optional(),
     })
     .optional(),
 });
@@ -115,6 +138,7 @@ export async function getEntriesListAction(
     mood?: number | null;
     timeFilter?: "all" | "week" | "month";
     today?: string;
+    notebookId?: string;
   },
 ): Promise<{
   success: boolean;

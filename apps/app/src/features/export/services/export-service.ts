@@ -10,6 +10,7 @@ import {
   JournalService,
   type DecryptedEntry,
 } from "@/features/journal/services/journal-service";
+import { NotebooksService } from "@/features/notebooks/services/notebook-service";
 
 /**
  * Builds a complete, self-contained backup archive of a user's journal.
@@ -24,7 +25,13 @@ export class ExportService {
    * Generates the ZIP archive bytes for a user's entire journal.
    */
   static async generateExportZip(userId: string): Promise<ArrayBuffer> {
-    const entries = await JournalService.getAllEntriesForExport(userId);
+    const [entries, notebooks] = await Promise.all([
+      JournalService.getAllEntriesForExport(userId),
+      NotebooksService.listNotebooks(userId),
+    ]);
+    const notebookNames = new Map(
+      notebooks.map((notebook) => [notebook.id, notebook.name]),
+    );
 
     const zip = new JSZip();
 
@@ -36,6 +43,8 @@ export class ExportService {
       title: entry.title,
       mood: entry.mood,
       wordCount: entry.wordCount,
+      notebook:
+        (entry.notebookId ? notebookNames.get(entry.notebookId) : null) ?? null,
       createdAt: entry.createdAt,
       updatedAt: entry.updatedAt,
     }));
@@ -89,7 +98,7 @@ function buildReadme(entryCount: number): string {
     }.`,
     "",
     "Contents:",
-    "  metadata.json          Structured details for every entry (date, title, mood, word count, timestamps).",
+    "  metadata.json          Structured details for every entry (date, title, mood, word count, notebook, timestamps).",
     "  entries/<year>/<month>/ One .txt (plain text) and one .html (formatted) file per entry.",
     "  images/                 Every image attached to your entries.",
     "",

@@ -2,13 +2,13 @@
 
 # Project State
 
-Last Updated: 2026-08-25
+Last Updated: 2026-08-26
 
-Current Phase: Mobile-First Redesign Complete
+Current Phase: Notebooks Fast-Follow Shipped
 
-Current Milestone: Phone-First Redesign Shipped (Phases 1–4)
+Current Milestone: Notebooks (Monetization Fast-Follow #1) — Complete
 
-Project Status: 🟢 Redesign Complete and Release Ready
+Project Status: 🟢 Release Ready
 
 ---
 
@@ -378,7 +378,7 @@ Final Polish
 
 # Current Goals
 
-- Mobile-first redesign (Phases 1–4) and the marketing-site phone-first pass (Phase 5, apps/docs) shipped and verified. No queued phase.
+- Notebooks fast-follow shipped and verified (see 2026-08-26 entry). Next queued work per MONETIZATION_PLAN §10: revision history (single previous-version slot first), then future letters, then curated themes/fonts.
 
 ---
 
@@ -391,6 +391,21 @@ Note: MongoDB (`mongodb+srv://`) now connects. The earlier `querySrv ECONNREFUSE
 ---
 
 # Recent Decisions
+
+2026-08-26 (Notebooks — monetization fast-follow #1 shipped)
+
+- **Polish pass (same day, user feedback):** (1) notebook cards are now WHOLE-CARD LINKS to `/entries?notebook=<id>` — the entries page honors the param server-side (invalid ids degrade to "all") and the shell mirrors filter changes into the URL via `router.replace` (deep-linkable, refresh/back-safe); card Rename/Delete/Make-default stop propagation, keyboard Enter/Space handled. (2) Move dialog extracted to shared `notebooks/components/move-entry-dialog.tsx` (editor chip + timeline both use it; compiler lint forced a derived-preselection pattern instead of setState-in-effect); its Select gains `w-full` (the primitive's `inline-flex` wrapper collapses width in dialogs — that was the "unstyled dropdown"). (3) Timeline rows gain a visible FolderInput move button when >1 notebooks; ZK accounts trigger `journalSyncService.requestSync` after a move so local metadata learns the new filing. (4) Scoped empty state: a filtered-empty notebook shows "This notebook is waiting for its first page" + New Entry CTA carrying the notebook param. (5) Docs `/pricing` gained honest tier lines (1/3/10 notebooks). (6) Card footer wraps (`flex-wrap`) — fixed Delete peeking outside the card at narrow widths. All verified: tsc clean, lint 0 errors (3 pre-existing warnings), 218/218 Vitest, both production builds clean, browser pass (card click→URL→scoped view, move dialog styling, footer wrap at 502px, no horizontal overflow). Note: a stale `next start` holding :3000 served an OLD build during verification — kill the port owner before restarting or you'll test stale code.
+- **Notebooks shipped end-to-end.** Verified: `tsc --noEmit` clean, eslint 0 errors (3 pre-existing `clearAllTimers` warnings), full Vitest **218/218** (+22), `pnpm build` clean for BOTH apps, live browser pass (desktop 1440 + mobile 375×812 emulation, zero horizontal overflow).
+  - **Semantics (user-locked):** one entry per day GLOBALLY (PRD §27 intact) — each day's reflection is FILED into a notebook and movable later. Insights/streaks/flashbacks/search/dashboard stay global across notebooks. Only EMPTY notebooks are deletable (no mass-delete path). Downgrade grandfathering per MONETIZATION_PLAN §1: creation gated, everything existing stays fully usable.
+  - **Tier decision (user):** notebook caps are finite — Free 1 / Plus **3** / Pro **10** (`plans.ts` reserved fields went live; `plans.test.ts` pins updated; MONETIZATION_PLAN §2 + §3 marked shipped). Pro-at-cap renders a calm informational dialog (no CTAs); Free/Plus get the standard paywall via `UpgradeDialog reason="notebooks"` (New Notebook stays visible+tappable at the limit — Option A).
+  - **Data spine:** new `features/notebooks/` (model `notebooks` collection with unique `{userId, nameLower}`; repository returning serialized `NotebookRecord`s; `NotebooksService`; zod name schema 1–60 chars whitespace-collapsed; rate-limited actions create 10/h + shared write bucket 30/min). `entries` gained nullable `notebookId` + non-unique `{userId, notebookId, date:-1}` index; unique `{userId, date}` untouched.
+  - **Lazy bootstrap:** `ensureBootstrapped` creates the default "Journal" on first notebooks read, backfills ALL null-notebook entries in one indexed `updateMany` (verified live: 120 seeded entries filed), and promotes the oldest survivor when a default is deleted. **Render-safety fix found in browser pass:** bootstrap must NOT call `revalidateTag` during RSC render (Next 16 hard error on /notebooks) — split `EntryRepository.bumpUserEntryVersion` (Redis INCR only, render-safe) from `invalidateUserEntryCache` (INCR + insights tag, actions/routes only). Filing changes no insights data, so the bump is semantically sufficient.
+  - **Save path:** `saveEntrySchema.notebookId` (optional ObjectId string); `saveEntryAction` resolves the target server-side (owned id passes; unknown/foreign id coerces to default — offline saves never fail or land cross-tenant); `saveJournalEntry` applies it CREATE-ONLY (edits never re-file — mirrors date grandfathering). New `moveEntryToNotebookAction` + `setDefaultNotebookAction` (ownership-checked, version-bumping).
+  - **Local-first sync:** `METADATA_VERSION` 2→3 (one-time per-device metadata refetch backfills `notebookId`; regression test proves v2 records refetch); document_cache/sync_queue payloads carry `notebookId`; `use-auto-save` threads it through persist/enqueue/legacy paths (deliberately NOT in `isDataDirty` — moves are explicit actions, never autosave); flush stamps local metadata from the SERVER-returned notebookId (post-coercion truth).
+  - **UI:** new `/notebooks` page (PageHeader voice, cards with entry counts + last-written + gold "new pages land here" default marker, create/rename RHF+zod dialogs, delete via shared ConfirmDialog, paywall/cap dialogs, counter chip). Rail renumbered 01–08 with Notebooks as 03 (More sheet matches; tab bar untouched). Entries page: notebook Select (desktop, >1 only) + filter-sheet chips + removable chip row + timeline meta label; New Entry link carries `&notebook=`. Editor header: quiet "Filed under X" chip → Move dialog (Select + confirm, query invalidation).
+  - **Export:** `metadata.json` entries gain `notebook` (name, resolved server-side); README line updated; archive layout unchanged.
+  - **Env note for future builds on this machine:** with heavy system memory pressure the app build OOMs at default concurrency — `NEXT_WORKER_CONCURRENCY=2` (build.mjs honors the env override) completed cleanly twice.
+  - Deferred (documented, not regressions): per-notebook insights/flashback scoping (explicitly out of scope v1), notebook covers/colors/reorder, parallel same-day entries, deleting the test account's demo "Night Thoughts" notebook (left in `withink_dev` intentionally).
 
 2026-08-25 (Billing Phase D — monetization launch-complete)
 

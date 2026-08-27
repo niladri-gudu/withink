@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  ENTITLEMENTS,
-  PLAN_PRODUCTS,
-  freeEntitlements,
-} from "./plans";
+import { ENTITLEMENTS, freeEntitlements, PLAN_PRODUCTS } from "./plans";
 
 describe("plans config", () => {
   it("matches the locked pricing matrix exactly", () => {
@@ -18,7 +14,7 @@ describe("plans config", () => {
     expect(ENTITLEMENTS.plus.backfillDays).toBe(90);
     expect(ENTITLEMENTS.plus.mediaStorageBytes).toBe(10 * 1024 * 1024 * 1024);
     expect(ENTITLEMENTS.plus.maxConcurrentSessions).toBe(3);
-    expect(ENTITLEMENTS.plus.notebookLimit).toBe(10);
+    expect(ENTITLEMENTS.plus.notebookLimit).toBe(3);
     expect(ENTITLEMENTS.plus.revisionRetentionDays).toBe(90);
     expect(ENTITLEMENTS.plus.futureLetterLimit).toBe(3);
 
@@ -27,7 +23,7 @@ describe("plans config", () => {
     expect(ENTITLEMENTS.pro.maxConcurrentSessions).toBe(
       Number.POSITIVE_INFINITY,
     );
-    expect(ENTITLEMENTS.pro.notebookLimit).toBe(Number.POSITIVE_INFINITY);
+    expect(ENTITLEMENTS.pro.notebookLimit).toBe(10);
     expect(ENTITLEMENTS.pro.revisionRetentionDays).toBe(
       Number.POSITIVE_INFINITY,
     );

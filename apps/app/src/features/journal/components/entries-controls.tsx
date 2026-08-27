@@ -38,14 +38,18 @@ interface EntriesControlsProps {
   onTimeFilterChange: (value: TimeFilter) => void;
   moodFilter: string;
   onMoodFilterChange: (value: string) => void;
+  /** "all" or a notebook id; only offered when the user has >1 notebook. */
+  notebookFilter: string;
+  onNotebookFilterChange: (value: string) => void;
+  notebooks: { id: string; name: string }[];
 }
 
 /**
  * Sticky search + filter entry point for the reflections timeline. On phones
- * the search pins under the page header while the list scrolls; the mood and
- * time-range filters live one tap deeper in a bottom Sheet of toggle chips
- * (the Phase-3 decision — chips here, the shared native Select everywhere a
- * single value is picked). Desktop keeps both inline in the toolbar row.
+ * the search pins under the page header while the list scrolls; the mood,
+ * notebook, and time-range filters live one tap deeper in a bottom Sheet of
+ * toggle chips (the Phase-3 decision — chips here, the shared native Select
+ * everywhere a single value is picked). Desktop keeps them inline.
  */
 export function EntriesControls({
   search,
@@ -54,11 +58,19 @@ export function EntriesControls({
   onTimeFilterChange,
   moodFilter,
   onMoodFilterChange,
+  notebookFilter,
+  onNotebookFilterChange,
+  notebooks,
 }: EntriesControlsProps) {
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const showNotebooks = notebooks.length > 1;
 
   const activeCount =
-    (timeFilter !== "all" ? 1 : 0) + (moodFilter !== "all" ? 1 : 0);
+    (timeFilter !== "all" ? 1 : 0) +
+    (moodFilter !== "all" ? 1 : 0) +
+    (showNotebooks && notebookFilter !== "all" ? 1 : 0);
+
+  const activeNotebook = notebooks.find((n) => n.id === notebookFilter);
 
   return (
     <div className="bg-background/95 sticky top-0 z-20 -mx-2 px-2 py-2 backdrop-blur-sm">
@@ -129,6 +141,17 @@ export function EntriesControls({
               <X className="h-3 w-3" />
             </button>
           ))}
+          {showNotebooks && notebookFilter !== "all" && activeNotebook && (
+            <button
+              type="button"
+              onClick={() => onNotebookFilterChange("all")}
+              aria-label={`Remove ${activeNotebook.name} filter`}
+              className="border-accent/40 bg-accent/5 text-accent inline-flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-full border px-3 font-serif text-xs font-semibold"
+            >
+              {activeNotebook.name}
+              <X className="h-3 w-3" />
+            </button>
+          )}
         </div>
       )}
 
@@ -168,6 +191,20 @@ export function EntriesControls({
             </option>
           ))}
         </Select>
+        {showNotebooks && (
+          <Select
+            value={notebookFilter}
+            onChange={(e) => onNotebookFilterChange(e.target.value)}
+            aria-label="Filter by notebook"
+          >
+            <option value="all">All notebooks</option>
+            {notebooks.map((notebook) => (
+              <option key={notebook.id} value={notebook.id}>
+                {notebook.name}
+              </option>
+            ))}
+          </Select>
+        )}
       </div>
 
       {/* Filter sheet (phones): chip rows for time range and mood */}
@@ -236,12 +273,47 @@ export function EntriesControls({
             </div>
           </fieldset>
 
+          {showNotebooks && (
+            <fieldset className="space-y-3">
+              <legend className="text-running-head text-muted-foreground/70">
+                Notebook
+              </legend>
+              <div className="flex flex-wrap gap-2">
+                {[{ id: "all", name: "All notebooks" }, ...notebooks].map(
+                  (option) => {
+                    const active = notebookFilter === option.id;
+                    return (
+                      <button
+                        key={option.id}
+                        type="button"
+                        aria-pressed={active}
+                        onClick={() => onNotebookFilterChange(option.id)}
+                        className={cn(
+                          "focus-visible:ring-ring inline-flex h-11 max-w-full cursor-pointer items-center gap-1.5 rounded-full border px-4 font-serif text-sm transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
+                          active
+                            ? "border-accent bg-accent/5 ring-accent/30 text-foreground ring-1"
+                            : "border-border text-muted-foreground hover:border-accent/50 hover:bg-secondary/40",
+                        )}
+                      >
+                        {active && (
+                          <Check className="text-accent h-3.5 w-3.5" />
+                        )}
+                        <span className="truncate">{option.name}</span>
+                      </button>
+                    );
+                  },
+                )}
+              </div>
+            </fieldset>
+          )}
+
           <div className="mt-auto flex items-center justify-between gap-3 pt-2">
             <Button
               variant="ghost"
               onClick={() => {
                 onTimeFilterChange("all");
                 onMoodFilterChange("all");
+                onNotebookFilterChange("all");
               }}
               disabled={activeCount === 0}
             >

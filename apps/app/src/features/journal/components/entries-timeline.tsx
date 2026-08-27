@@ -25,6 +25,7 @@ import {
   ChevronRight,
   EllipsisVertical,
   FileText,
+  FolderInput,
   Frown,
   Loader2,
   Meh,
@@ -38,6 +39,7 @@ import { ROUTES } from "@/constants/routes";
 import { formatDisplayDate } from "@/lib/utils/date";
 import { useEncryption } from "@/providers/encryption-provider";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { MoveEntryDialog } from "@/features/notebooks/components/move-entry-dialog";
 
 import {
   deleteEntryAction,
@@ -48,6 +50,7 @@ import {
   filterLocalTimeline,
 } from "../services/diary-cache-service";
 import type { DecryptedEntry } from "../services/journal-service";
+import { journalSyncService } from "../services/journal-sync-service";
 import type { TimeFilter } from "./entries-controls";
 
 interface EntriesTimelineProps {
@@ -60,6 +63,10 @@ interface EntriesTimelineProps {
   debouncedSearch: string;
   moodFilter: string;
   timeFilter: TimeFilter;
+  /** "all" or a notebook id (owned by EntriesPageShell). */
+  notebookFilter: string;
+  /** The viewer's notebooks for meta-row labels (only when > 1). */
+  notebooks: { id: string; name: string }[];
   onEntryDeleted?: () => void;
 }
 
@@ -143,6 +150,8 @@ export function EntriesTimeline({
   debouncedSearch,
   moodFilter,
   timeFilter,
+  notebookFilter,
+  notebooks,
   onEntryDeleted,
 }: EntriesTimelineProps) {
   const queryClient = useQueryClient();
@@ -155,21 +164,25 @@ export function EntriesTimeline({
     search: debouncedSearch,
     moodFilter,
     timeFilter,
+    notebookFilter,
   });
   if (
     prevFilters.search !== debouncedSearch ||
     prevFilters.moodFilter !== moodFilter ||
-    prevFilters.timeFilter !== timeFilter
+    prevFilters.timeFilter !== timeFilter ||
+    prevFilters.notebookFilter !== notebookFilter
   ) {
     setPrevFilters({
       search: debouncedSearch,
       moodFilter,
       timeFilter,
+      notebookFilter,
     });
     setPage(1);
   }
 
   const [deleteDate, setDeleteDate] = useState<string | null>(null);
+  const [moveDate, setMoveDate] = useState<string | null>(null);
 
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncProgress, setSyncProgress] = useState({ current: 0, total: 0 });
@@ -243,6 +256,7 @@ export function EntriesTimeline({
         search: debouncedSearch,
         moodFilter,
         timeFilter,
+        notebookFilter,
         localToday,
         isClientEncrypted,
         isUnlocked: !!masterKey,
@@ -260,6 +274,7 @@ export function EntriesTimeline({
           moodFilter: moodFilter === "all" ? "all" : Number(moodFilter),
           timeFilter,
           search: debouncedSearch,
+          notebookFilter,
           localToday,
         });
 
@@ -288,6 +303,7 @@ export function EntriesTimeline({
         mood: moodFilter === "all" ? null : Number(moodFilter),
         timeFilter,
         today: localToday,
+        notebookId: notebookFilter !== "all" ? notebookFilter : undefined,
       });
 
       if (!res.success || !res.data) {
@@ -301,7 +317,8 @@ export function EntriesTimeline({
         page === 1 &&
         !debouncedSearch &&
         moodFilter === "all" &&
-        timeFilter === "all";
+        timeFilter === "all" &&
+        notebookFilter === "all";
       // Only trust the server-provided page when the account does NOT use
       // client-side encryption — otherwise these are ciphertext blobs, not
       // displayable titles.
@@ -412,18 +429,46 @@ export function EntriesTimeline({
             ))}
           </div>
         ) : entries.length === 0 ? (
-          <Card className="border-border/80 flex flex-col items-center justify-center border py-16 text-center">
-            <span className="border-border/40 bg-secondary/40 text-muted-foreground mb-4 flex h-14 w-14 items-center justify-center rounded-full border">
-              <FileText className="h-6 w-6" />
-            </span>
-            <p className="text-serif text-foreground mb-1 text-lg font-semibold">
-              No matching reflections
-            </p>
-            <p className="text-body-small text-muted-foreground max-w-sm">
-              Adjust your search query or filters to find older journal logs, or
-              write a new entry.
-            </p>
-          </Card>
+          notebookFilter !== "all" && !debouncedSearch ? (
+            // Scoped empty state: this notebook simply has no pages yet.
+            <Card className="border-border/80 flex flex-col items-center justify-center border py-16 text-center">
+              <span className="border-border/40 bg-secondary/40 text-muted-foreground mb-4 flex h-14 w-14 items-center justify-center rounded-full border">
+                <FileText className="h-6 w-6" />
+              </span>
+              <p className="text-serif text-foreground mb-1 text-lg font-semibold">
+                This notebook is waiting for its first page
+              </p>
+              <p className="text-body-small text-muted-foreground max-w-sm">
+                {notebooks.find((n) => n.id === notebookFilter)?.name ??
+                  "This notebook"}{" "}
+                has no entries yet. Today is a fine day to start it.
+              </p>
+              <Button asChild className="mt-6">
+                <Link
+                  href={
+                    `${ROUTES.APP.ENTRY(localToday)}?today=${localToday}&notebook=${notebookFilter}` as unknown as ComponentPropsWithoutRef<
+                      typeof Link
+                    >["href"]
+                  }
+                >
+                  Write today&apos;s entry
+                </Link>
+              </Button>
+            </Card>
+          ) : (
+            <Card className="border-border/80 flex flex-col items-center justify-center border py-16 text-center">
+              <span className="border-border/40 bg-secondary/40 text-muted-foreground mb-4 flex h-14 w-14 items-center justify-center rounded-full border">
+                <FileText className="h-6 w-6" />
+              </span>
+              <p className="text-serif text-foreground mb-1 text-lg font-semibold">
+                No matching reflections
+              </p>
+              <p className="text-body-small text-muted-foreground max-w-sm">
+                Adjust your search query or filters to find older journal logs,
+                or write a new entry.
+              </p>
+            </Card>
+          )
         ) : (
           <AnimatePresence mode="popLayout">
             {entries.map((entry) => {
@@ -482,7 +527,7 @@ export function EntriesTimeline({
                                 )}
                               </h3>
                             </Link>
-                            {/* Meta row: date · words · mood — always visible */}
+                            {/* Meta row: date · words · notebook · mood — always visible */}
                             <div className="text-running-head text-muted-foreground/60 mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5">
                               <span className="flex items-center gap-1">
                                 <Calendar className="h-3 w-3" />
@@ -493,6 +538,18 @@ export function EntriesTimeline({
                               </span>
                               <span aria-hidden="true">·</span>
                               <span>{entry.wordCount} words</span>
+                              {notebooks.length > 1 &&
+                                notebookFilter === "all" &&
+                                entry.notebookId && (
+                                  <>
+                                    <span aria-hidden="true">·</span>
+                                    <span className="max-w-[10rem] truncate">
+                                      {notebooks.find(
+                                        (n) => n.id === entry.notebookId,
+                                      )?.name ?? "Notebook"}
+                                    </span>
+                                  </>
+                                )}
                             </div>
                           </div>
                         </div>
@@ -512,8 +569,20 @@ export function EntriesTimeline({
                         </p>
                       </div>
 
-                      {/* Actions: visible kebab → confirm Dialog (the one
-                          app-wide destructive convention; no hover-reveal) */}
+                      {/* Actions: visible icons → confirm Dialog (the one
+                          app-wide destructive convention; no hover-reveal).
+                          Move appears when the shelf has >1 notebook. */}
+                      {notebooks.length > 1 && (
+                        <IconButton
+                          variant="ghost"
+                          aria-label={`Move entry on ${formatDisplayDate(entry.date)} to another notebook`}
+                          title="Move to notebook"
+                          className="text-muted-foreground/70 hover:text-accent shrink-0"
+                          onClick={() => setMoveDate(entry.date)}
+                        >
+                          <FolderInput className="h-4 w-4" />
+                        </IconButton>
+                      )}
                       <IconButton
                         variant="ghost"
                         aria-label={`Options for entry on ${formatDisplayDate(entry.date)}`}
@@ -584,6 +653,23 @@ export function EntriesTimeline({
         pending={deletingEntry !== null}
         onConfirm={() => {
           if (deleteDate) void handleDelete(deleteDate);
+        }}
+      />
+
+      {/* Move-to-notebook (shared dialog). ZK accounts pull right after so
+          the local metadata cache learns the new filing. */}
+      <MoveEntryDialog
+        open={moveDate !== null}
+        onOpenChange={(open) => {
+          if (!open) setMoveDate(null);
+        }}
+        date={moveDate ?? ""}
+        notebooks={notebooks}
+        currentNotebookId={entries.find((e) => e.date === moveDate)?.notebookId}
+        onMoved={() => {
+          if (isClientEncrypted && masterKey) {
+            void journalSyncService.requestSync(masterKey);
+          }
         }}
       />
     </div>

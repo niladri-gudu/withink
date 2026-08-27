@@ -11,14 +11,12 @@ import {
 } from "@withink/ui/dialog";
 import { Loader2, Sparkles } from "lucide-react";
 
+import type { ResolvedPlan } from "../config/plans";
 import { useCheckoutRedirect } from "../hooks/use-checkout-redirect";
 
-export type PaywallReason = "storage" | "backfill";
+export type PaywallReason = "storage" | "backfill" | "notebooks";
 
-const COPY: Record<
-  PaywallReason,
-  { title: string; description: string }
-> = {
+const COPY: Record<PaywallReason, { title: string; description: string }> = {
   storage: {
     title: "Your photo space is full",
     description:
@@ -29,13 +27,31 @@ const COPY: Record<
     description:
       "The Free plan opens the last 14 days for writing. Plus extends the window to 90 days, and Pro lifts it entirely. Entries you already wrote are never touched.",
   },
+  notebooks: {
+    title: "Your shelf is full",
+    description:
+      "The Free plan keeps one notebook. Plus holds three, and Pro holds ten — every notebook you already have stays exactly as it is.",
+  },
 };
+
+/** Calm copy for a Pro user at the hard 10-notebook ceiling: nothing to sell. */
+const NOTEBOOK_CAP_COPY = {
+  title: "That's every shelf we have",
+  description:
+    "Ten notebooks is the full Pro shelf — and quite a library. To make room, empty one by moving its entries, then delete it.",
+} as const;
 
 interface UpgradeDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   /** Which gate tripped — drives the copy so the paywall matches the moment. */
   reason: PaywallReason;
+  /**
+   * The viewer's resolved plan when known. A Pro user tripping the notebooks
+   * gate is AT THE HARD CAP, not under-gated — they get an informational
+   * dialog instead of an upsell.
+   */
+  plan?: ResolvedPlan;
 }
 
 /**
@@ -48,8 +64,36 @@ export function UpgradeDialog({
   open,
   onOpenChange,
   reason,
+  plan,
 }: UpgradeDialogProps) {
   const { startCheckout, pendingKey } = useCheckoutRedirect();
+  const isProAtNotebookCap = reason === "notebooks" && plan === "pro";
+
+  if (isProAtNotebookCap) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent size="sm">
+          <DialogHeader>
+            <DialogTitle>{NOTEBOOK_CAP_COPY.title}</DialogTitle>
+            <DialogDescription>
+              {NOTEBOOK_CAP_COPY.description}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid gap-3 pt-1">
+            <Button
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              className="justify-center"
+            >
+              Close
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   const copy = COPY[reason];
 
   return (

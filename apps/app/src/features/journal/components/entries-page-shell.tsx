@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type ComponentPropsWithoutRef } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@withink/ui/button";
 import { Plus } from "lucide-react";
 
@@ -33,6 +34,10 @@ interface EntriesPageShellProps {
   accountEncrypted: boolean;
   /** Viewer's plan backfill window (days); Infinity = unlimited. */
   backfillDays: number;
+  /** The viewer's notebooks (id + name), default first. */
+  notebooks: { id: string; name: string }[];
+  /** Notebook scope resolved server-side from ?notebook= (deep links). */
+  initialNotebookFilter?: string;
 }
 
 export function EntriesPageShell({
@@ -43,7 +48,10 @@ export function EntriesPageShell({
   localToday,
   accountEncrypted,
   backfillDays,
+  notebooks,
+  initialNotebookFilter = "all",
 }: EntriesPageShellProps) {
+  const router = useRouter();
   const [calendarEntries, setCalendarEntries] = useState<CalendarEntry[]>(
     initialCalendarEntries,
   );
@@ -55,6 +63,19 @@ export function EntriesPageShell({
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [moodFilter, setMoodFilter] = useState<string>("all");
   const [timeFilter, setTimeFilter] = useState<TimeFilter>("all");
+  const [notebookFilter, setNotebookFilter] = useState(initialNotebookFilter);
+
+  // Mirror the notebook scope into the URL (replace, no history spam) so a
+  // scoped view stays deep-linkable, refresh-safe, and back-button-friendly.
+  useEffect(() => {
+    const qs = notebookFilter !== "all" ? `?notebook=${notebookFilter}` : "";
+    router.replace(
+      `${ROUTES.APP.ENTRIES}${qs}` as Parameters<typeof router.replace>[0],
+      {
+        scroll: false,
+      },
+    );
+  }, [notebookFilter, router]);
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -94,9 +115,9 @@ export function EntriesPageShell({
           <Button asChild className="cursor-pointer gap-2">
             <Link
               href={
-                `${ROUTES.APP.ENTRY(localToday)}?today=${localToday}` as unknown as ComponentPropsWithoutRef<
-                  typeof Link
-                >["href"]
+                `${ROUTES.APP.ENTRY(localToday)}?today=${localToday}${
+                  notebookFilter !== "all" ? `&notebook=${notebookFilter}` : ""
+                }` as unknown as ComponentPropsWithoutRef<typeof Link>["href"]
               }
             >
               <Plus className="h-4 w-4" />
@@ -132,6 +153,9 @@ export function EntriesPageShell({
             onTimeFilterChange={setTimeFilter}
             moodFilter={moodFilter}
             onMoodFilterChange={setMoodFilter}
+            notebookFilter={notebookFilter}
+            onNotebookFilterChange={setNotebookFilter}
+            notebooks={notebooks}
           />
           <EntriesTimeline
             initialEntries={initialEntries}
@@ -141,6 +165,8 @@ export function EntriesPageShell({
             debouncedSearch={debouncedSearch}
             moodFilter={moodFilter}
             timeFilter={timeFilter}
+            notebookFilter={notebookFilter}
+            notebooks={notebooks}
             onEntryDeleted={handleEntryDeleted}
           />
         </div>

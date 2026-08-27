@@ -17,6 +17,8 @@ export interface CachedMetadata {
   contentText: string;
   wordCount: number;
   mood: number | null;
+  /** Notebook filing (v3+). Absent on records written before notebooks. */
+  notebookId?: string;
   updatedAt: string;
   /** Schema version so `syncDiaryCache` can re-fetch records written by older code. */
   v: number;
@@ -27,7 +29,10 @@ export interface CachedMetadata {
   searchText?: string;
 }
 
-const METADATA_VERSION = 2;
+// v3: added notebookId (Notebooks fast-follow). Bumping the version makes
+// existing devices re-fetch every metadata record exactly once during the
+// next pull, which backfills the field without a store migration.
+const METADATA_VERSION = 3;
 
 /**
  * Builds the lowercase search blob used by `filterLocalTimeline`. Computed once
@@ -106,6 +111,8 @@ export interface LocalTimelineFilters {
   moodFilter?: number | "all";
   timeFilter?: "all" | "week" | "month";
   search?: string;
+  /** Notebook scope ("all" or a notebook id); unset means all. */
+  notebookFilter?: string;
   localToday: string;
 }
 
@@ -125,10 +132,17 @@ export function filterLocalTimeline(
     moodFilter = "all",
     timeFilter = "all",
     search = "",
+    notebookFilter,
     localToday,
   } = filters;
 
   let filtered = cached;
+
+  // Records written before METADATA_VERSION 3 carry no notebookId; they are
+  // excluded from a scoped view until their one-time re-sync backfills it.
+  if (notebookFilter && notebookFilter !== "all") {
+    filtered = filtered.filter((item) => item.notebookId === notebookFilter);
+  }
 
   if (moodFilter !== "all") {
     const m = Number(moodFilter);
@@ -175,6 +189,7 @@ export const diaryCacheService = {
     mood: number | null,
     updatedAt: string | Date,
     masterKey: CryptoKey,
+    notebookId?: string | null,
   ): Promise<void> {
     const updatedAtStr =
       updatedAt instanceof Date ? updatedAt.toISOString() : updatedAt;
@@ -187,6 +202,7 @@ export const diaryCacheService = {
       contentText,
       wordCount: wordCount || 0,
       mood,
+      notebookId: notebookId ?? undefined,
       updatedAt: updatedAtStr,
       v: METADATA_VERSION,
       searchText: buildSearchText(date, title || "", contentText),
@@ -432,6 +448,7 @@ export const diaryCacheService = {
                 contentText,
                 contentJson,
                 masterKey,
+                entry.notebookId,
               );
 
               await this.saveLocalMetadata(
@@ -442,6 +459,7 @@ export const diaryCacheService = {
                 entry.mood,
                 entry.updatedAt,
                 masterKey,
+                entry.notebookId,
               );
             } catch (e) {
               failedCount++;
@@ -479,6 +497,7 @@ export const diaryCacheService = {
     contentText: string,
     contentJson: any, // eslint-disable-line @typescript-eslint/no-explicit-any
     masterKey: CryptoKey,
+    notebookId?: string | null,
   ): Promise<void> {
     const payload = {
       date,
@@ -487,6 +506,7 @@ export const diaryCacheService = {
       contentHtml,
       contentText,
       contentJson,
+      notebookId: notebookId ?? undefined,
     };
     const encrypted = await encryptText(JSON.stringify(payload), masterKey);
     await diaryCacheDB.setDocument(date, encrypted);
@@ -505,6 +525,7 @@ export const diaryCacheService = {
     contentHtml: string;
     contentText: string;
     contentJson: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+    notebookId?: string;
   } | null> {
     try {
       const encrypted = await diaryCacheDB.getDocument(date);
@@ -533,6 +554,8 @@ export const diaryCacheService = {
       contentText: string;
       contentJson: any; // eslint-disable-line @typescript-eslint/no-explicit-any
       wordCount: number;
+      /** Filing target for new entries (v3+ payloads). */
+      notebookId?: string;
     },
     masterKey: CryptoKey,
   ): Promise<void> {
@@ -589,6 +612,7 @@ export const diaryCacheService = {
               contentText: serverText,
               contentJson: serverJson,
               wordCount: payload.wordCount,
+              notebookId: payload.notebookId,
             },
             localToday,
           );
@@ -610,6 +634,9 @@ export const diaryCacheService = {
                 payload.mood,
                 result.data.updatedAt,
                 masterKey,
+                // Server truth wins — an unknown filing id was coerced to
+                // the default notebook server-side.
+                result.data.notebookId,
               );
               succeeded.push(payload.date);
             }

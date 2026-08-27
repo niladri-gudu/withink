@@ -24,6 +24,13 @@ interface AutoSaveData {
   contentHtml: string;
   contentText: string;
   contentJson: unknown;
+  /**
+   * Notebook filing target. Deliberately NOT part of `isDataDirty`: moving
+   * an existing entry between notebooks is an explicit server action, so a
+   * change here never arms autosave — this field only rides along so NEW
+   * entries are filed correctly.
+   */
+  notebookId?: string;
 }
 
 type PersistOutcome = "saved" | "locked" | "error";
@@ -172,6 +179,7 @@ export function useAutoSave(
       payload.contentText,
       payload.contentJson,
       masterKey,
+      payload.notebookId,
     );
     await diaryCacheService.saveLocalMetadata(
       payload.date,
@@ -181,6 +189,7 @@ export function useAutoSave(
       payload.mood,
       updatedAt,
       masterKey,
+      payload.notebookId,
     );
   };
 
@@ -203,6 +212,7 @@ export function useAutoSave(
         contentText: payload.contentText,
         contentJson: payload.contentJson,
         wordCount,
+        notebookId: payload.notebookId,
       },
       masterKey,
     );
@@ -266,6 +276,7 @@ export function useAutoSave(
             contentText: textPayload,
             contentJson: jsonPayload,
             wordCount,
+            notebookId: payload.notebookId,
           },
           userLocalToday,
         ),
