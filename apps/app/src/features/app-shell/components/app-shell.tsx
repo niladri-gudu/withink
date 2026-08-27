@@ -105,10 +105,18 @@ export function AppShell({
   // Seed the encryption provider from server-rendered settings. No network
   // round-trip on mount — the layout already loaded these values. Layout effect
   // so existing encrypted users never flash the setup screen before the seed.
+  // The server passes null when no settings doc exists yet (brand-new users);
+  // seeding the same defaults getEncryptionSettingsAction returned for that
+  // case is required — otherwise encryptionSettingsSeeded never flips true and
+  // the shell renders its pulsing placeholder forever.
   React.useLayoutEffect(() => {
-    if (initialEncryptionSettings) {
-      setEncryptionSettings(initialEncryptionSettings);
-    }
+    setEncryptionSettings(
+      initialEncryptionSettings ?? {
+        isClientEncrypted: false,
+        encryptionSalt: "",
+        verificationCiphertext: "",
+      },
+    );
   }, [initialEncryptionSettings, setEncryptionSettings]);
 
   // Prompt users without a diary passcode to set one up on first launch.
