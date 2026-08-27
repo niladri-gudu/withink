@@ -118,19 +118,25 @@ export function AppShell({
     );
   }, [initialEncryptionSettings, setEncryptionSettings]);
 
-  // Prompt users without a diary passcode to set one up on first launch.
+  // One-time, dismissible PIN hint. Only fires when the setup can actually
+  // succeed: the account is zero-knowledge AND the master key is in memory
+  // (right after Diary Password setup / an in-session unlock). Prompting in
+  // any other state is what made the gate re-appear forever while the device
+  // binding silently failed. Dismissal persists in localStorage so it never
+  // nags again; the passcode stays opt-in via Settings.
   React.useEffect(() => {
-    if (!user || initialLockSettings?.hasPasscode) return;
-    const timer = setTimeout(() => {
-      const dismissed = safeStorage.getSessionItem(
-        "withink_lock_setup_dismissed",
-      );
-      if (!dismissed) {
-        setShowSetupPrompt(true);
-      }
-    }, 0);
-    return () => clearTimeout(timer);
-  }, [user, initialLockSettings?.hasPasscode]);
+    if (
+      !user ||
+      initialLockSettings?.hasPasscode ||
+      !isClientEncrypted ||
+      !masterKey ||
+      safeStorage.getItem("withink_pin_setup_dismissed") === "true"
+    ) {
+      return;
+    }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setShowSetupPrompt(true);
+  }, [user, initialLockSettings?.hasPasscode, isClientEncrypted, masterKey]);
 
   const handleLock = React.useCallback(async () => {
     setIsUnlocked(false);
@@ -203,12 +209,15 @@ export function AppShell({
     setShowSetupPrompt(false);
     setIsUnlocked(true);
     // Only mark the passcode lock as active when a PIN was actually provided. A
-    // password-only setup (e.g. a brand-new user) leaves the lock off until they
-    // set a passcode via the first-launch prompt.
+    // password-only setup (e.g. a brand-new user) leaves the lock off until
+    // they opt in via Settings or the one-time hint.
     setIsLockEnabled(!!pin);
     setHasPasscode(!!pin);
-    if (pin && typeof window !== "undefined") {
-      localStorage.setItem("withink_lock_enabled", "true");
+    if (pin) {
+      // Persist the dismissal too: a completed setup must never re-show the
+      // hint if the effect re-runs later (e.g. after a router.refresh()).
+      safeStorage.setItem("withink_lock_enabled", "true");
+      safeStorage.setItem("withink_pin_setup_dismissed", "true");
     }
   };
 
@@ -339,7 +348,12 @@ export function AppShell({
       {user && showSetupPrompt && (
         <LockSetupOnboarding
           onSetupSuccess={handleSetupSuccess}
-          onCancel={() => setShowSetupPrompt(false)}
+          onCancel={() => {
+            setShowSetupPrompt(false);
+            // "Maybe later" is permanent: the hint never re-appears. The
+            // passcode remains available any time via Settings.
+            safeStorage.setItem("withink_pin_setup_dismissed", "true");
+          }}
         />
       )}
 

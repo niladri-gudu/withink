@@ -1,4 +1,7 @@
-const isProd = process.env.IS_PROD === "true";
+// NODE_ENV (not a custom flag) because Next.js statically inlines it into
+// client bundles — IS_PROD is undefined in the browser, which baked localhost
+// public-site links (e.g. "Return Home" on /verified) into production JS.
+const isProd = process.env.NODE_ENV === "production";
 const PUBLIC_SITE_URL = isProd ? "https://withink.me" : "http://localhost:3001";
 
 export const ROUTES = {

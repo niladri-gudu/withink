@@ -16,6 +16,7 @@ import { toast } from "sonner";
 
 import { encryptText, exportKeyToHex } from "@/lib/crypto-client";
 import { deriveKeyFromPasswordAsync } from "@/lib/crypto-worker-client";
+import { safeStorage } from "@/lib/safe-storage";
 import { useFocusTrap } from "@/hooks/use-focus-trap";
 import { useEncryption } from "@/providers/encryption-provider";
 import { GateLayout } from "@/components/gate-layout";
@@ -50,8 +51,7 @@ export function LockSetupOnboarding({
   const [confirmPin, setConfirmPin] = React.useState("");
   const [step, setStep] = React.useState<1 | 2>(1);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const { isClientEncrypted, masterKey, encryptionSalt, getUnlockProof } =
-    useEncryption();
+  const { masterKey, encryptionSalt, getUnlockProof } = useEncryption();
 
   const onboardingContainerRef = useFocusTrap(true);
 
@@ -115,6 +115,29 @@ export function LockSetupOnboarding({
     // transition check when an account passcode already exists (fresh device).
     const unlockProof = await getUnlockProof();
 
+    // Bind THIS DEVICE first: encrypt the in-memory master key with the PIN.
+    // If this fails we abort before touching the server — saving a server-side
+    // passcode without a device-bound key strands the user on the Diary
+    // Password screen on every unlock (the exact bug this replaces). Nothing
+    // is persisted until both steps can succeed.
+    let encryptedMasterKey: string;
+    try {
+      const masterKeyHex = await exportKeyToHex(masterKey);
+      const pinKey = await deriveKeyFromPasswordAsync(
+        pin,
+        encryptionSalt,
+        50000,
+      );
+      encryptedMasterKey = await encryptText(masterKeyHex, pinKey);
+    } catch (err) {
+      console.error("Failed to bind the passcode to this device:", err);
+      toast.error("Couldn't secure this device. Please try again.", {
+        id: toastId,
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
     const res = await saveLockSettingsAction({
       isLockEnabled: true,
       passcode: pin,
@@ -124,24 +147,8 @@ export function LockSetupOnboarding({
     });
 
     if (res.success) {
-      if (isClientEncrypted && masterKey && encryptionSalt) {
-        try {
-          const masterKeyHex = await exportKeyToHex(masterKey);
-          const pinKey = await deriveKeyFromPasswordAsync(
-            pin,
-            encryptionSalt,
-            50000,
-          );
-          const encryptedMasterKey = await encryptText(masterKeyHex, pinKey);
-          localStorage.setItem(
-            "withink_encrypted_master_key",
-            encryptedMasterKey,
-          );
-          localStorage.removeItem("withink_master_key");
-        } catch (err) {
-          console.error("Failed to secure master key with passcode PIN:", err);
-        }
-      }
+      safeStorage.setItem("withink_encrypted_master_key", encryptedMasterKey);
+      safeStorage.removeItem("withink_master_key");
       toast.success("Diary passcode configured successfully!", {
         id: toastId,
       });
@@ -362,6 +369,18 @@ export function LockSetupOnboarding({
         </p>
 
         {steps}
+
+        {/* Optional by design: skipping is permanent (the hint never
+            re-appears) and the passcode can be enabled later in Settings. */}
+        <Button
+          type="button"
+          variant="ghost"
+          disabled={isSubmitting}
+          onClick={() => onCancel?.()}
+          className="text-muted-foreground/70 hover:text-foreground mt-2 text-xs tracking-wide"
+        >
+          Maybe later
+        </Button>
       </div>
     </GateLayout>
   );
