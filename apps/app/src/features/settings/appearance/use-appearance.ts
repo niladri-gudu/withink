@@ -54,6 +54,13 @@ function readStoredPref<K extends keyof AppearancePrefs>(
 function applyAttribute(key: keyof AppearancePrefs, value: string): void {
   if (typeof document === "undefined") return;
   const { attribute } = ATTR_MAP[key];
+  if (key === "accent") {
+    // Gold is the default accent but still needs an explicit [data-accent]
+    // rule to override a curated palette's own --accent. Always set it so
+    // selecting gold (or any variant) beats the active palette consistently.
+    document.documentElement.setAttribute(attribute, value);
+    return;
+  }
   if (value === APPEARANCE_DEFAULTS[key]) {
     // Defaults are the un-attrbuted base world in globals.css.
     document.documentElement.removeAttribute(attribute);

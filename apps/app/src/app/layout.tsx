@@ -246,7 +246,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
                      palette/font never flashes the Desk default. */
                   var palettes = ['vellum', 'indigo-nook', 'rosewood'];
                   var fonts = ['literata', 'editorial', 'codex', 'quill'];
-                  var accents = ['oxblood', 'indigo-ink', 'moss'];
+                  var accents = ['gold', 'oxblood', 'indigo-ink', 'moss'];
                   var root = document.documentElement;
                   function apply(key, attr, allowed) {
                     var v = localStorage.getItem(key);

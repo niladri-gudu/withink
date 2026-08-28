@@ -121,7 +121,7 @@ export function NotebooksShell({
   };
 
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-8 px-4 py-6 sm:px-6 sm:py-8">
+    <div className="w-full space-y-8">
       <header>
         <div className="border-border/70 flex items-baseline justify-between gap-4 border-b pb-3">
           <span className="text-running-head text-muted-foreground/70">

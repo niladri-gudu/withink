@@ -1,14 +1,16 @@
+import { PageLoadingHeader, PageLoadingShell } from "@/features/app-shell/components/page-loading";
+
 export default function LettersLoading() {
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-8 px-4 py-6 sm:px-6 sm:py-8">
-      <div className="border-border/70 animate-pulse border-b pb-3">
-        <div className="bg-muted/60 h-3 w-20 rounded-md" />
-      </div>
-      <div className="space-y-3">
-        <div className="bg-muted/60 h-5 w-40 animate-pulse rounded-md" />
-        <div className="bg-muted/50 h-10 w-72 animate-pulse rounded-md" />
-        <div className="bg-muted/60 h-4 w-96 animate-pulse rounded-md" />
-      </div>
+    <PageLoadingShell>
+      <PageLoadingHeader
+        runningHead="Letters"
+        eyebrow="sealed with intention"
+        title="Letters to"
+        accent="future you."
+        description="Write today what you want to read later. Each letter opens on the day you choose — never before."
+      />
+
       <div className="space-y-3">
         {[0, 1, 2].map((index) => (
           <div key={index} className="bg-card rounded-xl border p-5">
@@ -23,6 +25,6 @@ export default function LettersLoading() {
           </div>
         ))}
       </div>
-    </div>
+    </PageLoadingShell>
   );
 }

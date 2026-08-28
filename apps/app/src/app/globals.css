@@ -570,6 +570,19 @@
     --ring: oklch(0.76 0.09 150);
   }
 
+  /* Antique Gold — the house accent. Explicit so it overrides a palette's own
+     accent (it is the default, but selecting it must still beat a curated
+     palette's --accent rather than falling back to it). Values mirror the base
+     gold tokens in :root / .dark so Standard looks unchanged. */
+  [data-accent="gold"] {
+    --accent: oklch(0.5 0.105 75);
+    --ring: oklch(0.5 0.105 75);
+  }
+  .dark[data-accent="gold"] {
+    --accent: oklch(0.74 0.11 75);
+    --ring: oklch(0.74 0.11 75);
+  }
+
   /* ─── Pro typography pairings ───────────────────────────────────────────
      Swap the reading faces only (the @theme font vars stay mapped to the
      next/font CSS variables loaded in layout.tsx). Higher specificity via
