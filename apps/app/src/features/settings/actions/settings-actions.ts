@@ -14,6 +14,7 @@ import { logger } from "@/server/logger";
 import { rateLimit } from "@/server/rate-limit";
 import { ClientEncryptionSettingsModel } from "@/features/encryption/repositories/encryption-settings-model";
 import { FeedbackModel } from "@/features/feedback/repositories/feedback-model";
+import { LetterModel } from "@/features/letters/repositories/letter-model";
 import { EntryModel } from "@/features/journal/repositories/entry-model";
 import { EntryRepository } from "@/features/journal/repositories/entry-repository";
 import { LockSettingsModel } from "@/features/lock/repositories/lock-model";
@@ -78,11 +79,13 @@ export async function deleteAccountAction(password?: string): Promise<{
 
     // 1b. Purge remaining app collections tied to the user: lock settings
     //     (passcode hash), client encryption settings (salt + verification
-    //     blob), and feedback records (email + message text).
+    //     blob), letters to the future self, and feedback records (email +
+    //     message text).
     await Promise.all([
       (LockSettingsModel as any).deleteMany({ userId }),
       (ClientEncryptionSettingsModel as any).deleteMany({ userId }),
       (FeedbackModel as any).deleteMany({ userId }),
+      (LetterModel as any).deleteMany({ userId }),
     ]);
 
     // 2. Invalidate cache in Redis

@@ -11,6 +11,7 @@ import {
   type DecryptedEntry,
 } from "@/features/journal/services/journal-service";
 import { NotebooksService } from "@/features/notebooks/services/notebook-service";
+import { LetterRepository } from "@/features/letters/repositories/letter-repository";
 
 /**
  * Builds a complete, self-contained backup archive of a user's journal.
@@ -25,9 +26,10 @@ export class ExportService {
    * Generates the ZIP archive bytes for a user's entire journal.
    */
   static async generateExportZip(userId: string): Promise<ArrayBuffer> {
-    const [entries, notebooks] = await Promise.all([
+    const [entries, notebooks, letters] = await Promise.all([
       JournalService.getAllEntriesForExport(userId),
       NotebooksService.listNotebooks(userId),
+      LetterRepository.listMeta(userId),
     ]);
     const notebookNames = new Map(
       notebooks.map((notebook) => [notebook.id, notebook.name]),
@@ -35,7 +37,7 @@ export class ExportService {
 
     const zip = new JSZip();
 
-    zip.file("README.txt", buildReadme(entries.length));
+    zip.file("README.txt", buildReadme(entries.length, letters.length));
 
     // Clean metadata manifest — no encrypted fields, no rendered HTML.
     const metadata = entries.map((entry) => ({
@@ -48,7 +50,23 @@ export class ExportService {
       createdAt: entry.createdAt,
       updatedAt: entry.updatedAt,
     }));
-    zip.file("metadata.json", JSON.stringify(metadata, null, 2));
+    zip.file(
+      "metadata.json",
+      JSON.stringify({
+        entries: metadata,
+        // Bodies stay exactly as stored: plaintext for legacy accounts,
+        // ciphertext for zero-knowledge ones (server never decrypts).
+        letters: letters.map((letter) => ({
+          unlockDate: letter.unlockDate,
+          title: letter.title,
+          wordCount: letter.wordCount,
+          sealed: letter.sealed,
+          readAt: letter.readAt,
+          createdAt: letter.createdAt,
+          updatedAt: letter.updatedAt,
+        })),
+      }, null, 2),
+    );
 
     const entriesFolder = zip.folder("entries");
     const imagesFolder = zip.folder("images");
@@ -82,13 +100,35 @@ export class ExportService {
       }
     }
 
+    // Letters to the future self: one .txt/.html pair per letter, filed by
+    // unlock date (the day they were meant to be read). Bodies stay exactly
+    // as stored — plaintext for legacy accounts, ciphertext for ZK ones.
+    if (letters.length > 0) {
+      const lettersFolder = zip.folder("letters");
+      for (const letter of letters) {
+        const { year, monthName } = splitDate(letter.unlockDate);
+        const monthFolder = lettersFolder?.folder(year)?.folder(monthName);
+        const full = await LetterRepository.getFullById(userId, letter.id);
+        if (!full) continue;
+        const title = full.title || "Untitled letter";
+        monthFolder?.file(
+          `${letter.unlockDate}.txt`,
+          `TITLE: ${title}\nUNLOCK DATE: ${letter.unlockDate}\n\n${full.contentText}`,
+        );
+        monthFolder?.file(
+          `${letter.unlockDate}.html`,
+          buildEntryHtml(title, letter.unlockDate, full.contentHtml),
+        );
+      }
+    }
+
     // ArrayBuffer (not uint8array) so the route can hand it straight to the
     // Response body — no Buffer.from copy of the whole archive at peak memory.
     return zip.generateAsync({ type: "arraybuffer" });
   }
 }
 
-function buildReadme(entryCount: number): string {
+function buildReadme(entryCount: number, letterCount = 0): string {
   return [
     "Withink — Your Journal Export",
     "================================",
@@ -101,10 +141,15 @@ function buildReadme(entryCount: number): string {
     "  metadata.json          Structured details for every entry (date, title, mood, word count, notebook, timestamps).",
     "  entries/<year>/<month>/ One .txt (plain text) and one .html (formatted) file per entry.",
     "  images/                 Every image attached to your entries.",
+    letterCount > 0
+      ? `  letters/<year>/<month>/  Letters to your future self, filed by unlock date (${letterCount} total).`
+      : "",
     "",
     "Your writing belongs to you. Keep this archive somewhere safe.",
     "",
-  ].join("\n");
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
 
 function buildEntryHtml(

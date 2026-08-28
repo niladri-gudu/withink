@@ -8,14 +8,12 @@ describe("plans config", () => {
     expect(ENTITLEMENTS.free.mediaStorageBytes).toBe(100 * 1024 * 1024);
     expect(ENTITLEMENTS.free.maxConcurrentSessions).toBe(1);
     expect(ENTITLEMENTS.free.notebookLimit).toBe(1);
-    expect(ENTITLEMENTS.free.revisionRetentionDays).toBe(7);
     expect(ENTITLEMENTS.free.futureLetterLimit).toBe(0);
 
     expect(ENTITLEMENTS.plus.backfillDays).toBe(90);
     expect(ENTITLEMENTS.plus.mediaStorageBytes).toBe(10 * 1024 * 1024 * 1024);
     expect(ENTITLEMENTS.plus.maxConcurrentSessions).toBe(3);
     expect(ENTITLEMENTS.plus.notebookLimit).toBe(3);
-    expect(ENTITLEMENTS.plus.revisionRetentionDays).toBe(90);
     expect(ENTITLEMENTS.plus.futureLetterLimit).toBe(3);
 
     expect(ENTITLEMENTS.pro.backfillDays).toBe(Number.POSITIVE_INFINITY);
@@ -24,9 +22,6 @@ describe("plans config", () => {
       Number.POSITIVE_INFINITY,
     );
     expect(ENTITLEMENTS.pro.notebookLimit).toBe(10);
-    expect(ENTITLEMENTS.pro.revisionRetentionDays).toBe(
-      Number.POSITIVE_INFINITY,
-    );
     expect(ENTITLEMENTS.pro.futureLetterLimit).toBe(Number.POSITIVE_INFINITY);
   });
 

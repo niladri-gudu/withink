@@ -40,6 +40,12 @@ vi.mock("@/features/notebooks/services/notebook-service", () => ({
   },
 }));
 
+vi.mock("@/features/letters/repositories/letter-repository", () => ({
+  LetterRepository: {
+    listMeta: vi.fn().mockResolvedValue([]),
+  },
+}));
+
 function makeEntry(overrides: Partial<any> = {}): any {
   return {
     id: "id",
@@ -101,15 +107,16 @@ describe("ExportService.generateExportZip", () => {
     // Metadata is clean (no encrypted / rendered fields)
     const metaRaw = await zip.file("metadata.json")!.async("string");
     const meta = JSON.parse(metaRaw);
-    expect(meta).toHaveLength(2);
-    expect(meta[0]).toMatchObject({
+    expect(meta.letters).toEqual([]);
+    expect(meta.entries).toHaveLength(2);
+    expect(meta.entries[0]).toMatchObject({
       date: "2024-03-15",
       title: "Spring Day",
       mood: 4,
       wordCount: 3,
     });
-    expect(meta[0]).not.toHaveProperty("contentHtml");
-    expect(meta[0]).not.toHaveProperty("contentText");
+    expect(meta.entries[0]).not.toHaveProperty("contentHtml");
+    expect(meta.entries[0]).not.toHaveProperty("contentText");
 
     // Plain text + HTML, organized by year/month
     const txt = await zip
@@ -186,7 +193,7 @@ describe("ExportService.generateExportZip", () => {
 
     expect(zip.file("README.txt")).not.toBeNull();
     const meta = JSON.parse(await zip.file("metadata.json")!.async("string"));
-    expect(meta).toEqual([]);
+    expect(meta.entries).toEqual([]);
     expect(r2.send).not.toHaveBeenCalled();
   });
 

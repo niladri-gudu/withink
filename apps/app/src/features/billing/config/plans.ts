@@ -30,8 +30,6 @@ export interface Entitlements {
    * stay fully usable on downgrade; only new creation is gated).
    */
   notebookLimit: number;
-  /** Reserved (fast-follow): revision history retention in days. */
-  revisionRetentionDays: number;
   /** Reserved (fast-follow): simultaneously sealed letters to the future. */
   futureLetterLimit: number;
 }
@@ -43,7 +41,6 @@ export const ENTITLEMENTS: Record<ResolvedPlan, Entitlements> = {
     mediaStorageBytes: 100 * MB,
     maxConcurrentSessions: 1,
     notebookLimit: 1,
-    revisionRetentionDays: 7,
     futureLetterLimit: 0,
   },
   plus: {
@@ -52,7 +49,6 @@ export const ENTITLEMENTS: Record<ResolvedPlan, Entitlements> = {
     mediaStorageBytes: 10 * GB,
     maxConcurrentSessions: 3,
     notebookLimit: 3,
-    revisionRetentionDays: 90,
     futureLetterLimit: 3,
   },
   pro: {
@@ -61,7 +57,6 @@ export const ENTITLEMENTS: Record<ResolvedPlan, Entitlements> = {
     mediaStorageBytes: 50 * GB,
     maxConcurrentSessions: Number.POSITIVE_INFINITY,
     notebookLimit: 10,
-    revisionRetentionDays: Number.POSITIVE_INFINITY,
     futureLetterLimit: Number.POSITIVE_INFINITY,
   },
 };

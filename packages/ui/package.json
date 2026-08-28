@@ -12,6 +12,10 @@
       "types": "./src/button.tsx",
       "default": "./src/button.tsx"
     },
+    "./calendar": {
+      "types": "./src/calendar.tsx",
+      "default": "./src/calendar.tsx"
+    },
     "./card": {
       "types": "./src/card.tsx",
       "default": "./src/card.tsx"
@@ -74,6 +78,7 @@
     "lucide-react": "catalog:",
     "next-themes": "^0.4.6",
     "radix-ui": "^1.4.3",
+    "react-day-picker": "^10.0.1",
     "tailwind-merge": "catalog:"
   },
   "peerDependencies": {

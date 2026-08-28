@@ -29,7 +29,6 @@ vi.mock("@/features/billing/services/entitlements-service", () => ({
       mediaStorageBytes: 100 * 1024 * 1024,
       maxConcurrentSessions: 1,
       notebookLimit: 1,
-      revisionRetentionDays: 7,
       futureLetterLimit: 0,
     }),
   },

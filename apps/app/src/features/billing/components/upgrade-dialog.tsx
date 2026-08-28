@@ -14,7 +14,7 @@ import { Loader2, Sparkles } from "lucide-react";
 import type { ResolvedPlan } from "../config/plans";
 import { useCheckoutRedirect } from "../hooks/use-checkout-redirect";
 
-export type PaywallReason = "storage" | "backfill" | "notebooks";
+export type PaywallReason = "storage" | "backfill" | "notebooks" | "letters";
 
 const COPY: Record<PaywallReason, { title: string; description: string }> = {
   storage: {
@@ -31,6 +31,11 @@ const COPY: Record<PaywallReason, { title: string; description: string }> = {
     title: "Your shelf is full",
     description:
       "The Free plan keeps one notebook. Plus holds three, and Pro holds ten — every notebook you already have stays exactly as it is.",
+  },
+  letters: {
+    title: "You're holding every letter you can",
+    description:
+      "Plus keeps three active letters to your future self at once, and Pro has no limit. Delivered letters always stay yours, and a freed date makes room for a new one.",
   },
 };
 

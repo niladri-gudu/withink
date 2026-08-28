@@ -75,3 +75,14 @@ export function computeCurrentStreak(dates: string[], today: string): number {
   }
   return currentStreak;
 }
+
+/**
+ * Numeric dd-mm-yyyy for compact, locale-invariant date chips
+ * (e.g. letter unlock dates: "2026-09-21" -> "21-09-2026").
+ * Anything that isn't an ISO calendar date passes through untouched.
+ */
+export function formatNumericDate(dateStr: string): string {
+  if (!isDateString(dateStr)) return dateStr;
+  const [year, month, day] = dateStr.split("-");
+  return `${day}-${month}-${year}`;
+}

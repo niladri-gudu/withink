@@ -4,7 +4,7 @@ import * as React from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import { EDITOR_ROUTE_PATTERN } from "@/constants/routes";
+import { FULLSCREEN_ROUTE_PATTERN } from "@/constants/routes";
 import { safeStorage } from "@/lib/safe-storage";
 import { getLocalDateString } from "@/lib/utils/date";
 import { useEncryption } from "@/providers/encryption-provider";
@@ -64,7 +64,7 @@ export function AppShell({
   // masthead, no tab bar, and none of the page-content padding — the editor
   // owns its entire layout (header, overlays, scroll affordances). See the
   // journal surface brief and the z-index contract in globals.css.
-  const isFullscreenRoute = EDITOR_ROUTE_PATTERN.test(pathname ?? "");
+  const isFullscreenRoute = FULLSCREEN_ROUTE_PATTERN.test(pathname ?? "");
 
   const {
     isClientEncrypted,

@@ -14,6 +14,7 @@ import {
 import DashboardLowerGrid, {
   DashboardLowerGridSkeleton,
 } from "@/features/journal/components/dashboard-lower-grid";
+import { LetterArrival } from "@/features/letters/components/letter-arrival";
 
 export const metadata: Metadata = {
   title: "Diary Dashboard",
@@ -57,6 +58,11 @@ export default async function DashboardPage() {
           today={today}
           yesterday={yesterday}
         />
+      </Suspense>
+
+      {/* A delivered-but-unopened letter gets its quiet arrival moment. */}
+      <Suspense fallback={null}>
+        <LetterArrival userId={session.user.id} />
       </Suspense>
 
       {/* Bottom sections */}

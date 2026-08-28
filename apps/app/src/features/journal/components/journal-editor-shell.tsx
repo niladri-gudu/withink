@@ -26,7 +26,11 @@ import { MoveEntryDialog } from "@/features/notebooks/components/move-entry-dial
 import { useAutoSave } from "../hooks/use-auto-save";
 import { useSyncStatus } from "../hooks/use-sync-status";
 import { diaryCacheService } from "../services/diary-cache-service";
-import { EditorToolbar } from "./editor/editor-toolbar";
+import {
+  loadEditorContent,
+  type EditorLoadPort,
+} from "../services/editor-load";
+import { EditorToolbarDock } from "./editor/editor-toolbar-dock";
 import { MoodSelector } from "./mood-selector";
 import { SaveIndicator } from "./save-indicator";
 
@@ -62,6 +66,15 @@ const ZEN_REVEAL_HIDE_MS = 3000;
 /** The app's one scroll container (the shell's <main id="main-content">). */
 const SCROLL_ROOT_ID = "main-content";
 
+/** The one wired port: pure resolver + real cache/crypto implementations. */
+const editorLoadPort: EditorLoadPort = {
+  getLocalDocument: (docDate, key) =>
+    diaryCacheService.getLocalDocument(docDate, key),
+  decryptText: (value, key) => decryptText(value, key),
+  onDecryptError: (scope, err) =>
+    console.error(`Failed to decrypt initial ${scope}:`, err),
+};
+
 export function JournalEditorShell({
   date,
   initialTitle,
@@ -70,7 +83,10 @@ export function JournalEditorShell({
   initialNotebookId,
   notebooks = [],
 }: Props) {
-  const [title, setTitle] = useState(initialTitle);
+  // Title starts EMPTY and is owned by loadContent below: seeding it from
+  // `initialTitle` would flash server ciphertext on zero-knowledge accounts
+  // during the provider-seed window.
+  const [title, setTitle] = useState("");
   const [mood, setMood] = useState<number | null>(initialMood);
   const [notebookId, setNotebookId] = useState<string | null>(
     initialNotebookId ?? null,
@@ -83,6 +99,16 @@ export function JournalEditorShell({
   });
   const [editorInstance, setEditorInstance] = useState<any>(null);
   const [editorReady, setEditorReady] = useState(false);
+  /** Ref mirror so async load resolutions see the live instance immediately. */
+  const editorInstanceRef = useRef<any>(null);
+  /** Raw signature of the last payload committed to UI state. */
+  const appliedJsonSigRef = useRef<string | null>(null);
+  /**
+   * Normalized getJSON() snapshot captured the moment the live editor
+   * mounted. A later re-resolution may repaint only while the live document
+   * still equals this snapshot — user typing diverges it and always wins.
+   */
+  const consumedDocSignatureRef = useRef<string | null>(null);
   const [toolbarBottom, setToolbarBottom] = useState(20);
   const [isFocusMode, setIsFocusMode] = useState(false);
 
@@ -243,89 +269,76 @@ export function JournalEditorShell({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isFocusMode, typewriterEnabled]);
 
-  const { isClientEncrypted, masterKey } = useEncryption();
+  const { isClientEncrypted, masterKey, encryptionSettingsSeeded } =
+    useEncryption();
   const [decryptedContent, setDecryptedContent] = useState<any>(null);
 
-  // Decrypt content on mount if zero-knowledge is active
+  // Resolve what the editor displays for THIS date. Every branch decision
+  // lives in the pure resolver so the unseeded / keyless windows can never
+  // feed server ciphertext into a mounting Tiptap ("content" seeds the doc
+  // at creation only — a later prop change cannot heal a mounted editor).
   useEffect(() => {
-    // Guard against overlapping runs: quick A→B navigation can start two
-    // loads; without this check a slow load for A could resolve after B's and
-    // commit A's content under B's date.
     let cancelled = false;
-    const loadContent = async () => {
-      if (isClientEncrypted) {
-        // Wait until the master key is restored in memory
-        if (!masterKey) {
+
+    void loadEditorContent(
+      {
+        seeded: encryptionSettingsSeeded,
+        isClientEncrypted,
+        masterKey,
+        date,
+        initialTitle,
+        initialContent,
+        initialNotebookId,
+      },
+      editorLoadPort,
+    )
+      .then((outcome) => {
+        if (cancelled || outcome.kind === "wait") return;
+
+        // Deduplicate repeated resolutions carrying identical payloads:
+        // identity-churn from streamed RSC refreshes must not reset state.
+        const nextSignature = JSON.stringify(outcome.contentJson);
+        if (nextSignature === appliedJsonSigRef.current) return;
+        appliedJsonSigRef.current = nextSignature;
+
+        if (outcome.commitTitle !== undefined) setTitle(outcome.commitTitle);
+        if ("mood" in outcome) setMood(outcome.mood ?? null);
+        if ("notebookId" in outcome) {
+          setNotebookId(outcome.notebookId ?? null);
+        }
+
+        const liveEditor = editorInstanceRef.current;
+        if (!liveEditor) {
+          // First visibility: hand off to React; the mount consumes these.
+          setDecryptedContent(outcome.contentJson);
+          setEditorContent(outcome.editorSeed);
           return;
         }
 
-        // Try to load from local document cache first if available (works offline)
-        const cachedDoc = await diaryCacheService.getLocalDocument(
-          date,
-          masterKey,
-        );
-        if (cancelled) return;
-        if (cachedDoc) {
-          setTitle(cachedDoc.title);
-          setMood(cachedDoc.mood);
-          setNotebookId(cachedDoc.notebookId ?? initialNotebookId ?? null);
-          setDecryptedContent(cachedDoc.contentJson);
-          setEditorContent({
-            html: cachedDoc.contentHtml,
-            text: cachedDoc.contentText,
-            json: cachedDoc.contentJson,
-          });
-          return;
-        }
+        // A mounted editor still shows an older resolution (the historical
+        // race shape). Repaint ONLY while its document equals the mount-time
+        // snapshot — user typing diverges it and always wins. Uses the same
+        // wholesale command path the revision-restore feature proved.
+        const untouched =
+          consumedDocSignatureRef.current !== null &&
+          JSON.stringify(liveEditor.getJSON()) ===
+            consumedDocSignatureRef.current;
+        if (!untouched) return;
 
-        // Decrypt title if encrypted
-        if (initialTitle && initialTitle.includes(":")) {
-          try {
-            const decTitle = await decryptText(initialTitle, masterKey);
-            if (cancelled) return;
-            setTitle(decTitle);
-          } catch (err) {
-            console.error("Failed to decrypt initial title:", err);
-          }
-        } else {
-          if (cancelled) return;
-          setTitle(initialTitle);
-        }
+        liveEditor.commands.setContent(outcome.contentJson);
+        consumedDocSignatureRef.current =
+          JSON.stringify(liveEditor.getJSON());
+        setDecryptedContent(outcome.contentJson);
+      })
+      .catch((err) => {
+        console.error("Failed to load entry content:", err);
+      });
 
-        if (
-          typeof initialContent === "string" &&
-          initialContent.includes(":")
-        ) {
-          try {
-            const decrypted = await decryptText(initialContent, masterKey);
-            const parsed = JSON.parse(decrypted);
-            if (cancelled) return;
-            setDecryptedContent(parsed);
-            setEditorContent({ html: "", text: "", json: parsed });
-          } catch (err) {
-            console.error("Failed to decrypt initial content:", err);
-            if (cancelled) return;
-            setDecryptedContent({});
-            setEditorContent({ html: "", text: "", json: {} });
-          }
-        } else {
-          const fallback = initialContent || {};
-          if (cancelled) return;
-          setDecryptedContent(fallback);
-          setEditorContent({ html: "", text: "", json: fallback });
-        }
-      } else {
-        setTitle(initialTitle);
-        const fallback = initialContent || {};
-        setDecryptedContent(fallback);
-        setEditorContent({ html: "", text: "", json: fallback });
-      }
-    };
-    loadContent();
     return () => {
       cancelled = true;
     };
   }, [
+    encryptionSettingsSeeded,
     initialTitle,
     initialContent,
     initialNotebookId,
@@ -372,33 +385,9 @@ export function JournalEditorShell({
     };
   }, [toolbarBottom, isFocusMode]);
 
-  useEffect(() => {
-    const viewport = window.visualViewport;
-    if (!viewport) return;
-    let rafId: number | null = null;
-    let lastBottom = -1;
-    const update = () => {
-      if (rafId !== null) return;
-      rafId = requestAnimationFrame(() => {
-        rafId = null;
-        const fromBottom =
-          window.innerHeight - viewport.height - viewport.offsetTop;
-        const bottom = Math.max(fromBottom, 0) + 16;
-        if (bottom !== lastBottom) {
-          lastBottom = bottom;
-          setToolbarBottom(bottom);
-        }
-      });
-    };
-    viewport.addEventListener("resize", update);
-    viewport.addEventListener("scroll", update);
-    update();
-    return () => {
-      viewport.removeEventListener("resize", update);
-      viewport.removeEventListener("scroll", update);
-      if (rafId !== null) cancelAnimationFrame(rafId);
-    };
-  }, []);
+  // Keyboard avoidance moved into EditorToolbarDock (shared with the letter
+  // composer); it reports the offset back via onBottomChange, which feeds
+  // the scroll-padding effect above so the caret never hides behind chrome.
 
   const isUnlocked = editorReady && decryptedContent !== null;
   const canEncrypt = isClientEncrypted ? !!masterKey : true;
@@ -406,6 +395,8 @@ export function JournalEditorShell({
   // Stable callbacks so the memoized TiptapEditor doesn't re-render when the
   // shell updates (e.g. title/mood/scroll changes).
   const handleEditorReady = useCallback((editor: any) => {
+    editorInstanceRef.current = editor;
+    consumedDocSignatureRef.current = JSON.stringify(editor.getJSON());
     setEditorInstance(editor);
     setEditorReady(true);
   }, []);
@@ -580,46 +571,21 @@ export function JournalEditorShell({
         </div>
       </div>
 
-      {/* Floating formatting toolbar — the ONE owner of fixed bottom chrome.
-          Repositions above the mobile keyboard via visualViewport; clears
-          the tab-bar band and the home indicator even though the tab bar is
-          hidden on this route. On phones in zen it stays hidden until the
-          page is tapped. */}
-      <div
-        className={`fixed right-0 left-0 z-40 flex justify-center px-2 transition-[bottom] duration-300 ease-out sm:px-4 md:left-[var(--sidebar-width)] ${zenHidesChrome ? "pointer-events-none" : ""}`}
-        style={{
-          bottom: `calc(${toolbarBottom}px + env(safe-area-inset-bottom))`,
-        }}
-      >
-        <AnimatePresence>
-          {editorInstance && toolbarVisible && (
-            <motion.div
-              key="editor-toolbar"
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 8 }}
-              transition={
-                reduceMotion
-                  ? { duration: 0 }
-                  : { duration: 0.18, ease: "easeOut" }
-              }
-              className="border-border/60 bg-card/95 pointer-events-auto w-full max-w-full overflow-hidden rounded-xl border p-1 shadow-lg backdrop-blur-md sm:w-auto"
-            >
-              <EditorToolbar
-                editor={editorInstance}
-                isFocusMode={isFocusMode}
-                onToggleFocusMode={toggleFocusMode}
-                typewriterEnabled={typewriterEnabled}
-                onToggleTypewriter={() =>
-                  setTypewriterEnabled(!typewriterEnabled)
-                }
-                ambientSound={ambientSound}
-                onChangeAmbientSound={setAmbientSound}
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+      {/* Floating formatting toolbar — the dock owns fixed bottom chrome
+          (positioning, keyboard avoidance, motion) for every writing
+          surface. On phones in zen it stays hidden until the page is
+          tapped; the offset feeds the caret's scroll-padding below. */}
+      <EditorToolbarDock
+        editor={editorInstance}
+        visible={toolbarVisible}
+        onBottomChange={setToolbarBottom}
+        isFocusMode={isFocusMode}
+        onToggleFocusMode={toggleFocusMode}
+        typewriterEnabled={typewriterEnabled}
+        onToggleTypewriter={() => setTypewriterEnabled(!typewriterEnabled)}
+        ambientSound={ambientSound}
+        onChangeAmbientSound={setAmbientSound}
+      />
 
       {/* Save status pill — sm+ only (phones read the quiet inline line in
           the header). Dims but stays findable in zen. */}

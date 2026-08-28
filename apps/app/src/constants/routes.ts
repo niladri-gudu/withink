@@ -23,6 +23,7 @@ export const ROUTES = {
     ENTRIES: "/entries",
     ENTRY: (date: string) => `/entries/${date}`,
     NOTEBOOKS: "/notebooks",
+    LETTERS: "/letters",
     FLASHBACKS: "/flashbacks",
     INSIGHTS: "/insights",
     MEDIA: "/media",
@@ -34,9 +35,13 @@ export const ROUTES = {
 export type Routes = typeof ROUTES;
 
 /**
- * The journal editor route (`/entries/[date]`) is a TRUE fullscreen writing
- * surface: the shell renders no masthead, no tab bar, and no content padding
- * around it (see app-shell.tsx). Single source of truth so the shell and the
- * tab bar can never drift.
+ * True fullscreen writing surfaces: the shell renders no masthead, no tab
+ * bar, and no content padding around them (see app-shell.tsx). The journal
+ * editor (`/entries/[date]`) and the letter composer (`/letters/compose`)
+ * both own their entire layout, including fixed bottom chrome. Single source
+ * of truth so the shell and the tab bar can never drift.
  */
 export const EDITOR_ROUTE_PATTERN = /^\/entries\/[^/]+$/;
+export const LETTERS_COMPOSE_ROUTE_PATTERN = /^\/letters\/compose$/;
+export const FULLSCREEN_ROUTE_PATTERN =
+  /^\/(entries\/[^/]+|letters\/compose)$/;

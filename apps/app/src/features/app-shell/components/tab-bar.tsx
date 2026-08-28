@@ -20,6 +20,7 @@ import {
   History,
   Image as ImageIcon,
   LogOut,
+  Mail as MailIcon,
   MessageSquare,
   Notebook as NotebookIcon,
   Settings,
@@ -27,7 +28,7 @@ import {
   Sun,
 } from "lucide-react";
 
-import { EDITOR_ROUTE_PATTERN, ROUTES } from "@/constants/routes";
+import { FULLSCREEN_ROUTE_PATTERN, ROUTES } from "@/constants/routes";
 import { formatDisplayDate, getLocalDateString } from "@/lib/utils/date";
 
 import { useSignOut } from "../hooks/use-sign-out";
@@ -66,29 +67,36 @@ const moreItems = [
     isActive: (pathname: string) => pathname.startsWith(ROUTES.APP.NOTEBOOKS),
   },
   {
-    label: "Flashbacks",
+    label: "Letters",
     folio: "04",
+    href: ROUTES.APP.LETTERS,
+    icon: MailIcon,
+    isActive: (pathname: string) => pathname.startsWith(ROUTES.APP.LETTERS),
+  },
+  {
+    label: "Flashbacks",
+    folio: "05",
     href: ROUTES.APP.FLASHBACKS,
     icon: Sparkles,
     isActive: (pathname: string) => pathname === ROUTES.APP.FLASHBACKS,
   },
   {
     label: "Media",
-    folio: "06",
+    folio: "07",
     href: ROUTES.APP.MEDIA,
     icon: ImageIcon,
     isActive: (pathname: string) => pathname === ROUTES.APP.MEDIA,
   },
   {
     label: "Settings",
-    folio: "07",
+    folio: "08",
     href: ROUTES.APP.SETTINGS,
     icon: Settings,
     isActive: (pathname: string) => pathname === ROUTES.APP.SETTINGS,
   },
   {
     label: "Feedback",
-    folio: "08",
+    folio: "09",
     href: ROUTES.APP.FEEDBACK,
     icon: MessageSquare,
     isActive: (pathname: string) => pathname === ROUTES.APP.FEEDBACK,
@@ -114,7 +122,7 @@ export function TabBar({ user }: TabBarProps) {
   const [moreOpen, setMoreOpen] = React.useState(false);
   const moreActive = moreItems.some((item) => item.isActive(pathname));
 
-  if (EDITOR_ROUTE_PATTERN.test(pathname)) return null;
+  if (FULLSCREEN_ROUTE_PATTERN.test(pathname)) return null;
 
   return (
     <Sheet open={moreOpen} onOpenChange={setMoreOpen}>

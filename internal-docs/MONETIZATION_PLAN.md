@@ -29,7 +29,6 @@ Guiding rules (non-negotiable):
 |---|---|---|---|---|
 | Entries & words | Unlimited | Unlimited | Unlimited | Unlimited |
 | Read & edit past entries | Anytime | Anytime | Anytime | Anytime |
-| Revision history (fast-follow) | 7 days | 90 days | Forever | Forever |
 | Backfill missed days | 14 days | 90 days | Unlimited | Unlimited |
 | Notebooks | 1 | 3 | 10 | 10 |
 | Active devices | 1 at a time* | 3 | Unlimited | Unlimited |
@@ -37,7 +36,7 @@ Guiding rules (non-negotiable):
 | Themes & typography (fast-follow) | Standard | All curated styles | Curated custom accents & fonts | Same as Pro |
 | Reminders & weekly digest (later) | — | ✓ | ✓ | ✓ |
 | PDF & book export (later) | — | Standard PDF | Custom layouts | Same as Pro |
-| Letters to future self (fast-follow) | — | 3 active | Unlimited | Unlimited |
+| Letters to future self | — | 3 active | Unlimited | Unlimited |
 | Voice notes, E2EE audio (later) | — | — | ✓ | ✓ |
 | Priority support & early betas | — | — | ✓ | ✓ |
 
@@ -84,8 +83,8 @@ Explicitly deferred:
 | Feature | When | Why |
 |---|---|---|
 | ~~Notebooks~~ | **Shipped 2026-08-26** | Entries gained `notebookId`; default notebook bootstrapped lazily with a one-time backfill; gates on creation only (1/3/10), full downgrade grandfathering. |
-| Revision history | Fast-follow | Snapshot pipeline; start with single previous-version slot |
-| Letters to future self | Fast-follow | Read-path seal logic |
+| ~~Revision history~~ | **Removed 2026-08-27** | Was shipped earlier the same day (single previous-version slot, hourly capture throttle, read-time retention) and pulled the same day — product call: a single-slot restore point is too niche to justify the surface area. Code fully reverted; `entryrevisions` was dev-only, never in prod. IF ever re-added, the locked design is: up to **10 checkpoints per day** on every tier (capture inserts instead of overwrites; prune keeps newest 10 within the window), the dialog becomes a checkpoint list, and the 7/90/∞ retention stays the paid gate — slot count is not tiered. |
+| ~~Letters to future self~~ | **Shipped 2026-08-27** | Read-path seal logic: passive delivery on the viewer-local unlock date (server-enforced at reveal), `readAt` arrival badges on the dashboard, composer reuses the Tiptap editor with online-only autosave, ZK cipher storage identical to entries, slots count only undelivered letters (grandfathering-native), export includes a `letters/` section. |
 | Premium themes/fonts | Fast-follow | Curated asset work over token system |
 | Voice notes E2EE | Later | New media pipeline (recorder/worker/player) |
 | PDF/book export | Later | Rendering engine work |
@@ -254,8 +253,8 @@ a11y, responsive, tests, no TODOs, docs updated).
 ## 10. Post-Launch Roadmap
 
 Fast-follow order (perceived value ÷ effort):
-~~notebooks~~ (shipped) → revision history (slot → retention tiers) →
-future letters → curated themes/fonts.
+~~notebooks~~ (shipped) → ~~future letters~~ (shipped 2026-08-27) → curated themes/fonts (NEXT).
+(Revision history was built and removed 2026-08-27 — see §3.)
 
 Later: voice notes (E2EE audio; transcripts once privacy story solved) →
 PDF/book export → reminders + weekly digest (needs scheduler infra).

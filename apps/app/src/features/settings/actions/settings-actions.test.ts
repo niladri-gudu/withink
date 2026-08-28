@@ -83,6 +83,12 @@ vi.mock("@/features/feedback/repositories/feedback-model", () => ({
   },
 }));
 
+vi.mock("@/features/letters/repositories/letter-model", () => ({
+  LetterModel: {
+    deleteMany: vi.fn().mockResolvedValue({ deletedCount: 1 }),
+  },
+}));
+
 describe("deleteAccountAction", () => {
   beforeEach(() => {
     vi.clearAllMocks();
