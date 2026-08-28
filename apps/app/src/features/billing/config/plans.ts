@@ -32,6 +32,18 @@ export interface Entitlements {
   notebookLimit: number;
   /** Reserved (fast-follow): simultaneously sealed letters to the future. */
   futureLetterLimit: number;
+  /**
+   * Curated color palettes beyond the standard Desk/Dusk world (Plus and
+   * up). Existing selections are grandfathered on downgrade — only new
+   * selection is gated.
+   */
+  curatedThemes: boolean;
+  /**
+   * Pro appearance extras on top of curatedThemes: curated font pairings
+   * and accent variants. Existing selections are grandfathered on
+   * downgrade — only new selection is gated.
+   */
+  proAppearance: boolean;
 }
 
 export const ENTITLEMENTS: Record<ResolvedPlan, Entitlements> = {
@@ -42,6 +54,8 @@ export const ENTITLEMENTS: Record<ResolvedPlan, Entitlements> = {
     maxConcurrentSessions: 1,
     notebookLimit: 1,
     futureLetterLimit: 0,
+    curatedThemes: false,
+    proAppearance: false,
   },
   plus: {
     plan: "plus",
@@ -50,6 +64,8 @@ export const ENTITLEMENTS: Record<ResolvedPlan, Entitlements> = {
     maxConcurrentSessions: 3,
     notebookLimit: 3,
     futureLetterLimit: 3,
+    curatedThemes: true,
+    proAppearance: false,
   },
   pro: {
     plan: "pro",
@@ -58,6 +74,8 @@ export const ENTITLEMENTS: Record<ResolvedPlan, Entitlements> = {
     maxConcurrentSessions: Number.POSITIVE_INFINITY,
     notebookLimit: 10,
     futureLetterLimit: Number.POSITIVE_INFINITY,
+    curatedThemes: true,
+    proAppearance: true,
   },
 };
 

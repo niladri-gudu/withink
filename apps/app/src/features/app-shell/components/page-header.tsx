@@ -63,9 +63,7 @@ export function PageHeader({
           )}
           <h1 className="text-foreground font-serif text-3xl leading-none font-bold tracking-tight sm:text-4xl">
             {title}{" "}
-            <span className="text-accent mt-1 block pl-1 text-4xl font-normal italic sm:mt-0 sm:inline sm:text-5xl">
-              {accent}
-            </span>
+            <span className="text-accent font-normal">{accent}</span>
           </h1>
           {description && (
             <p className="text-body-small text-muted-foreground mt-1">

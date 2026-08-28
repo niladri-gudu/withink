@@ -102,7 +102,7 @@ export default async function EntryPage({
           </p>
           <h1 className="text-foreground font-serif text-4xl leading-none font-bold tracking-tight sm:text-5xl">
             {isFuture ? "The Future is" : "The Archive is"} <br />
-            <span className="text-accent mt-2 block text-5xl font-normal italic sm:text-6xl">
+            <span className="text-accent font-normal">
               {isFuture ? "unwritten." : "sealed."}
             </span>
           </h1>

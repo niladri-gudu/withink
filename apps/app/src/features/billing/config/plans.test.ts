@@ -9,12 +9,16 @@ describe("plans config", () => {
     expect(ENTITLEMENTS.free.maxConcurrentSessions).toBe(1);
     expect(ENTITLEMENTS.free.notebookLimit).toBe(1);
     expect(ENTITLEMENTS.free.futureLetterLimit).toBe(0);
+    expect(ENTITLEMENTS.free.curatedThemes).toBe(false);
+    expect(ENTITLEMENTS.free.proAppearance).toBe(false);
 
     expect(ENTITLEMENTS.plus.backfillDays).toBe(90);
     expect(ENTITLEMENTS.plus.mediaStorageBytes).toBe(10 * 1024 * 1024 * 1024);
     expect(ENTITLEMENTS.plus.maxConcurrentSessions).toBe(3);
     expect(ENTITLEMENTS.plus.notebookLimit).toBe(3);
     expect(ENTITLEMENTS.plus.futureLetterLimit).toBe(3);
+    expect(ENTITLEMENTS.plus.curatedThemes).toBe(true);
+    expect(ENTITLEMENTS.plus.proAppearance).toBe(false);
 
     expect(ENTITLEMENTS.pro.backfillDays).toBe(Number.POSITIVE_INFINITY);
     expect(ENTITLEMENTS.pro.mediaStorageBytes).toBe(50 * 1024 * 1024 * 1024);
@@ -23,6 +27,8 @@ describe("plans config", () => {
     );
     expect(ENTITLEMENTS.pro.notebookLimit).toBe(10);
     expect(ENTITLEMENTS.pro.futureLetterLimit).toBe(Number.POSITIVE_INFINITY);
+    expect(ENTITLEMENTS.pro.curatedThemes).toBe(true);
+    expect(ENTITLEMENTS.pro.proAppearance).toBe(true);
   });
 
   it("hands out an independent copy of the free tier", () => {

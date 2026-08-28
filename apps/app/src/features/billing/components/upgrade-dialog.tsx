@@ -14,7 +14,14 @@ import { Loader2, Sparkles } from "lucide-react";
 import type { ResolvedPlan } from "../config/plans";
 import { useCheckoutRedirect } from "../hooks/use-checkout-redirect";
 
-export type PaywallReason = "storage" | "backfill" | "notebooks" | "letters";
+export type PaywallReason =
+  | "storage"
+  | "backfill"
+  | "notebooks"
+  | "letters"
+  | "themes"
+  | "fonts"
+  | "accents";
 
 const COPY: Record<PaywallReason, { title: string; description: string }> = {
   storage: {
@@ -36,6 +43,21 @@ const COPY: Record<PaywallReason, { title: string; description: string }> = {
     title: "You're holding every letter you can",
     description:
       "Plus keeps three active letters to your future self at once, and Pro has no limit. Delivered letters always stay yours, and a freed date makes room for a new one.",
+  },
+  themes: {
+    title: "More paper worlds await",
+    description:
+      "The Free plan keeps the classic Desk. Plus opens every curated palette — Vellum, Indigo Nook, Rosewood — each with its own day and night. Any palette you already chose stays yours.",
+  },
+  fonts: {
+    title: "Type set your way",
+    description:
+      "Curated typography is a Pro touch: Literata for long reading nights, or the fine Quill pairing. Everything you have written stays exactly as it is.",
+  },
+  accents: {
+    title: "Pick your ink color",
+    description:
+      "Accent hues are a Pro touch — oxblood, indigo ink, or moss, each contrast-checked for comfortable reading. The classic gold stays free forever.",
   },
 };
 

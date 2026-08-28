@@ -85,7 +85,7 @@ Explicitly deferred:
 | ~~Notebooks~~ | **Shipped 2026-08-26** | Entries gained `notebookId`; default notebook bootstrapped lazily with a one-time backfill; gates on creation only (1/3/10), full downgrade grandfathering. |
 | ~~Revision history~~ | **Removed 2026-08-27** | Was shipped earlier the same day (single previous-version slot, hourly capture throttle, read-time retention) and pulled the same day — product call: a single-slot restore point is too niche to justify the surface area. Code fully reverted; `entryrevisions` was dev-only, never in prod. IF ever re-added, the locked design is: up to **10 checkpoints per day** on every tier (capture inserts instead of overwrites; prune keeps newest 10 within the window), the dialog becomes a checkpoint list, and the 7/90/∞ retention stays the paid gate — slot count is not tiered. |
 | ~~Letters to future self~~ | **Shipped 2026-08-27** | Read-path seal logic: passive delivery on the viewer-local unlock date (server-enforced at reveal), `readAt` arrival badges on the dashboard, composer reuses the Tiptap editor with online-only autosave, ZK cipher storage identical to entries, slots count only undelivered letters (grandfathering-native), export includes a `letters/` section. |
-| Premium themes/fonts | Fast-follow | Curated asset work over token system |
+| ~~Premium themes/fonts~~ | **Shipped 2026-08-28** | Curated palettes (Vellum, Indigo Nook, Rosewood — each with day+night) gate at Plus; Pro adds font pairings (Literata, Quill) and accent hues (oxblood, indigo ink, moss), all WCAG-contrast-measured. Plan resolved server-side for gating; selections persist client-side and are grandfathered on downgrade (only NEW selection gated). Cosmetic-only: no server action, hand-edited localStorage is an accepted (documented) risk. |
 | Voice notes E2EE | Later | New media pipeline (recorder/worker/player) |
 | PDF/book export | Later | Rendering engine work |
 | Reminders + digest | Later | Requires new scheduled-jobs infrastructure |
@@ -253,7 +253,9 @@ a11y, responsive, tests, no TODOs, docs updated).
 ## 10. Post-Launch Roadmap
 
 Fast-follow order (perceived value ÷ effort):
-~~notebooks~~ (shipped) → ~~future letters~~ (shipped 2026-08-27) → curated themes/fonts (NEXT).
+~~notebooks~~ (shipped) → ~~future letters~~ (shipped 2026-08-27) →
+~~curated themes/fonts~~ (shipped 2026-08-28). NEXT: the "later" tail
+(voice notes → PDF/book export → reminders+digest).
 (Revision history was built and removed 2026-08-27 — see §3.)
 
 Later: voice notes (E2EE audio; transcripts once privacy story solved) →

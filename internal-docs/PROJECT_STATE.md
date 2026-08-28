@@ -2,11 +2,11 @@
 
 # Project State
 
-Last Updated: 2026-08-27
+Last Updated: 2026-08-28
 
-Current Phase: Post-Letters (Monetization Fast-Follows Advancing)
+Current Phase: Post-Themes (Monetization Fast-Follows Advancing)
 
-Current Milestone: Letters to Future Self SHIPPED (2026-08-27)
+Current Milestone: Curated Themes & Typography SHIPPED (2026-08-28)
 
 Project Status: 🟢 Release Ready
 
@@ -378,7 +378,7 @@ Final Polish
 
 # Current Goals
 
-- **Letters to future self SHIPPED (2026-08-27 — see decision entry below).** Next queued per MONETIZATION_PLAN §10: curated themes/fonts, then the "later" tail (voice notes → PDF/book export → reminders+digest). Remaining pre-release items: the manual Dodo drills (portal-cancel downgrade, webhook replay, renewal-failure card, photo-quota paywall) and the docs-landing pricing copy swap.
+- **Curated themes & typography SHIPPED (2026-08-28 — see decision entry below).** Notebooks and themes/fonts fast-follows are done; revision history was dropped from scope. Next per MONETIZATION_PLAN §10: the "later" tail (voice notes → PDF/book export → reminders+digest). Remaining pre-release items: the manual Dodo drills (portal-cancel downgrade, webhook replay, renewal-failure card, photo-quota paywall) and the docs-landing pricing copy swap.
 
 ---
 
@@ -391,6 +391,13 @@ Note: MongoDB (`mongodb+srv://`) now connects. The earlier `querySrv ECONNREFUSE
 ---
 
 # Recent Decisions
+
+2026-08-28 (Themes & typography — curated palettes, Pro fonts/accents)
+
+- **Palette axis × mode axis.** Three curated palettes (Vellum sage ledger, Indigo Nook, Rosewood plum) ship as full semantic-token sets in `globals.css` under `[data-palette="…"]` (+ `.dark[data-palette="…"]`), stacking on the existing light/dark toggle — zero component rewrites. Each palette's `--accent`/`--ring` was contrast-measured via a throwaway oklch→sRGB script: ≥4.5:1 as text vs its own background AND card (light + dark), ≥3:1 as ring; ratios documented in the CSS comments. Mood ramps keep the established single-hue lightness-curve idiom, re-hued per world. Pro accent variants (`[data-accent]`: oxblood, indigo-ink, moss) override ONLY the accent trio and are tuned to hold ≥4.5:1 against ALL six palette backgrounds (lightness gap dominates). Pro font pairings (`[data-font]`: Literata; "Quill" = Cormorant Garamond + Shadows Into Light Two hand) swap only the `--font-sans/serif/--font-hand` vars; non-default faces load via `next/font` with `preload: false` so Free users never pay the bytes.
+- **Pre-paint + persistence.** `localStorage` keys `withink-palette/font/accent` (same precedent as `withink-paper-scale`); the inline head script in `layout.tsx` applies allowlisted ids as `<html>` data attributes before first paint (no flash). Catalog of record: `features/settings/appearance/catalog.ts` (ids, names, swatches, minPlan per item) — kept in sync with the inline-script allowlists by a drift-guard test. `use-appearance.ts` re-reads after hydration and also updates the `theme-color` metas per palette.
+- **Gating + grandfathering.** `Entitlements` gained `curatedThemes` (Plus+) and `proAppearance` (Pro); settings page resolves the plan server-side via `EntitlementsService` and passes it down. Locked cards show a lock glyph, preview the palette, and open `UpgradeDialog` with new reasons `themes` / `fonts` / `accents`. Downgrades never revoke a stored selection (localStorage persists; only NEW selection is gated). Accepted cosmetic risk (documented): hand-edited localStorage applies a locked look locally — no data/security impact, no server action involved.
+- Settings appearance group restructured: Day/Night mode cards, Paper world palette grid (dual day/night swatch halves), Typography rows (rendered in their own face), Accent swatch circles — all 44px targets, `aria-pressed`, keyboard navigable. Verified: tsc clean, eslint 0 errors, full Vitest **264/264** (incl. catalog gating + sync-guard tests), production build green.
 
 2026-08-28 (Letters — "Full codex letters" impeccable redesign)
 

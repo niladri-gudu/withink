@@ -1,5 +1,14 @@
 import type { Metadata, Viewport } from "next";
-import { Alegreya, Caveat } from "next/font/google";
+import {
+  Alegreya,
+  Caveat,
+  Cormorant_Garamond,
+  Geist,
+  Geist_Mono,
+  JetBrains_Mono,
+  Literata,
+  Shadows_Into_Light_Two,
+} from "next/font/google";
 import Script from "next/script";
 import { cn } from "@withink/utils";
 
@@ -17,6 +26,49 @@ const alegreya = Alegreya({
 const caveat = Caveat({
   variable: "--font-caveat",
   subsets: ["latin"],
+});
+
+/* Pro typography pairings (features/settings/appearance/catalog.ts). Loaded
+   without preload so Free users never pay the bytes; the browser fetches a
+   face only when a [data-font] swap actually puts it on rendered text. */
+const literata = Literata({
+  variable: "--font-literata",
+  subsets: ["latin"],
+  style: ["normal", "italic"],
+  preload: false,
+});
+
+const geist = Geist({
+  variable: "--font-geist",
+  subsets: ["latin"],
+  preload: false,
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+  preload: false,
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  variable: "--font-jetbrains-mono",
+  subsets: ["latin"],
+  preload: false,
+});
+
+const cormorant = Cormorant_Garamond({
+  variable: "--font-cormorant",
+  subsets: ["latin"],
+  style: ["normal", "italic"],
+  weight: ["400", "500", "600", "700"],
+  preload: false,
+});
+
+const shadows = Shadows_Into_Light_Two({
+  variable: "--font-shadows",
+  subsets: ["latin"],
+  weight: "400",
+  preload: false,
 });
 
 export const metadata: Metadata = {
@@ -122,7 +174,17 @@ export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html
       lang="en"
-      className={cn(alegreya.variable, caveat.variable, "h-full")}
+      className={cn(
+        alegreya.variable,
+        caveat.variable,
+        literata.variable,
+        geist.variable,
+        geistMono.variable,
+        jetbrainsMono.variable,
+        cormorant.variable,
+        shadows.variable,
+        "h-full",
+      )}
       suppressHydrationWarning
     >
       <head>
@@ -179,6 +241,22 @@ export default function RootLayout({ children }: RootLayoutProps) {
                   if (scale) {
                     document.documentElement.style.setProperty('--withink-paper-scale', scale);
                   }
+                  /* Curated appearance (features/settings/appearance/catalog.ts —
+                     keep allowlists in sync). Applied pre-paint so a premium
+                     palette/font never flashes the Desk default. */
+                  var palettes = ['vellum', 'indigo-nook', 'rosewood'];
+                  var fonts = ['literata', 'editorial', 'codex', 'quill'];
+                  var accents = ['oxblood', 'indigo-ink', 'moss'];
+                  var root = document.documentElement;
+                  function apply(key, attr, allowed) {
+                    var v = localStorage.getItem(key);
+                    if (v && allowed.indexOf(v) !== -1) {
+                      root.setAttribute(attr, v);
+                    }
+                  }
+                  apply('withink-palette', 'data-palette', palettes);
+                  apply('withink-font', 'data-font', fonts);
+                  apply('withink-accent', 'data-accent', accents);
                   var match = document.cookie.match(/(^|;)\\s*theme\\s*=\\s*([^;]+)/);
                   var theme = match ? match[2] : null;
                   if (theme) {

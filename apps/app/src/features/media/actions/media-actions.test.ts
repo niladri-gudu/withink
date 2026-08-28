@@ -30,6 +30,8 @@ vi.mock("@/features/billing/services/entitlements-service", () => ({
       maxConcurrentSessions: 1,
       notebookLimit: 1,
       futureLetterLimit: 0,
+      curatedThemes: false,
+      proAppearance: false,
     }),
   },
 }));

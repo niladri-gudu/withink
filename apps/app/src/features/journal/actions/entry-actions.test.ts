@@ -30,6 +30,8 @@ vi.mock("@/features/billing/services/entitlements-service", () => ({
       maxConcurrentSessions: 1,
       notebookLimit: 1,
       futureLetterLimit: 0,
+      curatedThemes: false,
+      proAppearance: false,
     }),
   },
 }));
@@ -161,6 +163,8 @@ describe("entry-actions", () => {
         maxConcurrentSessions: Number.POSITIVE_INFINITY,
         notebookLimit: Number.POSITIVE_INFINITY,
         futureLetterLimit: Number.POSITIVE_INFINITY,
+        curatedThemes: true,
+        proAppearance: true,
       });
 
       const input = {

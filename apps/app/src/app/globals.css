@@ -164,6 +164,453 @@
   }
 }
 
+/* ─── Curated palettes (Plus tier) ─────────────────────────────────────────
+   Each palette is a full semantic-variable set applied via a data attribute
+   on <html> (set pre-paint by the inline head script in layout.tsx), stacked
+   on top of the existing light/dark class toggle:
+
+     light + palette → [data-palette] (later rule, beats :root)
+     dark  + palette → .dark[data-palette] (0-2-0, beats both)
+
+   Every accent below was contrast-measured (oklch→sRGB, WCAG relative
+   luminance): ≥4.5:1 as text against its own background AND card, ≥3:1 as
+   ring. Accent variants under [data-accent] are tuned dark-enough (light
+   mode) / bright-enough (dark mode) to hold those ratios against EVERY
+   palette background, since any variant may pair with any palette.
+   ───────────────────────────────────────────────────────────────────────── */
+
+@layer base {
+  /* Vellum — a cool green-tinted ledger; sage ink on pale vellum paper. */
+  [data-palette="vellum"] {
+    --background: oklch(0.945 0.014 120);
+    --foreground: oklch(0.27 0.025 150);
+
+    --card: oklch(0.965 0.01 120);
+    --card-foreground: oklch(0.27 0.025 150);
+
+    --popover: oklch(0.965 0.01 120);
+    --popover-foreground: oklch(0.27 0.025 150);
+
+    --primary: oklch(0.27 0.025 150);
+    --primary-foreground: oklch(0.965 0.01 120);
+
+    --secondary: oklch(0.915 0.016 125);
+    --secondary-foreground: oklch(0.27 0.025 150);
+
+    --muted: oklch(0.915 0.016 125);
+    /* 6.02:1 against vellum background. */
+    --muted-foreground: oklch(0.46 0.022 148);
+
+    /* Sage ink: 6.65:1 vs background, 7.05:1 vs card. */
+    --accent: oklch(0.43 0.085 152);
+    --accent-foreground: oklch(0.965 0.01 120);
+
+    --destructive: oklch(0.5 0.15 30);
+    --destructive-foreground: oklch(0.965 0.01 120);
+
+    --border: oklch(0.85 0.015 125);
+    --input: oklch(0.85 0.015 125);
+    --ring: oklch(0.43 0.085 152);
+
+    --sidebar: oklch(0.925 0.013 122);
+    --sidebar-foreground: oklch(0.27 0.025 150);
+    --sidebar-primary: oklch(0.27 0.025 150);
+    --sidebar-primary-foreground: oklch(0.965 0.01 120);
+    --sidebar-accent: oklch(0.9 0.018 124);
+    --sidebar-accent-foreground: oklch(0.27 0.025 150);
+    --sidebar-border: oklch(0.85 0.015 125);
+    --sidebar-ring: oklch(0.43 0.085 152);
+
+    /* Mood — one moss ramp (lightness carries the 1→5 progression). */
+    --mood-angry: oklch(0.36 0.05 148);
+    --mood-angry-bg: oklch(0.36 0.05 148 / 0.12);
+    --mood-angry-border: oklch(0.36 0.05 148 / 0.24);
+    --mood-sad: oklch(0.41 0.055 150);
+    --mood-sad-bg: oklch(0.41 0.055 150 / 0.12);
+    --mood-sad-border: oklch(0.41 0.055 150 / 0.24);
+    --mood-neutral: oklch(0.47 0.06 152);
+    --mood-neutral-bg: oklch(0.47 0.06 152 / 0.14);
+    --mood-neutral-border: oklch(0.47 0.06 152 / 0.28);
+    --mood-happy: oklch(0.53 0.065 155);
+    --mood-happy-bg: oklch(0.53 0.065 155 / 0.14);
+    --mood-happy-border: oklch(0.53 0.065 155 / 0.28);
+    --mood-radiant: oklch(0.7 0.09 158);
+    --mood-radiant-bg: oklch(0.7 0.09 158 / 0.18);
+    --mood-radiant-border: oklch(0.7 0.09 158 / 0.32);
+  }
+
+  .dark[data-palette="vellum"] {
+    /* The vellum ledger after dusk: deep moss charcoal, pale sage text. */
+    --background: oklch(0.2 0.02 150);
+    --foreground: oklch(0.91 0.015 125);
+
+    --card: oklch(0.245 0.018 150);
+    --card-foreground: oklch(0.91 0.015 125);
+
+    --popover: oklch(0.245 0.018 150);
+    --popover-foreground: oklch(0.91 0.015 125);
+
+    --primary: oklch(0.91 0.015 125);
+    --primary-foreground: oklch(0.2 0.02 150);
+
+    --secondary: oklch(0.3 0.016 150);
+    --secondary-foreground: oklch(0.91 0.015 125);
+
+    --muted: oklch(0.3 0.016 150);
+    /* 6.07:1 against moss background. */
+    --muted-foreground: oklch(0.67 0.02 140);
+
+    /* Bright moss: 8.70:1 vs background, 7.79:1 vs card. */
+    --accent: oklch(0.76 0.095 145);
+    --accent-foreground: oklch(0.2 0.02 150);
+
+    --destructive: oklch(0.66 0.13 30);
+    --destructive-foreground: oklch(0.91 0.015 125);
+
+    --border: oklch(0.33 0.016 150);
+    --input: oklch(0.33 0.016 150);
+    --ring: oklch(0.76 0.095 145);
+
+    --sidebar: oklch(0.23 0.018 150);
+    --sidebar-foreground: oklch(0.91 0.015 125);
+    --sidebar-primary: oklch(0.91 0.015 125);
+    --sidebar-primary-foreground: oklch(0.2 0.02 150);
+    --sidebar-accent: oklch(0.28 0.016 150);
+    --sidebar-accent-foreground: oklch(0.91 0.015 125);
+    --sidebar-border: oklch(0.28 0.016 150);
+    --sidebar-ring: oklch(0.76 0.095 145);
+
+    /* Mood — moss ramp, dusk-tuned. */
+    --mood-angry: oklch(0.74 0.04 148);
+    --mood-angry-bg: oklch(0.74 0.04 148 / 0.16);
+    --mood-angry-border: oklch(0.74 0.04 148 / 0.3);
+    --mood-sad: oklch(0.78 0.045 150);
+    --mood-sad-bg: oklch(0.78 0.045 150 / 0.16);
+    --mood-sad-border: oklch(0.78 0.045 150 / 0.3);
+    --mood-neutral: oklch(0.82 0.05 152);
+    --mood-neutral-bg: oklch(0.82 0.05 152 / 0.18);
+    --mood-neutral-border: oklch(0.82 0.05 152 / 0.34);
+    --mood-happy: oklch(0.86 0.055 155);
+    --mood-happy-bg: oklch(0.86 0.055 155 / 0.18);
+    --mood-happy-border: oklch(0.86 0.055 155 / 0.34);
+    --mood-radiant: oklch(0.9 0.07 158);
+    --mood-radiant-bg: oklch(0.9 0.07 158 / 0.22);
+    --mood-radiant-border: oklch(0.9 0.07 158 / 0.42);
+  }
+
+  /* Indigo Nook — blue-ink desk; iron-indigo on cool ivory, periwinkle at night. */
+  [data-palette="indigo-nook"] {
+    --background: oklch(0.94 0.012 260);
+    --foreground: oklch(0.27 0.03 265);
+
+    --card: oklch(0.962 0.008 260);
+    --card-foreground: oklch(0.27 0.03 265);
+
+    --popover: oklch(0.962 0.008 260);
+    --popover-foreground: oklch(0.27 0.03 265);
+
+    --primary: oklch(0.27 0.03 265);
+    --primary-foreground: oklch(0.962 0.008 260);
+
+    --secondary: oklch(0.915 0.014 262);
+    --secondary-foreground: oklch(0.27 0.03 265);
+
+    --muted: oklch(0.915 0.014 262);
+    /* 5.98:1 against ivory background. */
+    --muted-foreground: oklch(0.46 0.025 265);
+
+    /* Iron indigo: 7.23:1 vs background, 7.72:1 vs card. */
+    --accent: oklch(0.42 0.11 266);
+    --accent-foreground: oklch(0.962 0.008 260);
+
+    --destructive: oklch(0.5 0.15 30);
+    --destructive-foreground: oklch(0.962 0.008 260);
+
+    --border: oklch(0.845 0.014 262);
+    --input: oklch(0.845 0.014 262);
+    --ring: oklch(0.42 0.11 266);
+
+    --sidebar: oklch(0.925 0.011 261);
+    --sidebar-foreground: oklch(0.27 0.03 265);
+    --sidebar-primary: oklch(0.27 0.03 265);
+    --sidebar-primary-foreground: oklch(0.962 0.008 260);
+    --sidebar-accent: oklch(0.9 0.014 262);
+    --sidebar-accent-foreground: oklch(0.27 0.03 265);
+    --sidebar-border: oklch(0.845 0.014 262);
+    --sidebar-ring: oklch(0.42 0.11 266);
+
+    /* Mood — one periwinkle ramp. */
+    --mood-angry: oklch(0.36 0.06 264);
+    --mood-angry-bg: oklch(0.36 0.06 264 / 0.12);
+    --mood-angry-border: oklch(0.36 0.06 264 / 0.24);
+    --mood-sad: oklch(0.41 0.065 266);
+    --mood-sad-bg: oklch(0.41 0.065 266 / 0.12);
+    --mood-sad-border: oklch(0.41 0.065 266 / 0.24);
+    --mood-neutral: oklch(0.47 0.07 268);
+    --mood-neutral-bg: oklch(0.47 0.07 268 / 0.14);
+    --mood-neutral-border: oklch(0.47 0.07 268 / 0.28);
+    --mood-happy: oklch(0.53 0.075 270);
+    --mood-happy-bg: oklch(0.53 0.075 270 / 0.14);
+    --mood-happy-border: oklch(0.53 0.075 270 / 0.28);
+    --mood-radiant: oklch(0.7 0.095 272);
+    --mood-radiant-bg: oklch(0.7 0.095 272 / 0.18);
+    --mood-radiant-border: oklch(0.7 0.095 272 / 0.32);
+  }
+
+  .dark[data-palette="indigo-nook"] {
+    /* The nook after dusk: deep indigo, parchment-periwinkle text. */
+    --background: oklch(0.2 0.025 265);
+    --foreground: oklch(0.91 0.015 265);
+
+    --card: oklch(0.245 0.022 265);
+    --card-foreground: oklch(0.91 0.015 265);
+
+    --popover: oklch(0.245 0.022 265);
+    --popover-foreground: oklch(0.91 0.015 265);
+
+    --primary: oklch(0.91 0.015 265);
+    --primary-foreground: oklch(0.2 0.025 265);
+
+    --secondary: oklch(0.3 0.02 265);
+    --secondary-foreground: oklch(0.91 0.015 265);
+
+    --muted: oklch(0.3 0.02 265);
+    /* 6.28:1 against indigo background. */
+    --muted-foreground: oklch(0.68 0.02 268);
+
+    /* Periwinkle night ink: 8.35:1 vs background, 7.48:1 vs card. */
+    --accent: oklch(0.76 0.095 272);
+    --accent-foreground: oklch(0.2 0.025 265);
+
+    --destructive: oklch(0.66 0.13 30);
+    --destructive-foreground: oklch(0.91 0.015 265);
+
+    --border: oklch(0.33 0.02 265);
+    --input: oklch(0.33 0.02 265);
+    --ring: oklch(0.76 0.095 272);
+
+    --sidebar: oklch(0.23 0.022 265);
+    --sidebar-foreground: oklch(0.91 0.015 265);
+    --sidebar-primary: oklch(0.91 0.015 265);
+    --sidebar-primary-foreground: oklch(0.2 0.025 265);
+    --sidebar-accent: oklch(0.28 0.02 265);
+    --sidebar-accent-foreground: oklch(0.91 0.015 265);
+    --sidebar-border: oklch(0.28 0.02 265);
+    --sidebar-ring: oklch(0.76 0.095 272);
+
+    /* Mood — periwinkle ramp, dusk-tuned. */
+    --mood-angry: oklch(0.74 0.05 266);
+    --mood-angry-bg: oklch(0.74 0.05 266 / 0.16);
+    --mood-angry-border: oklch(0.74 0.05 266 / 0.3);
+    --mood-sad: oklch(0.78 0.055 268);
+    --mood-sad-bg: oklch(0.78 0.055 268 / 0.16);
+    --mood-sad-border: oklch(0.78 0.055 268 / 0.3);
+    --mood-neutral: oklch(0.82 0.06 270);
+    --mood-neutral-bg: oklch(0.82 0.06 270 / 0.18);
+    --mood-neutral-border: oklch(0.82 0.06 270 / 0.34);
+    --mood-happy: oklch(0.86 0.07 272);
+    --mood-happy-bg: oklch(0.86 0.07 272 / 0.18);
+    --mood-happy-border: oklch(0.86 0.07 272 / 0.34);
+    --mood-radiant: oklch(0.9 0.085 274);
+    --mood-radiant-bg: oklch(0.9 0.085 274 / 0.22);
+    --mood-radiant-border: oklch(0.9 0.085 274 / 0.42);
+  }
+
+  /* Rosewood — warm plum desk; mulberry ink on rose cream, rose gold at night. */
+  [data-palette="rosewood"] {
+    --background: oklch(0.94 0.015 30);
+    --foreground: oklch(0.26 0.028 25);
+
+    --card: oklch(0.962 0.01 30);
+    --card-foreground: oklch(0.26 0.028 25);
+
+    --popover: oklch(0.962 0.01 30);
+    --popover-foreground: oklch(0.26 0.028 25);
+
+    --primary: oklch(0.26 0.028 25);
+    --primary-foreground: oklch(0.962 0.01 30);
+
+    --secondary: oklch(0.91 0.017 32);
+    --secondary-foreground: oklch(0.26 0.028 25);
+
+    --muted: oklch(0.91 0.017 32);
+    /* 6.29:1 against rose background. */
+    --muted-foreground: oklch(0.45 0.025 25);
+
+    /* Mulberry: 7.12:1 vs background, 7.61:1 vs card. */
+    --accent: oklch(0.43 0.1 25);
+    --accent-foreground: oklch(0.962 0.01 30);
+
+    --destructive: oklch(0.5 0.15 30);
+    --destructive-foreground: oklch(0.962 0.01 30);
+
+    --border: oklch(0.845 0.016 32);
+    --input: oklch(0.845 0.016 32);
+    --ring: oklch(0.43 0.1 25);
+
+    --sidebar: oklch(0.925 0.013 31);
+    --sidebar-foreground: oklch(0.26 0.028 25);
+    --sidebar-primary: oklch(0.26 0.028 25);
+    --sidebar-primary-foreground: oklch(0.962 0.01 30);
+    --sidebar-accent: oklch(0.895 0.015 32);
+    --sidebar-accent-foreground: oklch(0.26 0.028 25);
+    --sidebar-border: oklch(0.845 0.016 32);
+    --sidebar-ring: oklch(0.43 0.1 25);
+
+    /* Mood — one rose ramp. */
+    --mood-angry: oklch(0.36 0.06 22);
+    --mood-angry-bg: oklch(0.36 0.06 22 / 0.12);
+    --mood-angry-border: oklch(0.36 0.06 22 / 0.24);
+    --mood-sad: oklch(0.41 0.065 24);
+    --mood-sad-bg: oklch(0.41 0.065 24 / 0.12);
+    --mood-sad-border: oklch(0.41 0.065 24 / 0.24);
+    --mood-neutral: oklch(0.47 0.07 26);
+    --mood-neutral-bg: oklch(0.47 0.07 26 / 0.14);
+    --mood-neutral-border: oklch(0.47 0.07 26 / 0.28);
+    --mood-happy: oklch(0.53 0.075 28);
+    --mood-happy-bg: oklch(0.53 0.075 28 / 0.14);
+    --mood-happy-border: oklch(0.53 0.075 28 / 0.28);
+    --mood-radiant: oklch(0.7 0.095 30);
+    --mood-radiant-bg: oklch(0.7 0.095 30 / 0.18);
+    --mood-radiant-border: oklch(0.7 0.095 30 / 0.32);
+  }
+
+  .dark[data-palette="rosewood"] {
+    /* The desk after dusk, in plum: deep rosewood, blush parchment text. */
+    --background: oklch(0.2 0.02 25);
+    --foreground: oklch(0.91 0.015 28);
+
+    --card: oklch(0.245 0.018 25);
+    --card-foreground: oklch(0.91 0.015 28);
+
+    --popover: oklch(0.245 0.018 25);
+    --popover-foreground: oklch(0.91 0.015 28);
+
+    --primary: oklch(0.91 0.015 28);
+    --primary-foreground: oklch(0.2 0.02 25);
+
+    --secondary: oklch(0.3 0.016 25);
+    --secondary-foreground: oklch(0.91 0.015 28);
+
+    --muted: oklch(0.3 0.016 25);
+    /* 6.27:1 against rosewood background. */
+    --muted-foreground: oklch(0.68 0.018 28);
+
+    /* Rose gold: 7.86:1 vs background, 7.05:1 vs card. */
+    --accent: oklch(0.75 0.1 30);
+    --accent-foreground: oklch(0.2 0.02 25);
+
+    --destructive: oklch(0.66 0.13 30);
+    --destructive-foreground: oklch(0.91 0.015 28);
+
+    --border: oklch(0.33 0.016 25);
+    --input: oklch(0.33 0.016 25);
+    --ring: oklch(0.75 0.1 30);
+
+    --sidebar: oklch(0.23 0.018 25);
+    --sidebar-foreground: oklch(0.91 0.015 28);
+    --sidebar-primary: oklch(0.91 0.015 28);
+    --sidebar-primary-foreground: oklch(0.2 0.02 25);
+    --sidebar-accent: oklch(0.28 0.016 25);
+    --sidebar-accent-foreground: oklch(0.91 0.015 28);
+    --sidebar-border: oklch(0.28 0.016 25);
+    --sidebar-ring: oklch(0.75 0.1 30);
+
+    /* Mood — rose ramp, dusk-tuned. */
+    --mood-angry: oklch(0.74 0.05 24);
+    --mood-angry-bg: oklch(0.74 0.05 24 / 0.16);
+    --mood-angry-border: oklch(0.74 0.05 24 / 0.3);
+    --mood-sad: oklch(0.78 0.055 26);
+    --mood-sad-bg: oklch(0.78 0.055 26 / 0.16);
+    --mood-sad-border: oklch(0.78 0.055 26 / 0.3);
+    --mood-neutral: oklch(0.82 0.06 28);
+    --mood-neutral-bg: oklch(0.82 0.06 28 / 0.18);
+    --mood-neutral-border: oklch(0.82 0.06 28 / 0.34);
+    --mood-happy: oklch(0.86 0.07 30);
+    --mood-happy-bg: oklch(0.86 0.07 30 / 0.18);
+    --mood-happy-border: oklch(0.86 0.07 30 / 0.34);
+    --mood-radiant: oklch(0.9 0.085 32);
+    --mood-radiant-bg: oklch(0.9 0.085 32 / 0.22);
+    --mood-radiant-border: oklch(0.9 0.085 32 / 0.42);
+  }
+
+  /* ─── Pro accent variants ───────────────────────────────────────────────
+     Override ONLY the accent trio; every other token (mood ramp, ink, paper)
+     stays with the palette. Each variant holds ≥4.5:1 against all six
+     palette backgrounds (light variants are dark enough, dark variants
+     bright enough — contrast is dominated by the lightness gap). */
+
+  /* Oxblood — dried-ink red. */
+  [data-accent="oxblood"] {
+    --accent: oklch(0.45 0.11 25);
+    --ring: oklch(0.45 0.11 25);
+  }
+  .dark[data-accent="oxblood"] {
+    --accent: oklch(0.75 0.1 28);
+    --ring: oklch(0.75 0.1 28);
+  }
+
+  /* Indigo Ink — iron-blue fountain pen. */
+  [data-accent="indigo-ink"] {
+    --accent: oklch(0.44 0.1 265);
+    --ring: oklch(0.44 0.1 265);
+  }
+  .dark[data-accent="indigo-ink"] {
+    --accent: oklch(0.76 0.09 270);
+    --ring: oklch(0.76 0.09 270);
+  }
+
+  /* Moss — pressed botanical green. */
+  [data-accent="moss"] {
+    --accent: oklch(0.44 0.08 152);
+    --ring: oklch(0.44 0.08 152);
+  }
+  .dark[data-accent="moss"] {
+    --accent: oklch(0.76 0.09 150);
+    --ring: oklch(0.76 0.09 150);
+  }
+
+  /* ─── Pro typography pairings ───────────────────────────────────────────
+     Swap the reading faces only (the @theme font vars stay mapped to the
+     next/font CSS variables loaded in layout.tsx). Higher specificity via
+     html[data-font] beats Tailwind's @theme cascade layer. */
+
+  html[data-font="alegreya"] {
+    --font-sans: var(--font-alegreya), Georgia, serif;
+    --font-serif: var(--font-alegreya), Georgia, serif;
+    --font-mono: var(--font-alegreya), Georgia, serif;
+    --font-hand: var(--font-caveat), cursive;
+  }
+
+  html[data-font="literata"] {
+    --font-sans: var(--font-literata), Georgia, serif;
+    --font-serif: var(--font-literata), Georgia, serif;
+    --font-mono: var(--font-literata), Georgia, serif;
+    --font-hand: var(--font-caveat), cursive;
+  }
+
+  html[data-font="editorial"] {
+    --font-sans: var(--font-geist), system-ui, sans-serif;
+    --font-serif: var(--font-geist), system-ui, sans-serif;
+    --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+    --font-hand: var(--font-caveat), cursive;
+  }
+
+  html[data-font="codex"] {
+    --font-sans: var(--font-jetbrains-mono), ui-monospace, monospace;
+    --font-serif: var(--font-jetbrains-mono), ui-monospace, monospace;
+    --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
+    --font-hand: var(--font-caveat), cursive;
+  }
+
+  html[data-font="quill"] {
+    --font-sans: var(--font-cormorant), Georgia, serif;
+    --font-serif: var(--font-cormorant), Georgia, serif;
+    --font-mono: var(--font-cormorant), Georgia, serif;
+    --font-hand: var(--font-shadows), cursive;
+  }
+}
+
 /* Ledger-paper ruling behind writing surfaces: the open page, not a grid. */
 .ledger-rules {
   background-image: repeating-linear-gradient(

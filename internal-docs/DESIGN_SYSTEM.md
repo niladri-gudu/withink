@@ -548,6 +548,32 @@ Editor preferences
 
 Layout density
 
+### 15.1 Curated Palettes & Pro Typography (shipped 2026-08-28)
+
+The visual world is two orthogonal axes stacked on the same semantic
+tokens:
+
+- **Mode** — day/night, owned by the existing light/dark class toggle.
+- **Paper world (palette)** — a full semantic-variable set under
+  `[data-palette="…"]` (+ `.dark[data-palette="…"]`) in the app's
+  `globals.css`. Desk (standard, free), Vellum, Indigo Nook, Rosewood
+  (Plus). Palettes never redefine structure tokens (radius, paper scale).
+- **Accent ink (Pro)** — `[data-accent]` overrides ONLY `--accent`,
+  `--ring`, `--accent-foreground`. Variants are tuned dark-enough
+  (light mode) / bright-enough (dark mode) to hold ≥4.5:1 against every
+  palette background. Never a free color picker.
+- **Typography (Pro)** — `[data-font]` swaps `--font-sans/serif/--font-hand`
+  to another `next/font` pairing (Literata; Quill = Cormorant Garamond +
+  Shadows Into Light Two). Non-default faces use `preload: false`.
+
+Rules: every new accent is contrast-measured (≥4.5:1 text vs background
+and card, ≥3:1 ring) before shipping, with ratios documented in the CSS;
+mood ramps stay single-hue lightness curves re-hued per palette; ids live
+in `features/settings/appearance/catalog.ts` and must stay in sync with
+the pre-paint inline script allowlists in `layout.tsx` (drift-guard
+tested). Selections persist in localStorage and are grandfathered on
+downgrade.
+
 ---
 
 # 16. Typography Philosophy

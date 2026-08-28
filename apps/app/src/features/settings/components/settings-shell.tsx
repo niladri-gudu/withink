@@ -16,14 +16,11 @@ import {
   Loader2,
   LogOut,
   MonitorSmartphone,
-  Moon,
   Palette,
   Shield,
-  Sun,
   Trash2,
   User,
 } from "lucide-react";
-import { useTheme } from "next-themes";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -34,6 +31,7 @@ import { safeStorage } from "@/lib/safe-storage";
 import { clearSwCaches } from "@/lib/sw-cache";
 import { useEncryption } from "@/providers/encryption-provider";
 import { BillingSection } from "@/features/billing/components/billing-section";
+import type { ResolvedPlan } from "@/features/billing/config/plans";
 import { ZkChangeDialog } from "@/features/encryption/components/zk-change-dialog";
 import { ZkSetupDialog } from "@/features/encryption/components/zk-setup-dialog";
 import { DataExportCard } from "@/features/export/components/data-export-card";
@@ -43,6 +41,7 @@ import {
 } from "@/features/lock/actions/lock-actions";
 import { LockChangeDialog } from "@/features/lock/components/lock-change-dialog";
 import { LockSetupOnboarding } from "@/features/lock/components/lock-setup-onboarding";
+import { AppearanceSettings } from "@/features/settings/appearance/appearance-settings";
 import { DeleteAccountDialog } from "@/features/settings/components/delete-account-dialog";
 import { SettingsGroup } from "@/features/settings/components/settings-group";
 
@@ -56,6 +55,8 @@ interface SettingsShellProps {
     email: string;
     image?: string | null;
   };
+  /** Server-resolved plan — gates curated appearance selection. */
+  plan: ResolvedPlan;
 }
 
 const passwordSchema = z
@@ -80,8 +81,7 @@ function GroupDivider() {
   return <div aria-hidden="true" className="border-border/40 my-7 border-t" />;
 }
 
-export function SettingsShell({ initialUser }: SettingsShellProps) {
-  const { theme, setTheme } = useTheme();
+export function SettingsShell({ initialUser, plan }: SettingsShellProps) {
   const [user, setUser] = React.useState(initialUser);
 
   // ---- Profile -------------------------------------------------------------
@@ -423,25 +423,6 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
     (a) => a.provider === "credential",
   );
 
-  const themeOptions = [
-    {
-      id: "light",
-      name: "Desk",
-      desc: "Manila paper by day",
-      icon: Sun,
-      swatch: "bg-[#EADFC7]",
-      ink: "bg-[#3A2D1D]",
-    },
-    {
-      id: "dark",
-      name: "Dusk",
-      desc: "Low-strain umber by night",
-      icon: Moon,
-      swatch: "bg-[#33291C]",
-      ink: "bg-[#EADFC7]",
-    },
-  ] as const;
-
   return (
     <div className="animate-in fade-in w-full space-y-6 duration-300">
       {/* ==================== Groups (ruled sections; collapsible on phones).
@@ -544,45 +525,7 @@ export function SettingsShell({ initialUser }: SettingsShellProps) {
           title="Appearance & paper feel"
           description="Choose your light and tune the size of type and margins."
         >
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {themeOptions.map((t) => {
-              const active = theme === t.id;
-              return (
-                <button
-                  key={t.id}
-                  onClick={() => setTheme(t.id)}
-                  aria-pressed={active}
-                  className={cn(
-                    "focus-visible:ring-ring flex items-center gap-4 rounded-xl border p-4 text-left transition-all duration-200 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
-                    active
-                      ? "border-accent bg-accent/5 ring-accent/30 ring-1"
-                      : "border-border hover:border-accent/50 hover:bg-secondary/40",
-                  )}
-                >
-                  <div
-                    className={cn(
-                      "border-border/60 flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border",
-                      t.swatch,
-                    )}
-                  >
-                    <span className={cn("h-4 w-4 rounded-full", t.ink)} />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <t.icon className="text-muted-foreground h-4 w-4" />
-                      <span className="text-title font-semibold">{t.name}</span>
-                    </div>
-                    <p className="text-caption">{t.desc}</p>
-                  </div>
-                  {active && (
-                    <span className="bg-accent text-accent-foreground flex h-6 w-6 shrink-0 items-center justify-center rounded-full">
-                      <Check className="h-3.5 w-3.5" />
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
+          <AppearanceSettings plan={plan} />
 
           <GroupDivider />
 

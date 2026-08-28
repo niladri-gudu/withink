@@ -1,13 +1,14 @@
-import type { Metadata } from "next";
 import { Suspense } from "react";
+import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { ROUTES } from "@/constants/routes";
 import { getRequestSession } from "@/lib/request-cache";
 import { isDateString } from "@/lib/utils/date";
-import { BillingReturnBanner } from "@/features/billing/components/billing-return-banner";
 import { PageHeader } from "@/features/app-shell/components/page-header";
+import { BillingReturnBanner } from "@/features/billing/components/billing-return-banner";
+import { EntitlementsService } from "@/features/billing/services/entitlements-service";
 import { SettingsShell } from "@/features/settings/components/settings-shell";
 
 export const metadata: Metadata = {
@@ -34,6 +35,12 @@ export default async function SettingsPage() {
   const cookieToday = cookieStore.get("withink-local-date")?.value;
   const today = isDateString(cookieToday) ? cookieToday : undefined;
 
+  // Resolved plan drives appearance gating (curated palettes/fonts/accents).
+  // Server-side resolution only — the client never self-reports its tier.
+  const entitlements = await EntitlementsService.getEntitlements(
+    session.user.id,
+  );
+
   return (
     <div className="animate-in fade-in w-full space-y-8 duration-300">
       <PageHeader
@@ -50,7 +57,7 @@ export default async function SettingsPage() {
         <BillingReturnBanner />
       </Suspense>
 
-      <SettingsShell initialUser={settingsUser} />
+      <SettingsShell initialUser={settingsUser} plan={entitlements.plan} />
     </div>
   );
 }
