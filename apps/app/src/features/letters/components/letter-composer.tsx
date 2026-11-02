@@ -26,7 +26,8 @@ import { addDays, formatDisplayDate, formatNumericDate } from "@/lib/utils/date"
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { UpgradeDialog } from "@/features/billing/components/upgrade-dialog";
 import type { ResolvedPlan } from "@/features/billing/config/plans";
-import { decryptText, encryptText } from "@/lib/crypto-client";
+import { decryptText, encryptText, isCiphertext } from "@/lib/crypto-client";
+import { countWords } from "@/lib/utils/text";
 import { useEncryption } from "@/providers/encryption-provider";
 import { EditorToolbarDock } from "@/features/journal/components/editor/editor-toolbar-dock";
 import TiptapEditor from "@/features/journal/components/editor/tiptap-editor";
@@ -47,15 +48,6 @@ interface LetterComposerProps {
   activeCount: number;
   today: string;
   accountEncrypted: boolean;
-}
-
-function looksCipher(value: unknown): value is string {
-  return typeof value === "string" && value.includes(":");
-}
-
-function countWords(text: string): number {
-  const trimmed = text.trim();
-  return trimmed ? trimmed.split(/\s+/).length : 0;
 }
 
 /** Local-time ISO day for a Date (viewer-local semantics, same as entries). */
@@ -122,11 +114,11 @@ export function LetterComposer({
     void (async () => {
       try {
         const dec = async <T,>(value: T): Promise<T> => {
-          if (!looksCipher(value)) return value;
+          if (!isCiphertext(value)) return value;
           const raw = await decryptText(value, masterKey);
           return JSON.parse(raw) as T;
         };
-        const nextTitle = looksCipher(initialLetter.title)
+        const nextTitle = isCiphertext(initialLetter.title)
           ? await decryptText(initialLetter.title, masterKey)
           : initialLetter.title;
         const nextJson = (await dec(initialLetter.contentJson)) ?? {};

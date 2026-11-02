@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { ROUTES } from "@/constants/routes";
-import { getLocalDateString, isDateString } from "@/lib/utils/date";
 import { getRequestSession } from "@/lib/request-cache";
+import { getViewerToday } from "@/lib/viewer-today";
 import { EntitlementsService } from "@/features/billing/services/entitlements-service";
 import { EncryptionSettingsRepository } from "@/features/encryption/repositories/encryption-settings-repository";
 import { LetterComposer } from "@/features/letters/components/letter-composer";
@@ -28,9 +27,7 @@ export default async function ComposeLetterPage({ searchParams }: ComposePagePro
 
   const { id } = await searchParams;
 
-  const cookieStore = await cookies();
-  const cookieToday = cookieStore.get("withink-local-date")?.value;
-  const today = isDateString(cookieToday) ? cookieToday : getLocalDateString();
+  const today = await getViewerToday();
 
   // Editing requires an OWNED, UNSEALED letter that hasn't been delivered —
   // sealed letters rest until their day (the service enforces it too; a

@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { encryptText } from "@/lib/crypto-client";
 import { getLocalDateString } from "@/lib/utils/date";
+import { countWords } from "@/lib/utils/text";
 import { useEncryption } from "@/providers/encryption-provider";
 
 import { saveEntryAction } from "../actions/entry-actions";
@@ -220,7 +221,7 @@ export function useAutoSave(
 
   const persist = async (payload: AutoSaveData): Promise<PersistOutcome> => {
     const userLocalToday = getLocalDateString();
-    const wordCount = payload.contentText.split(/\s+/).filter(Boolean).length;
+    const wordCount = countWords(payload.contentText);
 
     // Security: never send plaintext when encryption is enabled but key is missing
     if (isClientEncrypted && !masterKey) {

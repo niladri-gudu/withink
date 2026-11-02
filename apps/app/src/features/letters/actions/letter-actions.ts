@@ -1,9 +1,7 @@
 "use server";
 
-import { cookies } from "next/headers";
-
-import { getLocalDateString, isDateString } from "@/lib/utils/date";
 import { getRequestSession } from "@/lib/request-cache";
+import { getViewerToday } from "@/lib/viewer-today";
 import { handleError } from "@/server/errors";
 import { rateLimit } from "@/server/rate-limit";
 import { LockService } from "@/features/lock/services/lock-service";
@@ -22,17 +20,6 @@ import {
 
 export type { LetterFullRecord, LetterMetaRecord } from "../services/letter-service";
 
-/**
- * Viewer-local today, resolved server-side from the client-maintained
- * timezone cookie (same resolution as journal pages), never trusted from a
- * request argument.
- */
-async function resolveToday(): Promise<string> {
-  const cookieStore = await cookies();
-  const cookieToday = cookieStore.get("withink-local-date")?.value;
-  return isDateString(cookieToday) ? cookieToday : getLocalDateString();
-}
-
 export async function listLettersAction(): Promise<{
   success: boolean;
   data?: Awaited<ReturnType<typeof LettersService.listLetters>>;
@@ -48,7 +35,7 @@ export async function listLettersAction(): Promise<{
 
     const [letters, today] = await Promise.all([
       LettersService.listLetters(session.user.id),
-      resolveToday(),
+      getViewerToday(),
     ]);
     return { success: true, data: letters, today };
   } catch (err) {
@@ -74,7 +61,7 @@ export async function getLetterForComposeAction(
     if (!unlocked) return { success: false, error: "Locked" };
 
     const validated = getLetterSchema.parse({ letterId });
-    const today = await resolveToday();
+    const today = await getViewerToday();
     const letter = await LettersService.getLetter(
       session.user.id,
       validated.letterId,
@@ -123,7 +110,7 @@ export async function upsertLetterAction(
       return { success: false, error: "Too many requests. Try again soon." };
     }
 
-    const today = await resolveToday();
+    const today = await getViewerToday();
     const letter = await LettersService.upsertLetter(
       session.user.id,
       validated,
@@ -171,7 +158,7 @@ export async function sealLetterAction(
       return { success: false, error: "Too many requests. Try again soon." };
     }
 
-    const today = await resolveToday();
+    const today = await getViewerToday();
     const letter = await LettersService.sealLetter(
       session.user.id,
       validated.letterId,
@@ -238,7 +225,7 @@ export async function revealLetterAction(
       return { success: false, error: "Too many requests. Try again soon." };
     }
 
-    const today = await resolveToday();
+    const today = await getViewerToday();
     const letter = await LettersService.revealLetter(
       session.user.id,
       validated.letterId,

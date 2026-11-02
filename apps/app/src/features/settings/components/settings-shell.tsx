@@ -25,11 +25,11 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-import { authClient, clearSessionCookies } from "@/lib/auth-client";
+import { authClient } from "@/lib/auth-client";
 import { deriveUnlockProofHex } from "@/lib/crypto-client";
 import { safeStorage } from "@/lib/safe-storage";
-import { clearSwCaches } from "@/lib/sw-cache";
 import { useEncryption } from "@/providers/encryption-provider";
+import { useSignOut } from "@/features/app-shell/hooks/use-sign-out";
 import { BillingSection } from "@/features/billing/components/billing-section";
 import type { ResolvedPlan } from "@/features/billing/config/plans";
 import { ZkChangeDialog } from "@/features/encryption/components/zk-change-dialog";
@@ -83,6 +83,7 @@ function GroupDivider() {
 
 export function SettingsShell({ initialUser, plan }: SettingsShellProps) {
   const [user, setUser] = React.useState(initialUser);
+  const signOut = useSignOut();
 
   // ---- Profile -------------------------------------------------------------
   const [profileName, setProfileName] = React.useState(user.name);
@@ -393,16 +394,8 @@ export function SettingsShell({ initialUser, plan }: SettingsShellProps) {
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      await authClient.signOut();
-      clearSessionCookies();
-      await clearSwCaches();
-      toast.success("Logged out of your diary");
-      window.location.href = "/login";
-    } catch {
-      toast.error("Sign out failed");
-    }
+  const handleLogout = () => {
+    void signOut();
   };
 
   const userInitials = user.name

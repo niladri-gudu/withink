@@ -31,7 +31,7 @@ import { ConfirmDialog } from "@/components/confirm-dialog";
 import { UpgradeDialog } from "@/features/billing/components/upgrade-dialog";
 import type { ResolvedPlan } from "@/features/billing/config/plans";
 import { useEncryption } from "@/providers/encryption-provider";
-import { decryptText } from "@/lib/crypto-client";
+import { decryptText, isCiphertext } from "@/lib/crypto-client";
 
 import {
   deleteLetterAction,
@@ -53,10 +53,6 @@ interface LettersShellProps {
 }
 
 /** Heuristic twins of the editor's cipher detection (`"iv:cipher"` payloads). */
-function looksCipher(value: unknown): value is string {
-  return typeof value === "string" && value.includes(":");
-}
-
 /**
  * Slip icons read at a glance: a closed envelope = not yet read, an open
  * one = read. The wax seal disc lives only in the reader's breaking moment.
@@ -124,7 +120,7 @@ export function LettersShell({
     void (async () => {
       const next: Record<string, string> = {};
       for (const letter of letters) {
-        if (letter.title && looksCipher(letter.title)) {
+        if (letter.title && isCiphertext(letter.title)) {
           try {
             next[letter.id] = await decryptText(letter.title, masterKey);
           } catch {
@@ -590,9 +586,9 @@ function LetterReaderDialog({
       let text = letter.contentText;
       if (encrypted && masterKey) {
         try {
-          if (title && looksCipher(title))
+          if (title && isCiphertext(title))
             title = await decryptText(title, masterKey);
-          if (text && looksCipher(text))
+          if (text && isCiphertext(text))
             text = await decryptText(text, masterKey);
         } catch {
           setFailed(true);

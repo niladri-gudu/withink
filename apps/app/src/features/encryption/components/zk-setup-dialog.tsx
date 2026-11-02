@@ -23,6 +23,7 @@ import {
 } from "@/lib/crypto-client";
 import { deriveKeyFromPasswordAsync } from "@/lib/crypto-worker-client";
 import { safeStorage } from "@/lib/safe-storage";
+import { countWords } from "@/lib/utils/text";
 import { useEncryption } from "@/providers/encryption-provider";
 import {
   enableClientEncryptionAction,
@@ -126,7 +127,7 @@ export function ZkSetupDialog({
         );
 
         // Count words
-        const wordCount = entry.contentText.split(/\s+/).filter(Boolean).length;
+        const wordCount = countWords(entry.contentText);
 
         encryptedEntries.push({
           id: entry.id,

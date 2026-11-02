@@ -1,11 +1,11 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { ROUTES } from "@/constants/routes";
 import { getRequestSession } from "@/lib/request-cache";
-import { addDays, getLocalDateString, isDateString } from "@/lib/utils/date";
+import { addDays } from "@/lib/utils/date";
+import { getViewerToday } from "@/lib/viewer-today";
 import { PageHeader } from "@/features/app-shell/components/page-header";
 import {
   DashboardHero,
@@ -27,10 +27,7 @@ export default async function DashboardPage() {
     redirect(ROUTES.AUTH.LOGIN);
   }
 
-  // 1. Determine local today
-  const cookieStore = await cookies();
-  const cookieToday = cookieStore.get("withink-local-date")?.value;
-  const today = isDateString(cookieToday) ? cookieToday : getLocalDateString();
+  const today = await getViewerToday();
   const yesterday = addDays(today, -1);
 
   // 2. Header renders instantly from session + date; the data-dependent hero

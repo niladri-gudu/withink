@@ -24,6 +24,14 @@ export function bytesToHex(bytes: Uint8Array): string {
     .join("");
 }
 
+/**
+ * True when a stored content field is ciphertext produced by `encryptText()`.
+ * Encrypted values carry an `iv:ciphertext` separator; plaintext never does.
+ */
+export function isCiphertext(value: unknown): value is string {
+  return typeof value === "string" && value.includes(":");
+}
+
 // Helper: Generate a secure random salt (16 bytes = 32 hex characters)
 export function generateRandomSalt(): string {
   const bytes = new Uint8Array(16);

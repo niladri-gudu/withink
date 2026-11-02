@@ -5,13 +5,9 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { formatDisplayDate } from "@/lib/utils/date";
-import { decryptText } from "@/lib/crypto-client";
+import { decryptText, isCiphertext } from "@/lib/crypto-client";
 import { useEncryption } from "@/providers/encryption-provider";
 import type { LetterMetaRecord } from "@/features/letters/services/letter-service";
-
-function looksCipher(value: unknown): value is string {
-  return typeof value === "string" && value.includes(":");
-}
 
 /** The reflection sheet's gold edge — something here asks to be opened. */
 function GoldEdge() {
@@ -57,7 +53,7 @@ export function LetterArrivalCard({
       const next: Record<string, string> = {};
       for (const letter of letters) {
         next[letter.id] =
-          letter.title && looksCipher(letter.title)
+          letter.title && isCiphertext(letter.title)
             ? await decryptText(letter.title, masterKey).catch(() => "")
             : letter.title;
         if (cancelled) return;
