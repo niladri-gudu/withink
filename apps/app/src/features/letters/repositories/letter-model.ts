@@ -29,7 +29,7 @@ export interface ILetter extends Document {
 
 const LetterSchema = new Schema<ILetter>(
   {
-    userId: { type: String, required: true, index: true },
+    userId: { type: String, required: true },
     unlockDate: { type: String, required: true },
     title: { type: String, default: "" },
     contentHtml: { type: String, default: "" },

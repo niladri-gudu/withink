@@ -28,6 +28,13 @@ function getEntryCacheTtlSeconds(date: string, localToday?: string) {
   return ARCHIVE_ENTRY_CACHE_TTL_SECONDS;
 }
 
+export interface EntryInsightsMeta {
+  date: string;
+  wordCount: number;
+  mood: number | null;
+  createdAt: Date;
+}
+
 export class EntryRepository {
   // Sentinel stored in Redis for "no entry exists" so empty-day reads are
   // served from cache instead of re-hitting Mongo on every request. Stored
@@ -153,6 +160,27 @@ export class EntryRepository {
     return serializedEntry;
   }
 
+  private static async findEntriesPage(
+    query: Record<string, unknown>,
+    page: number,
+    limit: number,
+  ): Promise<[IEntry[], number]> {
+    // Projection mirrors the search branch: timeline rows never need the bulky
+    // ciphertext blobs.
+    const [entries, total] = await Promise.all([
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (EntryModel as any)
+        .find(query, { userId: 0, contentHtml: 0, contentJson: 0 })
+        .sort({ date: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .lean(),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (EntryModel as any).countDocuments(query),
+    ]);
+    return [entries as IEntry[], total as number];
+  }
+
   static async getEntriesPage(
     userId: string,
     page: number,
@@ -211,16 +239,7 @@ export class EntryRepository {
           { date: { $regex: safe, $options: "i" } },
         ];
       }
-      const [entries, total] = await Promise.all([
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (EntryModel as any)
-          .find(query, { userId: 0, contentHtml: 0, contentJson: 0 })
-          .sort({ date: -1 })
-          .skip((page - 1) * limit)
-          .limit(limit)
-          .lean(),
-        (EntryModel as any).countDocuments(query), // eslint-disable-line @typescript-eslint/no-explicit-any
-      ]);
+      const [entries, total] = await this.findEntriesPage(query, page, limit);
       return serialize({ entries, total });
     }
 
@@ -234,35 +253,28 @@ export class EntryRepository {
         return cached;
       }
 
-      const [entries, total] = await Promise.all([
-        // Projection mirrors the search branch: timeline rows never need the
-        // bulky ciphertext blobs.
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (EntryModel as any)
-          .find(query, { userId: 0, contentHtml: 0, contentJson: 0 })
-          .sort({ date: -1 })
-          .skip((page - 1) * limit)
-          .limit(limit)
-          .lean(),
-        (EntryModel as any).countDocuments(query), // eslint-disable-line @typescript-eslint/no-explicit-any
-      ]);
+      const [entries, total] = await this.findEntriesPage(query, page, limit);
 
       const serializedResult = serialize({ entries, total });
       await setCachedValue(cacheKey, serializedResult, LIST_CACHE_TTL_SECONDS);
       return serializedResult;
     } else {
-      const [entries, total] = await Promise.all([
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (EntryModel as any)
-          .find(query, { userId: 0, contentHtml: 0, contentJson: 0 })
-          .sort({ date: -1 })
-          .skip((page - 1) * limit)
-          .limit(limit)
-          .lean(),
-        (EntryModel as any).countDocuments(query), // eslint-disable-line @typescript-eslint/no-explicit-any
-      ]);
+      const [entries, total] = await this.findEntriesPage(query, page, limit);
       return serialize({ entries, total });
     }
+  }
+
+  /** Lightweight metadata rows for insights aggregation (no content blobs). */
+  static async getMetadataForInsights(
+    userId: string,
+  ): Promise<EntryInsightsMeta[]> {
+    await connectDB();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const docs = await (EntryModel as any)
+      .find({ userId }, { date: 1, wordCount: 1, mood: 1, createdAt: 1 })
+      .sort({ date: 1 })
+      .lean();
+    return docs as EntryInsightsMeta[];
   }
 
   static async getEntryStats(userId: string): Promise<{
