@@ -9,8 +9,6 @@ import { EntryRepository } from "@/features/journal/repositories/entry-repositor
 import {
   deleteMediaFileAction,
   findEntryForMediaAction,
-  getFullMediaLibraryAction,
-  getStorageStatsAction,
 } from "./media-actions";
 
 // Mock LockService
@@ -97,18 +95,6 @@ describe("media-actions", () => {
       vi.mocked(getRequestSession).mockResolvedValue(null);
     });
 
-    it("should fail getStorageStatsAction if unauthorized", async () => {
-      const res = await getStorageStatsAction();
-      expect(res.success).toBe(false);
-      expect(res.error).toBe("Unauthorized");
-    });
-
-    it("should fail getFullMediaLibraryAction if unauthorized", async () => {
-      const res = await getFullMediaLibraryAction();
-      expect(res.success).toBe(false);
-      expect(res.error).toBe("Unauthorized");
-    });
-
     it("should fail deleteMediaFileAction if unauthorized", async () => {
       const res = await deleteMediaFileAction("dev-journal/user-123/file.jpg");
       expect(res.success).toBe(false);
@@ -125,47 +111,6 @@ describe("media-actions", () => {
   describe("authorized behavior", () => {
     beforeEach(() => {
       vi.mocked(getRequestSession).mockResolvedValue(mockSession as any);
-    });
-
-    it("should compute storage stats correctly in getStorageStatsAction", async () => {
-      vi.mocked(r2.send).mockResolvedValue({
-        Contents: [
-          { Key: "file1.jpg", Size: 1024 * 1024 * 5 }, // 5 MB
-          { Key: "file2.jpg", Size: 1024 * 1024 * 10 }, // 10 MB
-        ],
-      } as any);
-
-      const res = await getStorageStatsAction();
-      expect(res.success).toBe(true);
-      expect(res.data).toEqual({
-        usedMB: 15,
-        fileCount: 2,
-        limitMB: 100, // Free tier quota from mocked entitlements
-        percentUsed: 15,
-      });
-    });
-
-    it("should list media library sorted by modified date in getFullMediaLibraryAction", async () => {
-      vi.mocked(r2.send).mockResolvedValue({
-        Contents: [
-          {
-            Key: "dev-journal/user-123/img1.jpg",
-            Size: 500,
-            LastModified: new Date("2026-07-06T10:00:00Z"),
-          },
-          {
-            Key: "dev-journal/user-123/img2.jpg",
-            Size: 1000,
-            LastModified: new Date("2026-07-06T12:00:00Z"),
-          },
-        ],
-      } as any);
-
-      const res = await getFullMediaLibraryAction();
-      expect(res.success).toBe(true);
-      expect(res.data).toHaveLength(2);
-      // Sorted by last modified descending
-      expect(res.data?.[0]?.key).toBe("dev-journal/user-123/img2.jpg");
     });
 
     it("should reject deleteMediaFileAction if file path does not belong to user", async () => {

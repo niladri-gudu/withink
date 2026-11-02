@@ -12,7 +12,6 @@ import {
   saveLockSettingsAction,
   unlockAction,
   unlockSessionAction,
-  verifyPasswordAndResetLockAction,
 } from "./lock-actions";
 
 // Mock next/headers (cookies() is used by LockService + the test)
@@ -482,47 +481,4 @@ describe("Lock Actions Suite", () => {
     });
   });
 
-  describe("verifyPasswordAndResetLockAction", () => {
-    it("should verify password and disable lock on success", async () => {
-      vi.mocked(getRequestSession).mockResolvedValue(mockSession as any);
-
-      const spyVerifyPass = vi
-        .spyOn(LockService, "verifyLoginPassword")
-        .mockResolvedValue(true);
-      const spyClear = vi
-        .spyOn(LockService, "clearUnlockCookie")
-        .mockResolvedValue(undefined);
-
-      const res = await verifyPasswordAndResetLockAction("login-password-123");
-      expect(res.success).toBe(true);
-      expect(spyVerifyPass).toHaveBeenCalledWith(
-        "writer@withink.me",
-        "login-password-123",
-      );
-      expect(LockRepository.saveSettings).toHaveBeenCalledWith(mockUserId, {
-        isLockEnabled: false,
-        passcodeHash: "",
-        unlockProofHash: "",
-      });
-      expect(spyClear).toHaveBeenCalled();
-
-      spyVerifyPass.mockRestore();
-      spyClear.mockRestore();
-    });
-
-    it("should fail and not disable lock on incorrect password", async () => {
-      vi.mocked(getRequestSession).mockResolvedValue(mockSession as any);
-
-      const spyVerifyPass = vi
-        .spyOn(LockService, "verifyLoginPassword")
-        .mockResolvedValue(false);
-
-      const res = await verifyPasswordAndResetLockAction("wrong-password");
-      expect(res.success).toBe(false);
-      expect(res.error).toBe("Incorrect password");
-      expect(LockRepository.saveSettings).not.toHaveBeenCalled();
-
-      spyVerifyPass.mockRestore();
-    });
-  });
 });

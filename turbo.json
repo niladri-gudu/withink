@@ -8,7 +8,6 @@
       "outputs": [".next/**", "!.next/cache/**"],
       "env": [
         "IS_PROD",
-        "NEXT_PUBLIC_R2_PUBLIC_URL",
         "R2_PUBLIC_URL",
         "R2_ACCOUNT_ID",
         "NEXT_PUBLIC_APP_URL",

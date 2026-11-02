@@ -16,7 +16,6 @@ const nextConfig: NextConfig = {
 
   // Internal workspace packages ship as source; transpile them at build time.
   transpilePackages: [
-    "@withink/config",
     "@withink/theme",
     "@withink/ui",
     "@withink/utils",

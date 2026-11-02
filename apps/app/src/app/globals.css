@@ -5,7 +5,6 @@
    so utilities used inside @withink/* components are generated here too. */
 @source "../../../../packages/ui/src";
 @source "../../../../packages/theme/src";
-@source "../../../../packages/config/src";
 
 /* ─── Z-index contract ──────────────────────────────────────────────────────
    One scale for every layer in the app. New UI MUST use the matching tier;

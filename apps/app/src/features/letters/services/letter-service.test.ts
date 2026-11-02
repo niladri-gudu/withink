@@ -11,7 +11,6 @@ vi.mock("../repositories/letter-repository", () => ({
     countActive: vi.fn(),
     markReadIfUnread: vi.fn(),
     listArrivedUnread: vi.fn(),
-    deleteAllForUser: vi.fn(),
   },
 }));
 

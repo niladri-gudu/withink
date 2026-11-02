@@ -21,65 +21,6 @@ import {
 export type { MediaFile, StorageStats } from "../services/media-service";
 
 /**
- * Fetches storage statistics for the Media Library
- */
-export async function getStorageStatsAction(): Promise<{
-  success: boolean;
-  data?: StorageStats;
-  error?: string;
-}> {
-  try {
-    const session = await getRequestSession();
-    if (!session) {
-      return { success: false, error: "Unauthorized" };
-    }
-
-    const unlocked = await LockService.isSessionUnlocked(session.user.id);
-    if (!unlocked) {
-      return { success: false, error: "Locked" };
-    }
-
-    const { stats } = await getMediaLibraryAndStats(session.user.id);
-
-    return {
-      success: true,
-      data: stats,
-    };
-  } catch (err) {
-    const appError = handleError(err);
-    return { success: false, error: appError.safeMessage };
-  }
-}
-
-/**
- * Fetches all media files uploaded by the user
- */
-export async function getFullMediaLibraryAction(): Promise<{
-  success: boolean;
-  data?: MediaFile[];
-  error?: string;
-}> {
-  try {
-    const session = await getRequestSession();
-    if (!session) {
-      return { success: false, error: "Unauthorized" };
-    }
-
-    const unlocked = await LockService.isSessionUnlocked(session.user.id);
-    if (!unlocked) {
-      return { success: false, error: "Locked" };
-    }
-
-    const { files } = await getMediaLibraryAndStats(session.user.id);
-
-    return { success: true, data: files };
-  } catch (err) {
-    const appError = handleError(err);
-    return { success: false, error: appError.safeMessage };
-  }
-}
-
-/**
  * Fetches the media library and storage stats in a single round trip (one
  * session/lock check + one R2 listing).
  */

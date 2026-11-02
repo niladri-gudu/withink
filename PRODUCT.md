@@ -50,7 +50,6 @@ Explicitly undecided: the details of a future paid tier (what it charges for, pr
 - `internal-docs/PRD.md` — full product requirements (source of truth for features and philosophy).
 - `internal-docs/PROJECT_STATE.md` — build history, phases 1–18, recent decisions.
 - `internal-docs/DESIGN_SYSTEM.md` and `internal-docs/ARCHITECTURE.md` — incumbent visual and technical systems.
-- `packages/config/src/site.ts` — canonical name, tagline, URLs, and links.
 
 No testimonials, case studies, press mentions, or real-user usage data exist on hand; future design work must not fabricate any.
 
