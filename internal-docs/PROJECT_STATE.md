@@ -392,6 +392,14 @@ Note: MongoDB (`mongodb+srv://`) now connects. The earlier `querySrv ECONNREFUSE
 
 # Recent Decisions
 
+2026-11-02 (Production monitoring — Sentry + Better Stack + Speed Insights)
+
+- **Sentry** (`@sentry/nextjs` 11) initialised for browser, Node, and edge runtimes via `instrumentation-client.ts` + `instrumentation.ts` and `sentry.{server,edge}.config.ts`. `withSentryConfig` adds the `/monitoring` tunnel route (ad-blocker safe) and uploads source maps only when `SENTRY_AUTH_TOKEN` is present. `onRequestError` captures RSC/route-handler/server-action failures. The three React error boundaries now call `reportClientError()`, which prefers Sentry and falls back to the existing `/api/monitoring/errors` beacon when no DSN is configured.
+- **Privacy guard:** shared `lib/monitoring/scrub-event.ts` deletes request payloads/cookies/query strings, redacts content/title/secret/master-key/email keys recursively (including whole `entry`/`letters` objects), drops console and UI-input breadcrumbs, and keeps only `user.id`; `sendDefaultPii: false`. Session Replay is intentionally not installed.
+- **Uptime + field vitals:** static `GET /api/health` for Better Stack liveness probes; monitor topology, platform-native alerts (Atlas/Upstash/R2/Dodo/Vercel), and the triage runbook live in `internal-docs/MONITORING.md`. `<SpeedInsights />` added to the root layout (the existing `WebVitals` beacon remains).
+- **Env:** `NEXT_PUBLIC_SENTRY_DSN`, optional `SENTRY_DSN`/`SENTRY_ENVIRONMENT`, and build-only `SENTRY_ORG`/`SENTRY_PROJECT`/`SENTRY_AUTH_TOKEN`, added to both `.env.*.example` files and the Turbo build env list. Monitoring no-ops when the DSN is blank.
+- Verified: tsc clean; eslint 0 errors (same 3 pre-existing hook warnings); Vitest 262/263 — the only failure is the pre-existing gold-accent drift-guard, and 7 new scrubber tests pass; production build green after pinning `experimental.cpus: 4` (Next 16 no longer reads the build script's `NEXT_WORKER_CONCURRENCY`; 15 workers crashed with 0xC0000005).
+
 2026-11-02 (Debloat pass — dead code, deps, duplication)
 
 - **Removed dead surface:** `config/public-env.ts`, `auth/components/logout-button.tsx`, `constants/moods.ts`, `constants/editor.ts`, duplicate `use-mounted`/`cn` in docs, and never-called actions (`getFlashbackAction`, `getEntryDatesAction`, `verifyPasscodeResetCodeAction`, `verifyPasswordAndResetLockAction`, `getStorageStatsAction`, `getFullMediaLibraryAction`, `getRandomFlashback`, `getLastSynced`, `deleteAllForUser`).

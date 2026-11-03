@@ -24,7 +24,13 @@
         "RESEND_API_KEY",
         "EMAIL_FROM",
         "CONTACT_EMAIL",
-        "ENCRYPTION_KEY"
+        "ENCRYPTION_KEY",
+        "NEXT_PUBLIC_SENTRY_DSN",
+        "SENTRY_DSN",
+        "SENTRY_ENVIRONMENT",
+        "SENTRY_ORG",
+        "SENTRY_PROJECT",
+        "SENTRY_AUTH_TOKEN"
       ]
     },
     "dev": {

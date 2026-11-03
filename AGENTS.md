@@ -38,6 +38,7 @@ pnpm format             # prettier --write .   (note: *.md ignored)
 - `IS_PROD=false` selects the `withink_dev` DB and local-scope cookies. **Never** set `IS_PROD=true` locally — it hits the prod DB and prod cookies.
 - Node is pinned (`.nvmrc` 24.15.0, engines `>=24.11.1 <25`, pnpm 10.27.0). On Windows, do not casually bump Node: newer versions have a c-ares regression that breaks `mongodb+srv://` SRV resolution (see `.npmrc`).
 - Tests mock `@/config/env` in `vitest.setup.ts`, so tests run with no real env / no DB.
+- Production monitoring (Sentry, Better Stack, Speed Insights), its env vars, and the plaintext scrubber contract are documented in `internal-docs/MONITORING.md`.
 
 ## App conventions
 

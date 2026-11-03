@@ -10,6 +10,7 @@ import {
   Shadows_Into_Light_Two,
 } from "next/font/google";
 import Script from "next/script";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { cn } from "@withink/utils";
 
 import { AppProviders } from "@/providers/app-providers";
@@ -283,6 +284,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
           }}
         />
         <WebVitals />
+        <SpeedInsights />
         <AppProviders>{children}</AppProviders>
         {process.env.IS_PROD === "true" ? (
           <>

@@ -160,8 +160,14 @@ for dev/staging or `.env.production.example` for production).
 | `ENCRYPTION_KEY` | ✅* | 64 hex chars — AES-256-GCM server-side encryption (unlock tokens, legacy content). Distinct from user-held ZK keys. |
 | `DODO_API_KEY` / `DODO_WEBHOOK_SECRET` | ➖ | Billing. Without them the app runs Free-tier and checkout surfaces show a clear "billing unavailable" message instead of crashing. |
 | `DODO_PRODUCT_PLUS_MONTHLY` / `_PLUS_YEARLY` / `_PRO_MONTHLY` / `_PRO_YEARLY` | ➖ | Dodo product IDs mapped to plan entitlements. |
+| `NEXT_PUBLIC_SENTRY_DSN` | ➖ | Sentry browser DSN (public). When unset, monitoring no-ops and the first-party `/api/monitoring/errors` beacon remains the fallback. |
+| `SENTRY_DSN` | ➖ | Optional private DSN override for server/edge runtimes. |
+| `SENTRY_ORG` / `SENTRY_PROJECT` / `SENTRY_AUTH_TOKEN` | ➖ | Build-time source-map upload (Vercel build env only). Never expose the auth token to the client. |
 
 ✅* = required for full functionality; the app degrades gracefully where marked optional.
+
+Monitoring topology, the privacy contract, and the Better Stack dashboard setup
+live in [`MONITORING.md`](./MONITORING.md).
 
 ---
 

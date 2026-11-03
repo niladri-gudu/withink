@@ -25,12 +25,9 @@ process.env.NODE_OPTIONS = [process.env.NODE_OPTIONS, ...V8_FLAGS]
   .filter(Boolean)
   .join(" ");
 
-// Cap the page-data worker pool as a secondary safety margin. Next.js defaults
-// to 15 workers; fewer concurrent workers reduce peak aggregate memory pressure
-// on memory-constrained hosts.
-if (!process.env.NEXT_WORKER_CONCURRENCY) {
-  process.env.NEXT_WORKER_CONCURRENCY = "4";
-}
+// Page-data worker count lives in `experimental.cpus` in next.config.ts —
+// Next 16 no longer reads NEXT_WORKER_CONCURRENCY. Fewer workers reduce peak
+// aggregate memory pressure; 15 workers crash the worker processes here.
 
 const child = spawn("next", ["build", "--webpack"], {
   stdio: "inherit",
