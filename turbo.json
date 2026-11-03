@@ -30,7 +30,14 @@
         "SENTRY_ENVIRONMENT",
         "SENTRY_ORG",
         "SENTRY_PROJECT",
-        "SENTRY_AUTH_TOKEN"
+        "SENTRY_AUTH_TOKEN",
+        "DODO_API_KEY",
+        "DODO_WEBHOOK_SECRET",
+        "DODO_PRODUCT_PLUS_MONTHLY",
+        "DODO_PRODUCT_PLUS_YEARLY",
+        "DODO_PRODUCT_PRO_MONTHLY",
+        "DODO_PRODUCT_PRO_YEARLY",
+        "DODO_PRODUCT_PRO_LIFETIME"
       ]
     },
     "dev": {
