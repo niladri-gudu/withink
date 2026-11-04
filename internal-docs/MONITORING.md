@@ -97,7 +97,8 @@ token is a secret.
 | `SENTRY_ORG` | org slug | for local source maps only | ✅ Production + Preview | ✅ Production |
 | `SENTRY_PROJECT` | `withink-app` | same as Vercel | ✅ Production + Preview | ✅ Production |
 | `SENTRY_AUTH_TOKEN` | token from step 6 | usually omit | ✅ Production + Preview (**Sensitive**) | ✅ Production (**Sensitive**) |
-| `SENTRY_ENVIRONMENT` | label | omit | `production` (or omit) | `dev` |
+| `SENTRY_ENVIRONMENT` | server/edge label | omit | `production` (or omit) | `dev` |
+| `NEXT_PUBLIC_SENTRY_ENVIRONMENT` | browser label | omit | `production` | `dev` |
 | `SENTRY_DSN` | private DSN | optional | omit (public DSN is used) | omit |
 
 Notes:
@@ -107,8 +108,9 @@ Notes:
 - Mark only `SENTRY_AUTH_TOKEN` as **Sensitive** in Vercel. The DSN ends up in
   the client bundle anyway, and public vars are fine to leave visible.
 - The dev Vercel project reports `VERCEL_ENV=production` because `dev` is its
-  production branch. Set `SENTRY_ENVIRONMENT=dev` there or dev errors will be
-  tagged as production.
+  production branch. Set both `SENTRY_ENVIRONMENT=dev` (server) and
+  `NEXT_PUBLIC_SENTRY_ENVIRONMENT=dev` (browser) there, or dev errors will be
+  tagged as production. Browser bundles only see `NEXT_PUBLIC_*` values.
 - `SENTRY_AUTH_TOKEN` is only used at build time for source-map upload. If it
   is missing, the build still succeeds but stack traces stay minified.
 - Turbo already lists all of these in `build.env` (`turbo.json`), so cached

@@ -26,6 +26,7 @@
         "CONTACT_EMAIL",
         "ENCRYPTION_KEY",
         "NEXT_PUBLIC_SENTRY_DSN",
+        "NEXT_PUBLIC_SENTRY_ENVIRONMENT",
         "SENTRY_DSN",
         "SENTRY_ENVIRONMENT",
         "SENTRY_ORG",
