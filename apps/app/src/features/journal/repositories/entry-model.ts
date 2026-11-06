@@ -21,7 +21,7 @@ export interface IEntry extends Document {
 
 const EntrySchema = new Schema<IEntry>(
   {
-    userId: { type: String, required: true, index: true },
+    userId: { type: String, required: true },
     date: { type: String, required: true },
     title: { type: String, default: "" },
     contentHtml: { type: String, default: "" },
@@ -42,11 +42,6 @@ const EntrySchema = new Schema<IEntry>(
 // Unique index to prevent duplicate entries per user per day. Also serves
 // ascending reads (insights full-table scan, export) which sort by `date: 1`.
 EntrySchema.index({ userId: 1, date: 1 }, { unique: true });
-
-// Compound index for the dominant listed reads: the entries timeline, calendar
-// dates, and paginated dashboard queries all filter by `userId` and sort by
-// `date: -1`. This avoids an in-memory sort on those hot paths.
-EntrySchema.index({ userId: 1, date: -1 });
 
 // Notebook-filtered timeline reads (entries page scoped to one notebook).
 EntrySchema.index({ userId: 1, notebookId: 1, date: -1 });

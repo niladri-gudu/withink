@@ -15,6 +15,7 @@ import {
   generateRandomSalt,
 } from "@/lib/crypto-client";
 import { deriveKeyFromPasswordAsync } from "@/lib/crypto-worker-client";
+import { countWords } from "@/lib/utils/text";
 import { useEncryption } from "@/providers/encryption-provider";
 import { GateLayout } from "@/components/gate-layout";
 import {
@@ -138,7 +139,7 @@ export function MandatoryDiarySetup({
           newMasterKey,
         );
 
-        const wordCount = entry.contentText.split(/\s+/).filter(Boolean).length;
+        const wordCount = countWords(entry.contentText);
 
         encryptedEntries.push({
           id: entry.id,

@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs/config";
 
 const R2_PUBLIC_HOST = process.env.R2_PUBLIC_URL
   ? new URL(process.env.R2_PUBLIC_URL).hostname
@@ -16,7 +17,6 @@ const nextConfig: NextConfig = {
 
   // Internal workspace packages ship as source; transpile them at build time.
   transpilePackages: [
-    "@withink/config",
     "@withink/theme",
     "@withink/ui",
     "@withink/utils",
@@ -24,6 +24,10 @@ const nextConfig: NextConfig = {
 
   experimental: {
     serverMinification: false,
+    // Cap build workers explicitly: the build script's NEXT_WORKER_CONCURRENCY
+    // is no longer read by Next 16, and 15 page-data workers (one per core)
+    // crash the worker processes under memory pressure.
+    cpus: 4,
   },
 
   images: {
@@ -85,4 +89,16 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withSentryConfig(nextConfig, {
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  // Only needed in CI/Vercel for source-map upload; local builds skip it.
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  silent: !process.env.CI,
+  // Proxy envelopes through our own origin so ad-blockers don't drop them.
+  // Safe with proxy.ts: /monitoring is not a protected route.
+  tunnelRoute: "/monitoring",
+  webpack: {
+    treeshake: { removeDebugLogging: true },
+  },
+});

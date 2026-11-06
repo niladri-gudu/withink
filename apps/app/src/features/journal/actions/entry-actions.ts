@@ -256,30 +256,6 @@ export async function getStreakAndStatsAction(localToday: string): Promise<{
   }
 }
 
-export async function getEntryDatesAction(): Promise<{
-  success: boolean;
-  data?: string[];
-  error?: string;
-}> {
-  try {
-    const session = await getRequestSession();
-    if (!session) {
-      return { success: false, error: "Unauthorized" };
-    }
-
-    const unlocked = await LockService.isSessionUnlocked(session.user.id);
-    if (!unlocked) {
-      return { success: false, error: "Locked" };
-    }
-
-    const dates = await JournalService.getEntryDates(session.user.id);
-    return { success: true, data: dates };
-  } catch (err) {
-    const appError = handleError(err);
-    return { success: false, error: appError.safeMessage };
-  }
-}
-
 export interface CalendarEntry {
   date: string;
   mood: number | null;

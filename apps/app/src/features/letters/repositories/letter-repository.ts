@@ -155,8 +155,4 @@ export const LetterRepository = {
       .lean()) as unknown as ILetter[];
     return docs.map(toMeta);
   },
-
-  async deleteAllForUser(userId: string): Promise<void> {
-    await LetterDocModel.deleteMany({ userId });
-  },
 };

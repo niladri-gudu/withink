@@ -1,9 +1,8 @@
 import "server-only";
 
-import { connectDB } from "@/lib/db/mongoose";
 import { addDays, isDateString, parseLocalDateString } from "@/lib/utils/date";
 
-import { EntryModel } from "../../journal/repositories/entry-model";
+import { EntryRepository } from "../../journal/repositories/entry-repository";
 
 export interface MonthlyStat {
   month: string; // YYYY-MM
@@ -69,14 +68,8 @@ export class InsightsService {
       throw new Error("Invalid date string. Expected YYYY-MM-DD.");
     }
 
-    await connectDB();
-
     // 1. Fetch only metadata for all entries for the user, sorted chronologically by date
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const entries = await (EntryModel as any)
-      .find({ userId }, { date: 1, wordCount: 1, mood: 1, createdAt: 1 })
-      .sort({ date: 1 })
-      .lean();
+    const entries = await EntryRepository.getMetadataForInsights(userId);
 
     // 2. Initialize default payload
     const payload: InsightsPayload = {

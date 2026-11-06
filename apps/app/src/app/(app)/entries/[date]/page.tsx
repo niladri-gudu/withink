@@ -1,6 +1,5 @@
 import type { Metadata, Route } from "next";
 import dynamic from "next/dynamic";
-import { cookies } from "next/headers";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Button } from "@withink/ui/button";
@@ -14,7 +13,8 @@ import {
   NotebooksService,
 } from "@/features/notebooks/services/notebook-service";
 import { getRequestSession } from "@/lib/request-cache";
-import { backfillWindowStart, getLocalDateString, isDateString } from "@/lib/utils/date";
+import { backfillWindowStart, isDateString } from "@/lib/utils/date";
+import { getViewerToday } from "@/lib/viewer-today";
 import { EditorSkeleton } from "@/features/journal/components/editor-skeleton";
 import { JournalService } from "@/features/journal/services/journal-service";
 
@@ -63,14 +63,10 @@ export default async function EntryPage({
     redirect(ROUTES.AUTH.LOGIN);
   }
 
-  // 1. Determine local today (supporting search params, cookies, or server fallback)
-  const cookieStore = await cookies();
-  const cookieToday = cookieStore.get("withink-local-date")?.value;
+  // 1. Determine local today (explicit search param, then timezone cookie)
   const today = isDateString(searchParamsToday)
     ? searchParamsToday
-    : isDateString(cookieToday)
-      ? cookieToday
-      : getLocalDateString();
+    : await getViewerToday();
 
   // 2. Fetch entry from service (automatically handles cache and decryption)
   const entry = await JournalService.getEntryForDate(

@@ -8,7 +8,6 @@ import {
   deleteEntryAction,
   getEntriesListAction,
   getEntryAction,
-  getEntryDatesAction,
   getStreakAndStatsAction,
   saveEntryAction,
 } from "./entry-actions";
@@ -90,12 +89,6 @@ describe("entry-actions", () => {
 
     it("should fail getStreakAndStatsAction if unauthorized", async () => {
       const res = await getStreakAndStatsAction("2026-07-06");
-      expect(res.success).toBe(false);
-      expect(res.error).toBe("Unauthorized");
-    });
-
-    it("should fail getEntryDatesAction if unauthorized", async () => {
-      const res = await getEntryDatesAction();
       expect(res.success).toBe(false);
       expect(res.error).toBe("Unauthorized");
     });
@@ -271,14 +264,6 @@ describe("entry-actions", () => {
       expect(res.success).toBe(true);
       expect(res.data?.currentStreak).toBe(0);
       expect(res.data?.totalEntries).toBe(2);
-    });
-
-    it("should retrieve dates list on getEntryDatesAction", async () => {
-      vi.mocked(JournalService.getEntryDates).mockResolvedValue(["2026-07-06"]);
-      const res = await getEntryDatesAction();
-      expect(res.success).toBe(true);
-      expect(res.data).toEqual(["2026-07-06"]);
-      expect(JournalService.getEntryDates).toHaveBeenCalledWith(mockUserId);
     });
 
     it("should call deleteEntry on deleteEntryAction", async () => {

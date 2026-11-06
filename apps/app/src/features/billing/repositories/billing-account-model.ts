@@ -19,7 +19,7 @@ export interface IBillingAccount extends Document {
 
 const BillingAccountSchema = new Schema<IBillingAccount>(
   {
-    userId: { type: String, required: true, unique: true, index: true },
+    userId: { type: String, required: true, unique: true },
     plan: {
       type: String,
       enum: ["free", "plus", "pro"],

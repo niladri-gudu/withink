@@ -4,6 +4,8 @@ import { useEffect } from "react";
 import { Button } from "@withink/ui/button";
 import { Waves } from "lucide-react";
 
+import { reportClientError } from "@/lib/monitoring/report-client-error";
+
 interface ErrorProps {
   error: Error & { digest?: string };
   reset: () => void;
@@ -17,21 +19,7 @@ interface ErrorProps {
 export default function AppError({ error, reset }: ErrorProps) {
   useEffect(() => {
     console.error("App boundary caught error:", error);
-
-    const payload = {
-      message: error.message || "Unknown error",
-      stack: error.stack,
-      digest: error.digest,
-      url: typeof window !== "undefined" ? window.location.href : undefined,
-    };
-
-    fetch("/api/monitoring/errors", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    }).catch((err) => {
-      console.error("Failed to send error log:", err);
-    });
+    reportClientError(error, "app");
   }, [error]);
 
   return (

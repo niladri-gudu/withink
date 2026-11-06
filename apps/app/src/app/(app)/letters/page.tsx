@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { ROUTES } from "@/constants/routes";
-import { getLocalDateString, isDateString } from "@/lib/utils/date";
 import { getRequestSession } from "@/lib/request-cache";
+import { getViewerToday } from "@/lib/viewer-today";
 import { EntitlementsService } from "@/features/billing/services/entitlements-service";
 import { EncryptionSettingsRepository } from "@/features/encryption/repositories/encryption-settings-repository";
 import { LettersShell } from "@/features/letters/components/letters-shell";
@@ -21,9 +20,7 @@ export default async function LettersPage() {
     redirect(ROUTES.AUTH.LOGIN);
   }
 
-  const cookieStore = await cookies();
-  const cookieToday = cookieStore.get("withink-local-date")?.value;
-  const today = isDateString(cookieToday) ? cookieToday : getLocalDateString();
+  const today = await getViewerToday();
 
   const [letters, entitlements, encryptionSettings] = await Promise.all([
     LettersService.listLetters(session.user.id),

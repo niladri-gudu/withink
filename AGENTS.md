@@ -33,11 +33,12 @@ pnpm format             # prettier --write .   (note: *.md ignored)
 
 ## Env & secrets
 
-- Server env is zod-validated lazily in `apps/app/src/config/env.ts` (`server-only`; first runtime read throws if missing). `NEXT_PUBLIC_R2_PUBLIC_URL` is required at **build** time.
+- Server env is zod-validated lazily in `apps/app/src/config/env.ts` (`server-only`; first runtime read throws if missing).
 - Templates: `apps/app/.env.development.example`, `apps/app/.env.production.example`. Copy to `.env.local` for local dev.
 - `IS_PROD=false` selects the `withink_dev` DB and local-scope cookies. **Never** set `IS_PROD=true` locally — it hits the prod DB and prod cookies.
 - Node is pinned (`.nvmrc` 24.15.0, engines `>=24.11.1 <25`, pnpm 10.27.0). On Windows, do not casually bump Node: newer versions have a c-ares regression that breaks `mongodb+srv://` SRV resolution (see `.npmrc`).
 - Tests mock `@/config/env` in `vitest.setup.ts`, so tests run with no real env / no DB.
+- Production monitoring (Sentry, Better Stack, Speed Insights), its env vars, and the plaintext scrubber contract are documented in `internal-docs/MONITORING.md`.
 
 ## App conventions
 

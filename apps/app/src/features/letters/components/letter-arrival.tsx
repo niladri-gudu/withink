@@ -1,6 +1,4 @@
-import { cookies } from "next/headers";
-
-import { getLocalDateString, isDateString } from "@/lib/utils/date";
+import { getViewerToday } from "@/lib/viewer-today";
 import { EncryptionSettingsRepository } from "@/features/encryption/repositories/encryption-settings-repository";
 
 import { LettersService } from "../services/letter-service";
@@ -12,9 +10,7 @@ import { LetterArrivalCard } from "./letter-arrival-card";
  * and the lower grid. Renders nothing when there's no mail.
  */
 export async function LetterArrival({ userId }: { userId: string }) {
-  const cookieStore = await cookies();
-  const cookieToday = cookieStore.get("withink-local-date")?.value;
-  const today = isDateString(cookieToday) ? cookieToday : getLocalDateString();
+  const today = await getViewerToday();
 
   const [letters, encryptionSettings] = await Promise.all([
     LettersService.listArrivedUnread(userId, today),

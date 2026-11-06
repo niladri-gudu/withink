@@ -2,11 +2,11 @@
 
 # Project State
 
-Last Updated: 2026-08-28
+Last Updated: 2026-11-02
 
 Current Phase: Post-Themes (Monetization Fast-Follows Advancing)
 
-Current Milestone: Curated Themes & Typography SHIPPED (2026-08-28)
+Current Milestone: Debloat pass (dead code, deps, duplication) SHIPPED (2026-11-02)
 
 Project Status: 🟢 Release Ready
 
@@ -391,6 +391,22 @@ Note: MongoDB (`mongodb+srv://`) now connects. The earlier `querySrv ECONNREFUSE
 ---
 
 # Recent Decisions
+
+2026-11-02 (Production monitoring — Sentry + Better Stack + Speed Insights)
+
+- **Sentry** (`@sentry/nextjs` 11) initialised for browser, Node, and edge runtimes via `instrumentation-client.ts` + `instrumentation.ts` and `sentry.{server,edge}.config.ts`. `withSentryConfig` adds the `/monitoring` tunnel route (ad-blocker safe) and uploads source maps only when `SENTRY_AUTH_TOKEN` is present. `onRequestError` captures RSC/route-handler/server-action failures. The three React error boundaries now call `reportClientError()`, which prefers Sentry and falls back to the existing `/api/monitoring/errors` beacon when no DSN is configured.
+- **Privacy guard:** shared `lib/monitoring/scrub-event.ts` deletes request payloads/cookies/query strings, redacts content/title/secret/master-key/email keys recursively (including whole `entry`/`letters` objects), drops console and UI-input breadcrumbs, and keeps only `user.id`; `sendDefaultPii: false`. Session Replay is intentionally not installed.
+- **Uptime + field vitals:** static `GET /api/health` for Better Stack liveness probes; monitor topology, platform-native alerts (Atlas/Upstash/R2/Dodo/Vercel), and the triage runbook live in `internal-docs/MONITORING.md`. `<SpeedInsights />` added to the root layout (the existing `WebVitals` beacon remains).
+- **Env:** `NEXT_PUBLIC_SENTRY_DSN`, optional `SENTRY_DSN`/`SENTRY_ENVIRONMENT`, and build-only `SENTRY_ORG`/`SENTRY_PROJECT`/`SENTRY_AUTH_TOKEN`, added to both `.env.*.example` files and the Turbo build env list. Monitoring no-ops when the DSN is blank.
+- Verified: tsc clean; eslint 0 errors (same 3 pre-existing hook warnings); Vitest 262/263 — the only failure is the pre-existing gold-accent drift-guard, and 7 new scrubber tests pass; production build green after pinning `experimental.cpus: 4` (Next 16 no longer reads the build script's `NEXT_WORKER_CONCURRENCY`; 15 workers crashed with 0xC0000005).
+
+2026-11-02 (Debloat pass — dead code, deps, duplication)
+
+- **Removed dead surface:** `config/public-env.ts`, `auth/components/logout-button.tsx`, `constants/moods.ts`, `constants/editor.ts`, duplicate `use-mounted`/`cn` in docs, and never-called actions (`getFlashbackAction`, `getEntryDatesAction`, `verifyPasscodeResetCodeAction`, `verifyPasswordAndResetLockAction`, `getStorageStatsAction`, `getFullMediaLibraryAction`, `getRandomFlashback`, `getLastSynced`, `deleteAllForUser`).
+- **Removed unused workspace/deps/env:** deleted `packages/config` (`siteConfig` never imported); dropped app/docs direct deps only `@withink/ui` used (`radix-ui`, `@radix-ui/react-slot`, `@radix-ui/react-tooltip`, cva, clsx, tailwind-merge) plus docs' unused `sonner`/`next-themes`; dropped the unused build-time `NEXT_PUBLIC_R2_PUBLIC_URL` (runtime uses server-side `R2_PUBLIC_URL`).
+- **Collapsed duplication:** sign-out now goes through `useSignOut` in settings (also fixes a missing `lock()`); added `isCiphertext()` (4 copies), reused `countWords()` (5 copies), and added `getViewerToday()` (12 copies of the timezone-cookie resolution). `constants/moods.ts` deleted — it duplicated per-component token-based tables with hardcoded colors.
+- **Data layer:** removed redundant single-field `userId` indexes (prefix of compound indexes, including the duplicate `{userId:1,date:-1}` now served by the unique index in reverse), collapsed three duplicate paginated `find/count` blocks into `EntryRepository.findEntriesPage`, and routed `InsightsService` through `EntryRepository.getMetadataForInsights`.
+- Verified: tsc clean, eslint 0 errors (3 pre-existing hook warnings), production build green, Vitest 255/256 — the one failure is the pre-existing gold-accent drift-guard in `catalog.test.ts`.
 
 2026-08-28 (Themes & typography — curated palettes, Pro fonts/accents)
 
@@ -923,6 +939,7 @@ Note: MongoDB (`mongodb+srv://`) now connects. The earlier `querySrv ECONNREFUSE
 
 - Mobile-first redesign deferred items (2026-08-25, all documented in the Phase-4 entry and surface briefs): save-failed manual retry affordance; toolbar aria-label Ctrl-hints; sub-360px toolbar nudge; lightbox double-tap zoom; insights year-summary ribbon; settings disclosure state persistence; tiptap v3 StarterKit duplicate-extension warning; export archive streaming; media gallery virtualization/R2-list cap; entries search below the fold at 375; legacy `Button size="icon"` variant (editor toolbar only).
 - Low priority: `src/constants/cache-keys.ts` declares `CACHE_KEYS` builders (`ENTRY_HOT`, `STATS`, `FLASHBACK`) but `EntryRepository` and `FlashbackService` use ad-hoc string keys (`entries:{userId}:v{n}:...`) instead. Purely a maintainability nit with no perf impact; left untouched during Phase 14 because consolidating the key builders risks churning working version-based invalidation for no gain. Revisit if cache keys are ever centralized.
+- Post-debloat deferrals (2026-11-02): shared `PinInput`/`EmptyState`/R2 upload helper and a `withUnlockedSession()` server-action wrapper were intentionally left out — they touch interaction and auth/lock boilerplate and need live verification, not just typecheck. Removed Mongo indexes are declaration-only; the production `withink` DB will drop them on the next `syncIndexes`/index build (queries remain covered by compound-index prefixes).
 
 All Phase 1 modules compile cleanly and pass linter/typecheck verification successfully.
 

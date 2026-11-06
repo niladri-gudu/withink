@@ -1,6 +1,6 @@
 import "server-only";
 
-import { addDays, backfillWindowStart, isDateString } from "@/lib/utils/date";
+import { backfillWindowStart, isDateString } from "@/lib/utils/date";
 import { BusinessRuleError, ValidationError } from "@/server/errors";
 
 import type { IEntry } from "../repositories/entry-model";
@@ -294,20 +294,4 @@ export class JournalService {
     return await EntryRepository.deleteEntry(userId, date);
   }
 
-  /**
-   * Selects a random historical entry from the list of dates, excluding today and yesterday.
-   */
-  static async getRandomFlashback(
-    userId: string,
-    dates: string[],
-    today: string,
-  ): Promise<DecryptedEntry | null> {
-    const yesterday = addDays(today, -1);
-    const pastDates = dates.filter((d) => d < yesterday);
-    if (pastDates.length === 0) return null;
-
-    const randomIndex = Math.floor(Math.random() * pastDates.length);
-    const randomDate = pastDates[randomIndex]!;
-    return await this.getEntryForDate(userId, randomDate, today);
-  }
 }

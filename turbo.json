@@ -8,7 +8,6 @@
       "outputs": [".next/**", "!.next/cache/**"],
       "env": [
         "IS_PROD",
-        "NEXT_PUBLIC_R2_PUBLIC_URL",
         "R2_PUBLIC_URL",
         "R2_ACCOUNT_ID",
         "NEXT_PUBLIC_APP_URL",
@@ -25,7 +24,21 @@
         "RESEND_API_KEY",
         "EMAIL_FROM",
         "CONTACT_EMAIL",
-        "ENCRYPTION_KEY"
+        "ENCRYPTION_KEY",
+        "NEXT_PUBLIC_SENTRY_DSN",
+        "NEXT_PUBLIC_SENTRY_ENVIRONMENT",
+        "SENTRY_DSN",
+        "SENTRY_ENVIRONMENT",
+        "SENTRY_ORG",
+        "SENTRY_PROJECT",
+        "SENTRY_AUTH_TOKEN",
+        "DODO_API_KEY",
+        "DODO_WEBHOOK_SECRET",
+        "DODO_PRODUCT_PLUS_MONTHLY",
+        "DODO_PRODUCT_PLUS_YEARLY",
+        "DODO_PRODUCT_PRO_MONTHLY",
+        "DODO_PRODUCT_PRO_YEARLY",
+        "DODO_PRODUCT_PRO_LIFETIME"
       ]
     },
     "dev": {

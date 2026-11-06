@@ -58,7 +58,6 @@ This directory contains the public marketing landing page, legal philosophy page
 
 Shared code extracted into a Turborepo workspace. Currently includes:
 
-- `@withink/config` — site configuration
 - `@withink/eslint-config` — shared ESLint flat config
 - `@withink/theme` — theme provider (next-themes + cross-tab cookie sync)
 - `@withink/tokens` — canonical design-token CSS layer (`theme.css`)

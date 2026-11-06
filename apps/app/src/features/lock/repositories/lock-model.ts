@@ -16,7 +16,7 @@ export interface ILockSettings extends Document {
 
 const LockSettingsSchema = new Schema<ILockSettings>(
   {
-    userId: { type: String, required: true, unique: true, index: true },
+    userId: { type: String, required: true, unique: true },
     isLockEnabled: { type: Boolean, default: false },
     passcodeHash: { type: String, default: "" },
     autoLockTimeout: { type: Number, default: 300 }, // 5 minutes default

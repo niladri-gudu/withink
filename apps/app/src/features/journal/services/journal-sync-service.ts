@@ -4,8 +4,6 @@ import { diaryCacheService } from "./diary-cache-service";
 
 export type SyncState = "synced" | "pending";
 
-const LAST_SYNCED_KEY = "withink_last_synced";
-
 /**
  * Coordinates background cloud sync for the local-first journal.
  *
@@ -28,7 +26,6 @@ export class JournalSyncService {
   private running = false;
   private pullQueued = false;
   private workQueued = false;
-  private lastSynced: string | null = null;
 
   subscribe(listener: () => void): () => void {
     this.listeners.add(listener);
@@ -43,17 +40,6 @@ export class JournalSyncService {
 
   getStatus(date: string): SyncState {
     return this.pendingDates.has(date) ? "pending" : "synced";
-  }
-
-  getLastSynced(): string | null {
-    if (this.lastSynced) return this.lastSynced;
-    if (typeof window === "undefined") return null;
-    try {
-      this.lastSynced = window.localStorage.getItem(LAST_SYNCED_KEY);
-    } catch {
-      this.lastSynced = null;
-    }
-    return this.lastSynced;
   }
 
   /**
@@ -107,22 +93,12 @@ export class JournalSyncService {
       const localToday = getLocalDateString();
 
       // 1. Push pending local edits to the cloud first.
-      const result = await diaryCacheService.flushOfflineSyncQueue(
-        masterKey,
-        localToday,
-      );
-      if (result.succeeded.length > 0 || result.failed.length > 0) {
-        this.recordLastSynced();
-      }
+      await diaryCacheService.flushOfflineSyncQueue(masterKey, localToday);
 
       // 2. Pull remote changes in the background (never overwrites pending).
       if (this.pullQueued) {
         this.pullQueued = false;
-        const pulled = await diaryCacheService.syncDiaryCache(
-          masterKey,
-          localToday,
-        );
-        if (pulled) this.recordLastSynced();
+        await diaryCacheService.syncDiaryCache(masterKey, localToday);
       }
 
       await this.refreshState();
@@ -146,17 +122,6 @@ export class JournalSyncService {
     if (changed) {
       this.pendingDates = pending;
       this.emit();
-    }
-  }
-
-  private recordLastSynced(): void {
-    this.lastSynced = new Date().toISOString();
-    if (typeof window !== "undefined") {
-      try {
-        window.localStorage.setItem(LAST_SYNCED_KEY, this.lastSynced);
-      } catch {
-        // Storage failures should never break sync.
-      }
     }
   }
 

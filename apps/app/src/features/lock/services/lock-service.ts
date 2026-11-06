@@ -248,47 +248,6 @@ export class LockService {
   }
 
   /**
-   * Verifies the email reset code and disables lock settings.
-   */
-  static async verifyResetCodeAndDisable(
-    userId: string,
-    code: string,
-  ): Promise<boolean> {
-    if (!redis) return false;
-
-    const cacheKey = `lock:reset:${userId}`;
-    const storedCode = await getCachedValue<string>(cacheKey);
-
-    // Timing-safe comparison — passcodes already use timingSafeEqual, so the
-    // 6-digit reset path shouldn't be a softer target.
-    if (
-      !storedCode ||
-      !this.timingSafeStringEqual(String(storedCode), String(code))
-    ) {
-      return false;
-    }
-
-    // Passcode verified, disable lock settings
-    await LockRepository.saveSettings(userId, {
-      isLockEnabled: false,
-      passcodeHash: "",
-      unlockProofHash: "",
-    });
-
-    // Clear reset code from Redis
-    try {
-      await redis.del(cacheKey);
-    } catch {
-      // ignore
-    }
-
-    // Clear any existing cookie
-    await this.clearUnlockCookie();
-
-    return true;
-  }
-
-  /**
    * One-time migration for pre-existing zero-knowledge accounts: verifies the
    * email reset code and binds the supplied unlock proof (whose sha256 the
    * server stores). The email channel is what makes this safe — an attacker

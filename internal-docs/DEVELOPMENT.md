@@ -61,7 +61,6 @@ Technical documentation for developing, configuring, building, and deploying thi
 │   ├── tokens/           ←   @withink/tokens — canonical design-token theme.css
 │   ├── theme/            ←   @withink/theme — next-themes provider + cross-tab sync
 │   ├── utils/            ←   @withink/utils — cn() and other pure utilities
-│   ├── config/           ←   @withink/config — site configuration
 │   ├── eslint-config/    ←   @withink/eslint-config — shared flat config
 │   └── typescript-config/←   @withink/typescript-config — shared tsconfig presets
 ├── internal-docs/        ← Engineering docs of record
@@ -133,8 +132,7 @@ pnpm dev:docs         # marketing  → http://localhost:3001
 
 Environment variables are validated **lazily** with zod in
 `apps/app/src/config/env.ts` (`server-only`). Nothing throws until a variable
-is first read at runtime — except `NEXT_PUBLIC_R2_PUBLIC_URL`, which is
-required at **build** time.
+is first read at runtime.
 
 Tests do not need real credentials: `vitest.setup.ts` mocks `@/config/env`,
 so the suite runs with no network and no database.
@@ -156,15 +154,20 @@ for dev/staging or `.env.production.example` for production).
 | `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` | ➖ | Rate limiting + entitlements caching. Optional — calls fail open if unset. |
 | `R2_ACCOUNT_ID` / `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` / `R2_BUCKET_NAME` | ✅* | Cloudflare R2 credentials for media/export storage. |
 | `R2_PUBLIC_URL` | ✅* | Internal public asset URL (e.g. `https://assets.withink.me`). |
-| `NEXT_PUBLIC_R2_PUBLIC_URL` | ✅ (build-time) | Public asset URL exposed to the browser. The build fails without it. |
 | `RESEND_API_KEY` | ✅* | Transactional email sending. |
 | `EMAIL_FROM` | ✅* | From header, e.g. `Withink <noreply@withink.me>`. |
 | `CONTACT_EMAIL` | ✅* | Team inbox for feedback notifications. |
 | `ENCRYPTION_KEY` | ✅* | 64 hex chars — AES-256-GCM server-side encryption (unlock tokens, legacy content). Distinct from user-held ZK keys. |
 | `DODO_API_KEY` / `DODO_WEBHOOK_SECRET` | ➖ | Billing. Without them the app runs Free-tier and checkout surfaces show a clear "billing unavailable" message instead of crashing. |
 | `DODO_PRODUCT_PLUS_MONTHLY` / `_PLUS_YEARLY` / `_PRO_MONTHLY` / `_PRO_YEARLY` | ➖ | Dodo product IDs mapped to plan entitlements. |
+| `NEXT_PUBLIC_SENTRY_DSN` | ➖ | Sentry browser DSN (public). When unset, monitoring no-ops and the first-party `/api/monitoring/errors` beacon remains the fallback. |
+| `SENTRY_DSN` | ➖ | Optional private DSN override for server/edge runtimes. |
+| `SENTRY_ORG` / `SENTRY_PROJECT` / `SENTRY_AUTH_TOKEN` | ➖ | Build-time source-map upload (Vercel build env only). Never expose the auth token to the client. |
 
 ✅* = required for full functionality; the app degrades gracefully where marked optional.
+
+Monitoring topology, the privacy contract, and the Better Stack dashboard setup
+live in [`MONITORING.md`](./MONITORING.md).
 
 ---
 
@@ -333,7 +336,6 @@ Deployed on **Vercel** as separate projects from this monorepo:
 | `dev` | app (preview project) | **dev.withink.me** |
 
 - The `dev` Vercel project uses the `dev` branch as its Production Branch and mirrors local env values **except** `BETTER_AUTH_URL=https://dev.withink.me` (email links/OAuth redirects must resolve publicly).
-- `NEXT_PUBLIC_R2_PUBLIC_URL` must be present at build time in every environment.
 - Set `IS_PROD=true` only in the production projects — it selects the production database and `.withink.me`-scoped cookies.
 
 ---

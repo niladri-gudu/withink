@@ -16,6 +16,8 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import { isCiphertext } from "@/lib/crypto-client";
+
 /** Shape returned by DiaryCacheService.getLocalDocument (structural copy). */
 export interface CachedDocSnapshot {
   date?: string;
@@ -74,11 +76,6 @@ export type EditorLoadOutcome =
       editorSeed: EditorSeed;
     };
 
-/** Mirrors the shell's historical heuristic: `"iv:cipher"` colon payloads. */
-function looksEncrypted(value: unknown): value is string {
-  return typeof value === "string" && value.includes(":");
-}
-
 /**
  * Decides what the editor should show for a given day.
  * Deterministic given (facts, port) — never touches React or globals.
@@ -126,7 +123,7 @@ export async function loadEditorContent(
   // Fresh ZK path: decrypt title and content independently, preserving the
   // old behavior where one failing field doesn't blank the other.
   let commitTitle: string | undefined;
-  if (looksEncrypted(facts.initialTitle)) {
+  if (isCiphertext(facts.initialTitle)) {
     try {
       commitTitle = await port.decryptText(facts.initialTitle, key);
     } catch (err) {
@@ -137,7 +134,7 @@ export async function loadEditorContent(
   }
 
   let contentJson: any = {};
-  if (looksEncrypted(facts.initialContent)) {
+  if (isCiphertext(facts.initialContent)) {
     try {
       const decrypted = await port.decryptText(
         facts.initialContent as string,

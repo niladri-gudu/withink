@@ -11,7 +11,7 @@ export interface IClientEncryptionSettings extends Document {
 
 const ClientEncryptionSettingsSchema = new Schema<IClientEncryptionSettings>(
   {
-    userId: { type: String, required: true, unique: true, index: true },
+    userId: { type: String, required: true, unique: true },
     isClientEncrypted: { type: Boolean, default: false },
     encryptionSalt: { type: String, default: "" },
     verificationCiphertext: { type: String, default: "" },

@@ -20,6 +20,7 @@ import { toast } from "sonner";
 
 import { encryptText, safeDecryptText } from "@/lib/crypto-client";
 import { getLocalDateString } from "@/lib/utils/date";
+import { countWords } from "@/lib/utils/text";
 import { useFocusTrap } from "@/hooks/use-focus-trap";
 import { useEncryption } from "@/providers/encryption-provider";
 import { ConfirmDialog } from "@/components/confirm-dialog";
@@ -299,7 +300,7 @@ export function MediaLightbox({
 
       if (newHtml === contentHtml && newJson === contentJsonRaw) return false;
 
-      const wordCount = contentText.split(/\s+/).filter(Boolean).length;
+      const wordCount = countWords(contentText);
       const [encTitle, encHtml, encText, encJson] = await Promise.all([
         encryptText(entry.title || "", masterKey),
         encryptText(newHtml, masterKey),

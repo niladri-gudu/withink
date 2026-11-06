@@ -3,6 +3,8 @@
 import { useEffect } from "react";
 import { Button } from "@withink/ui/button";
 
+import { reportClientError } from "@/lib/monitoring/report-client-error";
+
 interface GlobalErrorProps {
   error: Error & { digest?: string };
   reset: () => void;
@@ -11,21 +13,7 @@ interface GlobalErrorProps {
 export default function GlobalError({ error, reset }: GlobalErrorProps) {
   useEffect(() => {
     console.error("Global critical failure:", error);
-
-    const payload = {
-      message: error.message || "Unknown error",
-      stack: error.stack,
-      digest: error.digest,
-      url: typeof window !== "undefined" ? window.location.href : undefined,
-    };
-
-    fetch("/api/monitoring/errors", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    }).catch((err) => {
-      console.error("Failed to send global error log:", err);
-    });
+    reportClientError(error, "global");
   }, [error]);
 
   return (

@@ -27,7 +27,7 @@ export interface INotebook extends Document {
 
 const NotebookSchema = new Schema<INotebook>(
   {
-    userId: { type: String, required: true, index: true },
+    userId: { type: String, required: true },
     name: { type: String, required: true },
     nameLower: { type: String, required: true },
     isDefault: { type: Boolean, default: false },
