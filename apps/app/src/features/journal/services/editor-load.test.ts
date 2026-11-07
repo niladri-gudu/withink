@@ -9,8 +9,9 @@ import {
 
 const DUMMY_KEY = { algorithm: "AES-GCM", usages: [] } as unknown as CryptoKey;
 
-const CIPHER_TITLE = "iv1:authtag:cipherjson";
-const CIPHER_CONTENT = "iv2:authtag:cipherpayload";
+// Real shape: 12-byte IV (24 hex) + ciphertext/tag hex.
+const CIPHER_TITLE = `00112233445566778899aabb:${"ab".repeat(32)}`;
+const CIPHER_CONTENT = `00112233445566778899aacc:${"cd".repeat(32)}`;
 const DECRYPTED_JSON = '{"type":"doc","content":[{"type":"paragraph"}]}';
 
 /** Master-key-present ZK facts (the "all green" baseline for decrypt paths). */

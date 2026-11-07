@@ -81,7 +81,7 @@ describe("media upload quota gate", () => {
     expect(payload.limitBytes).toBe(FREE_LIMIT);
   });
 
-  it("does not charge avatar uploads against the photo quota", async () => {
+  it("charges avatar uploads against the storage quota", async () => {
     const res = await post({
       filename: "avatar.jpg",
       contentType: "image/jpeg",
@@ -89,11 +89,13 @@ describe("media upload quota gate", () => {
       folder: "avatar",
     });
 
-    expect(res.status).toBe(200);
-    expect(mockedGetEntitlements).not.toHaveBeenCalled();
+    // Every user-writable folder counts; a non-journal folder must not be a
+    // quota bypass.
+    expect(res.status).toBe(507);
+    expect(mockedGetEntitlements).toHaveBeenCalled();
   });
 
-  it("does not charge feedback attachments against the photo quota", async () => {
+  it("charges feedback attachments against the storage quota", async () => {
     const res = await post({
       filename: "issue.jpg",
       contentType: "image/jpeg",
@@ -101,7 +103,7 @@ describe("media upload quota gate", () => {
       folder: "feedback",
     });
 
-    expect(res.status).toBe(200);
-    expect(mockedGetEntitlements).not.toHaveBeenCalled();
+    expect(res.status).toBe(507);
+    expect(mockedGetEntitlements).toHaveBeenCalled();
   });
 });

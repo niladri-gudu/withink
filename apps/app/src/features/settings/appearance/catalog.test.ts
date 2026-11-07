@@ -98,8 +98,9 @@ describe("appearance catalog — inline script sync", () => {
     expect(extract("fonts")).toEqual(
       FONTS.filter((f) => f.minPlan !== "free").map((f) => f.id),
     );
-    expect(extract("accents")).toEqual(
-      ACCENTS.filter((a) => a.minPlan !== "free").map((a) => a.id),
-    );
+    // Accents differ from palettes/fonts: the default (gold) is always set
+    // explicitly so it can override a curated palette's own --accent, so the
+    // pre-paint allowlist must contain every accent, free included.
+    expect(extract("accents")).toEqual(ACCENTS.map((a) => a.id));
   });
 });

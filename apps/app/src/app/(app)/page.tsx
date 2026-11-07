@@ -3,9 +3,8 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { ROUTES } from "@/constants/routes";
-import { getRequestSession } from "@/lib/request-cache";
+import { getRequestSession, getRequestViewerToday } from "@/lib/request-cache";
 import { addDays } from "@/lib/utils/date";
-import { getViewerToday } from "@/lib/viewer-today";
 import { PageHeader } from "@/features/app-shell/components/page-header";
 import {
   DashboardHero,
@@ -27,7 +26,7 @@ export default async function DashboardPage() {
     redirect(ROUTES.AUTH.LOGIN);
   }
 
-  const today = await getViewerToday();
+  const today = await getRequestViewerToday();
   const yesterday = addDays(today, -1);
 
   // 2. Header renders instantly from session + date; the data-dependent hero

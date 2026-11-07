@@ -2,6 +2,11 @@ import "@testing-library/jest-dom/vitest";
 
 import { vi } from "vitest";
 
+// Keep tests on the database-backed session path. The cookie cache is a
+// production latency optimization and would otherwise hide session reads
+// that tests assert on.
+process.env.NEXT_TEST_DISABLE_SESSION_CACHE = "1";
+
 vi.mock("@/config/env", () => ({
   env: {
     IS_PROD: false,

@@ -39,6 +39,19 @@ export class BillingAccountRepository {
     return serialize(account) as IBillingAccount | null;
   }
 
+  static async getByDodoSubscriptionId(
+    dodoSubscriptionId: string,
+  ): Promise<IBillingAccount | null> {
+    if (!dodoSubscriptionId) return null;
+    await connectDB();
+    const account = await (
+      BillingAccountModel as Model<IBillingAccount>
+    )
+      .findOne({ dodoSubscriptionId })
+      .lean();
+    return serialize(account) as IBillingAccount | null;
+  }
+
   /**
    * Creates or updates the user's billing record. Used exclusively by the
    * webhook handler; `userId` must come from verified event metadata.

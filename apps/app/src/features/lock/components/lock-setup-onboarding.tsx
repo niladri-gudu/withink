@@ -16,6 +16,7 @@ import { toast } from "sonner";
 
 import { encryptText, exportKeyToHex } from "@/lib/crypto-client";
 import { deriveKeyFromPasswordAsync } from "@/lib/crypto-worker-client";
+import { PIN_KDF_ITERATIONS } from "@/lib/kdf";
 import { safeStorage } from "@/lib/safe-storage";
 import { useFocusTrap } from "@/hooks/use-focus-trap";
 import { useEncryption } from "@/providers/encryption-provider";
@@ -126,7 +127,7 @@ export function LockSetupOnboarding({
       const pinKey = await deriveKeyFromPasswordAsync(
         pin,
         encryptionSalt,
-        50000,
+        PIN_KDF_ITERATIONS,
       );
       encryptedMasterKey = await encryptText(masterKeyHex, pinKey);
     } catch (err) {

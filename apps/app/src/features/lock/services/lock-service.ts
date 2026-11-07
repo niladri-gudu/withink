@@ -26,28 +26,52 @@ interface UnlockToken {
 }
 
 export class LockService {
+  /** PBKDF2 work factor for stored passcodes. Legacy hashes used 10k. */
+  private static readonly PASSCODE_ITERATIONS = 210_000;
+  private static readonly LEGACY_PASSCODE_ITERATIONS = 10_000;
+
   /**
    * Hashes a passcode using pbkdf2 with a random salt.
+   * Format: `${iterations}:${salt}:${hash}` so the work factor can be raised
+   * without invalidating hashes written by earlier releases.
    */
   static hashPasscode(passcode: string): string {
     const salt = randomBytes(16).toString("hex");
-    const hash = pbkdf2Sync(passcode, salt, 10000, 64, "sha256").toString(
+    const iterations = LockService.PASSCODE_ITERATIONS;
+    const hash = pbkdf2Sync(passcode, salt, iterations, 64, "sha256").toString(
       "hex",
     );
-    return `${salt}:${hash}`;
+    return `${iterations}:${salt}:${hash}`;
   }
 
   /**
-   * Verifies a passcode against its stored pbkdf2 hash.
+   * Verifies a passcode against its stored pbkdf2 hash. Accepts both the
+   * versioned format and the legacy `salt:hash` (10k iterations).
    */
   static verifyPasscode(passcode: string, storedHash: string): boolean {
     if (!storedHash || !storedHash.includes(":")) return false;
     try {
-      const [salt, hash] = storedHash.split(":");
+      const parts = storedHash.split(":");
+      let iterations = LockService.LEGACY_PASSCODE_ITERATIONS;
+      let salt: string;
+      let hash: string;
+      if (parts.length >= 3) {
+        iterations = Number(parts[0]);
+        if (!Number.isInteger(iterations) || iterations <= 0) return false;
+        salt = parts[1]!;
+        hash = parts.slice(2).join(":");
+      } else {
+        salt = parts[0]!;
+        hash = parts[1]!;
+      }
       if (!salt || !hash) return false;
-      const testHash = pbkdf2Sync(passcode, salt, 10000, 64, "sha256").toString(
-        "hex",
-      );
+      const testHash = pbkdf2Sync(
+        passcode,
+        salt,
+        iterations,
+        64,
+        "sha256",
+      ).toString("hex");
       const expected = Buffer.from(hash, "hex");
       const actual = Buffer.from(testHash, "hex");
       if (expected.length !== actual.length) return false;

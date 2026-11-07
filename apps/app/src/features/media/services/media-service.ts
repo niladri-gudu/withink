@@ -2,6 +2,7 @@ import "server-only";
 
 import { env } from "@/config/env";
 import { EntitlementsService } from "@/features/billing/services/entitlements-service";
+import { mediaUrlForKey } from "@/lib/media-url";
 import { listAllObjects } from "@/lib/r2-list";
 
 export interface MediaFile {
@@ -37,7 +38,7 @@ export async function getMediaLibraryAndStats(userId: string): Promise<{
   const files: MediaFile[] = objects
     .map((obj) => ({
       key: obj.key,
-      url: `${env.R2_PUBLIC_URL}/${obj.key}`,
+      url: mediaUrlForKey(obj.key),
       size: obj.size,
       lastModified: obj.lastModified?.toISOString() || null,
     }))

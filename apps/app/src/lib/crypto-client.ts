@@ -1,6 +1,8 @@
 // Browser-compatible zero-knowledge cryptographic utilities using native Web Crypto API.
 // Works both in browser and modern Node.js environments via globalThis.crypto.
 
+import { isClientCiphertext } from "@/lib/ciphertext";
+
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 
@@ -26,10 +28,11 @@ export function bytesToHex(bytes: Uint8Array): string {
 
 /**
  * True when a stored content field is ciphertext produced by `encryptText()`.
- * Encrypted values carry an `iv:ciphertext` separator; plaintext never does.
+ * Uses the exact `iv:ciphertext` hex shape — a plaintext title such as
+ * "Note: today" must not be mistaken for encrypted data.
  */
 export function isCiphertext(value: unknown): value is string {
-  return typeof value === "string" && value.includes(":");
+  return isClientCiphertext(value);
 }
 
 // Helper: Generate a secure random salt (16 bytes = 32 hex characters)
@@ -192,23 +195,25 @@ export async function deriveUnlockProofHex(key: CryptoKey): Promise<string> {
   return bytesToHex(new Uint8Array(bits));
 }
 
-// Safely decrypt text - returns original string if decryption fails or format is invalid
+/**
+ * Decrypts for display, returning "" (not a sentinel string) when the key is
+ * missing or the blob fails authentication. Rendering "DECRYPTION_ERROR" as
+ * diary text leaked implementation detail and looked like data corruption.
+ */
 export async function safeDecryptText(
   encryptedData: string,
   key: CryptoKey | null,
 ): Promise<string> {
-  if (
-    !key ||
-    !encryptedData ||
-    typeof encryptedData !== "string" ||
-    !encryptedData.includes(":")
-  ) {
-    return encryptedData;
-  }
+  if (!encryptedData || typeof encryptedData !== "string") return "";
+
+  // Legacy plaintext (pre-migration) is shown as-is.
+  if (!isCiphertext(encryptedData)) return encryptedData;
+  if (!key) return "";
+
   try {
     return await decryptText(encryptedData, key);
   } catch (error) {
     console.error("Failed to decrypt text client-side:", error);
-    return "DECRYPTION_ERROR";
+    return "";
   }
 }

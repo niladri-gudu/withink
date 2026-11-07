@@ -14,20 +14,17 @@ const options = {
   maxPoolSize: 10,
 };
 
-let client: MongoClient;
+// Reuse one client per process in every environment. Re-creating it in
+// production (or on HMR module reload) throws away the connection pool and
+// pays a fresh TLS handshake on the next request.
+const globalWithMongo = global as typeof globalThis & {
+  _mongoClient?: MongoClient;
+};
 
-if (process.env.NODE_ENV === "development") {
-  const globalWithMongo = global as typeof globalThis & {
-    _mongoClient?: MongoClient;
-  };
-
-  if (!globalWithMongo._mongoClient) {
-    globalWithMongo._mongoClient = new MongoClient(uri, options);
-  }
-  client = globalWithMongo._mongoClient;
-} else {
-  client = new MongoClient(uri, options);
+if (!globalWithMongo._mongoClient) {
+  globalWithMongo._mongoClient = new MongoClient(uri, options);
 }
+const client = globalWithMongo._mongoClient;
 
 const DB_NAME = env.IS_PROD ? "withink_prod" : "withink_dev";
 

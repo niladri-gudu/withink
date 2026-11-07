@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { Webhook } from "standardwebhooks";
 
 import { env } from "@/config/env";
+import { client } from "@/lib/db";
 import { BillingAccountRepository } from "@/features/billing/repositories/billing-account-repository";
 import { getProductKeyForId } from "@/features/billing/services/dodo-service";
 import {
@@ -134,11 +135,49 @@ async function applyBillingEvent(mapped: MappedBillingEvent): Promise<void> {
         )
       )?.userId ?? undefined;
   }
+  if (!userId && mapped.dodoSubscriptionId) {
+    userId =
+      (
+        await BillingAccountRepository.getByDodoSubscriptionId(
+          mapped.dodoSubscriptionId,
+        )
+      )?.userId ?? undefined;
+  }
+
   if (!userId) {
-    logger.warn(
-      "Dodo billing event could not be attributed to a user",
-      { dodoCustomerId: mapped.dodoCustomerId ?? "unknown" },
-    );
+    // Throwing makes the route release the idempotency claim and return 500,
+    // so Dodo retries instead of us silently losing a paid event. Attribution
+    // is usually fixed by the subscription event that follows the payment.
+    logger.warn("Dodo billing event could not be attributed to a user", {
+      dodoCustomerId: mapped.dodoCustomerId ?? "unknown",
+    });
+    throw new Error("Dodo billing event could not be attributed");
+  }
+
+  // A deleted account's webhook must not resurrect a billing row. Treat it
+  // as an acknowledged no-op (no retry will ever fix it).
+  const DB_NAME = env.IS_PROD ? "withink_prod" : "withink_dev";
+  const userStillExists = await client
+    .db(DB_NAME)
+    .collection("user")
+    .findOne({ id: userId }, { projection: { _id: 1 } });
+  if (!userStillExists) {
+    logger.info("Ignoring Dodo event for deleted user", { userId });
+    return;
+  }
+
+  const existing = await BillingAccountRepository.getByUserId(userId);
+
+  // Out-of-order deliveries: never let an older event overwrite newer state.
+  if (
+    mapped.eventAt &&
+    existing?.lastEventAt &&
+    new Date(existing.lastEventAt).getTime() > mapped.eventAt.getTime()
+  ) {
+    logger.info("Skipping stale Dodo billing event", {
+      userId,
+      eventAt: mapped.eventAt.toISOString(),
+    });
     return;
   }
 
@@ -148,6 +187,7 @@ async function applyBillingEvent(mapped: MappedBillingEvent): Promise<void> {
     ...(mapped.dodoSubscriptionId
       ? { dodoSubscriptionId: mapped.dodoSubscriptionId }
       : {}),
+    ...(mapped.eventAt ? { lastEventAt: mapped.eventAt } : {}),
   });
 
   // Gates read through the entitlements cache — drop it immediately.

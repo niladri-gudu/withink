@@ -18,7 +18,10 @@ import { EntitlementsService } from "./entitlements-service";
  * logged and swallowed so authentication can never be blocked by billing.
  */
 export class SessionCapService {
-  static async enforceOnSessionCreate(userId: string): Promise<void> {
+  static async enforceOnSessionCreate(
+    userId: string,
+    currentToken?: string,
+  ): Promise<void> {
     try {
       const { maxConcurrentSessions } =
         await EntitlementsService.getEntitlements(userId);
@@ -31,13 +34,27 @@ export class SessionCapService {
       const db = client.db(DB_NAME);
       const sessions = db.collection("session");
 
-      const count = await sessions.countDocuments({ userId });
+      // Only live sessions count: expired rows must not inflate the total
+      // into evicting a real device. Never evict the session that just
+      // signed in, even if its timestamp ties with an older one.
+      const activeFilter: Record<string, unknown> = {
+        userId,
+        expiresAt: { $gt: new Date() },
+      };
+      if (currentToken) {
+        activeFilter.token = { $ne: currentToken };
+      }
+
+      const count = await sessions.countDocuments({
+        userId,
+        expiresAt: { $gt: new Date() },
+      });
       const excess = count - maxConcurrentSessions;
       if (excess <= 0) return;
 
       const oldest = await sessions
-        .find({ userId })
-        .sort({ createdAt: 1 })
+        .find(activeFilter)
+        .sort({ createdAt: 1, _id: 1 })
         .limit(excess)
         .project({ _id: 1 })
         .toArray();

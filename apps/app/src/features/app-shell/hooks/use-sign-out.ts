@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { ROUTES } from "@/constants/routes";
 import { clearSessionCookies, signOut } from "@/lib/auth-client";
 import { clearSwCaches } from "@/lib/sw-cache";
+import { lockAction } from "@/features/lock/actions/lock-actions";
 import { useEncryption } from "@/providers/encryption-provider";
 
 /**
@@ -23,6 +24,10 @@ export function useSignOut() {
 
   return React.useCallback(async () => {
     try {
+      // Clear the server-side unlock cookie while the session still exists.
+      // Without this, signing out leaves the device "unlocked" for up to 8h
+      // and the next sign-in on a shared machine skips the passcode.
+      await lockAction();
       const res = await signOut();
       if (res?.error) {
         toast.error(res.error.message || "Failed to sign out.");

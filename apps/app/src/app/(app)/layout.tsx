@@ -1,7 +1,11 @@
-import { getRequestLockSettings, getRequestSession } from "@/lib/request-cache";
+import {
+  getRequestEncryptionSettings,
+  getRequestLockSettings,
+  getRequestSession,
+} from "@/lib/request-cache";
+import { getServerToday } from "@/lib/viewer-today";
 import { AppShell } from "@/features/app-shell/components/app-shell";
 import { LockedContentPlaceholder } from "@/features/app-shell/components/locked-content-placeholder";
-import { EncryptionSettingsRepository } from "@/features/encryption/repositories/encryption-settings-repository";
 import { LockService } from "@/features/lock/services/lock-service";
 
 interface AppLayoutProps {
@@ -20,9 +24,14 @@ export default async function AppLayout({ children }: AppLayoutProps) {
   if (session?.user) {
     const userId = session.user.id;
 
-    // Read lock settings once (per-request cache) and hand them to
-    // isSessionUnlocked so the layout doesn't hit Redis twice.
-    const lock = await getRequestLockSettings(userId);
+    // Start both per-request-cached reads together: lock and encryption are
+    // separate Redis keys, so serializing them added a full round-trip to the
+    // critical path. The unlock check needs the lock settings, so it runs
+    // after they resolve.
+    const [lock, encryption] = await Promise.all([
+      getRequestLockSettings(userId),
+      getRequestEncryptionSettings(userId),
+    ]);
     lockSettings = lock
       ? {
           isLockEnabled: lock.isLockEnabled,
@@ -32,11 +41,7 @@ export default async function AppLayout({ children }: AppLayoutProps) {
         }
       : null;
 
-    const [unlocked, encryption] = await Promise.all([
-      LockService.isSessionUnlocked(userId, true, lock),
-      EncryptionSettingsRepository.getSettings(userId),
-    ]);
-    sessionUnlocked = unlocked;
+    sessionUnlocked = await LockService.isSessionUnlocked(userId, true, lock);
     encryptionSettings = encryption;
   }
 
@@ -52,6 +57,7 @@ export default async function AppLayout({ children }: AppLayoutProps) {
       sessionUnlocked={sessionUnlocked}
       initialLockSettings={lockSettings}
       initialEncryptionSettings={encryptionSettings}
+      serverToday={getServerToday()}
     >
       {isLocked ? <LockedContentPlaceholder /> : children}
     </AppShell>

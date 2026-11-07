@@ -40,6 +40,23 @@ vi.mock("@/lib/request-cache", () => ({
   getRequestSession: vi.fn(),
 }));
 
+// The actions clamp client-supplied dates to the server clock; tests use a
+// fixed historical date, so keep the clamp an identity here (the clamp itself
+// is covered in viewer-today.test.ts).
+vi.mock("@/lib/viewer-today", () => ({
+  clampViewerToday: (value?: string | null) => value ?? "2026-07-06",
+}));
+
+// The save path now checks whether the account is zero-knowledge.
+vi.mock(
+  "@/features/encryption/repositories/encryption-settings-repository",
+  () => ({
+    EncryptionSettingsRepository: {
+      getSettings: vi.fn().mockResolvedValue(null),
+    },
+  }),
+);
+
 // Mock JournalService
 vi.mock("../services/journal-service", () => ({
   JournalService: {

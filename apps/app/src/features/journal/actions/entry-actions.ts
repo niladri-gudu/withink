@@ -2,11 +2,14 @@
 
 import { z } from "zod";
 
+import { isEncryptedOrEmpty } from "@/lib/ciphertext";
 import { getRequestSession } from "@/lib/request-cache";
-import { addDays, getLocalDateString, isDateString } from "@/lib/utils/date";
-import { handleError } from "@/server/errors";
+import { addDays } from "@/lib/utils/date";
+import { clampViewerToday } from "@/lib/viewer-today";
+import { handleError, ValidationError } from "@/server/errors";
 import { rateLimit } from "@/server/rate-limit";
 import { EntitlementsService } from "@/features/billing/services/entitlements-service";
+import { EncryptionSettingsRepository } from "@/features/encryption/repositories/encryption-settings-repository";
 import { LockService } from "@/features/lock/services/lock-service";
 import { NotebookRepository } from "@/features/notebooks/repositories/notebook-repository";
 import { NotebooksService } from "@/features/notebooks/services/notebook-service";
@@ -35,7 +38,7 @@ export async function getEntryAction(
     const entry = await JournalService.getEntryForDate(
       session.user.id,
       date,
-      today,
+      clampViewerToday(today),
     );
     return { success: true, data: entry };
   } catch (err) {
@@ -62,7 +65,28 @@ export async function saveEntryAction(
     // 1. Validate fields using Zod
     const validated = saveEntrySchema.parse(inputData);
 
-    // 2. Resolve the plan's backfill window (Free 14d · Plus 90d · Pro ∞)
+    // 2. Zero-knowledge accounts may only persist ciphertext. The client is
+    //    untrusted: a stale pre-migration tab or a crafted action call must
+    //    never be able to embed plaintext into an encrypted journal.
+    const encryptionSettings =
+      await EncryptionSettingsRepository.getSettings(session.user.id);
+    if (encryptionSettings?.isClientEncrypted) {
+      const contentFields = [
+        ["title", validated.title],
+        ["contentHtml", validated.contentHtml],
+        ["contentText", validated.contentText],
+        ["contentJson", validated.contentJson],
+      ] as const;
+      for (const [field, value] of contentFields) {
+        if (!isEncryptedOrEmpty(value)) {
+          throw new ValidationError(
+            `Encrypted journals can only save encrypted ${field}.`,
+          );
+        }
+      }
+    }
+
+    // 3. Resolve the plan's backfill window (Free 14d · Plus 90d · Pro ∞)
     const entitlements = await EntitlementsService.getEntitlements(
       session.user.id,
     );
@@ -93,7 +117,7 @@ export async function saveEntryAction(
         contentJson: validated.contentJson,
         wordCount: validated.wordCount,
       },
-      userLocalToday,
+      clampViewerToday(userLocalToday),
       {
         backfillDays: entitlements.backfillDays,
         notebookId: filingTarget,
@@ -157,6 +181,14 @@ export async function getEntriesListAction(
     }
 
     const parsed = entriesListArgsSchema.parse({ page, limit, filters });
+    const safeFilters = parsed.filters
+      ? {
+          ...parsed.filters,
+          today: parsed.filters.today
+            ? clampViewerToday(parsed.filters.today)
+            : undefined,
+        }
+      : undefined;
 
     // Search is an escaped-but-unindexed $regex scan plus a parallel count —
     // throttle per user so a scripted client can't pin shared Mongo CPU.
@@ -172,7 +204,7 @@ export async function getEntriesListAction(
       session.user.id,
       parsed.page,
       parsed.limit,
-      parsed.filters,
+      safeFilters,
     );
     return { success: true, data: result };
   } catch (err) {
@@ -222,7 +254,7 @@ export async function getStreakAndStatsAction(localToday: string): Promise<{
       };
     }
 
-    const today = isDateString(localToday) ? localToday : getLocalDateString();
+    const today = clampViewerToday(localToday);
     const yesterday = addDays(today, -1);
     const lastEntryDate = dates[0];
 

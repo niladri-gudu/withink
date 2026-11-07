@@ -5,6 +5,7 @@ import { z } from "zod";
 
 import { connectDB } from "@/lib/db/mongoose";
 import { safeDecrypt } from "@/lib/encryption";
+import { normalizeKdfIterations } from "@/lib/kdf";
 import { getRequestSession } from "@/lib/request-cache";
 import { handleError } from "@/server/errors";
 import {
@@ -27,6 +28,7 @@ export async function getEncryptionSettingsAction(): Promise<{
     isClientEncrypted: boolean;
     encryptionSalt: string;
     verificationCiphertext: string;
+    kdfIterations: number;
   };
   error?: string;
 }> {
@@ -48,6 +50,7 @@ export async function getEncryptionSettingsAction(): Promise<{
           isClientEncrypted: false,
           encryptionSalt: "",
           verificationCiphertext: "",
+          kdfIterations: normalizeKdfIterations(undefined),
         },
       };
     }
@@ -58,6 +61,7 @@ export async function getEncryptionSettingsAction(): Promise<{
         isClientEncrypted: settings.isClientEncrypted,
         encryptionSalt: settings.encryptionSalt,
         verificationCiphertext: settings.verificationCiphertext,
+        kdfIterations: normalizeKdfIterations(settings.kdfIterations),
       },
     };
   } catch (err) {
@@ -167,6 +171,7 @@ export async function enableClientEncryptionAction(
   verificationCiphertext: string,
   encryptedEntries: EncryptedEntryInput[],
   unlockProof?: string,
+  kdfIterations?: number,
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const session = await getRequestSession();
@@ -267,6 +272,7 @@ export async function enableClientEncryptionAction(
       isClientEncrypted: true,
       encryptionSalt: salt,
       verificationCiphertext,
+      kdfIterations: normalizeKdfIterations(kdfIterations),
     });
 
     // Bind the unlock proof (sha256 of the master-key-derived subkey) so the
@@ -293,6 +299,7 @@ export async function enableClientEncryptionAction(
 
 export async function updateDiaryPasswordAction(
   verificationCiphertext: string,
+  kdfIterations?: number,
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const session = await getRequestSession();
@@ -306,7 +313,12 @@ export async function updateDiaryPasswordAction(
       ClientEncryptionSettingsModel as Model<IClientEncryptionSettings>
     ).updateOne(
       { userId: session.user.id, isClientEncrypted: true },
-      { $set: { verificationCiphertext } },
+      {
+        $set: {
+          verificationCiphertext,
+          kdfIterations: normalizeKdfIterations(kdfIterations),
+        },
+      },
     );
 
     if (result.matchedCount === 0) {

@@ -15,6 +15,7 @@ import {
   generateRandomSalt,
 } from "@/lib/crypto-client";
 import { deriveKeyFromPasswordAsync } from "@/lib/crypto-worker-client";
+import { KDF_ITERATIONS, PIN_KDF_ITERATIONS } from "@/lib/kdf";
 import { countWords } from "@/lib/utils/text";
 import { useEncryption } from "@/providers/encryption-provider";
 import { GateLayout } from "@/components/gate-layout";
@@ -105,7 +106,11 @@ export function MandatoryDiarySetup({
 
       // 2. Generate random salt and derive password key
       const salt = generateRandomSalt();
-      const passwordKey = await deriveKeyFromPasswordAsync(password, salt);
+      const passwordKey = await deriveKeyFromPasswordAsync(
+        password,
+        salt,
+        KDF_ITERATIONS,
+      );
 
       // 3. Generate secure random master key
       const newMasterKey = await generateMasterKey();
@@ -161,6 +166,7 @@ export function MandatoryDiarySetup({
         verificationCiphertext,
         encryptedEntries,
         unlockProof,
+        KDF_ITERATIONS,
       );
       if (!enableRes.success) {
         throw new Error(
@@ -170,7 +176,11 @@ export function MandatoryDiarySetup({
 
       // 7. If diary lock is enabled, encrypt the master key with the PIN key
       if (diaryLockEnabled && diaryHasPasscode && pin) {
-        const pinKey = await deriveKeyFromPasswordAsync(pin, salt, 50000);
+        const pinKey = await deriveKeyFromPasswordAsync(
+          pin,
+          salt,
+          PIN_KDF_ITERATIONS,
+        );
         const encryptedMasterKey = await encryptText(masterKeyHex, pinKey);
         localStorage.setItem(
           "withink_encrypted_master_key",
@@ -189,6 +199,7 @@ export function MandatoryDiarySetup({
         isClientEncrypted: true,
         encryptionSalt: salt,
         verificationCiphertext,
+        kdfIterations: KDF_ITERATIONS,
       });
       setMasterKey(newMasterKey);
 

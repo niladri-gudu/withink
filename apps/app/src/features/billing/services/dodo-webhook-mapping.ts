@@ -18,6 +18,8 @@ export interface MappedBillingEvent {
   dodoCustomerId?: string;
   dodoSubscriptionId?: string;
   patch: BillingPatch;
+  /** Event timestamp, used to discard out-of-order deliveries. */
+  eventAt?: Date;
 }
 
 /**
@@ -36,6 +38,16 @@ export function mapWebhookEvent(
   event: WebhookPayload,
   resolveProductKey: (productId: string) => PlanProductKey | null,
 ): MappedBillingEvent | null {
+  const mapped = mapWebhookEventCore(event, resolveProductKey);
+  if (!mapped) return null;
+  const eventAt = parseDate(String((event as { timestamp?: unknown }).timestamp ?? ""));
+  return eventAt ? { ...mapped, eventAt } : mapped;
+}
+
+function mapWebhookEventCore(
+  event: WebhookPayload,
+  resolveProductKey: (productId: string) => PlanProductKey | null,
+): MappedBillingEvent | null {
   const data = event.data;
 
   if (data.payload_type === "Subscription") {
@@ -43,7 +55,11 @@ export function mapWebhookEvent(
   }
 
   if (data.payload_type === "Payment") {
-    return mapPaymentEvent(event.type, data);
+    return mapPaymentEvent(event.type, data, resolveProductKey);
+  }
+
+  if (data.payload_type === "DunningAttempt") {
+    return mapDunningEvent(event.type, data);
   }
 
   if (data.payload_type === "Refund" && event.type === "refund.succeeded") {
@@ -56,6 +72,33 @@ export function mapWebhookEvent(
   }
 
   return null;
+}
+
+/**
+ * Dunning: Dodo's retry cycle after a renewal fails. `recovering` keeps the
+ * paid tier during retries (grace), `recovered` restores active, and
+ * `exhausted` means the subscription is over — revoke immediately.
+ */
+function mapDunningEvent(
+  eventType: string,
+  dunning: Extract<WebhookPayload["data"], { payload_type: "DunningAttempt" }>,
+): MappedBillingEvent | null {
+  if (eventType !== "dunning.started" && eventType !== "dunning.recovered") {
+    return null;
+  }
+
+  const patch: BillingPatch =
+    dunning.status === "recovered"
+      ? { status: "active" }
+      : dunning.status === "exhausted"
+        ? { status: "canceled", currentPeriodEnd: null }
+        : { status: "past_due" };
+
+  return {
+    dodoCustomerId: dunning.customer_id,
+    dodoSubscriptionId: dunning.subscription_id,
+    patch,
+  };
 }
 
 function mapSubscriptionEvent(
@@ -110,6 +153,7 @@ function mapSubscriptionEvent(
 function mapPaymentEvent(
   eventType: string,
   payment: Extract<WebhookPayload["data"], { payload_type: "Payment" }>,
+  resolveProductKey: (productId: string) => PlanProductKey | null,
 ): MappedBillingEvent | null {
   const userId = asString(payment.metadata?.userId);
   const dodoCustomerId = payment.customer.customer_id;
@@ -117,14 +161,22 @@ function mapPaymentEvent(
 
   switch (eventType) {
     case "payment.succeeded": {
-      // Subscription payment: activation/renewal/recovery. The period end is
-      // owned by subscription.* events; here we only restore a healthy state.
+      // Subscription payment: activation/renewal/recovery. Subscription
+      // events own the period end, but payment events can arrive first (or
+      // alone if a subscription event is ever dropped) — derive the plan
+      // from the purchased product so a payer is never left on Free.
       if (!dodoSubscriptionId) return null;
+      const productId = payment.product_cart?.[0]?.product_id;
+      const productKey = productId ? resolveProductKey(productId) : null;
+      const shape = productKey ? PLAN_SHAPE[productKey] : null;
       return {
         userId,
         dodoCustomerId,
         dodoSubscriptionId,
-        patch: { status: "active" },
+        patch: {
+          status: "active",
+          ...(shape ? { plan: shape.plan, interval: shape.interval } : {}),
+        },
       };
     }
 

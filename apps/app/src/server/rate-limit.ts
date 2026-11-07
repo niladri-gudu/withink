@@ -19,6 +19,12 @@ type RateLimitOptions = {
   limit: number;
   /** Length of the fixed window, in seconds. */
   windowSeconds: number;
+  /**
+   * When true, a limiter failure blocks the request instead of allowing it.
+   * Use for secret-checking endpoints (passcode, password, reset codes): an
+   * unavailable limiter must not become an unlimited brute-force window.
+   */
+  failClosed?: boolean;
 };
 
 /**
@@ -39,13 +45,13 @@ type RateLimitOptions = {
  */
 export async function rateLimit(
   identifier: string,
-  { limit, windowSeconds }: RateLimitOptions,
+  { limit, windowSeconds, failClosed = false }: RateLimitOptions,
 ): Promise<RateLimitResult> {
   if (!redis) {
     return {
-      success: true,
+      success: !failClosed,
       limit,
-      remaining: limit,
+      remaining: failClosed ? 0 : limit,
       resetSeconds: windowSeconds,
     };
   }
@@ -74,16 +80,17 @@ export async function rateLimit(
 
     return { success: count <= limit, limit, remaining, resetSeconds };
   } catch (error) {
-    // Fail open — never block a real user because the limiter itself failed.
     logger.warn(
-      "Rate limit check failed; allowing request",
+      failClosed
+        ? "Rate limit check failed; blocking request (fail-closed)"
+        : "Rate limit check failed; allowing request",
       { identifier },
       error instanceof Error ? error : undefined,
     );
     return {
-      success: true,
+      success: !failClosed,
       limit,
-      remaining: limit,
+      remaining: failClosed ? 0 : limit,
       resetSeconds: windowSeconds,
     };
   }

@@ -88,6 +88,7 @@ export async function unlockAction(
       const limit = await rateLimit(`lock:unlock-failed:${session.user.id}`, {
         limit: 10,
         windowSeconds: 300,
+        failClosed: true,
       });
       if (!limit.success) {
         return {
@@ -286,6 +287,7 @@ export async function requestPasscodeResetEmailAction(): Promise<{
       {
         limit: 3,
         windowSeconds: 900,
+        failClosed: true,
       },
     );
     if (!limit.success) {
@@ -359,6 +361,7 @@ export async function unlockSessionAction(proof: string): Promise<{
       const limit = await rateLimit(`lock:unlock-proof:${session.user.id}`, {
         limit: 10,
         windowSeconds: 300,
+        failClosed: true,
       });
       if (!limit.success) {
         return {
@@ -397,6 +400,7 @@ export async function bindUnlockProofWithCodeAction(
     const limit = await rateLimit(`lock:bind-proof:${session.user.id}`, {
       limit: 5,
       windowSeconds: 900,
+      failClosed: true,
     });
     if (!limit.success) {
       return {

@@ -3,6 +3,10 @@ import type { Model } from "mongoose";
 
 import { connectDB } from "@/lib/db/mongoose";
 import {
+  getRequestUserEntryVersion,
+  setRequestUserEntryVersion,
+} from "@/lib/entry-version-cache";
+import {
   getCachedValue,
   incrementCachedValue,
   setCachedValue,
@@ -14,7 +18,6 @@ import { EntryModel, type IEntry } from "./entry-model";
 
 const HOT_ENTRY_CACHE_TTL_SECONDS = 120;
 const ARCHIVE_ENTRY_CACHE_TTL_SECONDS = 7200;
-const ENTRY_VERSION_TTL_SECONDS = 2592000;
 const LIST_CACHE_TTL_SECONDS = 120;
 
 function getEntryCacheTtlSeconds(date: string, localToday?: string) {
@@ -51,15 +54,10 @@ export class EntryRepository {
     return input.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   }
 
-  private static async getUserEntryVersion(userId: string): Promise<number> {
-    const key = `entries:${userId}:version`;
-    const version = await getCachedValue<number>(key);
-
-    if (version !== null) return version;
-
-    // Default to version 1
-    await setCachedValue(key, 1, ENTRY_VERSION_TTL_SECONDS);
-    return 1;
+  static async getUserEntryVersion(userId: string): Promise<number> {
+    // Request-memoized: the dashboard reads today, yesterday, the date list,
+    // and the flashback, all keyed off this same version.
+    return await getRequestUserEntryVersion(userId);
   }
 
   /**
@@ -72,7 +70,13 @@ export class EntryRepository {
    * renders (e.g. the notebooks bootstrap backfill).
    */
   static async bumpUserEntryVersion(userId: string): Promise<number | null> {
-    return await incrementCachedValue(`entries:${userId}:version`);
+    const newVersion = await incrementCachedValue(`entries:${userId}:version`);
+    // Keep the request-scoped memo in sync when a render-time backfill bumps
+    // the version, so later reads in the same request use the new namespace.
+    if (newVersion !== null) {
+      await setRequestUserEntryVersion(userId, newVersion);
+    }
+    return newVersion;
   }
 
   /**

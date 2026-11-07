@@ -130,4 +130,18 @@ export class DodoService {
 
     return portal.link;
   }
+
+  /**
+   * Cancels a subscription immediately (used on account deletion so a
+   * departing user is never billed again). A missing/unconfigured billing
+   * setup is a no-op; callers treat failure as non-fatal and still erase data.
+   */
+  static async cancelSubscription(subscriptionId: string): Promise<void> {
+    if (!env.DODO_API_KEY || !subscriptionId) return;
+
+    await getClient().subscriptions.update(subscriptionId, {
+      status: "cancelled",
+      cancel_reason: "cancelled_by_merchant",
+    });
+  }
 }

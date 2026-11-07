@@ -31,6 +31,8 @@ interface EncryptionSettingsSeed {
   isClientEncrypted: boolean;
   encryptionSalt: string;
   verificationCiphertext: string;
+  /** Stored PBKDF2 work factor (omitted by legacy rows → 100k default). */
+  kdfIterations?: number;
 }
 
 interface AppShellProps {
@@ -46,6 +48,8 @@ interface AppShellProps {
   initialLockSettings?: LockSettingsSeed | null;
   /** Server-seeded encryption settings so the shell boots configured without a round-trip. */
   initialEncryptionSettings?: EncryptionSettingsSeed | null;
+  /** The server's UTC calendar date, used to avoid a needless refresh. */
+  serverToday?: string | null;
 }
 
 export function AppShell({
@@ -54,6 +58,7 @@ export function AppShell({
   sessionUnlocked = false,
   initialLockSettings = null,
   initialEncryptionSettings = null,
+  serverToday = null,
 }: AppShellProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -253,10 +258,16 @@ export function AppShell({
 
     if (existingCookie !== localDateStr) {
       document.cookie = `withink-local-date=${localDateStr}; path=/; max-age=31536000; SameSite=Lax`;
+      // Only refresh when the server's UTC date actually differs from the
+      // viewer's local date. On a brand-new device the cookie is missing but
+      // the rendered date is usually already correct, and refreshing there
+      // forced a second full server render on every first visit.
       // Use a soft refresh (not a full reload) so in-memory client state such as
       // the decrypted master key survives. A hard reload on a new device would
       // re-prompt for the Diary Password immediately after unlocking.
-      router.refresh();
+      if (serverToday !== localDateStr) {
+        router.refresh();
+      }
     }
 
     // Persist the client timezone offset so SSR can render timezone-correct
@@ -265,7 +276,7 @@ export function AppShell({
     if (getCookie("withink-tz-offset") !== String(tzOffset)) {
       document.cookie = `withink-tz-offset=${tzOffset}; path=/; max-age=31536000; SameSite=Lax`;
     }
-  }, [router]);
+  }, [router, serverToday]);
 
   const handleToggleCollapse = () => {
     const nextCollapsed = !isCollapsed;

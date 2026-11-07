@@ -5,6 +5,7 @@ import { GetObjectCommand } from "@aws-sdk/client-s3";
 import JSZip from "jszip";
 
 import { env } from "@/config/env";
+import { keyFromMediaUrl } from "@/lib/media-url";
 import { r2 } from "@/lib/r2";
 import {
   JournalService,
@@ -71,6 +72,12 @@ export class ExportService {
     const entriesFolder = zip.folder("entries");
     const imagesFolder = zip.folder("images");
     const savedImageKeys = new Set<string>();
+    // JSZip holds every file in memory, so an unbounded media library can
+    // peak at several times its size. Cap bundled images and disclose the
+    // omission rather than risking a process OOM.
+    const MAX_IMAGE_BYTES = 500 * 1024 * 1024;
+    let imageBytesTotal = 0;
+    const omittedImages: string[] = [];
 
     for (const entry of entries) {
       const { year, monthName } = splitDate(entry.date);
@@ -95,9 +102,24 @@ export class ExportService {
         const bytes = await fetchImageBytes(key);
         if (!bytes) continue;
 
+        if (imageBytesTotal + bytes.byteLength > MAX_IMAGE_BYTES) {
+          omittedImages.push(key);
+          continue;
+        }
+
+        imageBytesTotal += bytes.byteLength;
         savedImageKeys.add(key);
         imagesFolder?.file(fileNameFromKey(key), bytes);
       }
+    }
+
+    if (omittedImages.length > 0) {
+      zip.file(
+        "images/OMITTED.txt",
+        "These images were not bundled because the archive hit its size cap.\n" +
+          "Each is still available in your media library.\n\n" +
+          omittedImages.join("\n"),
+      );
     }
 
     // Letters to the future self: one .txt/.html pair per letter, filed by
@@ -197,7 +219,8 @@ function splitDate(date: string): { year: string; monthName: string } {
 function extractImageSources(entry: DecryptedEntry): string[] {
   const sources = new Set<string>();
 
-  const urlRegex = /https?:\/\/[^\s"'<>)\\]+/gi;
+  // Absolute public URLs and origin-relative private-proxy URLs.
+  const urlRegex = /(?:https?:\/\/|\/api\/media\/)[^\s"'<>)\\]+/gi;
   for (const url of entry.contentHtml.match(urlRegex) ?? []) {
     sources.add(url);
   }
@@ -225,15 +248,13 @@ function extractImageSources(entry: DecryptedEntry): string[] {
 }
 
 /**
- * Returns the R2 object key for a src that points at our own public bucket,
- * or null for anything else. This keeps exports limited to first-party assets
- * and avoids fetching arbitrary external URLs.
+ * Returns the R2 object key for a src that points at our own bucket — either
+ * the legacy public URL or the authenticated `/api/media/...` proxy — or null
+ * for anything else. This keeps exports limited to first-party assets and
+ * avoids fetching arbitrary external URLs.
  */
 function keyFromPublicUrl(src: string): string | null {
-  const base = `${env.R2_PUBLIC_URL}/`;
-  if (!src.startsWith(base)) return null;
-  const key = src.slice(base.length).split(/[?#]/)[0];
-  return key ? decodeURIComponent(key) : null;
+  return keyFromMediaUrl(src);
 }
 
 /**

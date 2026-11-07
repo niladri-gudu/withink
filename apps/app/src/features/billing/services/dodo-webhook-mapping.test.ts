@@ -125,8 +125,14 @@ describe("mapWebhookEvent", () => {
         }) as never,
         resolve,
       );
-      // Period end belongs to subscription.* events — payment must not set it.
-      expect(result!.patch).toEqual({ status: "active" });
+      // Period end belongs to subscription.* events — payment must not set it,
+      // but the plan is derived from the purchased product so a payer is never
+      // left on Free when the payment event arrives first.
+      expect(result!.patch).toEqual({
+        status: "active",
+        plan: "plus",
+        interval: "monthly",
+      });
       expect(result!.dodoSubscriptionId).toBe("sub_123");
     });
 
@@ -163,6 +169,52 @@ describe("mapWebhookEvent", () => {
       expect(
         mapWebhookEvent(paymentEvent("payment.cancelled") as never, resolve),
       ).toBeNull();
+    });
+  });
+
+  describe("dunning events", () => {
+    function dunningEvent(
+      type: string,
+      status: "recovering" | "recovered" | "exhausted",
+    ): AnyPayload {
+      return {
+        type,
+        data: {
+          payload_type: "DunningAttempt",
+          subscription_id: "sub_123",
+          customer_id: "cus_abc",
+          status,
+          trigger_state: status === "exhausted" ? "cancelled" : "on_hold",
+        },
+      };
+    }
+
+    it("keeps the tier with past_due while dunning retries", () => {
+      const result = mapWebhookEvent(
+        dunningEvent("dunning.started", "recovering") as never,
+        resolve,
+      );
+      expect(result!.patch).toEqual({ status: "past_due" });
+      expect(result!.dodoSubscriptionId).toBe("sub_123");
+    });
+
+    it("restores active when dunning recovers", () => {
+      const result = mapWebhookEvent(
+        dunningEvent("dunning.recovered", "recovered") as never,
+        resolve,
+      );
+      expect(result!.patch).toEqual({ status: "active" });
+    });
+
+    it("revokes access when dunning is exhausted", () => {
+      const result = mapWebhookEvent(
+        dunningEvent("dunning.started", "exhausted") as never,
+        resolve,
+      );
+      expect(result!.patch).toEqual({
+        status: "canceled",
+        currentPeriodEnd: null,
+      });
     });
   });
 

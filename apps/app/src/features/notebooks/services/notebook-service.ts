@@ -170,9 +170,17 @@ export class NotebooksService {
         entryCount: 0,
         lastWrittenAt: null,
       };
-    } catch {
-      // Unique index caught a concurrent create with the same name.
-      throw new BusinessRuleError(`“${name}” already exists on your shelf.`);
+    } catch (error) {
+      // Only a unique-index violation means "duplicate name"; a Mongo outage
+      // must not be reported to the user as if their shelf already had it.
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        (error as { code?: number }).code === 11000
+      ) {
+        throw new BusinessRuleError(`“${name}” already exists on your shelf.`);
+      }
+      throw error;
     }
   }
 

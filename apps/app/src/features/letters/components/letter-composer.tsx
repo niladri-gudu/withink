@@ -9,6 +9,7 @@ import {
   startTransition,
 } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { Button } from "@withink/ui/button";
 import { Calendar } from "@withink/ui/calendar";
@@ -30,7 +31,25 @@ import { decryptText, encryptText, isCiphertext } from "@/lib/crypto-client";
 import { countWords } from "@/lib/utils/text";
 import { useEncryption } from "@/providers/encryption-provider";
 import { EditorToolbarDock } from "@/features/journal/components/editor/editor-toolbar-dock";
-import TiptapEditor from "@/features/journal/components/editor/tiptap-editor";
+
+// The letter composer shares the journal's Tiptap graph — by far the largest
+// client dependency on this route. Load it on demand, exactly like the journal
+// editor does, so opening /letters/compose doesn't ship it eagerly.
+const TiptapEditor = dynamic(
+  () => import("@/features/journal/components/editor/tiptap-editor"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex w-full animate-pulse flex-col space-y-4 py-10">
+        <div className="bg-muted/60 h-4 w-[85%] rounded-md" />
+        <div className="bg-muted/60 h-4 w-[95%] rounded-md" />
+        <div className="bg-muted/60 h-4 w-[70%] rounded-md" />
+        <div className="bg-muted/60 h-4 w-[80%] rounded-md" />
+        <div className="bg-muted/60 h-4 w-[60%] rounded-md" />
+      </div>
+    ),
+  },
+);
 
 import {
   deleteLetterAction,
@@ -187,61 +206,63 @@ export function LetterComposer({
 
     setSaveState("saving");
     savingRef.current = true;
-
-    // Zero-knowledge: encrypt every text field client-side; the server
-    // stores ciphertext verbatim. Legacy accounts post plaintext.
-    let out: Record<string, unknown> = { ...payload };
-    if (encrypted && masterKey) {
-      try {
+    try {
+      // Zero-knowledge: encrypt every text field client-side; the server
+      // stores ciphertext verbatim. Legacy accounts post plaintext.
+      let out: Record<string, unknown> = { ...payload };
+      if (encrypted && masterKey) {
         out = {
           unlockDate: payload.unlockDate,
           sealed: payload.sealed,
           wordCount: payload.wordCount,
-          title: payload.title ? await encryptText(payload.title, masterKey) : "",
-          contentHtml: payload.contentHtml
-            ? await encryptText(payload.contentHtml, masterKey)
-            : "",
-          contentText: payload.contentText
-            ? await encryptText(payload.contentText, masterKey)
-            : "",
-          contentJson:
-            payload.contentJson && Object.keys(payload.contentJson).length > 0
-              ? await encryptText(JSON.stringify(payload.contentJson), masterKey)
-              : {},
+          // Encrypt even empty values: the server rejects plaintext content
+          // for encrypted accounts, and `""`/`{}` are still plaintext.
+          title: await encryptText(payload.title, masterKey),
+          contentHtml: await encryptText(payload.contentHtml, masterKey),
+          contentText: await encryptText(payload.contentText, masterKey),
+          contentJson: await encryptText(
+            JSON.stringify(payload.contentJson ?? {}),
+            masterKey,
+          ),
         };
-      } catch {
-        setSaveState("error");
-        savingRef.current = false;
-        return false;
       }
-    }
 
-    const res = await upsertLetterAction({
-      letterId: letterIdRef.current ?? undefined,
-      ...out,
-    });
-    savingRef.current = false;
-    if (!res.success) {
-      if (res.code === "LETTER_LIMIT_REACHED") {
-        setPaywallOpen(true);
-      } else if (res.code === "LETTER_FROZEN") {
-        toast.error(res.error ?? "Delivered letters can no longer be changed.");
-        router.push("/letters" as Parameters<typeof router.push>[0]);
+      const res = await upsertLetterAction({
+        letterId: letterIdRef.current ?? undefined,
+        ...out,
+      });
+      if (!res.success) {
+        if (res.code === "LETTER_LIMIT_REACHED") {
+          setPaywallOpen(true);
+        } else if (res.code === "LETTER_FROZEN") {
+          toast.error(
+            res.error ?? "Delivered letters can no longer be changed.",
+          );
+          router.push("/letters" as Parameters<typeof router.push>[0]);
+          return false;
+        }
+        setSaveState("error");
         return false;
       }
+      if (res.data) {
+        if (!letterIdRef.current) {
+          setLetterId(res.data.id);
+          letterIdRef.current = res.data.id;
+        }
+        if (res.data.sealed !== sealed) setSealed(res.data.sealed);
+      }
+      lastSavedPayloadRef.current = signature;
+      setSaveState("saved");
+      return true;
+    } catch (err) {
+      // Offline / transport failure: never leave the single-flight latch set,
+      // or every later autosave (including pagehide) silently no-ops.
+      console.error("Letter autosave failed:", err);
       setSaveState("error");
       return false;
+    } finally {
+      savingRef.current = false;
     }
-    if (res.data) {
-      if (!letterIdRef.current) {
-        setLetterId(res.data.id);
-        letterIdRef.current = res.data.id;
-      }
-      if (res.data.sealed !== sealed) setSealed(res.data.sealed);
-    }
-    lastSavedPayloadRef.current = signature;
-    setSaveState("saved");
-    return true;
   }, [
     buildPlainPayload,
     decryptedContent,

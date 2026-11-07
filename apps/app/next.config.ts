@@ -7,7 +7,9 @@ const R2_PUBLIC_HOST = process.env.R2_PUBLIC_URL
 
 const nextConfig: NextConfig = {
   // React Compiler: automatic memoization, fewer manual re-render guards.
-  reactCompiler: true,
+  // It runs Babel over every file, which dominates dev compile time; allow
+  // disabling it locally with NEXT_DISABLE_REACT_COMPILER=1.
+  reactCompiler: process.env.NEXT_DISABLE_REACT_COMPILER !== "1",
 
   // Cache Components (PPR): mix static, cached (`use cache`), and dynamic
   // (Suspense) content per route. Foundational — adopted from day one.
@@ -39,8 +41,11 @@ const nextConfig: NextConfig = {
 
   async headers() {
     const isProd = process.env.IS_PROD === "true";
+    // The SDK uses the account-level path-style endpoint, so connect exactly
+    // there — a wildcard subdomain would allow any bucket host if the account
+    // id is ever inferred from the URL.
     const R2_UPLOAD_HOST = process.env.R2_ACCOUNT_ID
-      ? `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com https://*.${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`
+      ? `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`
       : "https://*.r2.cloudflarestorage.com";
 
     const cspHeader = `

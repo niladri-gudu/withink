@@ -1,9 +1,11 @@
 "use server";
 
+import { isEncryptedOrEmpty } from "@/lib/ciphertext";
 import { getRequestSession } from "@/lib/request-cache";
 import { getViewerToday } from "@/lib/viewer-today";
-import { handleError } from "@/server/errors";
+import { handleError, ValidationError } from "@/server/errors";
 import { rateLimit } from "@/server/rate-limit";
+import { EncryptionSettingsRepository } from "@/features/encryption/repositories/encryption-settings-repository";
 import { LockService } from "@/features/lock/services/lock-service";
 
 import {
@@ -97,6 +99,26 @@ export async function upsertLetterAction(
 
     const validated = saveLetterSchema.parse(input) as SaveLetterParsed;
     const isNew = !validated.letterId;
+
+    // Zero-knowledge accounts may only persist ciphertext (the client is
+    // untrusted — never embed plaintext in an encrypted letter).
+    const encryptionSettings =
+      await EncryptionSettingsRepository.getSettings(session.user.id);
+    if (encryptionSettings?.isClientEncrypted) {
+      const contentFields = [
+        ["title", validated.title],
+        ["contentHtml", validated.contentHtml],
+        ["contentText", validated.contentText],
+        ["contentJson", validated.contentJson],
+      ] as const;
+      for (const [field, value] of contentFields) {
+        if (!isEncryptedOrEmpty(value)) {
+          throw new ValidationError(
+            `Encrypted letters can only save encrypted ${field}.`,
+          );
+        }
+      }
+    }
 
     const limit_ = await rateLimit(
       isNew

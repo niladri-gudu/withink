@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import { getCachedValue, setCachedValue } from "@/lib/redis";
 import { getRequestSession } from "@/lib/request-cache";
+import { clampViewerToday } from "@/lib/viewer-today";
 import { handleError } from "@/server/errors";
 import { rateLimit } from "@/server/rate-limit";
 import { LockService } from "@/features/lock/services/lock-service";
@@ -44,7 +45,9 @@ export async function getInsightsAction(
     if (!parsed.success) {
       return { success: false, error: "Invalid request" };
     }
-    const validToday = parsed.data.todayStr;
+    // Billing-independent, but a spoofed far-future/back date skews every
+    // streak and heatmap bucket. Clamp to the real calendar.
+    const validToday = clampViewerToday(parsed.data.todayStr);
     const validTz = parsed.data.timezoneOffset;
 
     // The aggregation is an O(N) fetch + full JS pass — keep it from being

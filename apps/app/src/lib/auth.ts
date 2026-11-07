@@ -15,6 +15,17 @@ import { resend } from "./email";
 export const auth = betterAuth({
   database: mongodbAdapter(client.db(DB_NAME), { client }),
 
+  session: {
+    // Signed session payload in a cookie: skips the Mongo session lookup on
+    // every request and navigation. Kept deliberately short so sign-out,
+    // SessionCapService kicks, and revokeSessionsOnPasswordReset propagate to
+    // other tabs within a minute. Tests disable it to stay on the DB path.
+    cookieCache: {
+      enabled: process.env.NEXT_TEST_DISABLE_SESSION_CACHE !== "1",
+      maxAge: 60,
+    },
+  },
+
   trustedOrigins: env.IS_PROD
     ? ["https://withink.me", "https://app.withink.me"]
     : ["http://localhost:3000", "https://dev.withink.me"],
@@ -32,7 +43,10 @@ export const auth = betterAuth({
         // Device soft-kick (Gate #3): enforce the plan's concurrent-session
         // cap after each new sign-in. Best-effort — never blocks auth.
         after: async (session) => {
-          await SessionCapService.enforceOnSessionCreate(session.userId);
+          await SessionCapService.enforceOnSessionCreate(
+            session.userId,
+            session.token,
+          );
         },
       },
     },
@@ -74,6 +88,9 @@ export const auth = betterAuth({
     minPasswordLength: 8,
     requireEmailVerification: env.IS_PROD,
     autoSignIn: false,
+    // A password reset is a recovery signal: any session that existed before
+    // it (including a hijacked one) must not survive.
+    revokeSessionsOnPasswordReset: true,
     sendResetPassword: async ({ user, url }) => {
       try {
         await resend.emails.send({

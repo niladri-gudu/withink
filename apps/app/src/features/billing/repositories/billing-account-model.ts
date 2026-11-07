@@ -13,6 +13,12 @@ export interface IBillingAccount extends Document {
   dodoCustomerId: string;
   dodoSubscriptionId: string;
   currentPeriodEnd: Date | null;
+  /**
+   * Timestamp of the newest webhook event applied to this row. Out-of-order
+   * or replayed older events are ignored so a delayed `subscription.active`
+   * can't resurrect a canceled subscription.
+   */
+  lastEventAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -38,6 +44,7 @@ const BillingAccountSchema = new Schema<IBillingAccount>(
     dodoCustomerId: { type: String, default: "" },
     dodoSubscriptionId: { type: String, default: "" },
     currentPeriodEnd: { type: Date, default: null },
+    lastEventAt: { type: Date, default: null },
   },
   { timestamps: true },
 );

@@ -9,6 +9,12 @@ import {
   importKeyFromHex,
 } from "@/lib/crypto-client";
 import { deriveKeyFromPasswordAsync } from "@/lib/crypto-worker-client";
+import {
+  LEGACY_KDF_ITERATIONS,
+  LEGACY_PIN_KDF_ITERATIONS,
+  normalizeKdfIterations,
+  PIN_KDF_ITERATIONS,
+} from "@/lib/kdf";
 import { safeStorage } from "@/lib/safe-storage";
 import { diaryCacheService } from "@/features/journal/services/diary-cache-service";
 import { journalSyncService } from "@/features/journal/services/journal-sync-service";
@@ -55,6 +61,7 @@ interface EncryptionSettings {
   isClientEncrypted: boolean;
   encryptionSalt: string;
   verificationCiphertext: string;
+  kdfIterations?: number;
 }
 
 interface EncryptionContextType {
@@ -63,6 +70,8 @@ interface EncryptionContextType {
   isClientEncrypted: boolean;
   encryptionSalt: string;
   verificationCiphertext: string;
+  /** PBKDF2 iterations bound to this account's Diary Password. */
+  kdfIterations: number;
   isUnlocked: boolean;
   isPromptOpen: boolean;
   setPromptOpen: (open: boolean) => void;
@@ -107,6 +116,9 @@ export function EncryptionProvider({
   const [encryptionSalt, setEncryptionSalt] = React.useState("");
   const [verificationCiphertext, setVerificationCiphertext] =
     React.useState("");
+  const [kdfIterations, setKdfIterations] = React.useState(
+    LEGACY_KDF_ITERATIONS,
+  );
   const [isPromptOpen, setPromptOpen] = React.useState(false);
   // True when a diary-password unlock decrypted correctly but the server has
   // no bound unlock proof yet (accounts that enabled zero-knowledge before
@@ -181,6 +193,7 @@ export function EncryptionProvider({
       setIsClientEncrypted(settings.isClientEncrypted);
       setEncryptionSalt(settings.encryptionSalt);
       setVerificationCiphertext(settings.verificationCiphertext);
+      setKdfIterations(normalizeKdfIterations(settings.kdfIterations));
       setEncryptionSettingsSeeded(true);
     },
     [],
@@ -198,7 +211,7 @@ export function EncryptionProvider({
         const passwordKey = await deriveCachedKey(
           password,
           encryptionSalt,
-          100000,
+          kdfIterations,
         );
 
         // 2. Try to decrypt the verification ciphertext (which yields the Master Key hex)
@@ -239,12 +252,18 @@ export function EncryptionProvider({
         setPromptOpen(false);
         return true;
       } catch (err) {
-        evictCachedKey(password, encryptionSalt, 100000);
+        evictCachedKey(password, encryptionSalt, kdfIterations);
         console.error("Incorrect Diary Password", err);
         return false;
       }
     },
-    [encryptionSalt, verificationCiphertext, router, setMasterKey],
+    [
+      encryptionSalt,
+      verificationCiphertext,
+      kdfIterations,
+      router,
+      setMasterKey,
+    ],
   );
 
   const unlockWithPin = React.useCallback(
@@ -255,15 +274,31 @@ export function EncryptionProvider({
       }
 
       try {
-        // 1. Derive the Passcode Key from the 4-digit PIN + Salt
-        // Using iterations = 50000 for faster PIN verification
-        const pinKey = await deriveCachedKey(pin, encryptionSalt, 50000);
-
-        // 2. Decrypt the Master Key hex from localStorage
-        const decryptedMasterKeyHex = await decryptText(
-          encryptedMasterKeyHex,
-          pinKey,
-        );
+        // 1. Derive the Passcode Key from the PIN + Salt. New blobs use the
+        //    stronger count; devices written before the bump fall back to the
+        //    legacy count (a wrong PIN simply fails both and is rejected).
+        let decryptedMasterKeyHex: string;
+        try {
+          const pinKey = await deriveCachedKey(
+            pin,
+            encryptionSalt,
+            PIN_KDF_ITERATIONS,
+          );
+          decryptedMasterKeyHex = await decryptText(
+            encryptedMasterKeyHex,
+            pinKey,
+          );
+        } catch {
+          const legacyPinKey = await deriveCachedKey(
+            pin,
+            encryptionSalt,
+            LEGACY_PIN_KDF_ITERATIONS,
+          );
+          decryptedMasterKeyHex = await decryptText(
+            encryptedMasterKeyHex,
+            legacyPinKey,
+          );
+        }
 
         // 3. Import decrypted master key hex as the CryptoKey
         const key = await importKeyFromHex(decryptedMasterKeyHex);
@@ -275,7 +310,8 @@ export function EncryptionProvider({
         setPromptOpen(false);
         return true;
       } catch (err) {
-        evictCachedKey(pin, encryptionSalt, 50000);
+        evictCachedKey(pin, encryptionSalt, PIN_KDF_ITERATIONS);
+        evictCachedKey(pin, encryptionSalt, LEGACY_PIN_KDF_ITERATIONS);
         console.error("PIN Decryption failed", err);
         return false;
       }
@@ -327,6 +363,7 @@ export function EncryptionProvider({
       isClientEncrypted,
       encryptionSalt,
       verificationCiphertext,
+      kdfIterations,
       encryptionSettingsSeeded,
       isUnlocked,
       isPromptOpen,
@@ -345,6 +382,7 @@ export function EncryptionProvider({
       isClientEncrypted,
       encryptionSalt,
       verificationCiphertext,
+      kdfIterations,
       encryptionSettingsSeeded,
       isUnlocked,
       isPromptOpen,

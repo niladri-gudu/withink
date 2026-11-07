@@ -1,8 +1,11 @@
+import { headers } from "next/headers";
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 
 import { getRequestSession } from "@/lib/request-cache";
+import { getClientIp } from "@/lib/request-ip";
 import { logger } from "@/server/logger";
+import { rateLimit } from "@/server/rate-limit";
 
 // Anonymous endpoint: bound every field so it can't be abused as an
 // unbounded log-writing primitive.
@@ -27,6 +30,16 @@ export async function POST(req: NextRequest) {
   try {
     const session = await getRequestSession();
     const userId = session?.user?.id || "anonymous";
+
+    // Anonymous endpoint — throttle so it can't flood the log pipeline.
+    const clientIp = getClientIp(await headers());
+    const limit = await rateLimit(`web-vitals:${clientIp}`, {
+      limit: 30,
+      windowSeconds: 60,
+    });
+    if (!limit.success) {
+      return NextResponse.json({ error: "Too many reports" }, { status: 429 });
+    }
 
     const body = await req.json();
     const parsed = webVitalsSchema.safeParse(body);

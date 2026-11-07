@@ -6,6 +6,7 @@ import { z } from "zod";
 
 import { env } from "@/config/env";
 import { EntitlementsService } from "@/features/billing/services/entitlements-service";
+import { mediaUrlForKey } from "@/lib/media-url";
 import { r2 } from "@/lib/r2";
 import { listAllObjects } from "@/lib/r2-list";
 import { getCachedValue, redis, setCachedValue } from "@/lib/redis";
@@ -49,12 +50,27 @@ const uploadSchema = z.object({
 // and re-seeds from the real R2 listing on the next upload.
 const USED_CACHE_TTL_SECONDS = 300;
 
+/** Every namespace an authenticated user can write to. */
+function userStoragePrefixes(userId: string): string[] {
+  const envPrefix = env.IS_PROD ? "" : "dev-";
+  return [
+    `${envPrefix}journal/${userId}/`,
+    `${envPrefix}avatars/${userId}/`,
+    `${envPrefix}system/${userId}/`,
+  ];
+}
+
 async function getCurrentUsageBytes(userId: string): Promise<number> {
   const cached = await getCachedValue<number>(`media:used:${userId}`);
   if (typeof cached === "number") return cached;
 
-  const prefix = `${env.IS_PROD ? "" : "dev-"}journal/${userId}/`;
-  const objects = await listAllObjects(env.R2_BUCKET_NAME, prefix);
+  const objects = (
+    await Promise.all(
+      userStoragePrefixes(userId).map((prefix) =>
+        listAllObjects(env.R2_BUCKET_NAME, prefix),
+      ),
+    )
+  ).flat();
   const total = objects.reduce((acc, obj) => acc + obj.size, 0);
   await setCachedValue(`media:used:${userId}`, total, USED_CACHE_TTL_SECONDS);
   return total;
@@ -129,38 +145,40 @@ export async function POST(req: NextRequest) {
     }
 
     // Enforce the plan's storage quota server-side (the client-side bar is
-    // display only). Without this, a presign loop could store unbounded data.
-    // The structured 507 payload lets the client open the upgrade dialog
-    // instead of showing a generic error.
-    // Service folders (avatar, feedback) are app infrastructure, not the
-    // user's photo allowance — the usage counter only tracks journal/ — so
-    // they are exempt and can never be broken by a full quota.
-    const countsTowardQuota = !folder || folder === "journal";
-    if (countsTowardQuota) {
-      try {
-        const { mediaStorageBytes } =
-          await EntitlementsService.getEntitlements(session.user.id);
-        const used = await getCurrentUsageBytes(session.user.id);
-        if (used + size > mediaStorageBytes) {
-          return NextResponse.json(
-            {
-              error: "Storage quota exceeded. Delete some files first.",
-              code: "storage_quota_exceeded",
-              limitBytes: mediaStorageBytes,
-              usedBytes: used,
-            },
-            { status: 507 },
-          );
-        }
-      } catch (e) {
-        logger.warn(
-          "Could not verify storage quota before upload",
-          undefined,
-          e as Error,
+    // display only). Every folder a user can write to counts: otherwise a
+    // caller could switch `folder` to "avatar"/"feedback" and store unbounded
+    // data outside the counter. The structured 507 payload lets the client
+    // open the upgrade dialog instead of showing a generic error.
+    try {
+      const { mediaStorageBytes } = await EntitlementsService.getEntitlements(
+        session.user.id,
+      );
+      const used = await getCurrentUsageBytes(session.user.id);
+      if (used + size > mediaStorageBytes) {
+        return NextResponse.json(
+          {
+            error: "Storage quota exceeded. Delete some files first.",
+            code: "storage_quota_exceeded",
+            limitBytes: mediaStorageBytes,
+            usedBytes: used,
+          },
+          { status: 507 },
         );
       }
-      void recordUsageBytes(session.user.id, size);
+    } catch (e) {
+      // Fail closed: if we cannot establish the user's real usage, do not
+      // authorize another object write.
+      logger.warn(
+        "Could not verify storage quota before upload",
+        undefined,
+        e as Error,
+      );
+      return NextResponse.json(
+        { error: "Storage is temporarily unavailable. Please try again." },
+        { status: 503 },
+      );
     }
+    void recordUsageBytes(session.user.id, size);
 
     const isProduction = env.IS_PROD;
     const envPrefix = isProduction ? "" : "dev-";
@@ -184,7 +202,10 @@ export async function POST(req: NextRequest) {
     });
 
     const presignedUrl = await getSignedUrl(r2, command, { expiresIn: 60 });
-    const publicUrl = `${env.R2_PUBLIC_URL}/${key}`;
+    // Private folders get a stable authenticated URL; only feedback/system
+    // attachments remain on the public bucket (the owner reads those outside
+    // the submitter's session).
+    const publicUrl = mediaUrlForKey(key);
 
     return NextResponse.json({ presignedUrl, publicUrl });
   } catch (error) {

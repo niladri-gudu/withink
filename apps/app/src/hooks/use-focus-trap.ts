@@ -14,6 +14,7 @@ const FOCUSABLE_SELECTOR =
 export function useFocusTrap(active: boolean) {
   const containerRef = useRef<HTMLElement | null>(null);
   const previousActiveElementRef = useRef<HTMLElement | null>(null);
+  const restoreTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (!active) return;
@@ -48,6 +49,14 @@ export function useFocusTrap(active: boolean) {
       const firstElement = focusableElements[0]!;
       const lastElement = focusableElements[focusableElements.length - 1]!;
 
+      // Focus escaped the trap (body, browser chrome, or a sibling overlay).
+      // Pull it back to an edge instead of letting the next Tab leave.
+      if (!container.contains(document.activeElement)) {
+        (e.shiftKey ? lastElement : firstElement).focus();
+        e.preventDefault();
+        return;
+      }
+
       if (e.shiftKey) {
         if (document.activeElement === firstElement) {
           lastElement.focus();
@@ -74,13 +83,17 @@ export function useFocusTrap(active: boolean) {
 
     return () => {
       if (focusTimer) clearTimeout(focusTimer);
+      // A stale restore from a previous activation must not steal focus back
+      // after this trap has already moved on.
+      if (restoreTimerRef.current) clearTimeout(restoreTimerRef.current);
       window.removeEventListener("keydown", handleKeyDown);
       // Restore focus to the previously active element
-      if (previousActiveElementRef.current) {
+      const restoreEl = previousActiveElementRef.current;
+      if (restoreEl) {
         // Small delay to prevent issues with state updates
-        const restoreEl = previousActiveElementRef.current;
-        setTimeout(() => {
+        restoreTimerRef.current = setTimeout(() => {
           restoreEl.focus();
+          restoreTimerRef.current = null;
         }, 50);
       }
     };

@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 
 import { getRequestSession } from "@/lib/request-cache";
+import { getClientIp } from "@/lib/request-ip";
 import { logger } from "@/server/logger";
 import { rateLimit } from "@/server/rate-limit";
 
@@ -21,11 +22,7 @@ export async function POST(req: NextRequest) {
     const userId = session?.user?.id || "anonymous";
 
     const reqHeaders = await headers();
-    const forwardedFor = reqHeaders.get("x-forwarded-for") ?? "";
-    const clientIp =
-      forwardedFor.split(",")[0]?.trim() ||
-      reqHeaders.get("x-real-ip") ||
-      "unknown";
+    const clientIp = getClientIp(reqHeaders);
 
     const limit = await rateLimit(`client-errors:${clientIp}`, {
       limit: 20,

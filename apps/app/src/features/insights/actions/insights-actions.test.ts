@@ -18,6 +18,11 @@ vi.mock("@/lib/request-cache", () => ({
   getRequestSession: vi.fn(),
 }));
 
+// The action clamps client-supplied dates; keep historical fixtures intact.
+vi.mock("@/lib/viewer-today", () => ({
+  clampViewerToday: (value?: string | null) => value ?? "2026-07-06",
+}));
+
 // Mock InsightsService
 vi.mock("../services/insights-service", () => ({
   InsightsService: {

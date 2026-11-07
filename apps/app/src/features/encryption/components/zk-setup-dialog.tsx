@@ -22,6 +22,7 @@ import {
   generateRandomSalt,
 } from "@/lib/crypto-client";
 import { deriveKeyFromPasswordAsync } from "@/lib/crypto-worker-client";
+import { KDF_ITERATIONS, PIN_KDF_ITERATIONS } from "@/lib/kdf";
 import { safeStorage } from "@/lib/safe-storage";
 import { countWords } from "@/lib/utils/text";
 import { useEncryption } from "@/providers/encryption-provider";
@@ -93,7 +94,11 @@ export function ZkSetupDialog({
       // 2. Generate random 16-byte salt and derive password key client-side
       toast.loading("Deriving encryption keys...", { id: toastId });
       const salt = generateRandomSalt();
-      const passwordKey = await deriveKeyFromPasswordAsync(zkPassword, salt);
+      const passwordKey = await deriveKeyFromPasswordAsync(
+        zkPassword,
+        salt,
+        KDF_ITERATIONS,
+      );
 
       // 3. Generate a secure random master key client-side
       const newMasterKey = await generateMasterKey();
@@ -148,6 +153,7 @@ export function ZkSetupDialog({
         verificationCiphertext,
         encryptedEntries,
         unlockProof,
+        KDF_ITERATIONS,
       );
       if (!enableRes.success) {
         throw new Error(
@@ -160,7 +166,7 @@ export function ZkSetupDialog({
         const pinKey = await deriveKeyFromPasswordAsync(
           zkPINConfirm,
           salt,
-          50000,
+          PIN_KDF_ITERATIONS,
         );
         const encryptedMasterKey = await encryptText(masterKeyHex, pinKey);
         safeStorage.setItem("withink_encrypted_master_key", encryptedMasterKey);
@@ -177,6 +183,7 @@ export function ZkSetupDialog({
         isClientEncrypted: true,
         encryptionSalt: salt,
         verificationCiphertext,
+        kdfIterations: KDF_ITERATIONS,
       });
       setMasterKey(newMasterKey);
 

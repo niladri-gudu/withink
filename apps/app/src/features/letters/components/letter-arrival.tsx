@@ -1,5 +1,7 @@
-import { getViewerToday } from "@/lib/viewer-today";
-import { EncryptionSettingsRepository } from "@/features/encryption/repositories/encryption-settings-repository";
+import {
+  getRequestEncryptionSettings,
+  getRequestViewerToday,
+} from "@/lib/request-cache";
 
 import { LettersService } from "../services/letter-service";
 import { LetterArrivalCard } from "./letter-arrival-card";
@@ -10,11 +12,11 @@ import { LetterArrivalCard } from "./letter-arrival-card";
  * and the lower grid. Renders nothing when there's no mail.
  */
 export async function LetterArrival({ userId }: { userId: string }) {
-  const today = await getViewerToday();
+  const today = await getRequestViewerToday();
 
   const [letters, encryptionSettings] = await Promise.all([
     LettersService.listArrivedUnread(userId, today),
-    EncryptionSettingsRepository.getSettings(userId),
+    getRequestEncryptionSettings(userId),
   ]);
 
   if (letters.length === 0) return null;

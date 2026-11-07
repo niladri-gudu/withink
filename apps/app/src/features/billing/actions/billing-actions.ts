@@ -5,7 +5,10 @@ import { z } from "zod";
 import { LIMITS } from "@/constants/limits";
 import { env } from "@/config/env";
 import { resolvePlanFromAccount } from "@/features/billing/services/entitlements-service";
-import type { ResolvedPlan } from "@/features/billing/config/plans";
+import {
+  PLAN_PRODUCTS,
+  type ResolvedPlan,
+} from "@/features/billing/config/plans";
 import { BillingAccountRepository } from "@/features/billing/repositories/billing-account-repository";
 import {
   BillingNotConfiguredError,
@@ -75,6 +78,27 @@ export async function createCheckoutAction(
       return {
         success: false,
         error: "Too many attempts. Please try again later.",
+      };
+    }
+
+    // Never let an existing subscriber buy at or below their current tier:
+    // that silently downgrades a Pro user or creates a second subscription
+    // (double charge). Upgrades are allowed; changes are made in the portal.
+    const PLAN_RANK: Record<ResolvedPlan, number> = {
+      free: 0,
+      plus: 1,
+      pro: 2,
+    };
+    const requestedPlan = PLAN_PRODUCTS[parsed.data].plan;
+    const account = await BillingAccountRepository.getByUserId(userId);
+    const currentPlan = resolvePlanFromAccount(account);
+    if (PLAN_RANK[requestedPlan] <= PLAN_RANK[currentPlan]) {
+      return {
+        success: false,
+        error:
+          currentPlan === "free"
+            ? "That plan is already active."
+            : `You're already on ${currentPlan === "pro" ? "Pro" : "Plus"}. Use the billing portal to change your plan.`,
       };
     }
 

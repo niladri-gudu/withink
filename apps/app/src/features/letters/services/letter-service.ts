@@ -3,6 +3,7 @@ import "server-only";
 import type { ResolvedPlan } from "@/features/billing/config/plans";
 import { EntitlementsService } from "@/features/billing/services/entitlements-service";
 import { BusinessRuleError, ValidationError } from "@/server/errors";
+import { withRedisLock } from "@/server/mutex";
 
 import { occupiesSlot } from "../lib/letter-rules";
 import type { SaveLetterParsed } from "../validation/letter-schema";
@@ -100,15 +101,19 @@ export class LettersService {
           "Letters must open on a day that hasn't arrived yet.",
         );
       }
-      await this.assertCapacity(userId, today);
-      return LetterRepository.createDoc(userId, {
-        unlockDate: input.unlockDate,
-        sealed: input.sealed ?? false,
-        title: input.title,
-        contentHtml: input.contentHtml,
-        contentText: input.contentText,
-        contentJson: input.contentJson ?? {},
-        wordCount: input.wordCount ?? 0,
+      // Capacity is a count-then-create check. Serialize it per user so two
+      // concurrent drafts can't both observe "under limit" and both insert.
+      return withRedisLock(`letters:create:${userId}`, async () => {
+        await this.assertCapacity(userId, today);
+        return LetterRepository.createDoc(userId, {
+          unlockDate: input.unlockDate,
+          sealed: input.sealed ?? false,
+          title: input.title,
+          contentHtml: input.contentHtml,
+          contentText: input.contentText,
+          contentJson: input.contentJson ?? {},
+          wordCount: input.wordCount ?? 0,
+        });
       });
     }
 

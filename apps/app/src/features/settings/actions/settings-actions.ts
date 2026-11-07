@@ -8,10 +8,13 @@ import { client } from "@/lib/db";
 import { connectDB } from "@/lib/db/mongoose";
 import { r2 } from "@/lib/r2";
 import { listAllObjects } from "@/lib/r2-list";
+import { redis } from "@/lib/redis";
 import { getRequestSession } from "@/lib/request-cache";
 import { handleError } from "@/server/errors";
 import { logger } from "@/server/logger";
 import { rateLimit } from "@/server/rate-limit";
+import { BillingAccountModel } from "@/features/billing/repositories/billing-account-model";
+import { DodoService } from "@/features/billing/services/dodo-service";
 import { ClientEncryptionSettingsModel } from "@/features/encryption/repositories/encryption-settings-model";
 import { FeedbackModel } from "@/features/feedback/repositories/feedback-model";
 import { LetterModel } from "@/features/letters/repositories/letter-model";
@@ -58,6 +61,7 @@ export async function deleteAccountAction(password?: string): Promise<{
       const attempts = await rateLimit(`delete-account:${userId}`, {
         limit: 5,
         windowSeconds: 300,
+        failClosed: true,
       });
       if (!attempts.success) {
         return {
@@ -74,22 +78,61 @@ export async function deleteAccountAction(password?: string): Promise<{
       }
     }
 
+    // 0b. Stop billing before the record is erased. Best-effort: a deleted
+    //     account must never keep charging, but a failed cancel must not
+    //     block the user's deletion request.
+    const billing = await (BillingAccountModel as any)
+      .findOne({ userId })
+      .lean();
+    if (billing?.dodoSubscriptionId) {
+      try {
+        await DodoService.cancelSubscription(billing.dodoSubscriptionId);
+      } catch (error) {
+        logger.warn(
+          "Failed to cancel subscription during account deletion",
+          undefined,
+          error as Error,
+        );
+      }
+    }
+
     // 1. Delete all journal entries from MongoDB
     await (EntryModel as any).deleteMany({ userId });
 
     // 1b. Purge remaining app collections tied to the user: lock settings
     //     (passcode hash), client encryption settings (salt + verification
-    //     blob), letters to the future self, and feedback records (email +
-    //     message text).
+    //     blob), letters to the future self, feedback records (email +
+    //     message text), and billing (customer + subscription ids).
     await Promise.all([
       (LockSettingsModel as any).deleteMany({ userId }),
       (ClientEncryptionSettingsModel as any).deleteMany({ userId }),
       (FeedbackModel as any).deleteMany({ userId }),
       (LetterModel as any).deleteMany({ userId }),
+      (BillingAccountModel as any).deleteMany({ userId }),
     ]);
 
-    // 2. Invalidate cache in Redis
+    // 2. Invalidate per-user caches in Redis. Short-TTL keys (insights,
+    //    media usage) expire on their own; these are the long-lived ones.
     await EntryRepository.invalidateUserEntryCache(userId);
+    if (redis) {
+      try {
+        await redis.del(
+          `billing:${userId}:plan`,
+          `lock:${userId}:settings`,
+          `lock:reset:${userId}`,
+          `encryption:${userId}:settings`,
+          `media:used:${userId}`,
+          `entries:${userId}:version`,
+          `user:${userId}:flashback-history`,
+        );
+      } catch (error) {
+        logger.warn(
+          "Failed to clear user caches during account deletion",
+          undefined,
+          error as Error,
+        );
+      }
+    }
 
     // 3. Purge files from Cloudflare R2 bucket (paginated listing so >1,000
     //    objects are fully removed, not silently left orphaned).
@@ -127,6 +170,17 @@ export async function deleteAccountAction(password?: string): Promise<{
 
     await db.collection("session").deleteMany({ userId });
     await db.collection("account").deleteMany({ userId });
+
+    // Better Auth's pending email-verification / password-reset rows are
+    // keyed by email or carry the user id as their value. Remove both so no
+    // dorman token outlives the account.
+    await db.collection("verification").deleteMany({
+      $or: [
+        { value: userId },
+        { identifier: session.user.email },
+        { identifier: userId },
+      ],
+    });
 
     return { success: true };
   } catch (err) {

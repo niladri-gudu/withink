@@ -15,6 +15,7 @@ import { toast } from "sonner";
 
 import { decryptText, encryptText } from "@/lib/crypto-client";
 import { deriveKeyFromPasswordAsync } from "@/lib/crypto-worker-client";
+import { KDF_ITERATIONS } from "@/lib/kdf";
 import { useEncryption } from "@/providers/encryption-provider";
 import { updateDiaryPasswordAction } from "@/features/encryption/actions/encryption-actions";
 
@@ -32,6 +33,7 @@ export function ZkChangeDialog({ open, onOpenChange }: ZkChangeDialogProps) {
   const {
     encryptionSalt,
     verificationCiphertext,
+    kdfIterations,
     setEncryptionSettings,
     clearLocalMasterKey,
   } = useEncryption();
@@ -54,6 +56,7 @@ export function ZkChangeDialog({ open, onOpenChange }: ZkChangeDialogProps) {
       const oldPasswordKey = await deriveKeyFromPasswordAsync(
         zkOldPassword,
         encryptionSalt,
+        kdfIterations,
       );
 
       // 2. Decrypt verificationCiphertext to get master key hex
@@ -71,6 +74,7 @@ export function ZkChangeDialog({ open, onOpenChange }: ZkChangeDialogProps) {
       const newPasswordKey = await deriveKeyFromPasswordAsync(
         zkNewPassword,
         encryptionSalt,
+        KDF_ITERATIONS,
       );
 
       // 4. Encrypt master key hex with new password key
@@ -80,7 +84,10 @@ export function ZkChangeDialog({ open, onOpenChange }: ZkChangeDialogProps) {
       );
 
       // 5. Update server
-      const res = await updateDiaryPasswordAction(newVerificationCiphertext);
+      const res = await updateDiaryPasswordAction(
+        newVerificationCiphertext,
+        KDF_ITERATIONS,
+      );
       if (!res.success) {
         throw new Error(res.error || "Failed to update settings on server");
       }
@@ -90,6 +97,7 @@ export function ZkChangeDialog({ open, onOpenChange }: ZkChangeDialogProps) {
         isClientEncrypted: true,
         encryptionSalt,
         verificationCiphertext: newVerificationCiphertext,
+        kdfIterations: KDF_ITERATIONS,
       });
       clearLocalMasterKey();
 

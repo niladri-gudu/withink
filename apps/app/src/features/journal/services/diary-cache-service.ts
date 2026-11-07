@@ -357,9 +357,18 @@ export const diaryCacheService = {
       //    created (or edited) while this pull was in flight cannot be in the
       //    start-of-run snapshot, and pruning its queue item would destroy it.
       const serverDates = new Set(serverEntries.map((e) => e.date));
-      const pruneKeys = Object.keys(localMap).filter(
-        (date) => !serverDates.has(date) && !pendingDates.has(date),
-      );
+      // Never prune a record that was written very recently: a flush can
+      // consume its sync item just before the cloud write becomes visible in
+      // the sync list, and deleting it then loses an entry the user saw as
+      // "Saved · Synced". Two weeks of age is irrelevant; 15 minutes is a
+      // generous boundary for eventual consistency.
+      const PRUNE_GRACE_MS = 15 * 60 * 1000;
+      const pruneKeys = Object.keys(localMap).filter((date) => {
+        if (serverDates.has(date) || pendingDates.has(date)) return false;
+        const localUpdatedAt = new Date(localMap[date] ?? "").getTime();
+        if (!Number.isFinite(localUpdatedAt)) return false;
+        return Date.now() - localUpdatedAt > PRUNE_GRACE_MS;
+      });
       for (const date of pruneKeys) {
         const nowPending = await diaryCacheDB.getSyncItem(date);
         if (nowPending) continue;

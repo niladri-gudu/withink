@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { CircleAlert, PartyPopper, X } from "lucide-react";
 
+import { getBillingSummaryAction } from "../actions/billing-actions";
+
 /**
  * Post-checkout feedback (MONETIZATION_PLAN.md Phase D): Dodo redirects back
  * to /settings with a `status` query param. We surface the outcome once as an
@@ -21,12 +23,39 @@ export function BillingReturnBanner() {
     let next: "success" | "cancelled" | null = null;
     if (status.includes("cancel")) next = "cancelled";
     else if (status.includes("succe")) next = "success";
+    if (!next) return;
 
-    if (next) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- value comes from the URL, only known after hydration
-      setKind(next);
-      router.replace("/settings", { scroll: false });
+    // Strip the query immediately regardless of verification outcome.
+    router.replace("/settings", { scroll: false });
+
+    if (next === "cancelled") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- URL value only known after hydration
+      setKind("cancelled");
+      return;
     }
+
+    // Never assert "Payment received" from an untrusted URL. The webhook is
+    // the source of truth; confirm the account actually has a paid plan.
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await getBillingSummaryAction();
+        const paid =
+          res.success &&
+          res.summary &&
+          res.summary.plan !== "free" &&
+          (res.summary.status === "active" || res.summary.status === "past_due");
+        if (!cancelled && paid) {
+          setKind("success");
+        }
+      } catch {
+        // No confirmation — show nothing rather than a false receipt.
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [searchParams, router]);
 
   if (!kind || dismissed) return null;

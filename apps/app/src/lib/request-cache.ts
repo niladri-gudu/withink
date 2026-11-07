@@ -4,6 +4,8 @@ import { cache } from "react";
 import { headers } from "next/headers";
 
 import { auth } from "@/lib/auth";
+import { getViewerToday } from "@/lib/viewer-today";
+import { EncryptionSettingsRepository } from "@/features/encryption/repositories/encryption-settings-repository";
 import { LockRepository } from "@/features/lock/repositories/lock-repository";
 
 /**
@@ -26,4 +28,21 @@ export const getRequestSession = cache(async () => {
 
 export const getRequestLockSettings = cache(async (userId: string) => {
   return await LockRepository.getSettings(userId);
+});
+
+/**
+ * Encryption settings are read by the layout, the lower dashboard grid, and
+ * the letter-arrival card on the same render. Without this memoization that is
+ * three identical Redis round-trips per navigation.
+ */
+export const getRequestEncryptionSettings = cache(async (userId: string) => {
+  return await EncryptionSettingsRepository.getSettings(userId);
+});
+
+/**
+ * The viewer-local date is resolved from a cookie. The dashboard page and the
+ * letter-arrival card both need it; memoize so the cookie parse happens once.
+ */
+export const getRequestViewerToday = cache(async () => {
+  return await getViewerToday();
 });

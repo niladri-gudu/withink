@@ -89,6 +89,30 @@ vi.mock("@/features/letters/repositories/letter-model", () => ({
   },
 }));
 
+// Billing + Redis are now part of the deletion flow (cancel subscription,
+// erase the billing row, clear per-user caches).
+vi.mock("@/features/billing/repositories/billing-account-model", () => ({
+  BillingAccountModel: {
+    deleteMany: vi.fn().mockResolvedValue({ deletedCount: 0 }),
+    findOne: vi.fn(() => ({
+      lean: vi.fn().mockResolvedValue(null),
+    })),
+  },
+}));
+
+vi.mock("@/features/billing/services/dodo-service", () => ({
+  DodoService: {
+    cancelSubscription: vi.fn().mockResolvedValue(undefined),
+  },
+}));
+
+vi.mock("@/lib/redis", () => ({
+  redis: null,
+  getCachedValue: vi.fn(),
+  setCachedValue: vi.fn(),
+  incrementCachedValue: vi.fn(),
+}));
+
 describe("deleteAccountAction", () => {
   beforeEach(() => {
     vi.clearAllMocks();
