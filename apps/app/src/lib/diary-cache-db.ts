@@ -1,6 +1,8 @@
 // Browser-compatible native IndexedDB wrapper for Withink cache storage
 // Version 2: Added document_cache and sync_queue stores for full offline support
 
+import { requestPersistentStorage } from "@/lib/persistent-storage";
+
 const DB_NAME = "diary_cache";
 const STORE_NAME = "metadata_cache";
 const DOCUMENT_STORE = "document_cache";
@@ -25,6 +27,8 @@ function getDB(): Promise<IDBDatabase> {
         db.close();
         dbPromise = null;
       };
+      // The cache is now in real use: ask for eviction protection.
+      void requestPersistentStorage();
       resolve(db);
     };
 

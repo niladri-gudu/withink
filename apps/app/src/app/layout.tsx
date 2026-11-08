@@ -98,6 +98,11 @@ export const metadata: Metadata = {
       ? "https://app.withink.me"
       : "http://localhost:3000",
   ),
+  appleWebApp: {
+    capable: true,
+    title: "Withink",
+    statusBarStyle: "default",
+  },
   icons: {
     icon: [
       { rel: "icon", url: "/favicon.svg", sizes: "any", type: "image/svg+xml" },
@@ -169,6 +174,10 @@ interface RootLayoutProps {
    respect. */
 export const viewport: Viewport = {
   viewportFit: "cover",
+  // Chrome Android: shrink the layout viewport when the keyboard opens so the
+  // editor's fixed toolbar and caret scroll stay above it. iOS is handled by
+  // the visualViewport listener in EditorToolbarDock.
+  interactiveWidget: "resizes-content",
 };
 
 export default function RootLayout({ children }: RootLayoutProps) {
@@ -190,6 +199,9 @@ export default function RootLayout({ children }: RootLayoutProps) {
     >
       <head>
         <link rel="manifest" href="/manifest.json" />
+        {/* Next's appleWebApp.capable emits the generic `mobile-web-app-capable`
+            only; older iOS Safari still checks the Apple-prefixed name. */}
+        <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta
           name="theme-color"
           content="#eee5d6"

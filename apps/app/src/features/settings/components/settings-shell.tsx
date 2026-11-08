@@ -41,6 +41,7 @@ import {
 } from "@/features/lock/actions/lock-actions";
 import { LockChangeDialog } from "@/features/lock/components/lock-change-dialog";
 import { LockSetupOnboarding } from "@/features/lock/components/lock-setup-onboarding";
+import { InstallAppCard } from "@/features/pwa/components/install-app-card";
 import { AppearanceSettings } from "@/features/settings/appearance/appearance-settings";
 import { DeleteAccountDialog } from "@/features/settings/components/delete-account-dialog";
 import { SettingsGroup } from "@/features/settings/components/settings-group";
@@ -568,6 +569,15 @@ export function SettingsShell({ initialUser, plan }: SettingsShellProps) {
               </div>
             </div>
           </div>
+        </SettingsGroup>
+
+        {/* ---- Install app ---- */}
+        <SettingsGroup
+          icon={MonitorSmartphone}
+          title="Install app"
+          description="Add Withink to your home screen for full-screen, offline-ready writing."
+        >
+          <InstallAppCard />
         </SettingsGroup>
 
         {/* ---- Privacy & security ---- */}

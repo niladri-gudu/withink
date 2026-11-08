@@ -5,8 +5,17 @@
 //  - Static assets: cache-first (they are content-hashed / immutable).
 //  - On offline navigation: serve offline.html.
 //  - Message channel so the app can purge all caches on logout/account deletion.
-const CACHE_NAME = "withink-static-v2";
-const STATIC_ASSETS = ["/manifest.json", "/icon.svg", "/offline.html"];
+const CACHE_NAME = "withink-static-v3";
+const STATIC_ASSETS = [
+  "/manifest.json",
+  "/icon.svg",
+  "/icon-192.png",
+  "/icon-512.png",
+  "/icon-maskable-512.png",
+  "/apple-touch-icon.png",
+  "/favicon.svg",
+  "/offline.html",
+];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
