@@ -127,9 +127,11 @@ describe("NotebooksService.ensureBootstrapped", () => {
     mockedList.mockResolvedValueOnce([]).mockResolvedValueOnce([winnersRow]);
     mockedCreate.mockRejectedValue(new Error("E11000 duplicate key"));
 
+    // Returns the rows it read so callers (listNotebooks/getDefaultNotebookId)
+    // don't issue a duplicate listByUserId.
     await expect(
       NotebooksService.ensureBootstrapped("user-1"),
-    ).resolves.toBeUndefined();
+    ).resolves.toEqual([winnersRow]);
 
     expect(mockedBackfill).toHaveBeenCalledWith("user-1", winnersRow.id);
   });

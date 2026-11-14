@@ -38,10 +38,13 @@ export function DataExportCard() {
 
         zip.file("README.txt", buildReadme(entries.length));
 
-        // Clean metadata manifest
+        // Clean metadata manifest. Cache decrypted titles so the entry loop
+        // below doesn't decrypt each one a second time.
+        const decryptedTitles = new Map<string, string>();
         const metadata = [];
         for (const entry of entries) {
           const decTitle = await safeDecryptText(entry.title, masterKey);
+          decryptedTitles.set(entry.id || entry.date, decTitle);
           metadata.push({
             date: entry.date,
             title: decTitle,
@@ -56,15 +59,11 @@ export function DataExportCard() {
         const entriesFolder = zip.folder("entries");
 
         for (const entry of entries) {
-          const contentHtml = await safeDecryptText(
-            entry.contentHtml,
-            masterKey,
-          );
-          const contentText = await safeDecryptText(
-            entry.contentText,
-            masterKey,
-          );
-          const decTitle = await safeDecryptText(entry.title, masterKey);
+          const [contentHtml, contentText] = await Promise.all([
+            safeDecryptText(entry.contentHtml, masterKey),
+            safeDecryptText(entry.contentText, masterKey),
+          ]);
+          const decTitle = decryptedTitles.get(entry.id || entry.date) ?? "";
 
           const { year, monthName } = splitDate(entry.date);
           const monthFolder = entriesFolder?.folder(year)?.folder(monthName);

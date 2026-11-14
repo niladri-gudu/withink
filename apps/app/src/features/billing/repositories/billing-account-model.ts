@@ -49,6 +49,17 @@ const BillingAccountSchema = new Schema<IBillingAccount>(
   { timestamps: true },
 );
 
+// Webhook events arrive by Dodo customer/subscription id, not by user. Without
+// these, each webhook lookup is a collection scan (noticeable on M0).
+BillingAccountSchema.index(
+  { dodoCustomerId: 1 },
+  { sparse: true, name: "dodoCustomerId_1" },
+);
+BillingAccountSchema.index(
+  { dodoSubscriptionId: 1 },
+  { sparse: true, name: "dodoSubscriptionId_1" },
+);
+
 export const BillingAccountModel =
   mongoose.models.BillingAccount ||
   mongoose.model<IBillingAccount>("BillingAccount", BillingAccountSchema);

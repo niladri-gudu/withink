@@ -63,14 +63,16 @@ export function RecentReflectionsList({
           if (!cancelled) setReady(false);
           return;
         }
-        const decrypted = [];
-        for (const entry of initialEntries) {
-          const title = await safeDecryptText(entry.title || "", masterKey);
-          decrypted.push({
-            ...entry,
-            title: title || "Untitled Entry",
-          });
-        }
+        // Titles decrypt independently; run them together instead of serially.
+        const decrypted = await Promise.all(
+          initialEntries.map(async (entry) => {
+            const title = await safeDecryptText(entry.title || "", masterKey);
+            return {
+              ...entry,
+              title: title || "Untitled Entry",
+            };
+          }),
+        );
         if (cancelled) return;
         setEntries(decrypted);
         setReady(true);

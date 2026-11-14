@@ -3,7 +3,7 @@ import { diaryCacheDB } from "@/lib/diary-cache-db";
 import { addDays } from "@/lib/utils/date";
 
 import {
-  getEntryAction,
+  getEntriesBulkAction,
   getEntrySyncListAction,
   saveEntryAction,
 } from "../actions/entry-actions";
@@ -79,19 +79,67 @@ function createSnippet(text: string, maxLength = 240): string {
 // In-memory cache of the decrypted timeline, keyed by the unlocked CryptoKey
 // reference. Decrypting every record on every search is O(N) crypto work that
 // gets slow as a journal grows; caching the decrypted list makes searches
-// instant after the first one, and is invalidated on any write. Keyed by the
-// key object so a new unlock (new key) automatically rebuilds it, and it is
-// cleared on lock to release plaintext from memory.
+// instant after the first one. Writes update it in place (upsert below) rather
+// than invalidating it, so an autosave doesn't force a full re-decrypt.
+// Keyed by the key object so a new unlock (new key) automatically rebuilds it,
+// and it is cleared on lock to release plaintext from memory.
 let timelineCache: { key: CryptoKey; entries: CachedMetadata[] } | null = null;
 
 function invalidateTimelineCache(): void {
   timelineCache = null;
 }
 
+/**
+ * Replaces or inserts one record in the in-memory decrypted timeline without
+ * dropping the rest of it. This is what keeps an autosave or a single pulled
+ * entry from forcing a full IndexedDB read + decrypt on the next render.
+ * No-op when the cache has not been built yet (the next load reads IDB) or
+ * belongs to a previous unlock.
+ */
+function upsertTimelineCache(
+  masterKey: CryptoKey,
+  record: CachedMetadata,
+): void {
+  if (!timelineCache || timelineCache.key !== masterKey) return;
+
+  const entries = timelineCache.entries;
+  const index = entries.findIndex((entry) => entry.date === record.date);
+  if (index >= 0) {
+    entries[index] = record;
+    return;
+  }
+
+  // Keep the descending-date invariant without re-sorting the whole array.
+  let insertAt = entries.findIndex((entry) => entry.date < record.date);
+  if (insertAt === -1) insertAt = entries.length;
+  entries.splice(insertAt, 0, record);
+}
+
+function removeFromTimelineCache(date: string): void {
+  if (!timelineCache) return;
+  const index = timelineCache.entries.findIndex((entry) => entry.date === date);
+  if (index >= 0) timelineCache.entries.splice(index, 1);
+}
+
+/** Structural shape of a server entry used by the pull (kept local so this
+ *  client module never imports the server-only journal service). */
+interface ServerEntryPayload {
+  date: string;
+  title: string;
+  contentHtml: string;
+  contentText: string;
+  /** Ciphertext string (zero-knowledge pull only; legacy rows never reach here). */
+  contentJson: string;
+  mood: number | null;
+  wordCount: number;
+  notebookId: string | null;
+  updatedAt: string | Date;
+}
+
 // Fingerprint of the server sync list from the last full pull, keyed by the
 // master key. When the fingerprint is unchanged (and there are no pending local
-// edits) the pull has nothing to do, so we skip the O(N) IndexedDB read +
-// decrypt that `syncDiaryCache` would otherwise run every background tick.
+// edits) the pull has nothing to do, so we skip even the plaintext sync-index
+// read + diff that `syncDiaryCache` would otherwise run every background tick.
 let lastServerSyncFingerprint: { key: CryptoKey; fingerprint: string } | null =
   null;
 
@@ -210,7 +258,16 @@ export const diaryCacheService = {
 
     const encrypted = await encryptText(JSON.stringify(payload), masterKey);
     await diaryCacheDB.set(date, encrypted);
-    invalidateTimelineCache();
+    // Plaintext sync index (timestamp + schema version only, both already
+    // stored plaintext server-side) so pulls never decrypt to diff.
+    await diaryCacheDB.putSyncIndex({
+      date,
+      updatedAt: updatedAtStr,
+      v: METADATA_VERSION,
+    });
+    // Update the in-memory timeline surgically instead of dropping it. The
+    // old behavior re-decrypted every record after each autosave.
+    upsertTimelineCache(masterKey, payload);
   },
 
   /**
@@ -245,6 +302,42 @@ export const diaryCacheService = {
       const result = (decrypted.filter(Boolean) as CachedMetadata[]).sort(
         (a, b) => b.date.localeCompare(a.date),
       );
+
+      // Backfill the plaintext sync index for devices upgrading from a build
+      // that predates it (v2 metadata only). Without this the first pull
+      // would treat every entry as missing and re-fetch the whole journal.
+      const indexed = await diaryCacheDB.getAllSyncIndex();
+      const indexedDates = new Set(indexed.map((row) => row.date));
+      const missing = result.filter((entry) => !indexedDates.has(entry.date));
+      if (missing.length > 0) {
+        await Promise.all(
+          missing.map((entry) =>
+            diaryCacheDB.putSyncIndex({
+              date: entry.date,
+              updatedAt: entry.updatedAt,
+              v: entry.v,
+            }),
+          ),
+        );
+      }
+
+      // A record that failed to decrypt must not keep its index row: the pull
+      // would trust the stale timestamp and never re-fetch. Dropping the row
+      // makes `runPull` see the date as missing and self-heal it.
+      if (entries.length > 0) {
+        const decryptedDates = new Set(result.map((entry) => entry.date));
+        const staleIndex = indexed.filter(
+          (row) => !decryptedDates.has(row.date),
+        );
+        if (staleIndex.length > 0) {
+          await Promise.all(
+            staleIndex.map((row) =>
+              diaryCacheDB.deleteSyncIndex(row.date),
+            ),
+          );
+        }
+      }
+
       timelineCache = { key: masterKey, entries: result };
       return result;
     } catch (err) {
@@ -274,8 +367,9 @@ export const diaryCacheService = {
       diaryCacheDB.delete(date),
       diaryCacheDB.deleteDocument(date),
       diaryCacheDB.deleteSyncItem(date),
+      diaryCacheDB.deleteSyncIndex(date),
     ]);
-    invalidateTimelineCache();
+    removeFromTimelineCache(date);
   },
 
   /**
@@ -298,7 +392,9 @@ export const diaryCacheService = {
 
   async runPull(
     masterKey: CryptoKey,
-    localToday: string,
+    // Kept for API compatibility: the bulk pull no longer needs the viewer's
+    // local date (it was only used to pick the single-entry cache TTL).
+    _localToday: string,
     onProgress?: (current: number, total: number) => void,
   ): Promise<boolean> {
     try {
@@ -328,28 +424,29 @@ export const diaryCacheService = {
         return true;
       }
 
-      // In-memory timeline is now stale (metadata will change during this sync).
-      invalidateTimelineCache();
+      // 2. Read the plaintext sync index (no decryption). A pull must never
+      //    touch AES just to compare timestamps; the index holds only fields
+      //    Mongo already stores in plaintext.
+      let localIndex = await diaryCacheDB.getAllSyncIndex();
+      if (localIndex.length === 0) {
+        // Devices upgrading from a build that predates the index: derive it
+        // once from the existing encrypted metadata. Decrypting ~N small
+        // records locally is far cheaper (and quieter on Atlas) than treating
+        // the whole journal as missing and re-fetching every entry.
+        const metadataKeys = await diaryCacheDB.getAllKeys();
+        if (metadataKeys.length > 0) {
+          await this.getLocalCacheTimeline(masterKey);
+          localIndex = await diaryCacheDB.getAllSyncIndex();
+        }
+      }
 
-      // 2. Fetch all local entries and decrypt to build a local map
-      const localEntriesRaw = await diaryCacheDB.getAllEntries();
       const localMap: Record<string, string> = {};
-
-      await Promise.all(
-        localEntriesRaw.map(async (entry) => {
-          try {
-            const decryptedStr = await decryptText(entry.value, masterKey);
-            const parsed = JSON.parse(decryptedStr) as CachedMetadata;
-            // Records written by older code (before full-text metadata) have no
-            // `v: 2` marker; treat them as stale so they are re-fetched once.
-            localMap[entry.key] =
-              parsed.v === METADATA_VERSION ? parsed.updatedAt : "";
-          } catch {
-            // If decryption fails, mark it as empty so it gets re-fetched
-            localMap[entry.key] = "";
-          }
-        }),
-      );
+      for (const row of localIndex) {
+        // Records written by older code (before the current metadata version)
+        // are treated as stale so they are re-fetched once.
+        localMap[row.date] =
+          row.v === METADATA_VERSION ? row.updatedAt : "";
+      }
 
       // 3. Prune entries deleted on other devices (never prune pending local
       //    edits). All stores are purged so nothing resurrects locally. The
@@ -375,6 +472,8 @@ export const diaryCacheService = {
         await diaryCacheDB.delete(date);
         await diaryCacheDB.deleteDocument(date);
         await diaryCacheDB.deleteSyncItem(date);
+        await diaryCacheDB.deleteSyncIndex(date);
+        removeFromTimelineCache(date);
       }
 
       // 4. Identify entries to fetch (missing or updated on server, excluding
@@ -395,90 +494,56 @@ export const diaryCacheService = {
         return true; // No sync needed
       }
 
-      // 5. Fetch dirty entries in small concurrent chunks to prevent throttling
-      const CONCURRENCY_LIMIT = 5;
+      // 5. Fetch dirty entries in bulk chunks. One server action now returns up
+      //    to BULK_FETCH_LIMIT entries, replacing the old one-action-per-date
+      //    pull (a first sync of 120 entries used to be 120 round-trips).
+      const BULK_FETCH_LIMIT = 50;
       let completedCount = 0;
       let failedCount = 0;
       onProgress?.(0, fetchList.length);
 
-      for (let i = 0; i < fetchList.length; i += CONCURRENCY_LIMIT) {
-        const chunk = fetchList.slice(i, i + CONCURRENCY_LIMIT);
-        await Promise.all(
-          chunk.map(async (item) => {
-            try {
-              const resEntry = await getEntryAction(item.date, localToday);
-              if (!resEntry.success || !resEntry.data) {
-                failedCount++;
-                console.error(
-                  `Failed to fetch entry for ${item.date}:`,
-                  resEntry.error,
-                );
-                return;
-              }
+      for (let i = 0; i < fetchList.length; i += BULK_FETCH_LIMIT) {
+        const chunk = fetchList.slice(i, i + BULK_FETCH_LIMIT);
+        let bulkEntries: ServerEntryPayload[] = [];
 
-              const entry = resEntry.data;
+        try {
+          const bulk = await getEntriesBulkAction(
+            chunk.map((item) => item.date),
+          );
+          if (bulk.success && bulk.data) {
+            bulkEntries = bulk.data as ServerEntryPayload[];
+          } else {
+            console.error("Failed to fetch entry batch:", bulk.error);
+          }
+        } catch (e) {
+          console.error("Failed to fetch entry batch:", e);
+        }
 
-              // Decrypt fields locally
-              const title = await decryptText(entry.title, masterKey);
-              const contentText = await decryptText(
-                entry.contentText,
-                masterKey,
-              );
-
-              let contentHtml = "";
-              let contentJson = {};
-              try {
-                contentHtml = await decryptText(entry.contentHtml, masterKey);
-                const contentJsonRaw = await decryptText(
-                  entry.contentJson,
-                  masterKey,
-                );
-                contentJson = JSON.parse(contentJsonRaw);
-              } catch (err) {
-                console.error(
-                  "Failed to decrypt full document content fields:",
-                  err,
-                );
-              }
-
-              // Re-check the pending queue immediately before writing: the
-              // user may have started editing this date while the pull was
-              // in flight. Never clobber a locally-pending edit.
-              const nowPending = await diaryCacheDB.getSyncItem(item.date);
-              if (nowPending) {
-                return;
-              }
-
-              await this.saveLocalDocument(
-                entry.date,
-                title,
-                entry.mood,
-                contentHtml,
-                contentText,
-                contentJson,
-                masterKey,
-                entry.notebookId,
-              );
-
-              await this.saveLocalMetadata(
-                entry.date,
-                title,
-                contentText,
-                entry.wordCount,
-                entry.mood,
-                entry.updatedAt,
-                masterKey,
-                entry.notebookId,
-              );
-            } catch (e) {
-              failedCount++;
-              console.error(`Failed to sync entry for ${item.date}:`, e);
-            } finally {
-              completedCount++;
-              onProgress?.(completedCount, fetchList.length);
-            }
-          }),
+        const byDate = new Map(
+          bulkEntries.map((entry) => [entry.date, entry]),
         );
+
+        for (const item of chunk) {
+          const entry = byDate.get(item.date);
+          if (!entry) {
+            // Whole batch failed, or the entry vanished between the sync list
+            // and the fetch. Leave it out of the fingerprint so it retries.
+            failedCount++;
+            completedCount++;
+            onProgress?.(completedCount, fetchList.length);
+            continue;
+          }
+
+          try {
+            await this.ingestServerEntry(entry, masterKey);
+          } catch (e) {
+            failedCount++;
+            console.error(`Failed to sync entry for ${item.date}:`, e);
+          } finally {
+            completedCount++;
+            onProgress?.(completedCount, fetchList.length);
+          }
+        }
       }
 
       // Commit the fast-path fingerprint only when every entry synced
@@ -493,6 +558,57 @@ export const diaryCacheService = {
       console.error("Cache synchronization failed:", err);
       return false;
     }
+  },
+
+  /**
+   * Applies one server entry to the local cache: decrypt its fields, re-check
+   * the pending queue, then write the document, metadata and sync index.
+   * Extracted from the pull loop so the bulk path stays readable.
+   */
+  async ingestServerEntry(
+    entry: ServerEntryPayload,
+    masterKey: CryptoKey,
+  ): Promise<void> {
+    const title = await decryptText(entry.title, masterKey);
+    const contentText = await decryptText(entry.contentText, masterKey);
+
+    let contentHtml = "";
+    let contentJson = {};
+    try {
+      contentHtml = await decryptText(entry.contentHtml, masterKey);
+      const contentJsonRaw = await decryptText(entry.contentJson, masterKey);
+      contentJson = JSON.parse(contentJsonRaw);
+    } catch (err) {
+      console.error("Failed to decrypt full document content fields:", err);
+    }
+
+    // Re-check the pending queue immediately before writing: the user may have
+    // started editing this date while the bulk fetch was in flight. Never
+    // clobber a locally-pending edit.
+    const nowPending = await diaryCacheDB.getSyncItem(entry.date);
+    if (nowPending) return;
+
+    await this.saveLocalDocument(
+      entry.date,
+      title,
+      entry.mood,
+      contentHtml,
+      contentText,
+      contentJson,
+      masterKey,
+      entry.notebookId,
+    );
+
+    await this.saveLocalMetadata(
+      entry.date,
+      title,
+      contentText,
+      entry.wordCount,
+      entry.mood,
+      entry.updatedAt,
+      masterKey,
+      entry.notebookId,
+    );
   },
 
   /**
@@ -603,14 +719,15 @@ export const diaryCacheService = {
           const decryptedStr = await decryptText(item.value, masterKey);
           const payload = JSON.parse(decryptedStr);
 
-          // Re-encrypt fields using the server master key representation
-          const serverTitle = await encryptText(payload.title, masterKey);
-          const serverHtml = await encryptText(payload.contentHtml, masterKey);
-          const serverText = await encryptText(payload.contentText, masterKey);
-          const serverJson = await encryptText(
-            JSON.stringify(payload.contentJson),
-            masterKey,
-          );
+          // Re-encrypt fields using the server master key representation.
+          // Four independent AES operations — run them together.
+          const [serverTitle, serverHtml, serverText, serverJson] =
+            await Promise.all([
+              encryptText(payload.title, masterKey),
+              encryptText(payload.contentHtml, masterKey),
+              encryptText(payload.contentText, masterKey),
+              encryptText(JSON.stringify(payload.contentJson), masterKey),
+            ]);
 
           const result = await saveEntryAction(
             {

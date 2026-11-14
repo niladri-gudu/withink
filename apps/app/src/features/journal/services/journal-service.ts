@@ -285,6 +285,18 @@ export class JournalService {
   }
 
   /**
+   * Full entries for a bounded set of dates, used by the zero-knowledge
+   * client's bulk pull. One query instead of one server action per date.
+   */
+  static async getEntriesByIds(
+    userId: string,
+    dates: string[],
+  ): Promise<DecryptedEntry[]> {
+    const entries = await EntryRepository.getEntriesByIds(userId, dates);
+    return entries.map((entry) => this.decryptEntry(entry));
+  }
+
+  /**
    * Deletes a journal entry for a user on a given date.
    */
   static async deleteEntry(userId: string, date: string): Promise<boolean> {

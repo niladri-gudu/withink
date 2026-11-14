@@ -7,7 +7,19 @@ const DB_NAME = "diary_cache";
 const STORE_NAME = "metadata_cache";
 const DOCUMENT_STORE = "document_cache";
 const SYNC_STORE = "sync_queue";
-const DB_VERSION = 2;
+// v3: plaintext sync index. Lets a pull diff local vs. server by date without
+// decrypting every entry. Holds only fields Mongo already stores in plaintext
+// (date, updatedAt, schema version) — never journal content.
+const SYNC_INDEX_STORE = "sync_index";
+const DB_VERSION = 3;
+
+export interface SyncIndexRecord {
+  date: string;
+  /** ISO timestamp; client clock until the push is confirmed by the server. */
+  updatedAt: string;
+  /** Metadata schema version, so a format bump forces a one-time refetch. */
+  v: number;
+}
 
 let dbPromise: Promise<IDBDatabase> | null = null;
 
@@ -42,6 +54,9 @@ function getDB(): Promise<IDBDatabase> {
       }
       if (!db.objectStoreNames.contains(SYNC_STORE)) {
         db.createObjectStore(SYNC_STORE);
+      }
+      if (!db.objectStoreNames.contains(SYNC_INDEX_STORE)) {
+        db.createObjectStore(SYNC_INDEX_STORE);
       }
     };
   });
@@ -293,15 +308,82 @@ export const diaryCacheDB = {
     const db = await getDB();
     return new Promise((resolve, reject) => {
       const transaction = db.transaction(
-        [STORE_NAME, DOCUMENT_STORE, SYNC_STORE],
+        [STORE_NAME, DOCUMENT_STORE, SYNC_STORE, SYNC_INDEX_STORE],
         "readwrite",
       );
       transaction.objectStore(STORE_NAME).clear();
       transaction.objectStore(DOCUMENT_STORE).clear();
       transaction.objectStore(SYNC_STORE).clear();
+      transaction.objectStore(SYNC_INDEX_STORE).clear();
 
       transaction.oncomplete = () => resolve();
       transaction.onerror = () => reject(transaction.error);
     });
+  },
+
+  // Plaintext sync index (date → { updatedAt, v }).
+  async putSyncIndex(record: SyncIndexRecord): Promise<void> {
+    if (typeof window === "undefined") return;
+    const db = await getDB();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(SYNC_INDEX_STORE, "readwrite");
+      const store = transaction.objectStore(SYNC_INDEX_STORE);
+      const request = store.put(record, record.date);
+
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => resolve();
+    });
+  },
+
+  async getAllSyncIndex(): Promise<SyncIndexRecord[]> {
+    try {
+      const db = await getDB();
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction(SYNC_INDEX_STORE, "readonly");
+        const store = transaction.objectStore(SYNC_INDEX_STORE);
+        const request = store.getAll();
+
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => {
+          resolve((request.result as SyncIndexRecord[]) || []);
+        };
+      });
+    } catch (err) {
+      console.error("IndexedDB getAllSyncIndex error:", err);
+      return [];
+    }
+  },
+
+  async getSyncIndex(date: string): Promise<SyncIndexRecord | null> {
+    try {
+      const db = await getDB();
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction(SYNC_INDEX_STORE, "readonly");
+        const store = transaction.objectStore(SYNC_INDEX_STORE);
+        const request = store.get(date);
+
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => resolve((request.result as SyncIndexRecord) || null);
+      });
+    } catch (err) {
+      console.error("IndexedDB getSyncIndex error:", err);
+      return null;
+    }
+  },
+
+  async deleteSyncIndex(date: string): Promise<void> {
+    try {
+      const db = await getDB();
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction(SYNC_INDEX_STORE, "readwrite");
+        const store = transaction.objectStore(SYNC_INDEX_STORE);
+        const request = store.delete(date);
+
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => resolve();
+      });
+    } catch (err) {
+      console.error("IndexedDB deleteSyncIndex error:", err);
+    }
   },
 };

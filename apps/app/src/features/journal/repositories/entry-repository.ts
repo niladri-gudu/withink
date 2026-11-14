@@ -38,6 +38,12 @@ export interface EntryInsightsMeta {
   createdAt: Date;
 }
 
+/** JSON-safe cache shape for `getNotebookUsage` (Map is not serializable). */
+type NotebookUsageCache = [
+  notebookId: string,
+  usage: { count: number; lastWrittenAt: string | null },
+][];
+
 export class EntryRepository {
   // Sentinel stored in Redis for "no entry exists" so empty-day reads are
   // served from cache instead of re-hitting Mongo on every request. Stored
@@ -464,6 +470,16 @@ export class EntryRepository {
   static async getNotebookUsage(
     userId: string,
   ): Promise<Map<string, { count: number; lastWrittenAt: string | null }>> {
+    // This aggregate runs on /entries, /notebooks and the editor route. It is
+    // version-keyed like the other list reads, so any entry write invalidates
+    // it automatically instead of paying a Mongo aggregation per navigation.
+    const version = await this.getUserEntryVersion(userId);
+    const cacheKey = `entries:${userId}:v${version}:notebook-usage`;
+    const cached = await getCachedValue<NotebookUsageCache>(cacheKey);
+    if (cached !== null) {
+      return new Map(cached);
+    }
+
     await connectDB();
     const rows = await (EntryModel as Model<IEntry>).aggregate<{
       _id: string | null;
@@ -493,7 +509,33 @@ export class EntryRepository {
           : null,
       });
     }
+
+    await setCachedValue(
+      cacheKey,
+      Array.from(usage.entries()),
+      LIST_CACHE_TTL_SECONDS,
+    );
     return usage;
+  }
+
+  /**
+   * Fetches the full documents for a bounded set of dates in one query.
+   *
+   * Backs the zero-knowledge sync engine's bulk pull, which used to call the
+   * single-entry action once per stale date (each with its own session, lock
+   * and version lookups). Deliberately uncached: a bulk `$in` over the
+   * primary compound index is one cheap Mongo read.
+   */
+  static async getEntriesByIds(
+    userId: string,
+    dates: string[],
+  ): Promise<IEntry[]> {
+    if (dates.length === 0) return [];
+    await connectDB();
+    const entries = await (EntryModel as any) // eslint-disable-line @typescript-eslint/no-explicit-any
+      .find({ userId, date: { $in: dates } })
+      .lean();
+    return serialize(entries);
   }
 
   /**

@@ -52,6 +52,15 @@ const serverEnvSchema = z.object({
   DODO_PRODUCT_PLUS_YEARLY: z.string().min(1).optional(),
   DODO_PRODUCT_PRO_MONTHLY: z.string().min(1).optional(),
   DODO_PRODUCT_PRO_YEARLY: z.string().min(1).optional(),
+
+  // Web Push (optional). Without VAPID keys the reminders UI reports that
+  // notifications are not configured; the rest of the app is unaffected.
+  NEXT_PUBLIC_VAPID_PUBLIC_KEY: z.string().min(1).optional(),
+  VAPID_PRIVATE_KEY: z.string().min(1).optional(),
+  VAPID_SUBJECT: z.string().min(1).optional(),
+
+  // Bearer secret for /api/cron/notifications. The route returns 503 when unset.
+  CRON_SECRET: z.string().min(1).optional(),
 });
 
 export type ServerEnv = z.infer<typeof serverEnvSchema>;

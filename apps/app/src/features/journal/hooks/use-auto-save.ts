@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
-import { encryptText } from "@/lib/crypto-client";
 import { getLocalDateString } from "@/lib/utils/date";
 import { countWords } from "@/lib/utils/text";
 import { useEncryption } from "@/providers/encryption-provider";
@@ -228,29 +227,10 @@ export function useAutoSave(
       return "locked";
     }
 
-    let titlePayload = payload.title;
-    let htmlPayload = payload.contentHtml;
-    let textPayload = payload.contentText;
-    let jsonPayload: unknown = payload.contentJson;
-
-    if (isClientEncrypted && masterKey) {
-      try {
-        const jsonStr =
-          typeof payload.contentJson === "string"
-            ? payload.contentJson
-            : JSON.stringify(payload.contentJson);
-        titlePayload = await encryptText(payload.title, masterKey);
-        htmlPayload = await encryptText(payload.contentHtml, masterKey);
-        textPayload = await encryptText(payload.contentText, masterKey);
-        jsonPayload = await encryptText(jsonStr, masterKey);
-      } catch (err) {
-        console.error("Auto-save encryption failed:", err);
-        return "error";
-      }
-    }
-
     // Local-first: write to the encrypted local store, then sync to the cloud
     // in the background. The entry is safe the moment it lands locally.
+    // (The encrypted path returns below and encrypts inside the cache/queue
+    // writers, so no field is encrypted twice here.)
     if (isClientEncrypted && masterKey) {
       const savedAt = new Date();
       try {
@@ -271,11 +251,11 @@ export function useAutoSave(
         saveEntryAction(
           {
             date: payload.date,
-            title: titlePayload,
+            title: payload.title,
             mood: payload.mood,
-            contentHtml: htmlPayload,
-            contentText: textPayload,
-            contentJson: jsonPayload,
+            contentHtml: payload.contentHtml,
+            contentText: payload.contentText,
+            contentJson: payload.contentJson,
             wordCount,
             notebookId: payload.notebookId,
           },
@@ -344,6 +324,9 @@ export function useAutoSave(
           if (!unmountedRef.current) {
             setStatus("saved");
             scheduleIdleReset();
+            // Cheap for encrypted accounts now: saveLocalMetadata updated the
+            // in-memory timeline in place, so this refetch slices that array
+            // instead of re-reading and decrypting every IndexedDB record.
             queryClient.invalidateQueries({ queryKey: ["entries"] });
           }
         } else if (outcome === "locked") {

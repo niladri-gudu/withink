@@ -25,11 +25,14 @@ const nextConfig: NextConfig = {
   ],
 
   experimental: {
-    serverMinification: false,
+    // Minify server bundles: smaller cold-start parse cost on Vercel. Next 16
+    // defaults to true; the old explicit `false` only slowed cold starts.
+    serverMinification: true,
     // Cap build workers explicitly: the build script's NEXT_WORKER_CONCURRENCY
     // is no longer read by Next 16, and 15 page-data workers (one per core)
-    // crash the worker processes under memory pressure.
-    cpus: 4,
+    // crash the worker processes under memory pressure. Overridable for
+    // low-memory machines (e.g. NEXT_BUILD_CPUS=1).
+    cpus: Number(process.env.NEXT_BUILD_CPUS ?? 4),
   },
 
   images: {

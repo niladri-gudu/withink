@@ -18,7 +18,28 @@ import {
   JournalService,
   type DecryptedEntry,
 } from "../services/journal-service";
-import { saveEntrySchema } from "../validation/entry-schema";
+import { dateStringSchema, saveEntrySchema } from "../validation/entry-schema";
+
+/**
+ * Resolves a client-supplied notebook id to a filing target the user owns.
+ * Unknown/foreign ids fall back to the default notebook so an offline save
+ * never fails.
+ */
+async function resolveFilingTarget(
+  userId: string,
+  notebookId: string,
+): Promise<string> {
+  const owned = await NotebookRepository.getById(userId, notebookId);
+  return owned ? owned.id : await NotebooksService.getDefaultNotebookId(userId);
+}
+
+/** Cap on dates per bulk pull: bounds the Mongo `$in` set and payload size. */
+const BULK_FETCH_LIMIT = 50;
+
+const bulkDatesSchema = z
+  .array(dateStringSchema)
+  .min(1)
+  .max(BULK_FETCH_LIMIT);
 
 export async function getEntryAction(
   date: string,
@@ -65,11 +86,24 @@ export async function saveEntryAction(
     // 1. Validate fields using Zod
     const validated = saveEntrySchema.parse(inputData);
 
-    // 2. Zero-knowledge accounts may only persist ciphertext. The client is
-    //    untrusted: a stale pre-migration tab or a crafted action call must
-    //    never be able to embed plaintext into an encrypted journal.
-    const encryptionSettings =
-      await EncryptionSettingsRepository.getSettings(session.user.id);
+    // 2-4. Encryption settings, plan entitlements and the filing target are
+    // independent reads. Resolve them in parallel instead of stacking three
+    // sequential round-trips on every autosave.
+    const [encryptionSettings, entitlements, filingTarget] = await Promise.all([
+      EncryptionSettingsRepository.getSettings(session.user.id),
+      // Plan's backfill window (Free 14d · Plus 90d · Pro ∞).
+      EntitlementsService.getEntitlements(session.user.id),
+      // Never trust a client notebook id: owned ids pass through, unknown or
+      // foreign ids coerce to the default notebook so an offline save can
+      // never fail (or land cross-tenant).
+      validated.notebookId
+        ? resolveFilingTarget(session.user.id, validated.notebookId)
+        : Promise.resolve(undefined),
+    ]);
+
+    // Zero-knowledge accounts may only persist ciphertext. The client is
+    // untrusted: a stale pre-migration tab or a crafted action call must
+    // never be able to embed plaintext into an encrypted journal.
     if (encryptionSettings?.isClientEncrypted) {
       const contentFields = [
         ["title", validated.title],
@@ -84,25 +118,6 @@ export async function saveEntryAction(
           );
         }
       }
-    }
-
-    // 3. Resolve the plan's backfill window (Free 14d · Plus 90d · Pro ∞)
-    const entitlements = await EntitlementsService.getEntitlements(
-      session.user.id,
-    );
-
-    // 3. Resolve the filing target server-side — never trust a client id.
-    //    Owned ids pass through; unknown/foreign ids coerce to the default
-    //    notebook so an offline save can never fail (or land cross-tenant).
-    let filingTarget: string | undefined;
-    if (validated.notebookId) {
-      const owned = await NotebookRepository.getById(
-        session.user.id,
-        validated.notebookId,
-      );
-      filingTarget = owned
-        ? owned.id
-        : await NotebooksService.getDefaultNotebookId(session.user.id);
     }
 
     // 4. Delegate to JournalService
@@ -126,6 +141,40 @@ export async function saveEntryAction(
 
     return { success: true, data: entry };
   } catch (err) {
+    const appError = handleError(err);
+    return { success: false, error: appError.safeMessage };
+  }
+}
+
+/**
+ * Bulk entry fetch for the zero-knowledge sync engine. Replaces the previous
+ * one-server-action-per-date pull with one query for up to 50 dates. The
+ * caller chunks larger dirty sets; `$in` is bounded by the schema above.
+ */
+export async function getEntriesBulkAction(
+  dates: string[],
+): Promise<{ success: boolean; data?: DecryptedEntry[]; error?: string }> {
+  try {
+    const session = await getRequestSession();
+    if (!session) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const unlocked = await LockService.isSessionUnlocked(session.user.id);
+    if (!unlocked) {
+      return { success: false, error: "Locked" };
+    }
+
+    const parsed = bulkDatesSchema.parse(dates);
+    const entries = await JournalService.getEntriesByIds(
+      session.user.id,
+      parsed,
+    );
+    return { success: true, data: entries };
+  } catch (err) {
+    if (err instanceof z.ZodError) {
+      return { success: false, error: "Invalid request" };
+    }
     const appError = handleError(err);
     return { success: false, error: appError.safeMessage };
   }

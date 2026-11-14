@@ -9,6 +9,7 @@ import { Select } from "@withink/ui/select";
 import { cn } from "@withink/utils";
 import {
   AlertTriangle,
+  Bell,
   Camera,
   Check,
   CreditCard,
@@ -41,6 +42,7 @@ import {
 } from "@/features/lock/actions/lock-actions";
 import { LockChangeDialog } from "@/features/lock/components/lock-change-dialog";
 import { LockSetupOnboarding } from "@/features/lock/components/lock-setup-onboarding";
+import { NotificationSettings } from "@/features/notifications/components/notification-settings";
 import { InstallAppCard } from "@/features/pwa/components/install-app-card";
 import { AppearanceSettings } from "@/features/settings/appearance/appearance-settings";
 import { DeleteAccountDialog } from "@/features/settings/components/delete-account-dialog";
@@ -569,6 +571,15 @@ export function SettingsShell({ initialUser, plan }: SettingsShellProps) {
               </div>
             </div>
           </div>
+        </SettingsGroup>
+
+        {/* ---- Reminders ---- */}
+        <SettingsGroup
+          icon={Bell}
+          title="Reminders"
+          description="A gentle nudge to write, and a note when a letter arrives."
+        >
+          <NotificationSettings />
         </SettingsGroup>
 
         {/* ---- Install app ---- */}

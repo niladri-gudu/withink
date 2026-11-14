@@ -2,14 +2,18 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { ROUTES } from "@/constants/routes";
-import { getRequestSession } from "@/lib/request-cache";
+import {
+  getRequestCalendarEntries,
+  getRequestEncryptionSettings,
+  getRequestEntitlements,
+  getRequestEntryStats,
+  getRequestNotebooks,
+  getRequestSession,
+} from "@/lib/request-cache";
 import { computeCurrentStreak } from "@/lib/utils/date";
 import { getViewerToday } from "@/lib/viewer-today";
-import { EntitlementsService } from "@/features/billing/services/entitlements-service";
-import { EncryptionSettingsRepository } from "@/features/encryption/repositories/encryption-settings-repository";
 import { EntriesPageShell } from "@/features/journal/components/entries-page-shell";
 import { JournalService } from "@/features/journal/services/journal-service";
-import { NotebooksService } from "@/features/notebooks/services/notebook-service";
 
 export const metadata: Metadata = {
   title: "Reflections Timeline",
@@ -45,12 +49,15 @@ export default async function EntriesPage({ searchParams }: EntriesPageProps) {
     notebooks,
   ] = await Promise.all([
     JournalService.getEntriesPage(session.user.id, 1, 5, { today }),
-    JournalService.getEntryStats(session.user.id),
-    JournalService.getCalendarEntries(session.user.id),
-    EncryptionSettingsRepository.getSettings(session.user.id),
-    EntitlementsService.getEntitlements(session.user.id),
-    NotebooksService.listNotebooks(session.user.id),
+    getRequestEntryStats(session.user.id),
+    getRequestCalendarEntries(session.user.id),
+    // Memoized per request: the app layout already read the same settings.
+    getRequestEncryptionSettings(session.user.id),
+    getRequestEntitlements(session.user.id),
+    getRequestNotebooks(session.user.id),
   ]);
+
+  const accountEncrypted = !!encryptionSettings?.isClientEncrypted;
 
   // 3. Compute current streak from the calendar's date list (sorted desc).
   const dates = calendarEntries.map((entry) => entry.date);
@@ -74,12 +81,14 @@ export default async function EntriesPage({ searchParams }: EntriesPageProps) {
 
   return (
     <EntriesPageShell
-      initialEntries={entriesData.entries}
-      initialTotal={entriesData.total}
+      // ZK accounts decrypt the timeline locally and never read these server
+      // rows (they are ciphertext), so don't ship them through the RSC payload.
+      initialEntries={accountEncrypted ? [] : entriesData.entries}
+      initialTotal={accountEncrypted ? 0 : entriesData.total}
       initialCalendarEntries={calendarEntries}
       initialStreakData={streakData}
       localToday={today}
-      accountEncrypted={!!encryptionSettings?.isClientEncrypted}
+      accountEncrypted={accountEncrypted}
       backfillDays={entitlements.backfillDays}
       notebooks={notebooks.map((notebook) => ({
         id: notebook.id,

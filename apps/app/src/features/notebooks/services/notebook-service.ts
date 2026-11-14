@@ -6,7 +6,10 @@ import type { ResolvedPlan } from "@/features/billing/config/plans";
 import { EntitlementsService } from "@/features/billing/services/entitlements-service";
 import { EntryRepository } from "@/features/journal/repositories/entry-repository";
 
-import { NotebookRepository } from "../repositories/notebook-repository";
+import {
+  NotebookRepository,
+  type NotebookRecord,
+} from "../repositories/notebook-repository";
 import { normalizeNotebookName } from "../validation/notebook-schema";
 
 /** Name of the lazily-bootstrapped first notebook. */
@@ -52,7 +55,7 @@ export class NotebooksService {
    * indexed find; the backfill updateMany is a no-op once all rows are
    * claimed (matched via the {userId, notebookId} compound index).
    */
-  static async ensureBootstrapped(userId: string): Promise<void> {
+  static async ensureBootstrapped(userId: string): Promise<NotebookRecord[]> {
     let notebooks = await NotebookRepository.listByUserId(userId);
 
     if (notebooks.length === 0) {
@@ -70,10 +73,15 @@ export class NotebooksService {
     const oldest = notebooks[0];
     if (oldest && !notebooks.some((n) => n.isDefault)) {
       await NotebookRepository.setDefault(userId, oldest.id);
+      // Reflect the promotion locally so callers don't need a second read.
+      notebooks = notebooks.map((notebook) => ({
+        ...notebook,
+        isDefault: notebook.id === oldest.id,
+      }));
     }
 
     const target = notebooks.find((n) => n.isDefault) ?? notebooks[0];
-    if (!target) return;
+    if (!target) return notebooks;
 
     const moved = await EntryRepository.backfillNullNotebooks(
       userId,
@@ -86,20 +94,18 @@ export class NotebooksService {
       // and is sufficient, since filing never alters insights data.
       await EntryRepository.bumpUserEntryVersion(userId);
     }
+
+    // Callers (listNotebooks/getDefaultNotebookId) reuse this read instead of
+    // issuing their own `listByUserId` — one indexed find per request.
+    return notebooks;
   }
 
   /** The default notebook id, bootstrapping on first use. Never null. */
   static async getDefaultNotebookId(userId: string): Promise<string> {
-    await this.ensureBootstrapped(userId);
+    const notebooks = await this.ensureBootstrapped(userId);
 
-    const def = await NotebookRepository.getDefault(userId);
+    const def = notebooks.find((n) => n.isDefault) ?? notebooks[0];
     if (def) return def.id;
-
-    const all = await NotebookRepository.listByUserId(userId);
-    if (all[0]) {
-      await NotebookRepository.setDefault(userId, all[0].id);
-      return all[0].id;
-    }
 
     const created = await NotebookRepository.create(
       userId,
@@ -111,12 +117,10 @@ export class NotebooksService {
 
   /** All notebooks with usage stats, default and oldest first. */
   static async listNotebooks(userId: string): Promise<NotebookSummary[]> {
-    await this.ensureBootstrapped(userId);
-
-    const [notebooks, usage] = await Promise.all([
-      NotebookRepository.listByUserId(userId),
-      EntryRepository.getNotebookUsage(userId),
-    ]);
+    // ensureBootstrapped returns the rows it already read, so this is one
+    // `listByUserId` instead of the previous two.
+    const notebooks = await this.ensureBootstrapped(userId);
+    const usage = await EntryRepository.getNotebookUsage(userId);
 
     return notebooks.map((notebook) => {
       const used = usage.get(notebook.id);
