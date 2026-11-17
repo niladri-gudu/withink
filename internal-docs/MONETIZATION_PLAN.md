@@ -1,8 +1,13 @@
 # Withink Monetization Plan
 
-Version: 1.0
-Status: Approved Strategy → Implementation Pending
+Version: 1.1
+Status: Revised launch posture → local-first pricing
 Owner: Product
+
+> **v1.1 (2026-11-15):** Free is now local-first; paid is sync, backup, and
+> scale. Adds INR pricing, a capped founding offer, and an explicit
+> prerequisite: the local-first refactor must land before the v1.1
+> entitlements replace the v1.0 server-backed gates.
 
 ---
 
@@ -20,31 +25,42 @@ Guiding rules (non-negotiable):
   writing, search, tags, basic export stay free.
 - Nothing a user created under a higher tier becomes inaccessible on
   downgrade (grandfathering) — only new actions are gated.
+- Free is local-first: the journal works fully on-device. Cloud sync,
+  automatic backup, and cloud media are the paid value.
 
 ---
 
 ## 2. Final Pricing Matrix
 
-| Feature | Free $0 | Plus $4.99/mo · $39/yr | Pro $9.99/mo · $79/yr | Lifetime ~$199 once |
-|---|---|---|---|---|
-| Entries & words | Unlimited | Unlimited | Unlimited | Unlimited |
-| Read & edit past entries | Anytime | Anytime | Anytime | Anytime |
-| Backfill missed days | 14 days | 90 days | Unlimited | Unlimited |
-| Notebooks | 1 | 3 | 10 | 10 |
-| Active devices | 1 at a time* | 3 | Unlimited | Unlimited |
-| Photo storage | 100MB | 10GB | 50GB | 50GB |
-| Themes & typography (fast-follow) | Standard | All curated styles | Curated custom accents & fonts | Same as Pro |
-| Reminders & weekly digest (later) | — | ✓ | ✓ | ✓ |
-| PDF & book export (later) | — | Standard PDF | Custom layouts | Same as Pro |
-| Letters to future self | — | 3 active | Unlimited | Unlimited |
-| Voice notes, E2EE audio (later) | — | — | ✓ | ✓ |
-| Priority support & early betas | — | — | ✓ | ✓ |
+Model: **Free forever, on your device. Pay for sync, backup, and scale.**
 
-\* Signing in on a new device automatically signs out the oldest session.
-Full cloud sync and backup included on every plan.
+| Feature | Free $0 / ₹0 | Plus $4.99/mo · $39/yr<br>₹249/mo · ₹1,999/yr | Pro $9.99/mo · $79/yr<br>₹499/mo · ₹3,999/yr |
+|---|---|---|---|
+| Entries & words | Unlimited | Unlimited | Unlimited |
+| Read & edit past entries | Anytime | Anytime | Anytime |
+| Offline / local-first use | Source of truth | Yes | Yes |
+| Cloud sync | — (local only) | Up to 4 devices | Unlimited devices |
+| Automatic encrypted backup | Manual export only | Yes | Yes |
+| Backfill missed days | 14 days | 90 days | Unlimited |
+| Notebooks | 1 | 3 | 10 |
+| Cloud photo storage | — (device storage) | 10 GB | 50 GB |
+| Themes & typography | Standard | All curated styles | Curated + fonts/accents |
+| Letters to future self | 1 active | 3 active | Unlimited |
+| Reminders & weekly digest | — | ✓ | ✓ |
+| PDF & book export | — | Standard PDF | Custom layouts |
+| Voice notes, E2EE audio | — | — | ✓ |
+| Priority support & early betas | — | — | ✓ |
 
-Lifetime = Pro forever, plus cosmetic perks (Founding Member badge,
-supporters page opt-in). No storage delta over Pro (margin protection).
+**Annual is the default offer** (~⅓ off; "2 months free"). Monthly is the
+convenience option. Add a **14-day money-back guarantee**.
+
+**Founding offer (first 50 users):** $49/yr locked for life (Pro features) or
+₹2,999/yr. Optional cash injection: **$99 lifetime for the first 25** only.
+Never re-run a lifetime offer after the cap.
+
+**Free-tier promise:** unlimited entries/words, zero-knowledge encryption,
+diary lock, offline writing, search, and **manual encrypted export/import**
+stay free forever. Security and data ownership are never gated.
 
 **Tier decision (2026-08-26): Notebooks are capped 1 / 3 / 10 — not
 unlimited.** Entries and words are already unlimited on every tier, so a
@@ -53,17 +69,39 @@ sees a calm informational dialog (nothing to sell), Free/Plus see the
 standard upgrade paywall. Grandfathering is unchanged: existing notebooks
 stay fully usable on downgrade; only creation is gated.
 
-**Launch decision (2026-08-26): Lifetime is deferred to a fast-follow.**
-Launch scope is the three subscription products only
-(`plus-monthly`, `plus-yearly`, `pro-monthly`, `pro-yearly`). The one-time
-purchase path, `lifetime` account flag, and Founding Member UI were removed
-before any real sale, so no grandfathering or migration applies. Re-adding it
-later means: a Dodo one-time product + env id, the webhook lifetime branch,
-and a settings card state.
+**Lifetime is still deferred as a standing plan.** The only lifetime path at
+launch is the capped founding offer above. The one-time purchase path and
+`lifetime` account flag stay out of the codebase until a real, capped
+founding batch exists. Re-adding it means: a Dodo one-time product + env id,
+the webhook lifetime branch, and a settings card state.
 
 Payments: Dodo Payments (merchant of record — handles global tax).
 Products at launch: `plus-monthly`, `plus-yearly`, `pro-monthly`,
-`pro-yearly`.
+`pro-yearly`. INR pricing is PPP-adjusted (Plus ₹249/mo · ₹1,999/yr,
+Pro ₹499/mo · ₹3,999/yr) and auto-selected by locale where Dodo supports it.
+
+**Engineering note:** `apps/app/src/features/billing/config/plans.ts` still
+holds the v1.0 server-backed entitlements (Free: 100 MB media, 1 session,
+0 letters). Do not change it until the local-first mode lands; the matrix
+above is the spec for that change.
+
+### 2.1 Local-first model (why the gates change)
+
+- **Free is the app**: an installable PWA whose source of truth is
+  IndexedDB/device storage. It works with no account, no network, and no cold
+  start. Manual encrypted export is the backup path.
+- **Paid is the safety net**: automatic E2E cloud backup, sync across devices,
+  and cloud media. This is the peace-of-mind purchase.
+- **Devices**: Free is not device-limited (each device is local). Plus limits
+  *synced* devices to 4; Pro is unlimited.
+- **Media**: Free media lives on the device; paid tiers add cloud media.
+- **Data loss**: because Free is local-only, the app must (a) request
+  persistent storage, (b) nudge manual encrypted export, and (c) support
+  import. A journal that can silently disappear is not shippable.
+
+This model is only honest once the local-first refactor removes server reads
+from the render path (see §8 Phase E). Until then, the current server-backed
+behavior and v1.0 entitlement values stand.
 
 ---
 
@@ -144,6 +182,11 @@ export type PaidPlan = "plus" | "pro";
 export type ResolvedPlan = PaidPlan | "free";
 ```
 
+> Target v1.1 values (after Phases E/F): Free has no cloud sync, unlimited
+> local devices, and 1 letter; Plus has 4 synced devices and 10 GB cloud
+> media; Pro is unlimited. Until then, `plans.ts` keeps the v1.0
+> server-backed values.
+
 ---
 
 ## 6. Gate Wirings (Launch)
@@ -169,16 +212,34 @@ export type ResolvedPlan = PaidPlan | "free";
 - Over-quota upload → 402-style error payload → `UpgradeDialog`.
 - Grandfathering: existing over-quota users can still view/delete; only
   new uploads are blocked (current behavior, preserved).
+- **v1.1:** the quota becomes **cloud media** only. Once local-first ships,
+  Free photos live on the device and are bounded by device storage, not a
+  server quota; Plus/Pro get 10 GB / 50 GB of cloud media.
 
 ### Gate #3 — Concurrent sessions (soft-kick)
 - On session creation (Better Auth database hook on session create):
   count active sessions for user; while count > `maxSessions`, delete the
   oldest sessions (FIFO).
 - Pro/Lifetime: skip entirely.
+- **v1.1:** this becomes a **synced-device cap**, not a signed-in-session
+  cap. Free is not device-limited (each device is local); Plus allows 4
+  synced devices; Pro is unlimited. Ships with the local-first refactor.
 - Best-effort courtesy email via Resend: "You signed in on a new device."
 - Verify existing password-reset flow already clears all sessions.
 - Edge: offline pending sync on a revoked device flushes on next unlock
   (existing diary-password re-unlock path handles this — no new work).
+
+### Gate #4 — Letter slots
+- Free: 1 active (undelivered) letter — a taste of the emotional feature.
+  Plus: 3. Pro: unlimited. Only undelivered letters count (grandfathering-
+  native), matching the shipped behavior.
+
+### Gate #5 — Cloud sync entitlement
+- Free: none. The app is local-only; manual encrypted export is the backup.
+- Plus: automatic E2E cloud backup + sync up to 4 devices.
+- Pro: unlimited synced devices.
+- This gate ships only with the local-first refactor (§8 Phase E); until
+  then the current server-backed 1/3/∞ session behavior stands.
 
 ---
 
@@ -234,12 +295,23 @@ page. Full purchase → entitlement → gate flow in Dodo test mode.
 webhook replay drill, `pnpm typecheck` → `lint` → focused `vitest` →
 `build`, update `PROJECT_STATE.md`.
 
+**Phase E — Local-first mode** (prerequisite for v1.1 gates): static app
+shell, local unlock gate, routes read IndexedDB first, background-only sync,
+persistent-storage + encrypted export/import UX. This is also the performance
+fix: no server read on the render path, so no cold start in front of the UI.
+
+**Phase F — Pricing v1.1**: update `plans.ts` (Free: no cloud sync, unlimited
+local devices, 1 letter; Plus: 4 synced devices, 10 GB cloud media; Pro:
+unlimited), add INR Dodo products + the capped founding offer, update the
+pricing page copy and guarantee, and swap the "cloud journal" framing for
+"local-first, pay for sync/backup."
+
 Definition of Done follows internal-docs/CLAUDE.md (types, lint, build,
 a11y, responsive, tests, no TODOs, docs updated).
 
 ---
 
-## 9. Open Decisions (default chosen; veto before Phase C)
+## 9. Open Decisions (default chosen; veto before Phases C/F)
 
 1. Downgrade timing: webhook-cancel downgrades immediately; extra devices
    die by natural soft-kick (no mass revocation). Default: yes.
@@ -247,6 +319,13 @@ a11y, responsive, tests, no TODOs, docs updated).
    settings; fallback = contact flow. Default: portal if available.
 3. Lifetime fulfillment: webhook-only (no license keys) for v1.
    Default: yes.
+4. Free device semantics: unlimited local devices, no sync (default) vs a
+   small synced-device allowance. Default: unlimited local, no sync.
+5. Does Free require an account? Default: no — an account is required only
+   for sync/billing. This removes signup friction from the free experience.
+6. Founding offer shape: $49/yr locked for life, cap 50 (default) vs $99
+   lifetime, cap 25. Default: locked annual, no standing lifetime.
+7. INR pricing: auto-detect locale; Plus ₹1,999/yr, Pro ₹3,999/yr.
 
 ---
 
@@ -264,3 +343,26 @@ PDF/book export → reminders + weekly digest (needs scheduler infra).
 Marketing tail: replace the deliberately-omitted pricing copy on the docs
 landing ("pricing undecided" note in `.impeccable/surfaces/apps-docs.md`)
 with real numbers at launch.
+
+---
+
+## 11. Go-to-market (before tuning price)
+
+With zero users, pricing is not the bottleneck; retention is.
+
+1. Ship Phase E so the product is instant and offline-capable.
+2. Recruit 20–50 users from journaling and privacy communities
+   (r/Journaling, r/privacy, r/IndieHackers, Product Hunt, journaling
+   Discords).
+3. Instrument activation (first entry within 24h), D7/D30 retention, and
+   conversion.
+4. Run the capped founding offer for the first cohort.
+5. Ask early users: "What would make this a no-brainer at $39?" Build the
+   answer into Plus.
+
+Trust signals for a paid privacy product: a security page, an explicit "we
+cannot read your entries and do not train AI on them" statement, a guaranteed
+export, and consideration of open-sourcing the client.
+
+Revisit Pro differentiation and any lifetime offer only after retention is
+proven.
