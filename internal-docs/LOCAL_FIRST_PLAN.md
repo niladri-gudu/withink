@@ -169,37 +169,34 @@ against `LocalStore` + `RemoteApi`, not IndexedDB/Server Actions.
 Each phase is independently shippable and reversible. Do not start the next
 until typecheck, lint, focused tests and the production build pass.
 
-### E1 — Unblock the shell (performance-first, smallest change)
+### E1 — Unblock the shell (performance-first, smallest change) — SHIPPED
 
 Goal: the app shell paints immediately; page data streams after.
 
-1. Make `app/(app)/layout.tsx` a **static** component:
-   - Remove `await getRequestSession()`, `getRequestLockSettings`,
-     `getRequestEncryptionSettings`, `LockService.isSessionUnlocked`, and
-     `getServerToday()` from the layout.
-   - Render `<AppShell user={null} …>` with a client `LocalBootstrap` provider
-     that resolves the gate after paint.
-2. Add `providers/local-bootstrap.tsx` (client):
-   - Reads the local `profile` from IndexedDB (create it if missing).
-   - Reads a session hint (a non-httpOnly `withink-session-hint` cookie or
-     `localStorage` written after sign-in) to decide whether to call
-     `getBootstrapAction()`; **the call is post-paint and non-blocking**.
-   - Exposes `{ status: "loading" | "local" | "unlocking" | "ready" | "signed-out", profile }`.
-3. `AppShell` consumes `LocalBootstrap`:
-   - `loading` → neutral shell skeleton (no gate flash).
-   - `signed-out` + accounts required → client `router.replace("/login")`.
-   - `unlocking` → `LockScreen` / `DiaryPasswordUnlockScreen`.
-   - `ready` → children.
-4. Keep `proxy.ts` for a coarse redirect (accounts model unchanged in E1).
-5. Remove the `router.refresh()` calls that only re-render server data
-   (`app-shell.tsx:196,270`, `encryption-provider.tsx:246`); replace with local
-   state + `journalSyncService` triggers.
-6. Fix the proxy gap for `/notebooks`, `/letters`, `/letters/compose`, and the
-   `tab-bar.tsx` render-time date call.
+**Shipped (2026-11-18): Suspense-streamed shell gate.**
 
-**Why first:** this alone removes the blocking server read before the shell
-and is the largest perceived-speed win. Pages can still be RSC in this phase;
-they will stream behind the shell.
+1. `app/(app)/layout.tsx` is now synchronous: it renders
+   `<Suspense fallback={<AppShellSkeleton/>}><AppGate>{children}</AppGate></Suspense>`.
+   `AppGate` keeps the session/lock/encryption awaits, so the shell fallback
+   (`AppShellSkeleton`) paints immediately while the gate resolves.
+2. **Content stays server-gated.** `AppGate` still renders `children` only
+   after `LockService.isSessionUnlocked`, so a locked session never receives
+   page content. A full client bootstrap (rendering children before the gate)
+   was deliberately deferred to E2/E4: it would stream page content before the
+   lock check — safe for ZK ciphertext, not for legacy plaintext.
+3. Fixed `proxy.ts` to protect `/notebooks` and `/letters` (covers
+   `/letters/compose`).
+4. Fixed the `tab-bar.tsx` render-time `getLocalDateString()` hydration risk.
+
+**Deferred to E2/E4 (when the local profile exists):**
+- `LocalBootstrap` client provider + no server read before paint.
+- Remove `router.refresh()` from `app-shell.tsx` / `encryption-provider.tsx`
+  (the server gate still needs the refresh to re-render after unlock).
+- Pages become local-first (`children` no longer await Mongo/Redis).
+
+**Why first:** the shell no longer waits behind a blocking server read, so
+opening the app shows the chrome immediately instead of a blank screen. The
+page data still streams after the gate in this phase.
 
 **Verification:** first paint contains the shell without waiting on
 Mongo/Redis; `x-vercel-id` still `bom1`; network waterfall shows the document

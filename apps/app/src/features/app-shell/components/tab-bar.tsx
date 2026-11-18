@@ -208,11 +208,19 @@ interface MoreSheetProps {
  */
 function MoreSheet({ pathname, user }: MoreSheetProps) {
   const signOut = useSignOut();
-  const todayNote = formatDisplayDate(getLocalDateString(), {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-  });
+  // Computed after mount: the viewer-local date must never be read during the
+  // hydration render (server UTC vs device locale would mismatch).
+  const [todayNote, setTodayNote] = React.useState("");
+  React.useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setTodayNote(
+      formatDisplayDate(getLocalDateString(), {
+        weekday: "long",
+        month: "long",
+        day: "numeric",
+      }),
+    );
+  }, []);
 
   return (
     <SheetContent side="auto" aria-describedby={undefined}>

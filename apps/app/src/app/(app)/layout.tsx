@@ -1,3 +1,5 @@
+import { Suspense } from "react";
+
 import {
   getRequestEncryptionSettings,
   getRequestLockSettings,
@@ -5,6 +7,7 @@ import {
 } from "@/lib/request-cache";
 import { getServerToday } from "@/lib/viewer-today";
 import { AppShell } from "@/features/app-shell/components/app-shell";
+import { AppShellSkeleton } from "@/features/app-shell/components/app-shell-skeleton";
 import { LockedContentPlaceholder } from "@/features/app-shell/components/locked-content-placeholder";
 import { LockService } from "@/features/lock/services/lock-service";
 
@@ -12,15 +15,46 @@ interface AppLayoutProps {
   children: React.ReactNode;
 }
 
-export default async function AppLayout({ children }: AppLayoutProps) {
+interface LockSeed {
+  isLockEnabled: boolean;
+  hasPasscode: boolean;
+  autoLockTimeout: number;
+  lockOnTabHide: boolean;
+}
+
+interface EncryptionSeed {
+  isClientEncrypted: boolean;
+  encryptionSalt: string;
+  verificationCiphertext: string;
+  kdfIterations?: number;
+}
+
+/**
+ * The layout itself is synchronous, so the shell fallback paints immediately.
+ *
+ * Session/lock/encryption resolution happens in `AppGate` behind Suspense.
+ * That removes the single blocking await that previously sat above every
+ * `(app)` route (see `internal-docs/LOCAL_FIRST_PLAN.md` §3) without weakening
+ * the gate: `AppGate` still renders `children` only after the server-side
+ * unlock check, so a locked session never receives page content.
+ */
+export default function AppLayout({ children }: AppLayoutProps) {
+  return (
+    <Suspense fallback={<AppShellSkeleton />}>
+      <AppGate>{children}</AppGate>
+    </Suspense>
+  );
+}
+
+async function AppGate({ children }: AppLayoutProps) {
   const session = await getRequestSession();
 
   // Server-side lock verification: locked sessions never receive page content.
   // The client lock overlay (rendered by AppShell) provides the interactive
   // unlock experience on top of this gate.
   let sessionUnlocked = true;
-  let lockSettings = null;
-  let encryptionSettings = null;
+  let lockSettings: LockSeed | null = null;
+  let encryptionSettings: EncryptionSeed | null = null;
   if (session?.user) {
     const userId = session.user.id;
 

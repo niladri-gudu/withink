@@ -18,6 +18,10 @@ Active work:
 - Shipped: shared `@withink/core` (types, pure logic, crypto/storage/sync
   interfaces) and `@withink/api-client`; `/api/sync/*` HTTP API for the future
   Expo client.
+- Shipped: E1 shell streaming (Suspense fallback paints the chrome while the
+  session/lock gate resolves), proxy protection for `/notebooks` +
+  `/letters`, and the tab-bar hydration fix. Server-side content gating is
+  preserved; the full client bootstrap lands with the local profile in E2/E4.
 - Shipped: Sentry browser SDK deferred off the critical path (root JS
   659 KB → 424 KB); Vercel region moved to `bom1` (Mumbai).
 

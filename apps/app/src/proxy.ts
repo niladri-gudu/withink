@@ -11,6 +11,10 @@ const PROTECTED_ROUTES = [
   "/media",
   "/settings",
   "/feedback",
+  // These three relied only on page-level redirects; include them so the
+  // optimistic cookie gate matches every authenticated surface.
+  "/notebooks",
+  "/letters",
 ];
 
 export async function proxy(request: NextRequest) {
