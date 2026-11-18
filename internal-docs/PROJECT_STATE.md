@@ -2,11 +2,11 @@
 
 # Project State
 
-Last Updated: 2026-11-15
+Last Updated: 2026-11-18
 
-Current Phase: Local-First Refactor (Phase E — planned)
+Current Phase: Local-First Refactor (Phase E — foundation ready)
 
-Current Milestone: Performance pass + local-first/pricing docs (2026-11-15)
+Current Milestone: Shared core + sync API extracted (2026-11-18)
 
 Project Status: 🟢 Release Ready
 
@@ -15,6 +15,9 @@ Active work:
   `MONETIZATION_PLAN.md` §2.1.
 - Phase E implementation plan — see `LOCAL_FIRST_PLAN.md`. Recommended first
   slice is E1 (static shell, no server read before first paint).
+- Shipped: shared `@withink/core` (types, pure logic, crypto/storage/sync
+  interfaces) and `@withink/api-client`; `/api/sync/*` HTTP API for the future
+  Expo client.
 - Shipped: Sentry browser SDK deferred off the critical path (root JS
   659 KB → 424 KB); Vercel region moved to `bom1` (Mumbai).
 

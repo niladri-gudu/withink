@@ -1,5 +1,6 @@
 # Withink Local-First Plan (Phase E)
 
+
 Version: 1.0
 Status: Proposed — awaits approval
 Owner: Product + Engineering
@@ -122,22 +123,44 @@ Existing stores (`metadata_cache`, `document_cache`, `sync_queue`,
 `sync_index`) stay. The `profile` record replaces the server-seeded
 `initialEncryptionSettings` / `initialLockSettings`.
 
-### Shared pure modules (no `server-only`, no `cookies()`)
+### Shared core packages (extracted)
 
-Create `packages/` or `src/lib/local/` modules for logic currently trapped in
-server code:
+`packages/core` (`@withink/core`) and `packages/api-client`
+(`@withink/api-client`) now hold the portable layer. The web app re-exports
+from core so existing imports/tests keep working.
 
-- `today.ts`: `getLocalDateString()`, `clampViewerToday()`, date windows.
-- `streak.ts`: `computeCurrentStreak()` (already in `lib/utils/date`).
-- `insights.ts`: `computeInsights(entries)` extracted from
-  `InsightsService.getInsights` (`features/insights/services/insights-service.ts:62-314`).
-- `flashback.ts`: selection logic from `FlashbackService.getFlashbackForToday`
-  (`features/flashbacks/services/flashback-service.ts:24-134`), minus Redis.
-- `calendar.ts`: month window + day aggregation.
-- `letter-rules.ts` is already pure and portable.
+**`@withink/core` — already extracted:**
 
-Server services keep a thin wrapper so their existing tests and API routes
-still work; the server and client call the same pure functions.
+- `date.ts`: `getLocalDateString`, `addDays`, `computeCurrentStreak`,
+  `backfillWindowStart`, `formatDisplayDate`, `formatNumericDate`.
+- `text.ts`: `countWords`.
+- `ciphertext.ts`: `CLIENT_CIPHERTEXT_PATTERN`, `isClientCiphertext`,
+  `isEncryptedOrEmpty`.
+- `encoding.ts`: `hexToBytes`, `bytesToHex`.
+- `kdf.ts`: iteration policy + `normalizeKdfIterations`.
+- `timeline.ts`: `CachedEntryMetadata`, `buildSearchText`, `createSnippet`,
+  `filterLocalTimeline`.
+- `letters.ts`: delivery/slot/countdown rules.
+- `plans.ts`: `ResolvedPlan`, `Entitlements`, `ENTITLEMENTS`,
+  `freeEntitlements`.
+- `types.ts`: `EncryptionSettings`, `LockSettings`, `LocalProfile`,
+  `NotebookSummary`.
+- `crypto.ts`: `Cipher<TKey>`, `KeyDerivation<TKey>`, `CryptoProvider<TKey>`,
+  `WrappedMasterKey` (adapters stay platform-specific).
+- `storage.ts`: `LocalStore` (IndexedDB on web, SQLite on native).
+- `sync.ts`: `SyncListItem`, `SyncEntryPayload`, `SaveEntryPayload`,
+  `RemoteApi`, `SYNC_BULK_LIMIT`.
+
+**`@withink/api-client` — already extracted:** `createApiClient(options)` with
+`getSyncList`, `getEntries`, `saveEntries`, `saveEntry`, `deleteEntry`,
+`getNotebooks`, plus `ApiError`/`SyncRejectedError`. It talks to the new
+`/api/sync/{manifest,pull,push,delete,notebooks}` routes and accepts auth
+headers (cookie on web, bearer for Expo).
+
+**Still to extract in E2/E3** (kept app-local for now, imported by the web
+client): `insights.ts` (`computeInsights`), `flashback.ts` (selection),
+`calendar.ts` (month aggregation), and the sync engine itself. Write the engine
+against `LocalStore` + `RemoteApi`, not IndexedDB/Server Actions.
 
 ---
 

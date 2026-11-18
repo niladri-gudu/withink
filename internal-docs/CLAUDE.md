@@ -64,10 +64,17 @@ Shared code extracted into a Turborepo workspace. Currently includes:
 - `@withink/typescript-config` — shared TypeScript compiler presets
 - `@withink/ui` — shadcn-style UI kit (Button, Card, Input, Textarea, Skeleton, Tooltip, BrandLoader, ThemeToggle)
 - `@withink/utils` — `cn()` and other pure utilities
+- `@withink/core` — framework-neutral journal domain: date/text/ciphertext
+  helpers, timeline filters, letter rules, plans/entitlements, domain types,
+  and the crypto/storage/sync interfaces
+- `@withink/api-client` — typed fetch client for the versioned sync HTTP API
+  (`/api/sync/*`), shared by web and the future Expo app
 
-Packages ship as source and are consumed via `transpilePackages`; the data layer
-(Mongoose models, repositories, storage, email, auth) remains app-local and can be
-extracted into `packages/` in a future phase.
+Packages ship as source and are consumed via `transpilePackages`. Portable
+journal/sync logic lives in `@withink/core`; the server data layer (Mongoose
+models, repositories, R2, email, auth) remains app-local. Keep new
+client-shared logic free of `server-only`, `cookies()`, DOM, and Next.js
+imports so the Expo app can consume it.
 
 ---
 

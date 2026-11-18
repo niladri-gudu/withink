@@ -11,27 +11,13 @@ import { rateLimit } from "@/server/rate-limit";
 import { EntitlementsService } from "@/features/billing/services/entitlements-service";
 import { EncryptionSettingsRepository } from "@/features/encryption/repositories/encryption-settings-repository";
 import { LockService } from "@/features/lock/services/lock-service";
-import { NotebookRepository } from "@/features/notebooks/repositories/notebook-repository";
-import { NotebooksService } from "@/features/notebooks/services/notebook-service";
 
+import { resolveFilingTarget } from "../services/entry-sync-service";
 import {
   JournalService,
   type DecryptedEntry,
 } from "../services/journal-service";
 import { dateStringSchema, saveEntrySchema } from "../validation/entry-schema";
-
-/**
- * Resolves a client-supplied notebook id to a filing target the user owns.
- * Unknown/foreign ids fall back to the default notebook so an offline save
- * never fails.
- */
-async function resolveFilingTarget(
-  userId: string,
-  notebookId: string,
-): Promise<string> {
-  const owned = await NotebookRepository.getById(userId, notebookId);
-  return owned ? owned.id : await NotebooksService.getDefaultNotebookId(userId);
-}
 
 /** Cap on dates per bulk pull: bounds the Mongo `$in` set and payload size. */
 const BULK_FETCH_LIMIT = 50;

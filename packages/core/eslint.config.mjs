@@ -1,0 +1,8 @@
+import { defineConfig, globalIgnores } from "eslint/config";
+
+import config from "@withink/eslint-config";
+
+export default defineConfig([
+  ...config,
+  globalIgnores([".next/**", "build/**", "coverage/**", "node_modules/**"]),
+]);

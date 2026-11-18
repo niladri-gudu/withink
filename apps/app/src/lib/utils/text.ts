@@ -1,3 +1,2 @@
-export function countWords(text: string): number {
-  return text.trim().split(/\s+/).filter(Boolean).length;
-}
+// Shared word-counting helper (web + native).
+export * from "@withink/core/text";

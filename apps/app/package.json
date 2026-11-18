@@ -32,6 +32,7 @@
     "@tiptap/starter-kit": "^3.27.1",
     "@upstash/redis": "^1.38.0",
     "@vercel/speed-insights": "^2.0.0",
+    "@withink/core": "workspace:*",
     "@withink/theme": "workspace:*",
     "@withink/ui": "workspace:*",
     "@withink/utils": "workspace:*",

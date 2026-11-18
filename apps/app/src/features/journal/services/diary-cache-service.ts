@@ -1,6 +1,13 @@
+import {
+  buildSearchText,
+  createSnippet,
+  filterLocalTimeline,
+  type CachedEntryMetadata,
+  type LocalTimelineFilters,
+} from "@withink/core/timeline";
+
 import { decryptText, encryptText } from "@/lib/crypto-client";
 import { diaryCacheDB } from "@/lib/diary-cache-db";
-import { addDays } from "@/lib/utils/date";
 
 import {
   getEntriesBulkAction,
@@ -8,73 +15,17 @@ import {
   saveEntryAction,
 } from "../actions/entry-actions";
 
-export interface CachedMetadata {
-  date: string;
-  title: string;
-  /** Short preview shown in timeline cards. */
-  snippet: string;
-  /** Full plaintext of the entry, used for local search. */
-  contentText: string;
-  wordCount: number;
-  mood: number | null;
-  /** Notebook filing (v3+). Absent on records written before notebooks. */
-  notebookId?: string;
-  updatedAt: string;
-  /** Schema version so `syncDiaryCache` can re-fetch records written by older code. */
-  v: number;
-  /** Precomputed lowercase search blob (title + full text + date forms) so
-   *  filtering never re-lowercases/re-locale-formats every record per keystroke.
-   *  Absent on records written before this field was added; `filterLocalTimeline`
-   *  falls back to computing it on the fly for those. */
-  searchText?: string;
-}
+/** Local timeline record; shared with the native client via `@withink/core`. */
+export type CachedMetadata = CachedEntryMetadata;
+
+// Re-exported for existing consumers and tests.
+export { filterLocalTimeline };
+export type { LocalTimelineFilters };
 
 // v3: added notebookId (Notebooks fast-follow). Bumping the version makes
 // existing devices re-fetch every metadata record exactly once during the
 // next pull, which backfills the field without a store migration.
 const METADATA_VERSION = 3;
-
-/**
- * Builds the lowercase search blob used by `filterLocalTimeline`. Computed once
- * at save time (not per keystroke) so searching a large journal stays cheap.
- */
-function buildSearchText(
-  date: string,
-  title: string,
-  contentText: string,
-): string {
-  const [year, month, day] = date.split("-").map(Number);
-  let dateForms = "";
-  if (year !== undefined && month !== undefined && day !== undefined) {
-    const dateObj = new Date(year, month - 1, day);
-    dateForms = [
-      dateObj.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      }),
-      dateObj.toLocaleDateString("en-US", {
-        month: "long",
-        day: "numeric",
-        year: "numeric",
-      }),
-    ]
-      .join(" ")
-      .toLowerCase();
-  }
-  return [title, contentText, date, dateForms].join(" ").toLowerCase();
-}
-
-/**
- * Extracts a clean text snippet from content text
- */
-function createSnippet(text: string, maxLength = 240): string {
-  if (!text) return "";
-  const cleaned = text.replace(/\s+/g, " ").trim();
-  return cleaned.length > maxLength
-    ? cleaned.substring(0, maxLength) + "…"
-    : cleaned;
-}
 
 // In-memory cache of the decrypted timeline, keyed by the unlocked CryptoKey
 // reference. Decrypting every record on every search is O(N) crypto work that
@@ -154,76 +105,6 @@ function syncListFingerprint(
 // sync) would otherwise interleave IndexedDB reads/writes and widen every
 // prune/pull race window. Late callers piggyback on the in-flight run.
 let pullInFlight: Promise<boolean> | null = null;
-
-export interface LocalTimelineFilters {
-  moodFilter?: number | "all";
-  timeFilter?: "all" | "week" | "month";
-  search?: string;
-  /** Notebook scope ("all" or a notebook id); unset means all. */
-  notebookFilter?: string;
-  localToday: string;
-}
-
-/**
- * Pure filter over a decrypted local timeline. Extracted from the timeline
- * component so the search/filter behavior is unit-testable.
- *
- * Search matches the FULL entry text (falling back to the snippet for records
- * not yet re-synced to the full-text format), the title, the ISO date, and
- * human-readable date forms ("Jul 1", "July 4, 2026").
- */
-export function filterLocalTimeline(
-  cached: CachedMetadata[],
-  filters: LocalTimelineFilters,
-): CachedMetadata[] {
-  const {
-    moodFilter = "all",
-    timeFilter = "all",
-    search = "",
-    notebookFilter,
-    localToday,
-  } = filters;
-
-  let filtered = cached;
-
-  // Records written before METADATA_VERSION 3 carry no notebookId; they are
-  // excluded from a scoped view until their one-time re-sync backfills it.
-  if (notebookFilter && notebookFilter !== "all") {
-    filtered = filtered.filter((item) => item.notebookId === notebookFilter);
-  }
-
-  if (moodFilter !== "all") {
-    const m = Number(moodFilter);
-    filtered = filtered.filter((item) => item.mood === m);
-  }
-
-  if (timeFilter !== "all") {
-    filtered = filtered.filter((item) => {
-      if (timeFilter === "week") {
-        return item.date >= addDays(localToday, -7) && item.date <= localToday;
-      }
-      if (timeFilter === "month") {
-        return item.date >= addDays(localToday, -30) && item.date <= localToday;
-      }
-      return true;
-    });
-  }
-
-  if (search.trim()) {
-    const queryLower = search.trim().toLowerCase();
-    filtered = filtered.filter((item) => {
-      // Fast path: precomputed lowercase blob written at save time. Records
-      // written before that field existed fall back to computing it inline.
-      const searchText = (
-        item.searchText ||
-        buildSearchText(item.date, item.title, item.contentText || item.snippet)
-      ).toLowerCase();
-      return searchText.includes(queryLower);
-    });
-  }
-
-  return filtered;
-}
 
 export const diaryCacheService = {
   /**
