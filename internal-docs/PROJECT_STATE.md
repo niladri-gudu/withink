@@ -2,13 +2,21 @@
 
 # Project State
 
-Last Updated: 2026-11-02
+Last Updated: 2026-11-15
 
-Current Phase: Post-Themes (Monetization Fast-Follows Advancing)
+Current Phase: Local-First Refactor (Phase E — planned)
 
-Current Milestone: Debloat pass (dead code, deps, duplication) SHIPPED (2026-11-02)
+Current Milestone: Performance pass + local-first/pricing docs (2026-11-15)
 
 Project Status: 🟢 Release Ready
+
+Active work:
+- Monetization v1.1 (local-first: free on-device, paid sync/backup) — see
+  `MONETIZATION_PLAN.md` §2.1.
+- Phase E implementation plan — see `LOCAL_FIRST_PLAN.md`. Recommended first
+  slice is E1 (static shell, no server read before first paint).
+- Shipped: Sentry browser SDK deferred off the critical path (root JS
+  659 KB → 424 KB); Vercel region moved to `bom1` (Mumbai).
 
 ---
 
