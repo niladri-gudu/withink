@@ -3,6 +3,7 @@
 import { useEffect, useState, type ComponentPropsWithoutRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@withink/ui/button";
 import { Plus } from "lucide-react";
 
@@ -14,6 +15,7 @@ import {
   getStreakAndStatsAction,
   type CalendarEntry,
 } from "../actions/entry-actions";
+import { useLocalJournal } from "../hooks/use-local-journal";
 import type { DecryptedEntry } from "../services/journal-service";
 import { EntriesCalendar } from "./entries-calendar";
 import { EntriesControls, type TimeFilter } from "./entries-controls";
@@ -52,10 +54,21 @@ export function EntriesPageShell({
   initialNotebookFilter = "all",
 }: EntriesPageShellProps) {
   const router = useRouter();
-  const [calendarEntries, setCalendarEntries] = useState<CalendarEntry[]>(
-    initialCalendarEntries,
-  );
-  const [streakData, setStreakData] = useState(initialStreakData);
+  const queryClient = useQueryClient();
+
+  // Zero-knowledge accounts derive the calendar/streak from the local
+  // timeline (progressive: cached data first, bulk pull in the background).
+  // Non-ZK accounts keep the server-seeded values.
+  const local = useLocalJournal(localToday);
+  const isLocal = local.isLocal;
+  const [serverCalendarEntries, setServerCalendarEntries] = useState<
+    CalendarEntry[]
+  >(initialCalendarEntries);
+  const [serverStreakData, setServerStreakData] = useState(initialStreakData);
+  const calendarEntries = isLocal
+    ? local.calendarEntries
+    : serverCalendarEntries;
+  const streakData = isLocal ? local.streakData : serverStreakData;
 
   // Search + filters live at the page level so the sticky controls bar can sit
   // above both the calendar (phones) and the timeline in one DOM flow.
@@ -87,6 +100,13 @@ export function EntriesPageShell({
   }, [search]);
 
   const handleEntryDeleted = async () => {
+    if (isLocal) {
+      // The timeline already removed the entry from IndexedDB and its
+      // in-memory cache; recompute the derived calendar/streak from it.
+      await queryClient.invalidateQueries({ queryKey: ["local-journal"] });
+      return;
+    }
+
     // Re-fetch calendar dates and streak stats asynchronously
     const [resDates, resStats] = await Promise.all([
       getCalendarEntriesAction(),
@@ -94,10 +114,10 @@ export function EntriesPageShell({
     ]);
 
     if (resDates.success && resDates.data) {
-      setCalendarEntries(resDates.data);
+      setServerCalendarEntries(resDates.data);
     }
     if (resStats.success && resStats.data) {
-      setStreakData(resStats.data);
+      setServerStreakData(resStats.data);
     }
   };
 

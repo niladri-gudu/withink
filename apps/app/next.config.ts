@@ -17,6 +17,13 @@ const nextConfig: NextConfig = {
 
   typedRoutes: true,
 
+  typescript: {
+    // The in-build type checker is a forked worker that OOMs on low-memory
+    // machines. Vercel/CI keep it on; a constrained local build can opt out
+    // with NEXT_SKIP_BUILD_TYPECHECK=1 and rely on `pnpm typecheck`.
+    ignoreBuildErrors: process.env.NEXT_SKIP_BUILD_TYPECHECK === "1",
+  },
+
   // Internal workspace packages ship as source; transpile them at build time.
   transpilePackages: [
     "@withink/core",

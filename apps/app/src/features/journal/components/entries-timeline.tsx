@@ -214,6 +214,7 @@ export function EntriesTimeline({
         );
         // Invalidate query to trigger visual updates
         queryClient.invalidateQueries({ queryKey: ["entries"] });
+        queryClient.invalidateQueries({ queryKey: ["local-journal"] });
       } catch (err) {
         console.error("Local cache sync error:", err);
       } finally {
@@ -357,6 +358,7 @@ export function EntriesTimeline({
         }
 
         queryClient.invalidateQueries({ queryKey: ["entries"] });
+        queryClient.invalidateQueries({ queryKey: ["local-journal"] });
       } else {
         toast.error(res.error || "Failed to delete entry.");
       }

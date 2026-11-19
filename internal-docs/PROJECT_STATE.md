@@ -22,6 +22,10 @@ Active work:
   session/lock gate resolves), proxy protection for `/notebooks` +
   `/letters`, and the tab-bar hydration fix. Server-side content gating is
   preserved; the full client bootstrap lands with the local profile in E2/E4.
+- Shipped: E2 progressive archive — `/entries` derives calendar/streak from
+  the local timeline for ZK users, skips the entries/stats/calendar server
+  reads, and bulk-pulls missing dates in the background. Dashboard `/` local
+  reads, editor route props, and notebook labels remain.
 - Shipped: Sentry browser SDK deferred off the critical path (root JS
   659 KB → 424 KB); Vercel region moved to `bom1` (Mumbai).
 

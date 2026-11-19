@@ -37,37 +37,42 @@ export default async function EntriesPage({ searchParams }: EntriesPageProps) {
 
   const today = await getViewerToday();
 
-  // 2. Fetch data in parallel on the server. The calendar entries already
-  //    contain the full date list, so derive it from them instead of issuing a
-  //    duplicate getEntryDates round trip.
-  const [
-    entriesData,
-    stats,
-    calendarEntries,
-    encryptionSettings,
-    entitlements,
-    notebooks,
-  ] = await Promise.all([
-    JournalService.getEntriesPage(session.user.id, 1, 5, { today }),
-    getRequestEntryStats(session.user.id),
-    getRequestCalendarEntries(session.user.id),
-    // Memoized per request: the app layout already read the same settings.
-    getRequestEncryptionSettings(session.user.id),
-    getRequestEntitlements(session.user.id),
-    getRequestNotebooks(session.user.id),
-  ]);
-
+  // 2. Resolve the encryption flag first (request-memoized — the app layout
+  //    already read the same settings). ZK accounts read the archive from
+  //    IndexedDB, so the unbounded calendar/stats/entries Mongo reads are
+  //    skipped entirely; non-ZK accounts keep the server path.
+  const encryptionSettings = await getRequestEncryptionSettings(
+    session.user.id,
+  );
   const accountEncrypted = !!encryptionSettings?.isClientEncrypted;
 
+  const [entriesData, stats, calendarEntries, entitlements, notebooks] =
+    await Promise.all([
+      accountEncrypted
+        ? Promise.resolve(null)
+        : JournalService.getEntriesPage(session.user.id, 1, 5, { today }),
+      accountEncrypted
+        ? Promise.resolve(null)
+        : getRequestEntryStats(session.user.id),
+      accountEncrypted
+        ? Promise.resolve(null)
+        : getRequestCalendarEntries(session.user.id),
+      getRequestEntitlements(session.user.id),
+      getRequestNotebooks(session.user.id),
+    ]);
+
+  const calendar = calendarEntries ?? [];
+
   // 3. Compute current streak from the calendar's date list (sorted desc).
-  const dates = calendarEntries.map((entry) => entry.date);
+  //    For ZK accounts the shell derives this from the local timeline.
+  const dates = calendar.map((entry) => entry.date);
   const currentStreak = computeCurrentStreak(dates, today);
 
   const streakData = {
     currentStreak,
     totalEntries: dates.length,
-    totalWords: stats.totalWords,
-    averageWords: stats.averageWords,
+    totalWords: stats?.totalWords ?? 0,
+    averageWords: stats?.averageWords ?? 0,
   };
 
   // The notebook param is honored only when it names a real notebook —
@@ -81,11 +86,11 @@ export default async function EntriesPage({ searchParams }: EntriesPageProps) {
 
   return (
     <EntriesPageShell
-      // ZK accounts decrypt the timeline locally and never read these server
-      // rows (they are ciphertext), so don't ship them through the RSC payload.
-      initialEntries={accountEncrypted ? [] : entriesData.entries}
-      initialTotal={accountEncrypted ? 0 : entriesData.total}
-      initialCalendarEntries={calendarEntries}
+      // ZK accounts read the archive from IndexedDB (the shell derives the
+      // calendar/streak locally), so no server rows are shipped or awaited.
+      initialEntries={entriesData?.entries ?? []}
+      initialTotal={entriesData?.total ?? 0}
+      initialCalendarEntries={calendar}
       initialStreakData={streakData}
       localToday={today}
       accountEncrypted={accountEncrypted}

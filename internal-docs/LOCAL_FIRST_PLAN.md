@@ -208,6 +208,20 @@ finishing before the page data request; locked/unlocked states still work.
 
 Goal: `/`, `/entries`, `/entries/[date]` render from IndexedDB for ZK users.
 
+**Shipped (2026-11-18) — progressive archive:**
+- `/entries` skips `getEntriesPage`, `getEntryStats` and the calendar/date
+  reads for ZK accounts. `useLocalJournal` derives calendar + streak from the
+  local timeline, renders cached data immediately, and runs the existing bulk
+  pull (`syncDiaryCache`) in the background.
+- Non-ZK accounts keep the server-seeded path unchanged.
+- **Migration:** nothing is rewritten server-side; the local cache is derived
+  data. Warm devices render instantly. Cold/incomplete caches render what is
+  local and fill in from the bulk pull; an editor date that isn't cached yet
+  still falls back to the server in `editor-load.ts`.
+- **Still open in E2:** dashboard `/` local reads, the editor route's
+  remaining server props, notebook labels locally, and dropping the last
+  `notebooks`/`entitlements` reads from `/entries`.
+
 1. **`/entries`**:
    - Remove the server `Promise.all` in `entries/page.tsx`.
    - `EntriesPageShell` receives no data props; `EntriesTimeline` already
