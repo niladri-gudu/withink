@@ -24,8 +24,10 @@ Active work:
   preserved; the full client bootstrap lands with the local profile in E2/E4.
 - Shipped: E2 progressive archive — `/entries` derives calendar/streak from
   the local timeline for ZK users, skips the entries/stats/calendar server
-  reads, and bulk-pulls missing dates in the background. Dashboard `/` local
-  reads, editor route props, and notebook labels remain.
+  reads, and bulk-pulls missing dates in the background.
+- Shipped: E2 dashboard hero local reads — today/yesterday + streak come from
+  IndexedDB for ZK; recent reflections/flashback/letters, editor route props,
+  and notebook labels remain.
 - Shipped: Sentry browser SDK deferred off the critical path (root JS
   659 KB → 424 KB); Vercel region moved to `bom1` (Mumbai).
 

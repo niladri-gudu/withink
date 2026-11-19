@@ -218,9 +218,13 @@ Goal: `/`, `/entries`, `/entries/[date]` render from IndexedDB for ZK users.
   data. Warm devices render instantly. Cold/incomplete caches render what is
   local and fill in from the bulk pull; an editor date that isn't cached yet
   still falls back to the server in `editor-load.ts`.
-- **Still open in E2:** dashboard `/` local reads, the editor route's
-  remaining server props, notebook labels locally, and dropping the last
-  `notebooks`/`entitlements` reads from `/entries`.
+- **Dashboard hero (2026-11-18):** today/yesterday and the streak now come
+  from the local timeline for ZK accounts (`DashboardHeroLocal`); the
+  `getEntryForDate`/`getEntryDates` server reads are skipped. Recent
+  reflections, the flashback, and letters remain server-backed for now.
+- **Still open in E2:** dashboard recent reflections/flashback local reads,
+  the editor route's remaining server props, notebook labels locally, and
+  dropping the last `notebooks`/`entitlements` reads from `/entries`.
 
 1. **`/entries`**:
    - Remove the server `Promise.all` in `entries/page.tsx`.

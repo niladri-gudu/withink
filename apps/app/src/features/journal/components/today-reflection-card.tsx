@@ -21,11 +21,14 @@ import type { DecryptedEntry } from "../services/journal-service";
 interface TodayReflectionCardProps {
   entry: DecryptedEntry | null;
   today: string;
+  /** Entry fields are already plaintext (local-first path); skip decrypting. */
+  plaintext?: boolean;
 }
 
 export function TodayReflectionCard({
   entry,
   today,
+  plaintext = false,
 }: TodayReflectionCardProps) {
   const { isClientEncrypted, masterKey } = useEncryption();
   const [decryptedTitle, setDecryptedTitle] = useState<string | null>(null);
@@ -35,6 +38,13 @@ export function TodayReflectionCard({
   useEffect(() => {
     const decrypt = async () => {
       if (!entry) return;
+      // Local-first: fields already came from the decrypted IndexedDB cache.
+      if (plaintext) {
+        setDecryptedTitle(entry.title || "Untitled Reflection");
+        setDecryptedText(entry.contentText || "");
+        setDecryptedHtml(entry.contentHtml || "");
+        return;
+      }
       if (isClientEncrypted && masterKey) {
         const title = await safeDecryptText(entry.title || "", masterKey);
         const text = await safeDecryptText(entry.contentText || "", masterKey);
@@ -49,7 +59,7 @@ export function TodayReflectionCard({
       }
     };
     decrypt();
-  }, [entry, isClientEncrypted, masterKey]);
+  }, [entry, plaintext, isClientEncrypted, masterKey]);
 
   if (!entry) {
     return (
