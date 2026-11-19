@@ -51,6 +51,13 @@ Model: **Free forever, on your device. Pay for sync, backup, and scale.**
 | Voice notes, E2EE audio | — | — | ✓ |
 | Priority support & early betas | — | — | ✓ |
 
+**Sync behavior is identical on both paid tiers.** Plus and Pro both include
+automatic encrypted backup, continuous background sync, and a manual
+**"Sync now"** action. The tiers differ on device count, cloud media, letters,
+and extras — never on whether backups happen automatically. (A
+daily-vs-continuous cadence split was considered and rejected: gating a
+safety feature behind Pro monetizes forgetfulness and risks a lost journal.)
+
 **Annual is the default offer** (~⅓ off; "2 months free"). Monthly is the
 convenience option. Add a **14-day money-back guarantee**.
 
