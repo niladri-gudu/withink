@@ -1,12 +1,10 @@
 "use client";
 
 import * as React from "react";
-
 import type { CachedEntryMetadata } from "@withink/core/timeline";
 
 import { useLocalJournal } from "../hooks/use-local-journal";
 import type { DecryptedEntry } from "../services/journal-service";
-
 import { DashboardHeroSkeleton } from "./dashboard-hero-skeleton";
 import { StreakMarginNote } from "./streak-margin-note";
 import { TodayReflectionCard } from "./today-reflection-card";

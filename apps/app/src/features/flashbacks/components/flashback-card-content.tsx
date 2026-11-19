@@ -24,12 +24,15 @@ interface DashboardFlashbackCardProps {
   entry: DecryptedEntry | null;
   label: string;
   today: string;
+  /** Entry fields are already plaintext (local-first path); skip decrypting. */
+  plaintext?: boolean;
 }
 
 export function DashboardFlashbackCard({
   entry,
   label,
   today,
+  plaintext = false,
 }: DashboardFlashbackCardProps) {
   const { isClientEncrypted, masterKey } = useEncryption();
   const [decryptedTitle, setDecryptedTitle] = React.useState<string | null>(
@@ -40,6 +43,12 @@ export function DashboardFlashbackCard({
   React.useEffect(() => {
     const decrypt = async () => {
       if (!entry) return;
+      // Local-first: fields already came from the decrypted IndexedDB cache.
+      if (plaintext) {
+        setDecryptedTitle(entry.title || "Untitled Reflection");
+        setDecryptedText(entry.contentText || "");
+        return;
+      }
       if (isClientEncrypted && masterKey) {
         const title = await safeDecryptText(entry.title || "", masterKey);
         const text = await safeDecryptText(entry.contentText || "", masterKey);
@@ -51,7 +60,7 @@ export function DashboardFlashbackCard({
       }
     };
     decrypt();
-  }, [entry, isClientEncrypted, masterKey]);
+  }, [entry, plaintext, isClientEncrypted, masterKey]);
 
   if (!entry) {
     return (

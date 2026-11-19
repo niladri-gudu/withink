@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Route } from "next";
 import Link from "next/link";
 import { Button } from "@withink/ui/button";
@@ -20,7 +20,7 @@ import { safeDecryptText } from "@/lib/crypto-client";
 import { formatDisplayDate } from "@/lib/utils/date";
 import { useEncryption } from "@/providers/encryption-provider";
 
-import type { DecryptedEntry } from "../services/journal-service";
+import { useLocalJournal } from "../hooks/use-local-journal";
 
 const moodIcons: Record<number, React.ComponentType<{ className?: string }>> = {
   1: Angry,
@@ -38,24 +38,39 @@ const moodColors: Record<number, string> = {
   5: "text-mood-5 bg-mood-5-bg border-mood-5-border",
 };
 
+/** Only the fields this list renders; `DecryptedEntry` is assignable. */
+interface ReflectionItem {
+  date: string;
+  title: string;
+  mood: number | null;
+}
+
 interface RecentReflectionsListProps {
-  initialEntries: DecryptedEntry[];
+  initialEntries: ReflectionItem[];
   today: string;
   /** Whether the account uses client-side encryption. Server-derived so the
    *  SSR HTML renders skeletons instead of ciphertext blobs for ZK users. */
   encrypted?: boolean;
+  /** Read the latest entries from the local-first timeline (ZK only). */
+  local?: boolean;
 }
 
 export function RecentReflectionsList({
   initialEntries,
   today,
   encrypted = false,
+  local = false,
 }: RecentReflectionsListProps) {
   const { isClientEncrypted, masterKey } = useEncryption();
-  const [entries, setEntries] = useState<DecryptedEntry[]>(initialEntries);
+  const localJournal = useLocalJournal(today);
+  const useLocal = local && localJournal.isLocal;
+
+  const [decryptedEntries, setDecryptedEntries] =
+    useState<ReflectionItem[]>(initialEntries);
   const [ready, setReady] = useState(!encrypted);
 
   useEffect(() => {
+    if (useLocal) return;
     let cancelled = false;
     const decryptEntries = async () => {
       if (isClientEncrypted || encrypted) {
@@ -63,22 +78,20 @@ export function RecentReflectionsList({
           if (!cancelled) setReady(false);
           return;
         }
-        // Titles decrypt independently; run them together instead of serially.
-        const decrypted = await Promise.all(
-          initialEntries.map(async (entry) => {
-            const title = await safeDecryptText(entry.title || "", masterKey);
-            return {
-              ...entry,
-              title: title || "Untitled Entry",
-            };
-          }),
-        );
+        const decrypted: ReflectionItem[] = [];
+        for (const entry of initialEntries) {
+          const title = await safeDecryptText(entry.title || "", masterKey);
+          decrypted.push({
+            ...entry,
+            title: title || "Untitled Entry",
+          });
+        }
         if (cancelled) return;
-        setEntries(decrypted);
+        setDecryptedEntries(decrypted);
         setReady(true);
       } else {
         if (cancelled) return;
-        setEntries(initialEntries);
+        setDecryptedEntries(initialEntries);
         setReady(true);
       }
     };
@@ -86,9 +99,20 @@ export function RecentReflectionsList({
     return () => {
       cancelled = true;
     };
-  }, [initialEntries, isClientEncrypted, masterKey, encrypted]);
+  }, [initialEntries, isClientEncrypted, masterKey, encrypted, useLocal]);
 
-  if (!ready) {
+  const entries = useMemo<ReflectionItem[]>(() => {
+    if (!useLocal) return decryptedEntries;
+    return localJournal.timeline.slice(0, 3).map((entry) => ({
+      date: entry.date,
+      title: entry.title,
+      mood: entry.mood,
+    }));
+  }, [useLocal, decryptedEntries, localJournal.timeline]);
+
+  const isReady = useLocal ? !localJournal.isLoading : ready;
+
+  if (!isReady) {
     return (
       <div className="divide-border/60 divide-y">
         {[1, 2, 3].map((i) => (

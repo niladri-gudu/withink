@@ -9,6 +9,7 @@ import { Skeleton } from "@withink/ui/skeleton";
 
 import { getRequestEncryptionSettings } from "@/lib/request-cache";
 import { DashboardFlashbackCard } from "@/features/flashbacks/components/flashback-card-content";
+import { DashboardFlashbackLocal } from "@/features/flashbacks/components/dashboard-flashback-local";
 import { FlashbackService } from "@/features/flashbacks/services/flashback-service";
 import { RecentReflectionsList } from "@/features/journal/components/recent-reflections-list";
 import { JournalService } from "@/features/journal/services/journal-service";
@@ -68,23 +69,33 @@ export default async function DashboardLowerGrid({
   userId,
   today,
 }: DashboardLowerGridProps) {
-  const [flashback, recentData, encryptionSettings] = await Promise.all([
-    FlashbackService.getFlashbackForToday(userId, today),
-    JournalService.getEntriesPage(userId, 1, 3, { today }),
-    getRequestEncryptionSettings(userId),
-  ]);
+  // Memoized per request; read first so ZK accounts skip the server journal
+  // reads entirely and render the local-first cards below.
+  const encryptionSettings = await getRequestEncryptionSettings(userId);
+  const encrypted = !!encryptionSettings?.isClientEncrypted;
+
+  const [flashback, recentData] = encrypted
+    ? ([null, null] as const)
+    : await Promise.all([
+        FlashbackService.getFlashbackForToday(userId, today),
+        JournalService.getEntriesPage(userId, 1, 3, { today }),
+      ]);
 
   const flashbackEntry = flashback ? flashback.entry : null;
   const flashbackLabel = flashback ? flashback.label : "";
-  const encrypted = !!encryptionSettings?.isClientEncrypted;
+  const recentEntries = recentData?.entries ?? [];
 
   return (
     <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-      <DashboardFlashbackCard
-        entry={flashbackEntry}
-        label={flashbackLabel}
-        today={today}
-      />
+      {encrypted ? (
+        <DashboardFlashbackLocal today={today} />
+      ) : (
+        <DashboardFlashbackCard
+          entry={flashbackEntry}
+          label={flashbackLabel}
+          today={today}
+        />
+      )}
 
       <Card className="border-border border">
         <CardHeader>
@@ -95,9 +106,10 @@ export default async function DashboardLowerGrid({
         </CardHeader>
         <CardContent className="pt-2">
           <RecentReflectionsList
-            initialEntries={recentData.entries}
+            initialEntries={recentEntries}
             today={today}
             encrypted={encrypted}
+            local={encrypted}
           />
         </CardContent>
       </Card>
