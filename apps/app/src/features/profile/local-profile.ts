@@ -47,11 +47,22 @@ export async function seedLocalProfile(input: {
 /**
  * Non-sensitive hint the server layout can read (E4b) to know this browser
  * belongs to a zero-knowledge account whose streamed RSC content is
- * ciphertext. It is never used for authorization.
+ * ciphertext. It is never used for authorization. The value is the account id
+ * so a different account signing in on the same browser can detect the stale
+ * hint and fall back to the server gate.
  */
-export function setZkHintCookie(): void {
+export function setZkHintCookie(accountId: string): void {
   if (typeof document === "undefined") return;
-  document.cookie = `${ZK_HINT_COOKIE}=1; path=/; max-age=31536000; samesite=lax`;
+  document.cookie = `${ZK_HINT_COOKIE}=${encodeURIComponent(accountId)}; path=/; max-age=31536000; samesite=lax`;
+}
+
+/** Reads the hint cookie value (account id), or null when absent. */
+export function readZkHintCookie(): string | null {
+  if (typeof document === "undefined") return null;
+  const match = document.cookie.match(
+    new RegExp(`(?:^|;\\s*)${ZK_HINT_COOKIE}=([^;]*)`),
+  );
+  return match?.[1] ? decodeURIComponent(match[1]) : null;
 }
 
 export function clearZkHintCookie(): void {

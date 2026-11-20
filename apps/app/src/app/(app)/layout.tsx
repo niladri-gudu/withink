@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { cookies } from "next/headers";
 
 import {
   getRequestEncryptionSettings,
@@ -8,6 +9,7 @@ import {
 import { getServerToday } from "@/lib/viewer-today";
 import { AppShell } from "@/features/app-shell/components/app-shell";
 import { AppShellSkeleton } from "@/features/app-shell/components/app-shell-skeleton";
+import { LocalAppShell } from "@/features/app-shell/components/local-app-shell";
 import { LockedContentPlaceholder } from "@/features/app-shell/components/locked-content-placeholder";
 import { LockService } from "@/features/lock/services/lock-service";
 import { ProfileSeeder } from "@/features/profile/profile-seeder";
@@ -39,7 +41,16 @@ interface EncryptionSeed {
  * the gate: `AppGate` still renders `children` only after the server-side
  * unlock check, so a locked session never receives page content.
  */
-export default function AppLayout({ children }: AppLayoutProps) {
+export default async function AppLayout({ children }: AppLayoutProps) {
+  // Non-sensitive hint, set on-device by ProfileSeeder for ZK accounts. It is
+  // safe to skip the server gate only because ZK RSC content is ciphertext;
+  // anything without the hint (legacy plaintext, first visit) keeps the gate.
+  const zkHint = !!(await cookies()).get("withink-zk")?.value;
+
+  if (zkHint) {
+    return <LocalAppShell>{children}</LocalAppShell>;
+  }
+
   return (
     <Suspense fallback={<AppShellSkeleton />}>
       <AppGate>{children}</AppGate>

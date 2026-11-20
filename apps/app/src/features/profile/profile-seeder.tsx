@@ -30,7 +30,9 @@ export function ProfileSeeder({
 }: ProfileSeederProps) {
   React.useEffect(() => {
     void seedLocalProfile({ accountId, user, encryption, lock }).then(() => {
-      if (encryption.isClientEncrypted) setZkHintCookie();
+      if (encryption.isClientEncrypted && accountId) {
+        setZkHintCookie(accountId);
+      }
     });
   }, [accountId, user, encryption, lock]);
 

@@ -6,8 +6,10 @@ import { toast } from "sonner";
 
 import { ROUTES } from "@/constants/routes";
 import { clearSessionCookies, signOut } from "@/lib/auth-client";
+import { diaryCacheDB } from "@/lib/diary-cache-db";
 import { clearSwCaches } from "@/lib/sw-cache";
 import { lockAction } from "@/features/lock/actions/lock-actions";
+import { clearZkHintCookie } from "@/features/profile/local-profile";
 import { useEncryption } from "@/providers/encryption-provider";
 
 /**
@@ -35,7 +37,10 @@ export function useSignOut() {
       }
       clearSessionCookies();
       lock();
-      await clearSwCaches();
+      // Drop the local-first profile + journal cache too, so a different
+      // account signing in on this browser can never see this one's data.
+      clearZkHintCookie();
+      await Promise.all([clearSwCaches(), diaryCacheDB.clear()]);
       toast.success("Logged out of your diary.");
       router.push(ROUTES.AUTH.LOGIN);
     } catch (err: unknown) {

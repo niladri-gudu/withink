@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-
 import { computeCurrentStreak } from "@withink/core/date";
 
 import { useEncryption } from "@/providers/encryption-provider";
@@ -83,14 +82,12 @@ export function useLocalJournal(localToday: string): LocalJournal {
 
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setWarming(true);
-    void diaryCacheService
-      .syncDiaryCache(masterKey, localToday)
-      .finally(() => {
-        if (!cancelled) {
-          void queryClient.invalidateQueries({ queryKey: ["local-journal"] });
-          setWarming(false);
-        }
-      });
+    void diaryCacheService.syncDiaryCache(masterKey, localToday).finally(() => {
+      if (!cancelled) {
+        void queryClient.invalidateQueries({ queryKey: ["local-journal"] });
+        setWarming(false);
+      }
+    });
 
     return () => {
       cancelled = true;

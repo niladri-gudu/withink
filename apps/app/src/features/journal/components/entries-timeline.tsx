@@ -345,8 +345,7 @@ export function EntriesTimeline({
   // Show skeletons while reading local, and also while the first background
   // pull is filling an empty cache — never the "no entries" empty state.
   const awaitingLocalCache =
-    accountEncrypted &&
-    (!data || (localWarming && data.entries.length === 0));
+    accountEncrypted && (!data || (localWarming && data.entries.length === 0));
 
   const deleteMutation = useMutation({
     mutationFn: (date: string) => deleteEntryAction(date),
