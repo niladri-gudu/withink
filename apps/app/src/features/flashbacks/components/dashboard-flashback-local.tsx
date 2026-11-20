@@ -1,10 +1,9 @@
 "use client";
 
 import * as React from "react";
+import type { CachedEntryMetadata } from "@withink/core/timeline";
 import { Card } from "@withink/ui/card";
 import { Skeleton } from "@withink/ui/skeleton";
-
-import type { CachedEntryMetadata } from "@withink/core/timeline";
 
 import { useLocalJournal } from "@/features/journal/hooks/use-local-journal";
 import type { DecryptedEntry } from "@/features/journal/services/journal-service";
@@ -71,8 +70,7 @@ export function DashboardFlashbackLocal({
 
   const entry = React.useMemo(() => {
     if (!pick) return null;
-    const meta =
-      local.timeline.find((item) => item.date === pick.date) ?? null;
+    const meta = local.timeline.find((item) => item.date === pick.date) ?? null;
     return toPlainEntry(meta, pick.date);
   }, [pick, local.timeline]);
 

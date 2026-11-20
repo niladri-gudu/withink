@@ -50,9 +50,7 @@ export function selectLocalFlashback(
   if (pastDates.length === 0) return { pick: null, history };
 
   const todayMMDD = today.substring(5);
-  const anniversaryDates = pastDates.filter((date) =>
-    date.endsWith(todayMMDD),
-  );
+  const anniversaryDates = pastDates.filter((date) => date.endsWith(todayMMDD));
 
   if (anniversaryDates.length > 0) {
     const [todayYear] = today.split("-").map(Number);

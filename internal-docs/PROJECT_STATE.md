@@ -28,6 +28,9 @@ Active work:
 - Shipped: E2 dashboard hero + lower grid local reads — today/yesterday,
   streak, recent reflections, and the flashback come from IndexedDB for ZK;
   letters, editor route props, and notebook labels remain.
+- Foundation: E4 local profile cache (`diary_cache` v4 `profile` store +
+  `ProfileSeeder` + `withink-zk` hint cookie). No gate change yet; E4b needs
+  on-device unlock verification.
 - Shipped: Sentry browser SDK deferred off the critical path (root JS
   659 KB → 424 KB); Vercel region moved to `bom1` (Mumbai).
 

@@ -1,6 +1,8 @@
 // Browser-compatible native IndexedDB wrapper for Withink cache storage
 // Version 2: Added document_cache and sync_queue stores for full offline support
 
+import type { LocalProfile } from "@withink/core";
+
 import { requestPersistentStorage } from "@/lib/persistent-storage";
 
 const DB_NAME = "diary_cache";
@@ -11,7 +13,10 @@ const SYNC_STORE = "sync_queue";
 // decrypting every entry. Holds only fields Mongo already stores in plaintext
 // (date, updatedAt, schema version) — never journal content.
 const SYNC_INDEX_STORE = "sync_index";
-const DB_VERSION = 3;
+// v4: on-device identity/profile cache (encryption + lock settings + display
+// hint), so the shell can eventually bootstrap without a server read.
+const PROFILE_STORE = "profile";
+const DB_VERSION = 4;
 
 export interface SyncIndexRecord {
   date: string;
@@ -54,6 +59,9 @@ function getDB(): Promise<IDBDatabase> {
       }
       if (!db.objectStoreNames.contains(SYNC_STORE)) {
         db.createObjectStore(SYNC_STORE);
+      }
+      if (!db.objectStoreNames.contains(PROFILE_STORE)) {
+        db.createObjectStore(PROFILE_STORE);
       }
       if (!db.objectStoreNames.contains(SYNC_INDEX_STORE)) {
         db.createObjectStore(SYNC_INDEX_STORE);
@@ -308,13 +316,14 @@ export const diaryCacheDB = {
     const db = await getDB();
     return new Promise((resolve, reject) => {
       const transaction = db.transaction(
-        [STORE_NAME, DOCUMENT_STORE, SYNC_STORE, SYNC_INDEX_STORE],
+        [STORE_NAME, DOCUMENT_STORE, SYNC_STORE, SYNC_INDEX_STORE, PROFILE_STORE],
         "readwrite",
       );
       transaction.objectStore(STORE_NAME).clear();
       transaction.objectStore(DOCUMENT_STORE).clear();
       transaction.objectStore(SYNC_STORE).clear();
       transaction.objectStore(SYNC_INDEX_STORE).clear();
+      transaction.objectStore(PROFILE_STORE).clear();
 
       transaction.oncomplete = () => resolve();
       transaction.onerror = () => reject(transaction.error);
@@ -384,6 +393,44 @@ export const diaryCacheDB = {
       });
     } catch (err) {
       console.error("IndexedDB deleteSyncIndex error:", err);
+    }
+  },
+
+  // Local profile (one "current" record): encryption/lock settings plus a
+  // display-only account hint. Derived data — degrade to null on read errors.
+  async getProfile(key = "current"): Promise<LocalProfile | null> {
+    try {
+      const db = await getDB();
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction(PROFILE_STORE, "readonly");
+        const store = transaction.objectStore(PROFILE_STORE);
+        const request = store.get(key);
+
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () =>
+          resolve((request.result as LocalProfile) || null);
+      });
+    } catch (err) {
+      console.error("IndexedDB getProfile error:", err);
+      return null;
+    }
+  },
+
+  async putProfile(profile: LocalProfile, key = "current"): Promise<void> {
+    if (typeof window === "undefined") return;
+    try {
+      const db = await getDB();
+      await new Promise<void>((resolve, reject) => {
+        const transaction = db.transaction(PROFILE_STORE, "readwrite");
+        const store = transaction.objectStore(PROFILE_STORE);
+        const request = store.put(profile, key);
+
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => resolve();
+      });
+    } catch (err) {
+      // The profile is derived from the server; a failed write is not fatal.
+      console.error("IndexedDB putProfile error:", err);
     }
   },
 };

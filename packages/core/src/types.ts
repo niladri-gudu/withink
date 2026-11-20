@@ -19,6 +19,15 @@ export interface LockSettings {
   lockOnTabHide: boolean;
 }
 
+/** Display-only account hint cached on-device for the shell. Never trusted
+ *  for authorization; the server session remains authoritative. */
+export interface LocalUserHint {
+  id: string;
+  name: string;
+  email: string;
+  image?: string | null;
+}
+
 /**
  * The on-device identity. `accountId` is null for a purely local profile and
  * becomes the server user id once the profile is linked for sync.
@@ -30,6 +39,8 @@ export interface LocalProfile {
   updatedAt: string;
   encryption: EncryptionSettings;
   lock: LockSettings;
+  /** Display-only account hint; null for a purely local profile. */
+  user: LocalUserHint | null;
   /** Last plan seen from the server; UI-only, never authoritative. */
   lastKnownPlan: ResolvedPlan;
   planCheckedAt: string | null;

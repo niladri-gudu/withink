@@ -10,6 +10,7 @@ import { AppShell } from "@/features/app-shell/components/app-shell";
 import { AppShellSkeleton } from "@/features/app-shell/components/app-shell-skeleton";
 import { LockedContentPlaceholder } from "@/features/app-shell/components/locked-content-placeholder";
 import { LockService } from "@/features/lock/services/lock-service";
+import { ProfileSeeder } from "@/features/profile/profile-seeder";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -85,6 +86,30 @@ async function AppGate({ children }: AppLayoutProps) {
   // content replaces the placeholder without a full reload.
   const isLocked = !!session?.user && !sessionUnlocked;
 
+  // Cache the authoritative settings on-device for the next boot. E4b will
+  // read this profile (plus the withink-zk hint cookie) to gate the shell
+  // without a server round-trip; nothing here changes the current gate.
+  const profileEncryption = {
+    isClientEncrypted: encryptionSettings?.isClientEncrypted ?? false,
+    encryptionSalt: encryptionSettings?.encryptionSalt ?? "",
+    verificationCiphertext: encryptionSettings?.verificationCiphertext ?? "",
+    kdfIterations: encryptionSettings?.kdfIterations ?? 0,
+  };
+  const profileLock = lockSettings ?? {
+    isLockEnabled: false,
+    hasPasscode: false,
+    autoLockTimeout: 0,
+    lockOnTabHide: false,
+  };
+  const profileUser = session?.user
+    ? {
+        id: session.user.id,
+        name: session.user.name,
+        email: session.user.email,
+        image: session.user.image ?? null,
+      }
+    : null;
+
   return (
     <AppShell
       user={session?.user || null}
@@ -93,6 +118,12 @@ async function AppGate({ children }: AppLayoutProps) {
       initialEncryptionSettings={encryptionSettings}
       serverToday={getServerToday()}
     >
+      <ProfileSeeder
+        accountId={session?.user.id ?? null}
+        user={profileUser}
+        encryption={profileEncryption}
+        lock={profileLock}
+      />
       {isLocked ? <LockedContentPlaceholder /> : children}
     </AppShell>
   );
