@@ -3,6 +3,7 @@
 import * as React from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@withink/ui/button";
+import { isClientCiphertext } from "@withink/core/ciphertext";
 import { countWords } from "@withink/core/text";
 import { toast } from "sonner";
 
@@ -139,6 +140,19 @@ export function DataImportCard() {
             rawText.match(/^TITLE:\s*(.*)$/m)?.[1]?.trim() ?? "";
           const meta = metadata[date] ?? {};
           const title = (meta.title ?? headerTitle).trim();
+
+          // A raw server archive stores ciphertext; importing it would
+          // double-encrypt. Only the decrypted ZIP from Settings → Export is
+          // importable.
+          if (
+            isClientCiphertext(title) ||
+            isClientCiphertext(text) ||
+            isClientCiphertext(html)
+          ) {
+            failed++;
+            continue;
+          }
+
           const mood = meta.mood ?? null;
           const wordCount = meta.wordCount ?? countWords(text);
           const updatedAt = meta.updatedAt ?? new Date().toISOString();
@@ -230,8 +244,9 @@ export function DataImportCard() {
           Import a journal
         </h3>
         <p className="text-muted-foreground text-sm">
-          Restore a Withink export (.zip). Dates already on this device are
-          skipped; entries are encrypted locally and synced in the background.
+          Restore the ZIP from <strong>Export</strong> above. Dates already on
+          this device are skipped; entries are encrypted locally and synced in
+          the background.
         </p>
       </div>
       <div className="flex flex-wrap items-center gap-3">
