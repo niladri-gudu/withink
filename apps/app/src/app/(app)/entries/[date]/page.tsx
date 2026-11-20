@@ -68,19 +68,19 @@ export default async function EntryPage({
     ? searchParamsToday
     : await getViewerToday();
 
-  // 2. Fetch entry from service (automatically handles cache and decryption)
-  const entry = await JournalService.getEntryForDate(
-    session.user.id,
-    date,
-    today,
-  );
+  // 2-3. Entry, plan window and notebook list are independent; resolve them in
+  // one wave instead of three sequential round-trips on every editor open.
+  // (The entry read stays for now: the ZK server fallback for a cold device
+  // needs an on-demand fetch in the shell, which ships with E4.)
+  const [entry, entitlements, notebooks] = await Promise.all([
+    JournalService.getEntryForDate(session.user.id, date, today),
+    EntitlementsService.getEntitlements(session.user.id),
+    NotebooksService.listNotebooks(session.user.id),
+  ]);
 
   // 3. Grace period firewall checks — the window is the viewer's plan's
   //    backfill entitlement (Free 14d · Plus 90d · Pro unlimited). Existing
   //    entries are always viewable/editable; the wall only blocks creation.
-  const entitlements = await EntitlementsService.getEntitlements(
-    session.user.id,
-  );
   const windowStart = backfillWindowStart(today, entitlements.backfillDays);
   const isFuture = date > today;
   const isExpired = windowStart !== null && date < windowStart;
@@ -133,7 +133,6 @@ export default async function EntryPage({
   // 4. Resolve the filing target server-side (never trust a client id):
   //    an existing entry keeps its own notebook; a new day files into the
   //    ?notebook= param when the user owns it, else the default notebook.
-  const notebooks = await NotebooksService.listNotebooks(session.user.id);
   let filingNotebookId = entry?.notebookId ?? null;
   if (!filingNotebookId) {
     const requested =
