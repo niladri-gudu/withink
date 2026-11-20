@@ -19,3 +19,21 @@ export function useSyncStatus(date: string): SyncState {
   );
   return journalSyncService.getStatus(date);
 }
+
+export interface JournalSyncSummary {
+  pendingCount: number;
+  lastSyncedAt: number | null;
+}
+
+/** Account-wide sync summary for the Settings card / status UI. */
+export function useJournalSyncSummary(): JournalSyncSummary {
+  useSyncExternalStore(
+    (listener) => journalSyncService.subscribe(listener),
+    () => journalSyncService.getSnapshot(),
+    () => 0,
+  );
+  return {
+    pendingCount: journalSyncService.getPendingCount(),
+    lastSyncedAt: journalSyncService.getLastSyncedAt(),
+  };
+}

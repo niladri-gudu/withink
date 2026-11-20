@@ -12,6 +12,7 @@ import {
   Bell,
   Camera,
   Check,
+  Cloud,
   CreditCard,
   Link as LinkIcon,
   Loader2,
@@ -42,6 +43,7 @@ import {
 } from "@/features/lock/actions/lock-actions";
 import { LockChangeDialog } from "@/features/lock/components/lock-change-dialog";
 import { LockSetupOnboarding } from "@/features/lock/components/lock-setup-onboarding";
+import { SyncStatusCard } from "@/features/journal/components/sync-status-card";
 import { NotificationSettings } from "@/features/notifications/components/notification-settings";
 import { InstallAppCard } from "@/features/pwa/components/install-app-card";
 import { AppearanceSettings } from "@/features/settings/appearance/appearance-settings";
@@ -571,6 +573,15 @@ export function SettingsShell({ initialUser, plan }: SettingsShellProps) {
               </div>
             </div>
           </div>
+        </SettingsGroup>
+
+        {/* ---- Sync & backup ---- */}
+        <SettingsGroup
+          icon={Cloud}
+          title="Sync & backup"
+          description="Your journal is saved on this device; sync keeps an encrypted copy in the cloud."
+        >
+          <SyncStatusCard />
         </SettingsGroup>
 
         {/* ---- Reminders ---- */}

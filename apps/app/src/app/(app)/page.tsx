@@ -6,6 +6,7 @@ import { ROUTES } from "@/constants/routes";
 import { getRequestSession, getRequestViewerToday } from "@/lib/request-cache";
 import { addDays } from "@/lib/utils/date";
 import { PageHeader } from "@/features/app-shell/components/page-header";
+import { CloudRestorePrompt } from "@/features/journal/components/cloud-restore-prompt";
 import {
   DashboardHero,
   DashboardHeroSkeleton,
@@ -46,6 +47,8 @@ export default async function DashboardPage() {
         description="A fresh page for today's reflection"
         today={today}
       />
+
+      <CloudRestorePrompt />
 
       {/* Above-the-fold hero (streamed) */}
       <Suspense fallback={<DashboardHeroSkeleton />}>

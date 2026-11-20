@@ -26,6 +26,42 @@ export class JournalSyncService {
   private running = false;
   private pullQueued = false;
   private workQueued = false;
+  private lastSyncedAt: number | null = null;
+
+  constructor() {
+    if (typeof window === "undefined") return;
+    try {
+      const raw = window.localStorage.getItem("withink-last-synced-at");
+      const parsed = raw ? Number(raw) : NaN;
+      if (Number.isFinite(parsed)) this.lastSyncedAt = parsed;
+    } catch {
+      // Private mode / quota: status falls back to "not synced yet".
+    }
+  }
+
+  getPendingCount(): number {
+    return this.pendingDates.size;
+  }
+
+  getLastSyncedAt(): number | null {
+    return this.lastSyncedAt;
+  }
+
+  /** Records a successful background or manual sync and notifies subscribers. */
+  markSynced(): void {
+    this.lastSyncedAt = Date.now();
+    if (typeof window !== "undefined") {
+      try {
+        window.localStorage.setItem(
+          "withink-last-synced-at",
+          String(this.lastSyncedAt),
+        );
+      } catch {
+        // Status is best-effort.
+      }
+    }
+    this.emit();
+  }
 
   subscribe(listener: () => void): () => void {
     this.listeners.add(listener);
@@ -93,15 +129,20 @@ export class JournalSyncService {
       const localToday = getLocalDateString();
 
       // 1. Push pending local edits to the cloud first.
-      await diaryCacheService.flushOfflineSyncQueue(masterKey, localToday);
+      const push = await diaryCacheService.flushOfflineSyncQueue(
+        masterKey,
+        localToday,
+      );
 
       // 2. Pull remote changes in the background (never overwrites pending).
+      let pullOk = true;
       if (this.pullQueued) {
         this.pullQueued = false;
-        await diaryCacheService.syncDiaryCache(masterKey, localToday);
+        pullOk = await diaryCacheService.syncDiaryCache(masterKey, localToday);
       }
 
       await this.refreshState();
+      if (push.failed.length === 0 && pullOk) this.markSynced();
     } catch (err) {
       console.error("Journal background sync failed:", err);
     } finally {
