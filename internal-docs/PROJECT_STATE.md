@@ -28,9 +28,11 @@ Active work:
 - Shipped: E2 dashboard hero + lower grid local reads — today/yesterday,
   streak, recent reflections, and the flashback come from IndexedDB for ZK;
   letters, editor route props, and notebook labels remain.
-- Foundation: E4 local profile cache (`diary_cache` v4 `profile` store +
-  `ProfileSeeder` + `withink-zk` hint cookie). No gate change yet; E4b needs
-  on-device unlock verification.
+- Shipped + verified: E4b local shell — `(app)/layout` uses the account-scoped
+  `withink-zk` hint to render `LocalAppShell` from the IndexedDB profile for
+  ZK accounts (no server gate). Verified reload → unlock → dashboard and
+  sign-out clearing `diary_cache` + the hint cookie. Accounts without the
+  hint keep the server gate.
 - Shipped: cold-cache syncing state — `useLocalJournal.isWarming` keeps the
   hero, recent reflections, flashback and archive on skeletons while the first
   pull fills an empty local cache, instead of flashing the empty state. Warm

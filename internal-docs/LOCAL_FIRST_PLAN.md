@@ -284,9 +284,12 @@ Goal: the app is usable without an account; paid sync is opt-in.
 **Foundation shipped (2026-11-20):** `diary_cache` v4 adds a `profile` store
 (encryption/lock settings + display-only user hint). `ProfileSeeder` caches
 the authoritative server settings after each gate render and sets the
-non-sensitive `withink-zk` hint cookie. The gate switch (E4b — reading the
-profile instead of awaiting the server) is deferred until the unlock flow can
-be verified on a real device.
+non-sensitive `withink-zk` hint cookie.
+
+**E4b shipped + verified (2026-11-20):** `(app)/layout` reads the
+account-scoped `withink-zk` hint and renders `LocalAppShell` from the profile;
+reload → unlock → dashboard and sign-out cleanup were verified with a
+throwaway dev account. Accounts without the hint keep the server gate.
 
 1. **Onboarding**: if no `profile` exists, create one locally:
    - Diary Password → PBKDF2 → wrapped master key; store salt,
