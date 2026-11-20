@@ -37,6 +37,9 @@ Active work:
   hero, recent reflections, flashback and archive on skeletons while the first
   pull fills an empty local cache, instead of flashing the empty state. Warm
   caches never show it.
+- Shipped: sync status + "Sync now" (Settings → Sync & backup), the dashboard
+  cloud-restore prompt, and journal import from a Withink export ZIP (skips
+  existing dates, encrypts locally, queues a background push).
 - Shipped: Sentry browser SDK deferred off the critical path (root JS
   659 KB → 424 KB); Vercel region moved to `bom1` (Mumbai).
 

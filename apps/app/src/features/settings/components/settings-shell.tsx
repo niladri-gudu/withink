@@ -37,6 +37,7 @@ import type { ResolvedPlan } from "@/features/billing/config/plans";
 import { ZkChangeDialog } from "@/features/encryption/components/zk-change-dialog";
 import { ZkSetupDialog } from "@/features/encryption/components/zk-setup-dialog";
 import { DataExportCard } from "@/features/export/components/data-export-card";
+import { DataImportCard } from "@/features/export/components/data-import-card";
 import {
   getLockSettingsAction,
   saveLockSettingsAction,
@@ -990,6 +991,13 @@ export function SettingsShell({ initialUser, plan }: SettingsShellProps) {
           {/* Export */}
           <div aria-label="Export">
             <DataExportCard />
+          </div>
+
+          <GroupDivider />
+
+          {/* Import */}
+          <div aria-label="Import">
+            <DataImportCard />
           </div>
 
           <GroupDivider />
