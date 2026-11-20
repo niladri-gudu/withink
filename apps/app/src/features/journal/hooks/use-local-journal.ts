@@ -31,6 +31,11 @@ export interface LocalJournal {
   streakData: LocalStreakStats;
   /** True while the first local read is still resolving. */
   isLoading: boolean;
+  /**
+   * True while the initial background pull is filling an empty cache. UI should
+   * show a "syncing" state instead of the empty state during this window.
+   */
+  isWarming: boolean;
   /** True when the account is zero-knowledge and unlocked, so local is usable. */
   isLocal: boolean;
 }
@@ -55,6 +60,8 @@ export function useLocalJournal(localToday: string): LocalJournal {
   const { isClientEncrypted, masterKey } = useEncryption();
   const queryClient = useQueryClient();
   const isLocal = isClientEncrypted && !!masterKey;
+  // True while the initial background pull is filling an empty cache.
+  const [warming, setWarming] = React.useState(false);
 
   const query = useQuery({
     queryKey: ["local-journal", localToday, isLocal],
@@ -74,11 +81,14 @@ export function useLocalJournal(localToday: string): LocalJournal {
     if (!isLocal || !masterKey) return;
     let cancelled = false;
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setWarming(true);
     void diaryCacheService
       .syncDiaryCache(masterKey, localToday)
       .finally(() => {
         if (!cancelled) {
           void queryClient.invalidateQueries({ queryKey: ["local-journal"] });
+          setWarming(false);
         }
       });
 
@@ -119,11 +129,17 @@ export function useLocalJournal(localToday: string): LocalJournal {
     };
   }, [timeline, localToday]);
 
+  // Only the empty-cache window counts as warming: a warm cache must never
+  // flash a syncing state while the fast manifest check runs.
+  const isWarming =
+    isLocal && warming && !query.isPending && timeline.length === 0;
+
   return {
     timeline,
     calendarEntries,
     streakData,
     isLoading: isLocal && query.isPending,
+    isWarming,
     isLocal,
   };
 }

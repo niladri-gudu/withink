@@ -59,7 +59,9 @@ export function DashboardHeroLocal({
     [todayMeta, today],
   );
 
-  if (local.isLoading) {
+  // isLoading = first local read; isWarming = first pull filling an empty
+  // cache. Both should show the skeleton, never the "write today" empty state.
+  if (local.isLoading || local.isWarming) {
     return <DashboardHeroSkeleton />;
   }
 

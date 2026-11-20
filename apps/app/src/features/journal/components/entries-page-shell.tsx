@@ -182,6 +182,7 @@ export function EntriesPageShell({
             initialTotal={initialTotal}
             localToday={localToday}
             accountEncrypted={accountEncrypted}
+            localWarming={local.isWarming}
             debouncedSearch={debouncedSearch}
             moodFilter={moodFilter}
             timeFilter={timeFilter}

@@ -110,7 +110,9 @@ export function RecentReflectionsList({
     }));
   }, [useLocal, decryptedEntries, localJournal.timeline]);
 
-  const isReady = useLocal ? !localJournal.isLoading : ready;
+  const isReady = useLocal
+    ? !localJournal.isLoading && !localJournal.isWarming
+    : ready;
 
   if (!isReady) {
     return (

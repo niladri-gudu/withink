@@ -31,6 +31,10 @@ Active work:
 - Foundation: E4 local profile cache (`diary_cache` v4 `profile` store +
   `ProfileSeeder` + `withink-zk` hint cookie). No gate change yet; E4b needs
   on-device unlock verification.
+- Shipped: cold-cache syncing state — `useLocalJournal.isWarming` keeps the
+  hero, recent reflections, flashback and archive on skeletons while the first
+  pull fills an empty local cache, instead of flashing the empty state. Warm
+  caches never show it.
 - Shipped: Sentry browser SDK deferred off the critical path (root JS
   659 KB → 424 KB); Vercel region moved to `bom1` (Mumbai).
 

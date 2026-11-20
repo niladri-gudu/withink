@@ -59,6 +59,8 @@ interface EntriesTimelineProps {
   localToday: string;
   /** Server-derived: whether this account uses client-side encryption. */
   accountEncrypted: boolean;
+  /** True while the initial background pull is filling an empty local cache. */
+  localWarming?: boolean;
   /** Page-level filter state (owned by EntriesPageShell). */
   debouncedSearch: string;
   moodFilter: string;
@@ -147,6 +149,7 @@ export function EntriesTimeline({
   initialTotal,
   localToday,
   accountEncrypted,
+  localWarming = false,
   debouncedSearch,
   moodFilter,
   timeFilter,
@@ -339,7 +342,11 @@ export function EntriesTimeline({
 
   // ZK accounts have no displayable server page: until the local decrypted
   // cache resolves, show skeletons instead of an (incorrect) empty state.
-  const awaitingLocalCache = accountEncrypted && !data;
+  // Show skeletons while reading local, and also while the first background
+  // pull is filling an empty cache — never the "no entries" empty state.
+  const awaitingLocalCache =
+    accountEncrypted &&
+    (!data || (localWarming && data.entries.length === 0));
 
   const deleteMutation = useMutation({
     mutationFn: (date: string) => deleteEntryAction(date),

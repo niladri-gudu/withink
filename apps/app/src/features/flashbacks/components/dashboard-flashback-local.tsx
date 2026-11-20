@@ -74,7 +74,7 @@ export function DashboardFlashbackLocal({
     return toPlainEntry(meta, pick.date);
   }, [pick, local.timeline]);
 
-  if (local.isLoading) {
+  if (local.isLoading || local.isWarming) {
     return (
       <Card className="border-border border p-6">
         <div className="space-y-4">
