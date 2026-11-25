@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { safeDecryptText } from "@/lib/crypto-client";
 import { useEncryption } from "@/providers/encryption-provider";
 import { getAllEntriesAction } from "@/features/journal/actions/entry-actions";
+import { recordExportBackup } from "../lib/backup-timestamp";
 
 /**
  * "Your data" section for the Settings page. Downloads a complete ZIP backup
@@ -89,6 +90,7 @@ export function DataExportCard() {
         anchor.remove();
         window.URL.revokeObjectURL(url);
 
+        recordExportBackup();
         toast.success("Your zero-knowledge archive is ready", { id: toastId });
       } else {
         // Standard server-side export
@@ -112,6 +114,7 @@ export function DataExportCard() {
         anchor.remove();
         window.URL.revokeObjectURL(url);
 
+        recordExportBackup();
         toast.success("Your archive is ready", { id: toastId });
       }
     } catch (err) {

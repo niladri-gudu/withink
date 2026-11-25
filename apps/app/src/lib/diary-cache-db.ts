@@ -330,6 +330,31 @@ export const diaryCacheDB = {
     });
   },
 
+  /**
+   * Clears the derived entry cache but keeps the local `profile` record.
+   *
+   * This is the "rebuild local cache" repair path: the journal re-downloads
+   * from the encrypted cloud copy, while the wrapped key, salt and diary
+   * settings stay on the device so the user is not locked out.
+   */
+  async clearEntries(): Promise<void> {
+    if (typeof window === "undefined") return;
+    const db = await getDB();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(
+        [STORE_NAME, DOCUMENT_STORE, SYNC_STORE, SYNC_INDEX_STORE],
+        "readwrite",
+      );
+      transaction.objectStore(STORE_NAME).clear();
+      transaction.objectStore(DOCUMENT_STORE).clear();
+      transaction.objectStore(SYNC_STORE).clear();
+      transaction.objectStore(SYNC_INDEX_STORE).clear();
+
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
+    });
+  },
+
   // Plaintext sync index (date → { updatedAt, v }).
   async putSyncIndex(record: SyncIndexRecord): Promise<void> {
     if (typeof window === "undefined") return;

@@ -46,8 +46,14 @@ export function selectLocalFlashback(
   history: string[],
 ): { pick: LocalFlashbackPick | null; history: string[] } {
   const yesterday = addDays(today, -1);
-  const pastDates = dates.filter((date) => date < yesterday);
-  if (pastDates.length === 0) return { pick: null, history };
+  const allPastDates = dates.filter((date) => date < yesterday);
+  if (allPastDates.length === 0) return { pick: null, history };
+
+  // Prefer dates not recently shown — including for the anniversary branch.
+  // If the user already saw today's anniversary (or pressed "Show another"),
+  // fall through to the wider archive instead of repeating the same memory.
+  const unseen = allPastDates.filter((date) => !history.includes(date));
+  const pastDates = unseen.length > 0 ? unseen : allPastDates;
 
   const todayMMDD = today.substring(5);
   const anniversaryDates = pastDates.filter((date) => date.endsWith(todayMMDD));
@@ -73,8 +79,7 @@ export function selectLocalFlashback(
     };
   }
 
-  let candidates = pastDates.filter((date) => !history.includes(date));
-  if (candidates.length === 0) candidates = pastDates;
+  const candidates = pastDates;
 
   // Stable within a day, varies across days; avoids re-renders picking
   // different entries.

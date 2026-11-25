@@ -225,9 +225,9 @@ Goal: `/`, `/entries`, `/entries/[date]` render from IndexedDB for ZK users.
   read the local timeline for ZK (`selectLocalFlashback`, device-local
   history); the server `getEntriesPage`/`FlashbackService` reads are skipped.
   Letters remain server-backed.
-- **Still open in E2:** the editor route's remaining server props, notebook
-  labels locally, and dropping the last `notebooks`/`entitlements` reads from
-  `/entries`.
+- **Still open in E2:** the editor route's remaining server props and notebook
+  labels locally (the `/entries` page still reads `notebooks`/`entitlements`
+  from the server for labels and the plan window).
 
 1. **`/entries`**:
    - Remove the server `Promise.all` in `entries/page.tsx`.
@@ -257,6 +257,21 @@ save locally; reload works; sync catches up later.
 ---
 
 ### E3 — Notebooks, insights, flashbacks locally
+
+**Shipped (2026-11-26) — insights + flashbacks.**
+
+- `computeInsights` moved to the pure `features/insights/services/insights-compute.ts`;
+  `InsightsService` now owns only the Mongo metadata read. ZK accounts compute
+  the identical payload from the decrypted local timeline via
+  `InsightsDashboard`'s `localMode`, including `createdAt` backfilled into
+  `CachedMetadata` by the pull and the push flush (so the time-of-day bucket
+  stays accurate).
+- `/flashbacks` renders `FlashbackViewLocal` for ZK accounts: anniversary-first
+  local selection with the device-local `flashback_history`, rich content read
+  from `document_cache`. The card markup is shared through
+  `flashback-reader.tsx`; legacy accounts keep the server-chosen path.
+
+**Still open in E3:** the local `notebooks` store and local CRUD/queueing.
 
 1. **Notebooks**: add the `notebooks` store; seed once from the server
    (`listNotebooks`) during bootstrap, then read locally. Create/rename/delete
@@ -317,6 +332,21 @@ second device.
 ---
 
 ### E5 — Data safety (non-negotiable for local-first)
+
+**Shipped (2026-11-26): import + device storage safety.**
+
+1. **Import** — SHIPPED (2026-11-21): the export ZIP is parsed client-side,
+   existing dates are skipped, and entries are encrypted locally then queued.
+2. **Backup nudges** — PARTIAL: Settings → Your data shows the age of the last
+   archive downloaded from this device and points at Export; a proactive
+   dashboard nudge is still open.
+3. **Persistent storage** — SHIPPED: the "On this device" card reports whether
+   the browser has granted eviction protection and can request it.
+4. **Storage pressure** — SHIPPED: the same card shows used bytes vs. quota, and
+   the "Rebuild local cache" action re-downloads the encrypted journal after
+   flushing unsynced edits.
+
+The original scope follows for reference:
 
 1. **Import** in `features/export`: parse the existing export archive
    (`metadata.json` + `entries/*.html|.txt`) and write encrypted records to

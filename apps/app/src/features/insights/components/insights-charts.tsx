@@ -2,7 +2,7 @@
 
 import { Card } from "@withink/ui/card";
 
-import type { InsightsPayload } from "../services/insights-service";
+import type { InsightsPayload } from "../services/insights-compute";
 import { ActivitySummaries } from "./activity-summaries";
 import { CalendarHeatmap } from "./calendar-heatmap";
 import { MonthlyOverview } from "./monthly-overview";

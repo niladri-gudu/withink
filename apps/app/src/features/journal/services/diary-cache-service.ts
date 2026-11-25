@@ -84,6 +84,8 @@ interface ServerEntryPayload {
   mood: number | null;
   wordCount: number;
   notebookId: string | null;
+  /** Server-created timestamp (plaintext server-side) for local insights. */
+  createdAt?: string | Date;
   updatedAt: string | Date;
 }
 
@@ -119,9 +121,15 @@ export const diaryCacheService = {
     updatedAt: string | Date,
     masterKey: CryptoKey,
     notebookId?: string | null,
+    createdAt?: string | Date,
   ): Promise<void> {
     const updatedAtStr =
       updatedAt instanceof Date ? updatedAt.toISOString() : updatedAt;
+    const createdAtStr = createdAt
+      ? createdAt instanceof Date
+        ? createdAt.toISOString()
+        : createdAt
+      : undefined;
     const snippet = createSnippet(contentText);
 
     const payload: CachedMetadata = {
@@ -132,6 +140,7 @@ export const diaryCacheService = {
       wordCount: wordCount || 0,
       mood,
       notebookId: notebookId ?? undefined,
+      createdAt: createdAtStr,
       updatedAt: updatedAtStr,
       v: METADATA_VERSION,
       searchText: buildSearchText(date, title || "", contentText),
@@ -269,6 +278,22 @@ export const diaryCacheService = {
     } finally {
       if (pullInFlight === run) pullInFlight = null;
     }
+  },
+
+  /**
+   * Safety valve for a damaged or stale local cache: drops the encrypted entry
+   * copy (keeping the local profile / key wrap) and re-pulls everything from
+   * the cloud. Callers must flush pending edits first — this discards anything
+   * still waiting in the queue.
+   */
+  async rebuildLocalCache(
+    masterKey: CryptoKey,
+    localToday: string,
+  ): Promise<boolean> {
+    invalidateTimelineCache();
+    lastServerSyncFingerprint = null;
+    await diaryCacheDB.clearEntries();
+    return await this.syncDiaryCache(masterKey, localToday);
   },
 
   async runPull(
@@ -489,6 +514,7 @@ export const diaryCacheService = {
       entry.updatedAt,
       masterKey,
       entry.notebookId,
+      entry.createdAt,
     );
   },
 
@@ -644,6 +670,7 @@ export const diaryCacheService = {
                 // Server truth wins — an unknown filing id was coerced to
                 // the default notebook server-side.
                 result.data.notebookId,
+                result.data.createdAt,
               );
               succeeded.push(payload.date);
             }

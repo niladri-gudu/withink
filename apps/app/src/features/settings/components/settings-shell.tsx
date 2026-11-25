@@ -38,13 +38,14 @@ import { ZkChangeDialog } from "@/features/encryption/components/zk-change-dialo
 import { ZkSetupDialog } from "@/features/encryption/components/zk-setup-dialog";
 import { DataExportCard } from "@/features/export/components/data-export-card";
 import { DataImportCard } from "@/features/export/components/data-import-card";
+import { SyncStatusCard } from "@/features/journal/components/sync-status-card";
+import { LocalDataCard } from "@/features/settings/components/local-data-card";
 import {
   getLockSettingsAction,
   saveLockSettingsAction,
 } from "@/features/lock/actions/lock-actions";
 import { LockChangeDialog } from "@/features/lock/components/lock-change-dialog";
 import { LockSetupOnboarding } from "@/features/lock/components/lock-setup-onboarding";
-import { SyncStatusCard } from "@/features/journal/components/sync-status-card";
 import { NotificationSettings } from "@/features/notifications/components/notification-settings";
 import { InstallAppCard } from "@/features/pwa/components/install-app-card";
 import { AppearanceSettings } from "@/features/settings/appearance/appearance-settings";
@@ -984,6 +985,13 @@ export function SettingsShell({ initialUser, plan }: SettingsShellProps) {
                 </div>
               </div>
             )}
+          </div>
+
+          <GroupDivider />
+
+          {/* On this device (local cache protection + repair) */}
+          <div aria-label="On this device">
+            <LocalDataCard />
           </div>
 
           <GroupDivider />

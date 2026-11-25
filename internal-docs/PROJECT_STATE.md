@@ -2,11 +2,11 @@
 
 # Project State
 
-Last Updated: 2026-11-18
+Last Updated: 2026-11-26
 
-Current Phase: Local-First Refactor (Phase E — foundation ready)
+Current Phase: Local-First Refactor (Phase E — journal, dashboard, insights and flashbacks local)
 
-Current Milestone: Shared core + sync API extracted (2026-11-18)
+Current Milestone: Local insights + flashbacks + device data safety (2026-11-26)
 
 Project Status: 🟢 Release Ready
 
@@ -40,6 +40,16 @@ Active work:
 - Shipped: sync status + "Sync now" (Settings → Sync & backup), the dashboard
   cloud-restore prompt, and journal import from a Withink export ZIP (skips
   existing dates, encrypts locally, queues a background push).
+- Shipped: local insights — `computeInsights` is a pure module shared by the
+  server (`InsightsService`) and the client; ZK accounts compute the identical
+  payload from the decrypted local timeline (`createdAt` is backfilled into the
+  cached metadata by the pull and the push flush).
+- Shipped: local flashbacks — `/flashbacks` selects anniversary-first from the
+  local timeline with device-local history and reads rich content from the
+  document cache; the card markup is shared with the legacy server path.
+- Shipped: Settings → Your data "On this device" card — eviction-protection
+  status + request, storage estimate, last-backup age, and a guarded "Rebuild
+  local cache" action that flushes unsynced edits and keeps the local profile.
 - Shipped: Sentry browser SDK deferred off the critical path (root JS
   659 KB → 424 KB); Vercel region moved to `bom1` (Mumbai).
 
@@ -424,6 +434,14 @@ Note: MongoDB (`mongodb+srv://`) now connects. The earlier `querySrv ECONNREFUSE
 ---
 
 # Recent Decisions
+
+2026-11-26 (Local-first — insights, flashbacks, and device data safety)
+
+- **Insights are local for zero-knowledge accounts.** The aggregation moved verbatim into the pure `features/insights/services/insights-compute.ts`; `InsightsService` keeps only the Mongo metadata read. ZK `/insights` runs the same function over the decrypted timeline with the device timezone (cookie offset for SSR, `useSyncExternalStore` on the client) and shows a skeleton until the key is in memory. `CachedMetadata.createdAt` is now filled by both the bulk pull and the push flush, so the most-active-time bucket stays accurate.
+- **Flashbacks are local for ZK.** `FlashbackViewLocal` selects anniversary-first from the local timeline and device-local history, then reads `contentHtml` from `document_cache`. The card markup moved into shared `flashback-reader.tsx`; legacy accounts keep the server selection. `selectLocalFlashback` now applies recently-shown history to the anniversary branch too, so "Show another" never repeats the same memory.
+- **Settings → Your data gains "On this device".** Reports eviction protection (`navigator.storage.persisted`) with a "Protect this device" action, used/quota bytes, and the age of the last archive download (recorded in `withink-last-export-at` and broadcast for live updates). "Rebuild local cache" flushes the queue, refuses if any push fails, then calls `diaryCacheService.rebuildLocalCache` — it clears only entry stores (`clearEntries`) and keeps the `profile`, so the wrapped key and diary password survive.
+- **Still open:** local notebooks (store + local CRUD/queueing), the editor route's remaining server props, notebook labels on `/entries`, E4 anonymous/onboarding, and a proactive dashboard backup nudge.
+- Verified: `tsc --noEmit` clean, eslint 0 errors on changed files, full Vitest **277/277**, production build green (31 routes; PPR preserved).
 
 2026-11-02 (Production monitoring — Sentry + Better Stack + Speed Insights)
 

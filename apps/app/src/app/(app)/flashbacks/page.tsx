@@ -2,9 +2,13 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { ROUTES } from "@/constants/routes";
-import { getRequestSession } from "@/lib/request-cache";
+import {
+  getRequestEncryptionSettings,
+  getRequestSession,
+} from "@/lib/request-cache";
 import { getViewerToday } from "@/lib/viewer-today";
 import { FlashbackView } from "@/features/flashbacks/components/flashback-view";
+import { FlashbackViewLocal } from "@/features/flashbacks/components/flashback-view-local";
 import { FlashbackService } from "@/features/flashbacks/services/flashback-service";
 
 export const metadata: Metadata = {
@@ -20,7 +24,16 @@ export default async function FlashbacksPage() {
 
   const today = await getViewerToday();
 
-  // 2. Fetch today's flashback
+  // 2. Zero-knowledge accounts pick the memory from their decrypted local
+  //    timeline, so the server selection read is skipped. Legacy accounts
+  //    keep the server-chosen flashback.
+  const encryptionSettings = await getRequestEncryptionSettings(
+    session.user.id,
+  );
+  if (encryptionSettings?.isClientEncrypted) {
+    return <FlashbackViewLocal localToday={today} />;
+  }
+
   const flashback = await FlashbackService.getFlashbackForToday(
     session.user.id,
     today,
