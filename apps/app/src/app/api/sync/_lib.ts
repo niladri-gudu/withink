@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { headers } from "next/headers";
 
 import { getRequestSession } from "@/lib/request-cache";
 import { LockService } from "@/features/lock/services/lock-service";
@@ -37,11 +38,21 @@ export async function requireSyncSession(
     };
   }
 
-  const unlocked = await LockService.isSessionUnlocked(session.user.id);
-  if (!unlocked) {
-    return {
-      response: NextResponse.json({ error: "Locked" }, { status: 403 }),
-    };
+  // Native clients (Expo) authenticate with a bearer session token and have
+  // no `withink-unlocked` cookie; their lock is the on-device key. The server
+  // lock stays enforced for cookie-authenticated web sessions.
+  const headerStore = await headers();
+  const isBearer =
+    headerStore.get("authorization")?.toLowerCase().startsWith("bearer ") ??
+    false;
+
+  if (!isBearer) {
+    const unlocked = await LockService.isSessionUnlocked(session.user.id);
+    if (!unlocked) {
+      return {
+        response: NextResponse.json({ error: "Locked" }, { status: 403 }),
+      };
+    }
   }
 
   return { userId: session.user.id };

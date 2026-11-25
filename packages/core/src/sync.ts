@@ -42,6 +42,13 @@ export interface SaveEntryPayload {
   mood: number | null;
   /** Filing target for NEW entries; the server re-validates ownership. */
   notebookId?: string;
+  /**
+   * The `updatedAt` this client last saw for the entry. When provided, the
+   * server rejects the write if the entry changed on another device, instead
+   * of silently overwriting it. Optional so existing clients keep last-write-
+   * wins; native clients opt in.
+   */
+  baseUpdatedAt?: string;
   /** Viewer-local today, used for the backfill window. */
   today: string;
 }

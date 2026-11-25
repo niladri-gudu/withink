@@ -65,10 +65,13 @@ Shared code extracted into a Turborepo workspace. Currently includes:
 - `@withink/ui` — shadcn-style UI kit (Button, Card, Input, Textarea, Skeleton, Tooltip, BrandLoader, ThemeToggle)
 - `@withink/utils` — `cn()` and other pure utilities
 - `@withink/core` — framework-neutral journal domain: date/text/ciphertext
-  helpers, timeline filters, letter rules, plans/entitlements, domain types,
-  and the crypto/storage/sync interfaces
+  helpers, timeline filters, insights aggregation, flashback selection, letter
+  rules, plans/entitlements, domain types, and the crypto/storage/sync
+  interfaces
 - `@withink/api-client` — typed fetch client for the versioned sync HTTP API
-  (`/api/sync/*`), shared by web and the future Expo app
+  (`/api/sync/*`, cookie or bearer auth), shared by web and the future Expo
+  app; includes notebook mutations and the optional `baseUpdatedAt`
+  stale-write guard
 
 Packages ship as source and are consumed via `transpilePackages`. Portable
 journal/sync logic lives in `@withink/core`; the server data layer (Mongoose

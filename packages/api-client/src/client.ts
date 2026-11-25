@@ -1,4 +1,5 @@
 import type {
+  NotebookSummary,
   SaveEntryPayload,
   SaveEntryResult,
   SyncEntryPayload,
@@ -11,6 +12,7 @@ import {
   type ApiClientOptions,
   type SyncDeleteResponse,
   type SyncManifestResponse,
+  type SyncNotebookMutationResponse,
   type SyncNotebooksResponse,
   type SyncPullResponse,
   type SyncPushResponse,
@@ -126,6 +128,48 @@ export function createApiClient(options: ApiClientOptions): WithinkApiClient {
         "/api/sync/notebooks",
       );
       return result.notebooks;
+    },
+
+    async createNotebook(name: string): Promise<NotebookSummary> {
+      const result = await request<SyncNotebookMutationResponse>(
+        "/api/sync/notebooks",
+        { method: "POST", body: JSON.stringify({ action: "create", name }) },
+      );
+      if (!result.notebook) {
+        throw new ApiError(
+          500,
+          "The server did not return the new notebook.",
+        );
+      }
+      return result.notebook;
+    },
+
+    async renameNotebook(id: string, name: string) {
+      await request<SyncNotebookMutationResponse>("/api/sync/notebooks", {
+        method: "POST",
+        body: JSON.stringify({ action: "rename", id, name }),
+      });
+    },
+
+    async deleteNotebook(id: string) {
+      await request<SyncNotebookMutationResponse>("/api/sync/notebooks", {
+        method: "POST",
+        body: JSON.stringify({ action: "delete", id }),
+      });
+    },
+
+    async setDefaultNotebook(id: string) {
+      await request<SyncNotebookMutationResponse>("/api/sync/notebooks", {
+        method: "POST",
+        body: JSON.stringify({ action: "set-default", id }),
+      });
+    },
+
+    async moveEntryToNotebook(date: string, notebookId: string) {
+      await request<SyncNotebookMutationResponse>("/api/sync/notebooks", {
+        method: "POST",
+        body: JSON.stringify({ action: "move-entry", date, notebookId }),
+      });
     },
   };
 }

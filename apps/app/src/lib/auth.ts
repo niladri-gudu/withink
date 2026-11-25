@@ -1,6 +1,7 @@
 import { betterAuth } from "better-auth";
 import { mongodbAdapter } from "better-auth/adapters/mongodb";
 import { nextCookies } from "better-auth/next-js";
+import { bearer } from "better-auth/plugins/bearer";
 
 import { env } from "@/config/env";
 import { logger } from "@/server/logger";
@@ -183,7 +184,13 @@ export const auth = betterAuth({
     },
   },
 
-  plugins: [nextCookies()],
+  plugins: [
+    // Native clients (Expo) have no cookie jar; they send the session token as
+    // `Authorization: Bearer <token>`. The web keeps using cookies unchanged.
+    bearer(),
+    // nextCookies() must stay last so it can attach Set-Cookie headers.
+    nextCookies(),
+  ],
   trustHost: true,
 });
 

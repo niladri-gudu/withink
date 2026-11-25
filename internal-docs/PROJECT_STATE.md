@@ -50,6 +50,10 @@ Active work:
 - Shipped: Settings → Your data "On this device" card — eviction-protection
   status + request, storage estimate, last-backup age, and a guarded "Rebuild
   local cache" action that flushes unsynced edits and keeps the local profile.
+- Shipped: mobile readiness — bearer-token auth for `/api/sync/*`, shared
+  `computeInsights` + `selectLocalFlashback` in `@withink/core`, notebook
+  create/rename/delete/set-default/move over the sync API, and an optional
+  stale-write rejection on push (`baseUpdatedAt`).
 - Shipped: Sentry browser SDK deferred off the critical path (root JS
   659 KB → 424 KB); Vercel region moved to `bom1` (Mumbai).
 
@@ -434,6 +438,14 @@ Note: MongoDB (`mongodb+srv://`) now connects. The earlier `querySrv ECONNREFUSE
 ---
 
 # Recent Decisions
+
+2026-11-26 (Mobile readiness — bearer auth, shared logic, notebook API, stale-write guard)
+
+- **Bearer auth:** Better Auth now loads `bearer()`, so `/api/sync/*` accepts `Authorization: Bearer <session-token>` for Expo while the web keeps cookies. `requireSyncSession` skips the server unlock-cookie check only for bearer requests (native locks locally with the device key).
+- **Shared logic:** `computeInsights` and `selectLocalFlashback` moved to `@withink/core/insights` and `@withink/core/flashback`; the web modules are thin re-exports. No behavior change.
+- **Notebook API:** `POST /api/sync/notebooks` now handles create/rename/delete/set-default/move-entry (same `NotebooksService` as the web actions, with the notebook-limit code surfaced). `@withink/api-client` exposes one method per action.
+- **Stale writes:** `SaveEntryPayload.baseUpdatedAt` is optional; when present, `POST /api/sync/push` rejects a write if the entry changed or was deleted on another device (422 with a clear reason) instead of silently overwriting. Web autosave omits it and keeps last-write-wins.
+- Verified: tsc clean (app + core + api-client), eslint clean, full Vitest **277/277**, production build green after clearing a stale `.next` font cache.
 
 2026-11-26 (Local-first — insights, flashbacks, and device data safety)
 

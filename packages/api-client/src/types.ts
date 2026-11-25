@@ -40,6 +40,12 @@ export interface SyncNotebooksResponse {
   notebooks: NotebookSummary[];
 }
 
+export interface SyncNotebookMutationResponse {
+  success: boolean;
+  /** Present on `create`. */
+  notebook?: NotebookSummary;
+}
+
 export interface ApiClientOptions {
   /** e.g. "https://app.withink.me" (no trailing slash required). */
   baseUrl: string;
@@ -66,6 +72,13 @@ export interface WithinkApiClient {
   saveEntry(payload: SaveEntryPayload): Promise<SaveEntryResult>;
   deleteEntry(date: string): Promise<boolean>;
   getNotebooks(): Promise<NotebookSummary[]>;
+  /** Returns the created notebook (server enforces the plan's limit). */
+  createNotebook(name: string): Promise<NotebookSummary>;
+  renameNotebook(id: string, name: string): Promise<void>;
+  deleteNotebook(id: string): Promise<void>;
+  setDefaultNotebook(id: string): Promise<void>;
+  /** Files an existing entry into another notebook. */
+  moveEntryToNotebook(date: string, notebookId: string): Promise<void>;
 }
 
 export class ApiError extends Error {

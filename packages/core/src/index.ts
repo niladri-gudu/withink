@@ -4,6 +4,8 @@ export * from "./ciphertext";
 export * from "./encoding";
 export * from "./kdf";
 export * from "./timeline";
+export * from "./insights";
+export * from "./flashback";
 export * from "./letters";
 export * from "./plans";
 export * from "./types";

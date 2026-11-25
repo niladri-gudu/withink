@@ -13,19 +13,25 @@ import type {
 } from "@withink/core";
 
 import { clampViewerToday } from "@/lib/viewer-today";
-import { handleError } from "@/server/errors";
+import { BusinessRuleError, handleError } from "@/server/errors";
 import { EntitlementsService } from "@/features/billing/services/entitlements-service";
 import { EncryptionSettingsRepository } from "@/features/encryption/repositories/encryption-settings-repository";
 import { NotebookRepository } from "@/features/notebooks/repositories/notebook-repository";
 import { NotebooksService } from "@/features/notebooks/services/notebook-service";
 
 import { dateStringSchema, saveEntrySchema } from "../validation/entry-schema";
+import { EntryRepository } from "../repositories/entry-repository";
 import { JournalService } from "./journal-service";
 
 /** One entry as accepted by `POST /api/sync/push`. */
 export const syncPushEntrySchema = saveEntrySchema.extend({
   /** Viewer-local today, used to enforce the plan's backfill window. */
   today: dateStringSchema,
+  /**
+   * Last `updatedAt` the client saw. When supplied, a push that would
+   * overwrite a newer server copy is rejected instead of clobbering it.
+   */
+  baseUpdatedAt: z.string().optional(),
 });
 
 export type SyncPushEntry = z.infer<typeof syncPushEntrySchema>;
@@ -115,6 +121,28 @@ export class EntrySyncService {
                 `Encrypted journals can only save encrypted ${field}.`,
               );
             }
+          }
+        }
+
+        // Stale-write guard (opt-in): the client tells us which server version
+        // it edited. If the entry moved on since then — edited or deleted on
+        // another device — reject so the client can pull and merge instead of
+        // silently overwriting.
+        if (input.baseUpdatedAt) {
+          const current = await EntryRepository.getEntry(
+            userId,
+            validated.date,
+          );
+          if (!current) {
+            throw new BusinessRuleError(
+              "This entry was deleted on another device. Pull the latest and try again.",
+            );
+          }
+          const currentUpdatedAt = new Date(current.updatedAt).getTime();
+          if (currentUpdatedAt !== new Date(input.baseUpdatedAt).getTime()) {
+            throw new BusinessRuleError(
+              "This entry changed on another device. Pull the latest and try again.",
+            );
           }
         }
 

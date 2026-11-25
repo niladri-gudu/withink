@@ -32,6 +32,14 @@
       "types": "./src/timeline.ts",
       "default": "./src/timeline.ts"
     },
+    "./insights": {
+      "types": "./src/insights.ts",
+      "default": "./src/insights.ts"
+    },
+    "./flashback": {
+      "types": "./src/flashback.ts",
+      "default": "./src/flashback.ts"
+    },
     "./letters": {
       "types": "./src/letters.ts",
       "default": "./src/letters.ts"

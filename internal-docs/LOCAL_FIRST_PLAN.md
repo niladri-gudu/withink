@@ -157,10 +157,12 @@ from core so existing imports/tests keep working.
 `/api/sync/{manifest,pull,push,delete,notebooks}` routes and accepts auth
 headers (cookie on web, bearer for Expo).
 
-**Still to extract in E2/E3** (kept app-local for now, imported by the web
-client): `insights.ts` (`computeInsights`), `flashback.ts` (selection),
-`calendar.ts` (month aggregation), and the sync engine itself. Write the engine
-against `LocalStore` + `RemoteApi`, not IndexedDB/Server Actions.
+**Extracted (2026-11-26):** `insights.ts` (`computeInsights`) and
+`flashback.ts` (selection) now live in `@withink/core`; the web modules are
+thin re-exports. **Still app-local:** `calendar.ts` (month aggregation is
+derived inline from the timeline) and the sync engine itself — the Expo app
+will implement a native engine against `LocalStore` + `RemoteApi`, not
+IndexedDB/Server Actions.
 
 ---
 
