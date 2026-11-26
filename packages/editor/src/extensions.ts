@@ -11,14 +11,20 @@ import StarterKit from "@tiptap/starter-kit";
 /**
  * The one TipTap extension list.
  *
- * Web renders it through `@tiptap/react`; any other editor surface (the
- * native WebView bridge, fixtures, the parity spike) must use this factory so
- * the schema, marks and serialized HTML can never drift between platforms.
+ * Web renders it through `@tiptap/react`; the native WebView bridge and the
+ * parity fixtures use it too, so the schema, marks and serialized HTML can
+ * never drift between platforms. Any extension change is a contract change:
+ * regenerate the fixtures in the same commit.
  */
 export function createEditorExtensions() {
   return [
     StarterKit.configure({
       heading: { levels: [1, 2, 3] },
+      // StarterKit 3 ships default Link/Underline; disable its copies so the
+      // configured ones below are the only schema — otherwise the duplicates
+      // are ignored with a warning and Link's rel/class never apply.
+      link: false,
+      underline: false,
     }),
     UnderlineExt,
     ImageExt.configure({ inline: false, allowBase64: true }),

@@ -2,7 +2,7 @@
 
 # Project State
 
-Last Updated: 2026-11-26
+Last Updated: 2026-11-27
 
 Current Phase: Local-First Refactor (Phase E — journal, dashboard, insights and flashbacks local)
 
@@ -99,13 +99,23 @@ Active work:
   the cookie unlock gate exactly like `/api/sync/*`) and call the existing
   actions/services. Expo push tokens are stored per install and `PushService`
   sends to both Web Push and Expo, pruning dead tokens.
-- Verified: rich-editor spike — the web TipTap extension list is now a single
-  factory (`createEditorExtensions()`), and ten fixtures (marks, headings,
-  lists, task list, blockquote/code/hr, link, image, Bengali, escaping,
-  long-form) serialized byte-identically in desktop Chrome and the app's
-  Android WebView: HTML, JSON, plain text and JSON→HTML all 10/10. Decision:
-  WebView-hosted TipTap with the shared factory (`MOBILE_LAUNCH_PLAN.md` §11).
-  Next: the WebView editor bridge and the permanent fixture suite.
+- Shipped + verified: rich editor on native. The TipTap extension factory and
+  toolbar-state derivation now live in `@withink/editor`, which also owns a
+  ten-fixture parity corpus and the WebView host: an esbuild script emits a
+  self-contained HTML document into the mobile bundle, and the native
+  `RichTextEditor` host drives it over a small message protocol (queued
+  commands, debounced snapshots, `flush` acknowledgement, theme, editable).
+  The entry screen saves the bridge's HTML/text/JSON through the same
+  local-first SQLite path, with a save baseline so opening and closing a page
+  without edits never queues a push. Verified on the connected Android device:
+  typing, bold and bullet lists, autosave + `/api/sync/push` 200, formatted
+  reopen, a web-written entry rendering and round-tripping, and both the
+  in-app Back button and the hardware back key flushing before navigation.
+  `MOBILE_PARITY.md` tracks the remaining iOS verification and editor chrome.
+  Regenerate the WebView after an extension change with
+  `pnpm --filter @withink/editor build:webview`; the test suite fails if the
+  committed bundle drifts. Decision: WebView-hosted TipTap with the shared
+  factory (`MOBILE_LAUNCH_PLAN.md` §11).
 
 ---
 

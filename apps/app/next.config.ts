@@ -28,6 +28,7 @@ const nextConfig: NextConfig = {
   transpilePackages: [
     "@withink/contracts",
     "@withink/core",
+    "@withink/editor",
     "@withink/theme",
     "@withink/ui",
     "@withink/utils",

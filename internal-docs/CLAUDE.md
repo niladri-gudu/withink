@@ -84,6 +84,10 @@ Shared code extracted into a Turborepo workspace. Currently includes:
   (`/api/sync/*`, cookie or bearer auth), shared by web and the Expo app;
   includes notebook mutations and the optional `baseUpdatedAt` stale-write
   guard
+- `@withink/editor` — the one TipTap extension factory, toolbar-state
+  derivation, the WebView bridge/template, and the HTML/JSON parity fixtures
+  with committed goldens; `pnpm --filter @withink/editor build:webview`
+  regenerates the mobile editor document
 
 Packages ship as source and are consumed via `transpilePackages`. Portable
 journal/sync logic lives in `@withink/core`; the server data layer (Mongoose

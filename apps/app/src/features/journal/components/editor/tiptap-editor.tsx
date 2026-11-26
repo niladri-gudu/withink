@@ -3,11 +3,10 @@
 
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { EditorContent, useEditor } from "@tiptap/react";
+import { createEditorExtensions } from "@withink/editor";
 import { toast } from "sonner";
 
 import { UpgradeDialog } from "@/features/billing/components/upgrade-dialog";
-
-import { createEditorExtensions } from "./extensions";
 
 let uploadCounter = 0;
 function generateTempId(): string {

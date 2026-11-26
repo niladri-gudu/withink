@@ -1,0 +1,521 @@
+{
+  "marks": {
+    "html": "<p><strong>Bold</strong> <em>italic</em> <u>under</u> <s>strike</s> <code>code</code> <mark>mark</mark></p>",
+    "text": "Bold italic under strike code mark",
+    "json": {
+      "type": "doc",
+      "content": [
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "marks": [
+                {
+                  "type": "bold"
+                }
+              ],
+              "text": "Bold"
+            },
+            {
+              "type": "text",
+              "text": " "
+            },
+            {
+              "type": "text",
+              "marks": [
+                {
+                  "type": "italic"
+                }
+              ],
+              "text": "italic"
+            },
+            {
+              "type": "text",
+              "text": " "
+            },
+            {
+              "type": "text",
+              "marks": [
+                {
+                  "type": "underline"
+                }
+              ],
+              "text": "under"
+            },
+            {
+              "type": "text",
+              "text": " "
+            },
+            {
+              "type": "text",
+              "marks": [
+                {
+                  "type": "strike"
+                }
+              ],
+              "text": "strike"
+            },
+            {
+              "type": "text",
+              "text": " "
+            },
+            {
+              "type": "text",
+              "marks": [
+                {
+                  "type": "code"
+                }
+              ],
+              "text": "code"
+            },
+            {
+              "type": "text",
+              "text": " "
+            },
+            {
+              "type": "text",
+              "marks": [
+                {
+                  "type": "highlight",
+                  "attrs": {
+                    "color": ""
+                  }
+                }
+              ],
+              "text": "mark"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "headings": {
+    "html": "<h1>One</h1><h2>Two</h2><h3>Three</h3><p>Body</p>",
+    "text": "One\n\nTwo\n\nThree\n\nBody",
+    "json": {
+      "type": "doc",
+      "content": [
+        {
+          "type": "heading",
+          "attrs": {
+            "level": 1
+          },
+          "content": [
+            {
+              "type": "text",
+              "text": "One"
+            }
+          ]
+        },
+        {
+          "type": "heading",
+          "attrs": {
+            "level": 2
+          },
+          "content": [
+            {
+              "type": "text",
+              "text": "Two"
+            }
+          ]
+        },
+        {
+          "type": "heading",
+          "attrs": {
+            "level": 3
+          },
+          "content": [
+            {
+              "type": "text",
+              "text": "Three"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "Body"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "lists": {
+    "html": "<ul><li><p>alpha</p></li><li><p>beta</p></li></ul><ol><li><p>one</p></li><li><p>two</p></li></ol>",
+    "text": "alpha\n\n\n\nbeta\n\n\n\n\n\none\n\n\n\ntwo",
+    "json": {
+      "type": "doc",
+      "content": [
+        {
+          "type": "bulletList",
+          "content": [
+            {
+              "type": "listItem",
+              "content": [
+                {
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "alpha"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "listItem",
+              "content": [
+                {
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "beta"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "orderedList",
+          "attrs": {
+            "start": 1,
+            "type": null
+          },
+          "content": [
+            {
+              "type": "listItem",
+              "content": [
+                {
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "one"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "listItem",
+              "content": [
+                {
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "two"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "task-list": {
+    "html": "<ul data-type=\"taskList\"><li data-checked=\"true\" data-type=\"taskItem\"><label><input type=\"checkbox\" checked=\"checked\"><span></span></label><div><p>done</p></div></li><li data-checked=\"false\" data-type=\"taskItem\"><label><input type=\"checkbox\"><span></span></label><div><p>todo</p></div></li></ul>",
+    "text": "done\n\n\n\ntodo",
+    "json": {
+      "type": "doc",
+      "content": [
+        {
+          "type": "taskList",
+          "content": [
+            {
+              "type": "taskItem",
+              "attrs": {
+                "checked": true
+              },
+              "content": [
+                {
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "done"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "taskItem",
+              "attrs": {
+                "checked": false
+              },
+              "content": [
+                {
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "todo"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "quote-code-rule": {
+    "html": "<blockquote><p>quoted</p></blockquote><pre><code>const x = 1 &lt; 2;</code></pre><hr>",
+    "text": "quoted\n\nconst x = 1 < 2;",
+    "json": {
+      "type": "doc",
+      "content": [
+        {
+          "type": "blockquote",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "quoted"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "codeBlock",
+          "attrs": {
+            "language": null
+          },
+          "content": [
+            {
+              "type": "text",
+              "text": "const x = 1 < 2;"
+            }
+          ]
+        },
+        {
+          "type": "horizontalRule"
+        }
+      ]
+    }
+  },
+  "link": {
+    "html": "<p><a target=\"_blank\" rel=\"noopener noreferrer\" class=\"text-accent underline cursor-pointer\" href=\"https://example.com/a?b=1&amp;c=2\">Example</a></p>",
+    "text": "Example",
+    "json": {
+      "type": "doc",
+      "content": [
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "marks": [
+                {
+                  "type": "link",
+                  "attrs": {
+                    "href": "https://example.com/a?b=1&c=2",
+                    "target": "_blank",
+                    "rel": "noopener noreferrer",
+                    "class": "text-accent underline cursor-pointer",
+                    "title": null
+                  }
+                }
+              ],
+              "text": "Example"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "image": {
+    "html": "<p></p><img src=\"https://assets.withink.me/photo.webp\" alt=\"A view\">",
+    "text": "",
+    "json": {
+      "type": "doc",
+      "content": [
+        {
+          "type": "paragraph"
+        },
+        {
+          "type": "image",
+          "attrs": {
+            "src": "https://assets.withink.me/photo.webp",
+            "alt": "A view",
+            "title": null,
+            "width": null,
+            "height": null
+          }
+        }
+      ]
+    }
+  },
+  "bengali": {
+    "html": "<p>আমি বাংলায় লিখি। আজকের দিনটি সুন্দর।</p>",
+    "text": "আমি বাংলায় লিখি। আজকের দিনটি সুন্দর।",
+    "json": {
+      "type": "doc",
+      "content": [
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "আমি বাংলায় লিখি। আজকের দিনটি সুন্দর।"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "escaping": {
+    "html": "<p>A &lt; B &amp;&amp; \"quoted\" &gt; C</p>",
+    "text": "A < B && \"quoted\" > C",
+    "json": {
+      "type": "doc",
+      "content": [
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "A < B && \"quoted\" > C"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "long-form": {
+    "html": "<p>First paragraph with <strong>bold</strong> and <em>italic</em> text.</p><p>Second paragraph, <u>underlined</u> a bit.</p><ul><li><p>a point</p></li><li><p>another point</p></li></ul><p>Closing line with a <code>snippet</code>.</p>",
+    "text": "First paragraph with bold and italic text.\n\nSecond paragraph, underlined a bit.\n\n\n\n\n\na point\n\n\n\nanother point\n\nClosing line with a snippet.",
+    "json": {
+      "type": "doc",
+      "content": [
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "First paragraph with "
+            },
+            {
+              "type": "text",
+              "marks": [
+                {
+                  "type": "bold"
+                }
+              ],
+              "text": "bold"
+            },
+            {
+              "type": "text",
+              "text": " and "
+            },
+            {
+              "type": "text",
+              "marks": [
+                {
+                  "type": "italic"
+                }
+              ],
+              "text": "italic"
+            },
+            {
+              "type": "text",
+              "text": " text."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "Second paragraph, "
+            },
+            {
+              "type": "text",
+              "marks": [
+                {
+                  "type": "underline"
+                }
+              ],
+              "text": "underlined"
+            },
+            {
+              "type": "text",
+              "text": " a bit."
+            }
+          ]
+        },
+        {
+          "type": "bulletList",
+          "content": [
+            {
+              "type": "listItem",
+              "content": [
+                {
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "a point"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "listItem",
+              "content": [
+                {
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "another point"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "Closing line with a "
+            },
+            {
+              "type": "text",
+              "marks": [
+                {
+                  "type": "code"
+                }
+              ],
+              "text": "snippet"
+            },
+            {
+              "type": "text",
+              "text": "."
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

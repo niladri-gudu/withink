@@ -32,10 +32,10 @@ Status values: `—` not started · `dev` implemented, unverified · `shipped` �
 | Session / account hint | shipped | dev | `@withink/core` types, `withink-zk` cookie | Expo stores the session in SecureStore; local profile pending |
 | Lock / unlock | shipped | dev | `LockService`, `/api/unlock` | Master-key unlock + 15-minute token verified on Android; biometrics pending |
 | Client-side encryption | shipped | dev | `@withink/core` kdf/crypto contracts | PBKDF2 in a native module (self-tested) on a background thread; WebView and pure-JS fallbacks; AES-GCM/HKDF in noble; golden vectors pass; device unlock + decrypt verified |
-| Journal read/write | shipped | dev | `@withink/core/sync-engine` | Read, decrypt and encrypted write verified on the Pixel 4 emulator |
+| Journal read/write | shipped | dev | `@withink/core/sync-engine` | Read, decrypt and encrypted write verified on the Pixel 4 emulator; rich-editor writes verified on the Android phone |
 | Autosave + offline queue | shipped | dev | `LocalStore` adapter | SQLite queue; an offline edit stayed queued and flushed on reconnect |
 | Sync (push/pull/prune) | shipped | dev | `planSyncPull` in `@withink/core` | Push + pull verified on device; prune covered by unit tests |
-| Entry editor | shipped | dev | `createEditorExtensions()` | Plain-text editor on native today; WebView TipTap spike passed 10/10 fixtures against web; bridge implementation next |
+| Entry editor | shipped | dev | `@withink/editor` | WebView-hosted TipTap using the shared factory; formatting toolbar, autosave and flush-on-back verified on Android against web-written content. Remaining: iOS verification, links/media, mood/notebook chrome |
 | Timeline / search / filters | shipped | — | `@withink/core/timeline` | |
 | Calendar | shipped | — | `@withink/core/date` | |
 | Streaks | shipped | — | `@withink/core/date` | |
@@ -58,6 +58,10 @@ Status values: `—` not started · `dev` implemented, unverified · `shipped` �
   Vitest.
 - **Wire contracts:** `packages/contracts` — zod schemas used by routes,
   Server Actions, the API client, and the native client.
+- **Editor:** `packages/editor` — the one TipTap extension factory, the
+  toolbar-state derivation, the WebView host, and the HTML/JSON parity
+  fixtures with committed goldens. The mobile bundle is generated from it and
+  a test fails if the committed document drifts from source.
 - **Transport:** `packages/api-client` — the only HTTP client; tested with a
   fake fetch.
 - **Adapters:** web declares `LocalStore` / `CryptoProvider`; native must
@@ -72,7 +76,8 @@ Status values: `—` not started · `dev` implemented, unverified · `shipped` �
 - [ ] `pnpm turbo run lint typecheck test` green.
 - [ ] Shared golden vectors pass on both crypto implementations.
 - [ ] `planSyncPull` tests cover any new sync rule.
-- [ ] Editor round-trip fixtures pass (once the native editor exists).
+- [ ] Editor round-trip fixtures pass (`pnpm --filter @withink/editor test`,
+      including a boot of the committed WebView bundle).
 - [ ] Matrix has no stale `shipped` claims.
 - [ ] Web and native verified against the same account for: create, edit,
       delete, notebook move, letter reveal, media upload.

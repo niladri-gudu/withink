@@ -1,6 +1,10 @@
-import { formatDisplayDate } from "@withink/core";
-import { Redirect, useLocalSearchParams, useRouter } from "expo-router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  Redirect,
+  useLocalSearchParams,
+  usePreventRemove,
+  useRouter,
+} from "expo-router";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -11,12 +15,26 @@ import {
   View,
 } from "react-native";
 
-import { Screen } from "@/components/screen";
-import { ThemedText } from "@/components/themed-text";
+import { formatDisplayDate } from "@withink/core";
+import type {
+  EditorCommand,
+  EditorContentInput,
+  EditorSnapshot,
+  EditorTheme,
+  FormatState,
+} from "@withink/editor";
+
 import { Spacing } from "@/constants/theme";
-import { useTheme } from "@/hooks/use-theme";
 import { diaryCache } from "@/lib/diary-cache";
 import { getMasterKey } from "@/lib/master-key";
+import { useTheme } from "@/hooks/use-theme";
+import { EditorToolbar } from "@/components/editor-toolbar";
+import {
+  RichTextEditor,
+  type RichTextEditorHandle,
+} from "@/components/rich-text-editor";
+import { Screen } from "@/components/screen";
+import { ThemedText } from "@/components/themed-text";
 
 const AUTOSAVE_MS = 1200;
 
@@ -28,16 +46,18 @@ function escapeHtml(value: string): string {
     .replace(/"/g, "&quot;");
 }
 
-/** Plain-text → TipTap-compatible HTML (paragraphs split on blank lines). */
+/** Plain-text → TipTap-compatible HTML for entries saved by the old editor. */
 function textToHtml(text: string): string {
   const paragraphs = text.split(/\n{2,}/);
   const html = paragraphs
-    .map((paragraph) => `<p>${escapeHtml(paragraph).replace(/\n/g, "<br>")}</p>`)
+    .map(
+      (paragraph) => `<p>${escapeHtml(paragraph).replace(/\n/g, "<br>")}</p>`,
+    )
     .join("");
-  return html || "<p></p>";
+  return html || "";
 }
 
-/** Plain-text → TipTap document JSON. */
+/** Plain-text → TipTap document JSON for entries saved by the old editor. */
 function textToJson(text: string): unknown {
   const paragraphs = text.split(/\n{2,}/);
   return {
@@ -55,14 +75,18 @@ function describeError(error: unknown): string {
   return error instanceof Error ? error.message : "Something went wrong.";
 }
 
+/** Cheap change signature; formatting lives in the HTML. */
+function saveSignature(title: string, snapshot: EditorSnapshot | null): string {
+  return `${title} | ${snapshot?.html ?? ""} | ${snapshot?.text ?? ""}`;
+}
+
 /**
- * Plain-text entry editor for the native client.
+ * Rich entry editor for the native client.
  *
- * Writes are local-first: the encrypted document, metadata and queue item go
- * to SQLite on every autosave, then the queue is pushed to the server. Rich
- * formatting is not editable here yet; `contentHtml`/`contentJson` are
- * regenerated from the plain text on save, which is why this screen is marked
- * as a basic editor in the parity matrix.
+ * The body is the shared TipTap editor in a bundled WebView, so formatting
+ * round-trips with the web editor byte-for-byte. Writes stay local-first: every
+ * autosave encrypts the document, metadata and queue item into SQLite before
+ * the queue is pushed to the server.
  */
 export function EntryEditorScreen() {
   const router = useRouter();
@@ -73,25 +97,37 @@ export function EntryEditorScreen() {
     : (params.date ?? "");
 
   const [title, setTitle] = useState("");
-  const [text, setText] = useState("");
+  const [initialContent, setInitialContent] =
+    useState<EditorContentInput | null>(null);
+  const [format, setFormat] = useState<FormatState | null>(null);
   const [loading, setLoading] = useState(true);
-  const [hydrated, setHydrated] = useState(false);
   const [dirty, setDirty] = useState(false);
+  const [allowLeave, setAllowLeave] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const editorRef = useRef<RichTextEditorHandle>(null);
+  const snapshotRef = useRef<EditorSnapshot | null>(null);
+  const titleRef = useRef("");
   const dirtyRef = useRef(false);
-  const latestRef = useRef({ date, title, text });
-  // Effects and event handlers read the ref; render reads the state mirror.
-  useEffect(() => {
-    latestRef.current = { date, title, text };
-  }, [date, title, text]);
+  const lastSavedRef = useRef("");
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const editorTheme = useMemo<EditorTheme>(
+    () => ({
+      text: theme.text,
+      background: theme.background,
+      muted: theme.textSecondary,
+      accent: "#208AEF",
+      border: theme.backgroundSelected,
+      codeBackground: theme.backgroundElement,
+    }),
+    [theme],
+  );
 
   useEffect(() => {
     const key = getMasterKey();
     if (!key || !date) {
-      // Nothing async to run; flip the spinner off once. The route redirects
-      // to the diary anyway when no key is held.
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setLoading(false);
       return;
@@ -105,16 +141,32 @@ export function EntryEditorScreen() {
         const entry = await diaryCache.fetchEntryIfMissing(date, key);
         if (cancelled) return;
         if (entry) {
-          setTitle(entry.title);
-          setText(entry.contentText);
+          const storedTitle = entry.title ?? "";
+          setTitle(storedTitle);
+          titleRef.current = storedTitle;
+          const hasText = entry.contentText.trim().length > 0;
+          setInitialContent({
+            html:
+              entry.contentHtml ||
+              (hasText ? textToHtml(entry.contentText) : ""),
+            json:
+              entry.contentJson &&
+              typeof entry.contentJson === "object" &&
+              Object.keys(entry.contentJson as Record<string, unknown>).length >
+                0
+                ? entry.contentJson
+                : hasText
+                  ? textToJson(entry.contentText)
+                  : undefined,
+          });
+        } else {
+          setInitialContent({ html: "" });
         }
       } catch (err) {
         if (!cancelled) setError(describeError(err));
+        if (!cancelled) setInitialContent({ html: "" });
       } finally {
-        if (!cancelled) {
-          setLoading(false);
-          setHydrated(true);
-        }
+        if (!cancelled) setLoading(false);
       }
     })();
 
@@ -123,67 +175,138 @@ export function EntryEditorScreen() {
     };
   }, [date]);
 
-  const persist = useCallback(async (announce: boolean) => {
-    const key = getMasterKey();
-    const latest = latestRef.current;
-    if (!key || !latest.date) return;
-    if (latest.title.trim() === "" && latest.text.trim() === "") {
-      dirtyRef.current = false;
-      setDirty(false);
-      return;
-    }
+  const persist = useCallback(
+    async (announce: boolean, snapshotOverride?: EditorSnapshot | null) => {
+      if (saveTimerRef.current) {
+        clearTimeout(saveTimerRef.current);
+        saveTimerRef.current = null;
+      }
+      const key = getMasterKey();
+      if (!key || !date) return;
 
-    try {
-      await diaryCache.saveEntryLocally(
-        {
-          date: latest.date,
-          title: latest.title,
-          contentText: latest.text,
-          contentHtml: textToHtml(latest.text),
-          contentJson: textToJson(latest.text),
-          mood: null,
-        },
-        key,
-      );
-      dirtyRef.current = false;
-      setDirty(false);
-      setStatus("Saved on this device");
-      setError(null);
+      const snapshot = snapshotOverride ?? snapshotRef.current;
+      const contentText = snapshot?.text ?? "";
+      if (titleRef.current.trim() === "" && contentText.trim() === "") {
+        dirtyRef.current = false;
+        setDirty(false);
+        return;
+      }
 
-      const flush = await diaryCache.flushQueue(key);
-      // Always update the footer: a silent autosave needs a state change to
-      // repaint "Editing…" even when the push is a no-op.
-      setStatus(
-        flush.failed > 0
-          ? "Saved on this device · will sync when back online"
-          : announce
-            ? "Synced"
-            : "Saved on this device",
-      );
-    } catch (err) {
-      setError(describeError(err));
+      try {
+        await diaryCache.saveEntryLocally(
+          {
+            date,
+            title: titleRef.current,
+            contentText,
+            contentHtml: snapshot?.html ?? "",
+            contentJson: snapshot?.json ?? {},
+            mood: null,
+          },
+          key,
+        );
+        lastSavedRef.current = saveSignature(titleRef.current, snapshot);
+        dirtyRef.current = false;
+        setDirty(false);
+        setStatus("Saved on this device");
+        setError(null);
+
+        const flush = await diaryCache.flushQueue(key);
+        // Always update the footer: a silent autosave needs a state change to
+        // repaint "Editing…" even when the push is a no-op.
+        setStatus(
+          flush.failed > 0
+            ? "Saved on this device · will sync when back online"
+            : announce
+              ? "Synced"
+              : "Saved on this device",
+        );
+      } catch (err) {
+        setError(describeError(err));
+        setStatus(null);
+      }
+    },
+    [date],
+  );
+
+  const scheduleAutosave = useCallback(() => {
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => {
+      saveTimerRef.current = null;
+      void persist(false);
+    }, AUTOSAVE_MS);
+  }, [persist]);
+
+  const handleSnapshot = useCallback(
+    (snapshot: EditorSnapshot) => {
+      snapshotRef.current = snapshot;
+      dirtyRef.current = true;
+      setDirty(true);
       setStatus(null);
-    }
+      scheduleAutosave();
+    },
+    [scheduleAutosave],
+  );
+
+  function handleTitleChange(value: string) {
+    titleRef.current = value;
+    setTitle(value);
+    dirtyRef.current = true;
+    setDirty(true);
+    setStatus(null);
+    scheduleAutosave();
+  }
+
+  const handleLoaded = useCallback((snapshot: EditorSnapshot) => {
+    // Opening a page is not an edit: record the normalized content as the
+    // baseline so leaving without changes never queues a pointless push.
+    lastSavedRef.current = saveSignature(titleRef.current, snapshot);
   }, []);
 
-  // Autosave after the user stops typing, like the web editor.
-  useEffect(() => {
-    if (!hydrated || !dirtyRef.current) return;
-    const timer = setTimeout(() => void persist(false), AUTOSAVE_MS);
-    return () => clearTimeout(timer);
-  }, [title, text, hydrated, persist]);
-
-  // Save on the way out (back gesture / navigation).
+  // Save on the way out if anything is still pending.
   useEffect(() => {
     return () => {
-      if (dirtyRef.current) void persist(false);
+      if (saveTimerRef.current) {
+        clearTimeout(saveTimerRef.current);
+        saveTimerRef.current = null;
+      }
+      const current = snapshotRef.current;
+      if (
+        dirtyRef.current &&
+        current &&
+        saveSignature(titleRef.current, current) !== lastSavedRef.current
+      ) {
+        void persist(false, current);
+      }
     };
   }, [persist]);
 
-  async function handleBack() {
-    if (dirtyRef.current) await persist(false);
+  const handleBack = useCallback(() => {
     router.back();
-  }
+  }, [router]);
+
+  // Native-stack pops bypass `BackHandler`, so intercept the removal itself:
+  // the WebView hands over its last snapshot before the screen unmounts, then
+  // `repeat` re-runs the blocked pop.
+  usePreventRemove(!allowLeave, ({ repeat }) => {
+    void (async () => {
+      const snapshot = await editorRef.current?.flush();
+      if (snapshot) snapshotRef.current = snapshot;
+      const current = snapshot ?? snapshotRef.current;
+      if (
+        current &&
+        saveSignature(titleRef.current, current) !== lastSavedRef.current
+      ) {
+        await persist(false, current);
+      }
+      // Keep the prop in sync with the hook's internal state before repeating.
+      setAllowLeave(true);
+      repeat();
+    })();
+  });
+
+  const handleCommand = useCallback((command: EditorCommand) => {
+    editorRef.current?.runCommand(command);
+  }, []);
 
   if (!getMasterKey()) {
     return <Redirect href="/diary" />;
@@ -199,7 +322,7 @@ export function EntryEditorScreen() {
     );
   }
 
-  if (loading) {
+  if (loading || !initialContent) {
     return (
       <Screen>
         <View style={styles.center}>
@@ -222,7 +345,7 @@ export function EntryEditorScreen() {
           <Pressable
             accessibilityRole="button"
             hitSlop={12}
-            onPress={() => void handleBack()}
+            onPress={handleBack}
           >
             <ThemedText type="smallBold">Back</ThemedText>
           </Pressable>
@@ -237,34 +360,26 @@ export function EntryEditorScreen() {
 
         <TextInput
           accessibilityLabel="Entry title"
-          onChangeText={(value) => {
-            dirtyRef.current = true;
-            latestRef.current = { ...latestRef.current, title: value };
-            setDirty(true);
-            setStatus(null);
-            setTitle(value);
-          }}
+          onChangeText={handleTitleChange}
+          onSubmitEditing={() => editorRef.current?.focus()}
           placeholder="Title"
           placeholderTextColor={theme.textSecondary}
+          returnKeyType="next"
           style={[styles.title, { color: theme.text }]}
           value={title}
         />
 
-        <TextInput
-          accessibilityLabel="Entry text"
-          multiline
-          onChangeText={(value) => {
-            dirtyRef.current = true;
-            latestRef.current = { ...latestRef.current, text: value };
-            setDirty(true);
-            setStatus(null);
-            setText(value);
-          }}
-          placeholder="Write what happened…"
-          placeholderTextColor={theme.textSecondary}
-          style={[styles.body, { color: theme.text }]}
-          textAlignVertical="top"
-          value={text}
+        <EditorToolbar onCommand={handleCommand} state={format} />
+
+        <RichTextEditor
+          editable
+          initialContent={initialContent}
+          onError={setError}
+          onLoaded={handleLoaded}
+          onSnapshot={handleSnapshot}
+          onStateChange={setFormat}
+          ref={editorRef}
+          theme={editorTheme}
         />
 
         <View
@@ -279,10 +394,7 @@ export function EntryEditorScreen() {
             disabled={!dirty}
             onPress={() => void persist(true)}
           >
-            <ThemedText
-              type="smallBold"
-              style={{ opacity: dirty ? 1 : 0.4 }}
-            >
+            <ThemedText type="smallBold" style={{ opacity: dirty ? 1 : 0.4 }}>
               Save
             </ThemedText>
           </Pressable>
@@ -310,12 +422,6 @@ const styles = StyleSheet.create({
     fontSize: 26,
     fontWeight: "600",
     paddingVertical: Spacing.two,
-  },
-  body: {
-    flex: 1,
-    fontSize: 17,
-    lineHeight: 26,
-    paddingTop: Spacing.two,
   },
   footer: {
     flexDirection: "row",

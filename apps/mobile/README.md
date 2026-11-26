@@ -81,10 +81,20 @@ on a background thread. The module self-tests against a known-answer vector
 before it is trusted; Expo Go and any self-test failure fall back to the hidden
 WebView's WebCrypto bridge and then to an audited pure-JS implementation.
 AES-GCM and HKDF use `@noble` primitives validated against the web golden
-vectors. The master key and 15-minute unlock token stay in memory only. The
-editor is plain text and regenerates TipTap-compatible HTML/JSON on save.
+vectors. The master key and 15-minute unlock token stay in memory only.
+
+The entry body is the shared TipTap editor running in a bundled, offline
+WebView (`@withink/editor`). The document is generated from the package's
+bridge entry and committed as
+`src/lib/editor-webview.generated.ts`; after changing an extension or the
+bridge, regenerate it and commit the result:
+
+```bash
+pnpm --filter @withink/editor build:webview
+pnpm --filter @withink/editor test   # fails if the committed document drifts
+```
 
 Checks: `pnpm --filter @withink/mobile test` also covers the SQLite adapter, the
-cache/sync flow and the native KDF wrapper (31 tests). Remaining slices: rich
-editor and the Phase 2 account endpoints; see
-`internal-docs/MOBILE_LAUNCH_PLAN.md`.
+cache/sync flow and the native KDF wrapper (31 tests). Remaining slices:
+editor chrome parity (links/media, mood/notebook), iOS verification, and the
+journal screens; see `internal-docs/MOBILE_LAUNCH_PLAN.md`.

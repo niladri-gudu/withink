@@ -20,6 +20,7 @@
     "@withink/api-client": "workspace:*",
     "@withink/contracts": "workspace:*",
     "@withink/core": "workspace:*",
+    "@withink/editor": "workspace:*",
     "better-auth": "1.6.26",
     "expo": "~58.0.26",
     "expo-constants": "~58.0.16",

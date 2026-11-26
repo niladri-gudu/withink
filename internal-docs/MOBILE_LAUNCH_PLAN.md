@@ -300,11 +300,17 @@ synced → verified against the web account.
 
 ### Phase 4 — Journal parity (~4 weeks)
 
-**Phase 4 status (2026-11-26): editor spike done.** The web extension list is
-now a single factory (`createEditorExtensions()`), and ten fixtures serialize
-identically in desktop Chrome and the app's Android WebView (10/10, HTML +
-JSON + text + JSON→HTML). Next: the WebView bridge (message protocol, focus,
-autosave), the permanent shared fixture suite in CI, then the journal screens.
+**Phase 4 status (2026-11-27): editor bridge done.** The extension factory,
+toolbar-state derivation, fixture corpus and WebView host live in
+`@withink/editor`; an esbuild script emits the offline editor document into
+the mobile bundle, and the native screen drives it over a versioned message
+protocol (queued commands, debounced snapshots, flush acknowledgement, theme).
+The entry screen now writes the bridge's HTML/text/JSON through the existing
+local-first path, and the parity suite fails if the committed bundle drifts.
+Verified on the Android device: formatting, autosave + sync, formatted reopen,
+cross-client content, and flush-on-back. Next: the rest of the editor chrome
+(formatting sheet, links/media, mood/notebook) and the remaining journal
+screens.
 
 1. **Editor spike (highest risk).** TipTap/ProseMirror is DOM-only. Evaluate
    `@10play/tentap-editor` (TipTap inside a bridged WebView) first because it preserves
@@ -469,6 +475,12 @@ of this plan. Phase 0 and the Phase 2 HTTP surface remain useful either way.
    the web extension list makes schema parity structural instead of a bet on
    a third-party package's TipTap version. `@10play/tentap-editor` remains the
    fallback if the bridge, IME or keyboard work proves too costly.
+   **Implemented 2026-11-27:** `packages/editor` owns the factory, the
+   WebView entry, the HTML template, the fixture goldens and a jsdom test that
+   boots the real bundle; `scripts/build-webview.mjs` writes
+   `apps/mobile/src/lib/editor-webview.generated.ts` (committed, with a
+   reproducibility test). The native host queues commands until `ready`,
+   acknowledges `flush`, and pushes theme/editable changes.
 3. **Push** — Expo Push Service over expo-notifications; keep web push for the PWA.
 4. **Auth** — Better Auth Expo plugin + SecureStore; Apple sign-in added.
 5. **Unlock token** — short-lived signed token from `/api/unlock` for native media/export.
