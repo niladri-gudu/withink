@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Lint, typecheck, test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.27.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.11.1
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # The build runs on Vercel with real secrets; CI gates the shared
+      # packages and the app suite, which are env-independent.
+      - run: pnpm turbo run lint typecheck test
+
+      # Advisory until the repository-wide Prettier baseline is normalized;
+      # the current tree has ~286 pre-existing unformatted files.
+      - name: Format check (advisory)
+        run: pnpm format:check
+        continue-on-error: true
