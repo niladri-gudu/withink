@@ -80,9 +80,16 @@ Active work:
   service over the shared `planSyncPull`, and adds a plain-text editor with
   debounced local saves and queue flush. Verified on the Pixel 4 emulator:
   pull → decrypt → edit → autosave → `/api/sync/push` 200, with the server
-  copy decrypted independently from the diary password. Next: native crypto
-  module for a dev build, rich-editor spike, and the remaining Phase 2
-  endpoints.
+  copy decrypted independently from the diary password.
+- Shipped: native crypto module + Android development client — the local Expo
+  module `apps/mobile/modules/withink-crypto` runs PBKDF2-HMAC-SHA256 in Kotlin
+  (`Mac`) and Swift (CommonCrypto) on an Expo module queue, with a
+  known-answer self-test and WebView/pure-JS fallbacks. The algorithm's
+  self-test, web golden and RFC 8018 vectors pass in a JVM harness; the debug
+  client builds with `expo run:android` (NDK/CMake), installs and launches on
+  the Android phone, and reaches the auth API. The on-device unlock round-trip
+  through the native module is pending a device reconnect. Next: rich-editor
+  spike and the remaining Phase 2 endpoints.
 
 ---
 

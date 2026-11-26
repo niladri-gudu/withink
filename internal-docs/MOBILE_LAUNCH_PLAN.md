@@ -255,8 +255,17 @@ the route. `/api/sync/*` already models the pattern.
   encrypted documents + a plaintext sync index + an encrypted queue item
   before pushing. Verified on the Pixel 4 emulator: edit → autosave →
   `/api/sync/push` 200, with the server copy decrypted independently.
-- Next: the native crypto module (replacing the WebView bridge in a dev
-  build), the rich-editor spike, and the remaining Phase 2 endpoints.
+- Native PBKDF2 module: `apps/mobile/modules/withink-crypto` implements
+  PBKDF2-HMAC-SHA256 in Kotlin (JVM `Mac`) and Swift (CommonCrypto) on an Expo
+  module queue, so the 600k-iteration production derivation no longer occupies
+  the JS thread or needs a WebView. The JS wrapper refuses the module unless it
+  reproduces a known-answer vector, then falls back to the WebView bridge
+  (Expo Go) and the audited pure-JS implementation. The algorithm's three
+  vectors (self-test, web golden, RFC 8018) pass in a JVM harness, and the
+  Android debug client builds with `expo run:android`, installs and launches on
+  the device. The on-device unlock round-trip through the module is pending a
+  device reconnect. See §11 decision 8.
+- Next: the rich-editor spike and the remaining Phase 2 endpoints.
 
 1. `apps/mobile` with Expo Router + TypeScript, added to the pnpm workspace.
 2. `@withink/tokens/native`: a TS token object generated from the same values as
@@ -441,3 +450,9 @@ of this plan. Phase 0 and the Phase 2 HTTP surface remain useful either way.
 5. **Unlock token** — short-lived signed token from `/api/unlock` for native media/export.
 6. **Billing** — read-only in-app summary; no purchase UI or steering links.
 7. **Public launch** — gated on a green parity matrix.
+8. **Native crypto** — a small local Expo module for PBKDF2 only, rather than
+   `react-native-quick-crypto`: it is the single CPU-bound primitive, has no
+   third-party build risk, and keeps OpenSSL out of the binary. AES-GCM and
+   HKDF stay in the audited pure-JS implementation. The module must pass its
+   known-answer self-test before any real key is derived; otherwise the client
+   falls back to the WebView bridge and then pure JS.
