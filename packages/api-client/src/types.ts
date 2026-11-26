@@ -1,3 +1,4 @@
+import type { ApiErrorBody } from "@withink/contracts";
 import type {
   NotebookSummary,
   SaveEntryPayload,
@@ -7,44 +8,21 @@ import type {
   SyncPushRejection,
 } from "@withink/core";
 
-export interface SyncManifestResponse {
-  entries: SyncListItem[];
-}
-
-export interface SyncPullRequest {
-  dates: string[];
-}
-
-export interface SyncPullResponse {
-  entries: SyncEntryPayload[];
-}
-
-export interface SyncPushRequest {
-  entries: SaveEntryPayload[];
-}
-
-export interface SyncPushResponse {
-  saved: SaveEntryResult[];
-  rejected: SyncPushRejection[];
-}
-
-export interface SyncDeleteRequest {
-  date: string;
-}
-
-export interface SyncDeleteResponse {
-  success: boolean;
-}
-
-export interface SyncNotebooksResponse {
-  notebooks: NotebookSummary[];
-}
-
-export interface SyncNotebookMutationResponse {
-  success: boolean;
-  /** Present on `create`. */
-  notebook?: NotebookSummary;
-}
+/**
+ * Wire shapes live in `@withink/contracts`; re-exported here so existing
+ * imports from `@withink/api-client` keep working.
+ */
+export type {
+  SyncDeleteRequest,
+  SyncDeleteResponse,
+  SyncManifestResponse,
+  SyncNotebookMutationResponse,
+  SyncNotebooksResponse,
+  SyncPullRequest,
+  SyncPullResponse,
+  SyncPushRequest,
+  SyncPushResponse,
+} from "@withink/contracts";
 
 export interface ApiClientOptions {
   /** e.g. "https://app.withink.me" (no trailing slash required). */
@@ -84,12 +62,19 @@ export interface WithinkApiClient {
 export class ApiError extends Error {
   readonly status: number;
   readonly code?: string;
+  readonly details?: ApiErrorBody["details"];
 
-  constructor(status: number, message: string, code?: string) {
+  constructor(
+    status: number,
+    message: string,
+    code?: string,
+    details?: ApiErrorBody["details"],
+  ) {
     super(message);
     this.name = "ApiError";
     this.status = status;
     this.code = code;
+    this.details = details;
   }
 }
 

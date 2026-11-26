@@ -12,3 +12,4 @@ export * from "./types";
 export * from "./crypto";
 export * from "./storage";
 export * from "./sync";
+export * from "./sync-engine";

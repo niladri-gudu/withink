@@ -1,3 +1,4 @@
+import type { ApiErrorBody } from "@withink/contracts";
 import type {
   NotebookSummary,
   SaveEntryPayload,
@@ -61,11 +62,12 @@ export function createApiClient(options: ApiClientOptions): WithinkApiClient {
     }
 
     if (!response.ok) {
-      const errorBody = (body ?? {}) as { error?: string; code?: string };
+      const errorBody = (body ?? {}) as Partial<ApiErrorBody>;
       throw new ApiError(
         response.status,
         errorBody.error ?? response.statusText,
         errorBody.code,
+        errorBody.details,
       );
     }
 
