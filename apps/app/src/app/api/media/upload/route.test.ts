@@ -1,6 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { getRequestSession } from "@/lib/request-cache";
+
+import { POST } from "./route";
+
 // Mock everything the upload route touches around its quota decision.
 vi.mock("@/lib/request-cache", () => ({
   getRequestSession: vi.fn(),
@@ -20,8 +24,7 @@ const mockedGetEntitlements = vi.fn();
 
 vi.mock("@/features/billing/services/entitlements-service", () => ({
   EntitlementsService: {
-    getEntitlements: (...args: unknown[]) =>
-      mockedGetEntitlements(...args),
+    getEntitlements: (...args: unknown[]) => mockedGetEntitlements(...args),
   },
 }));
 
@@ -46,16 +49,19 @@ vi.mock("@aws-sdk/s3-request-presigner", () => ({
   getSignedUrl: vi.fn().mockResolvedValue("https://signed.example/upload"),
 }));
 
-import { getRequestSession } from "@/lib/request-cache";
-import { POST } from "./route";
-
 const FREE_LIMIT = 100 * 1024 * 1024;
 const mockSession = { user: { id: "user-1" } };
 
 function post(body: Record<string, unknown>) {
-  return POST({
-    json: async () => body,
-  } as any);
+  // A real Request so the bounded body reader can consume the stream, matching
+  // how the route runs in production.
+  return POST(
+    new Request("http://localhost/api/media/upload", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+    }) as any,
+  );
 }
 
 describe("media upload quota gate", () => {

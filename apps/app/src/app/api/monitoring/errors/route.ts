@@ -6,9 +6,12 @@ import { getRequestSession } from "@/lib/request-cache";
 import { getClientIp } from "@/lib/request-ip";
 import { logger } from "@/server/logger";
 import { rateLimit } from "@/server/rate-limit";
+import { BodyTooLargeError, readJsonBody } from "@/server/request-body";
 
 // Anonymous endpoint: bound every field so it can't be abused as an
 // unbounded log-writing primitive, and throttle per IP.
+const MAX_BODY_BYTES = 64 * 1024;
+
 const errorReportingSchema = z.object({
   message: z.string().min(1).max(2_000),
   stack: z.string().max(8_000).optional(),
@@ -32,7 +35,21 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Too many reports" }, { status: 429 });
     }
 
-    const body = await req.json();
+    let body: unknown;
+    try {
+      body = await readJsonBody(req, MAX_BODY_BYTES);
+    } catch (error) {
+      if (error instanceof BodyTooLargeError) {
+        return NextResponse.json(
+          { error: "Payload too large" },
+          { status: 413 },
+        );
+      }
+      return NextResponse.json(
+        { error: "Invalid error payload parameters" },
+        { status: 400 },
+      );
+    }
     const parsed = errorReportingSchema.safeParse(body);
 
     if (!parsed.success) {

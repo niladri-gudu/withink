@@ -5,7 +5,6 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { z } from "zod";
 
 import { env } from "@/config/env";
-import { EntitlementsService } from "@/features/billing/services/entitlements-service";
 import { mediaUrlForKey } from "@/lib/media-url";
 import { r2 } from "@/lib/r2";
 import { listAllObjects } from "@/lib/r2-list";
@@ -13,6 +12,8 @@ import { getCachedValue, redis, setCachedValue } from "@/lib/redis";
 import { getRequestSession } from "@/lib/request-cache";
 import { logger } from "@/server/logger";
 import { rateLimit } from "@/server/rate-limit";
+import { BodyTooLargeError, readJsonBody } from "@/server/request-body";
+import { EntitlementsService } from "@/features/billing/services/entitlements-service";
 import { LockService } from "@/features/lock/services/lock-service";
 
 const ALLOWED_TYPES = [
@@ -37,6 +38,8 @@ const EXT_BY_TYPE: Record<string, string> = {
 // Known destination folders only — arbitrary strings must not become key
 // path segments under the user prefix.
 const ALLOWED_FOLDERS = new Set(["journal", "feedback", "issue", "avatar"]);
+
+const MAX_BODY_BYTES = 8 * 1024;
 
 const uploadSchema = z.object({
   filename: z.string().min(1).max(255),
@@ -110,7 +113,21 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Locked" }, { status: 403 });
     }
 
-    const body = await req.json();
+    let body: unknown;
+    try {
+      body = await readJsonBody(req, MAX_BODY_BYTES);
+    } catch (error) {
+      if (error instanceof BodyTooLargeError) {
+        return NextResponse.json(
+          { error: "Payload too large" },
+          { status: 413 },
+        );
+      }
+      return NextResponse.json(
+        { error: "Invalid payload parameters" },
+        { status: 400 },
+      );
+    }
     const parsed = uploadSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(

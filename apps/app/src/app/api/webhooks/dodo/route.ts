@@ -3,6 +3,8 @@ import { Webhook } from "standardwebhooks";
 
 import { env } from "@/config/env";
 import { client } from "@/lib/db";
+import { logger } from "@/server/logger";
+import { BodyTooLargeError, readTextBody } from "@/server/request-body";
 import { BillingAccountRepository } from "@/features/billing/repositories/billing-account-repository";
 import { getProductKeyForId } from "@/features/billing/services/dodo-service";
 import {
@@ -10,7 +12,6 @@ import {
   type MappedBillingEvent,
 } from "@/features/billing/services/dodo-webhook-mapping";
 import { EntitlementsService } from "@/features/billing/services/entitlements-service";
-import { logger } from "@/server/logger";
 
 // Webhook payloads are small JSON documents; anything larger is not a Dodo
 // event and parsing it would only waste memory on a hostile body.
@@ -35,9 +36,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Not configured" }, { status: 503 });
   }
 
-  const rawBody = await request.text();
-  if (rawBody.length > MAX_BODY_BYTES) {
-    return NextResponse.json({ error: "Payload too large" }, { status: 413 });
+  let rawBody: string;
+  try {
+    rawBody = await readTextBody(request, MAX_BODY_BYTES);
+  } catch (error) {
+    if (error instanceof BodyTooLargeError) {
+      return NextResponse.json({ error: "Payload too large" }, { status: 413 });
+    }
+    throw error;
   }
 
   const headers: Record<string, string> = {
@@ -104,10 +110,12 @@ async function claimOnce(eventId: string | undefined): Promise<boolean> {
   const { redis } = await import("@/lib/redis");
   if (!redis || !eventId) return true;
   try {
-    return (await redis.set(`billing:webhook:${eventId}`, "1", {
-      ex: IDEMPOTENCY_TTL_SECONDS,
-      nx: true,
-    })) === "OK";
+    return (
+      (await redis.set(`billing:webhook:${eventId}`, "1", {
+        ex: IDEMPOTENCY_TTL_SECONDS,
+        nx: true,
+      })) === "OK"
+    );
   } catch {
     return true;
   }
