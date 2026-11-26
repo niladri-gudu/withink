@@ -12,6 +12,7 @@ import { SessionCapService } from "@/features/billing/services/session-cap-servi
 
 import { client, DB_NAME } from "./db";
 import { resend } from "./email";
+import { expoOriginPlugin } from "./expo-auth-plugin";
 
 export const auth = betterAuth({
   database: mongodbAdapter(client.db(DB_NAME), { client }),
@@ -28,8 +29,8 @@ export const auth = betterAuth({
   },
 
   trustedOrigins: env.IS_PROD
-    ? ["https://withink.me", "https://app.withink.me"]
-    : ["http://localhost:3000", "https://dev.withink.me"],
+    ? ["https://withink.me", "https://app.withink.me", "withink://"]
+    : ["http://localhost:3000", "https://dev.withink.me", "withink://"],
 
   advanced: {
     crossSubDomainCookies: {
@@ -185,6 +186,9 @@ export const auth = betterAuth({
   },
 
   plugins: [
+    // Expo sends `expo-origin` instead of `Origin`; copy it before the CSRF
+    // check so cookie-bearing native requests (sign-out) are accepted.
+    expoOriginPlugin(),
     // Native clients (Expo) have no cookie jar; they send the session token as
     // `Authorization: Bearer <token>`. The web keeps using cookies unchanged.
     bearer(),
