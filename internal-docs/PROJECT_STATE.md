@@ -68,7 +68,13 @@ Active work:
 - Shipped: Expo client foundation (`apps/mobile`, SDK 58) — Better Auth
   SecureStore session, local `expo-origin` server plugin, and a diary screen
   that reads `/api/sync/manifest` with a bearer token. Verified end to end on
-  an Android device via Expo Go; unlock/decryption and SQLite are next.
+  an Android device via Expo Go.
+- Shipped: mobile encrypted read path — `GET /api/mobile/bootstrap` returns
+  safe encryption/lock fields; the client derives PBKDF2 via a hidden
+  WebView's native WebCrypto, exchanges the HKDF proof at `/api/unlock`, pulls
+  the 50 most recent pages, and decrypts them in memory. Verified on Android
+  with two seeded encrypted entries. SQLite/offline and encrypted writes/editor
+  are next.
 
 ---
 
@@ -451,6 +457,29 @@ Note: MongoDB (`mongodb+srv://`) now connects. The earlier `querySrv ECONNREFUSE
 ---
 
 # Recent Decisions
+
+2026-11-26 (Mobile encrypted read path — bootstrap, KDF bridge, unlock, decrypt)
+
+- **Bootstrap:** `GET /api/mobile/bootstrap` returns user hint plus
+  `isClientEncrypted`, salt, verification ciphertext, KDF iterations, and lock
+  flags. Passcode/unlock-proof hashes never leave the server.
+- **Crypto:** AES-256-GCM and HKDF use audited `@noble` primitives; PBKDF2
+  runs through a hidden WebView's native WebCrypto (`crypto.subtle`) because
+  Hermes has none and 600k iterations in pure JS took ~2 minutes on the test
+  device. A pure-JS fallback remains for unsupported contexts. Golden vectors
+  match the web byte for byte.
+- **Unlock:** the client decrypts the wrapped master key with the diary
+  password, derives the HKDF proof, exchanges it at `/api/unlock`, and keeps
+  the master key and 15-minute token in memory only.
+- **Read path:** the diary pulls the 50 most recent pages via
+  `/api/sync/manifest` + `/api/sync/pull`, decrypts title/text on device, and
+  renders titles with snippets. No plaintext is persisted.
+- **Verified on Android (Expo Go):** two seeded encrypted entries decrypted
+  and rendered. First requests were slow from Next dev route compilation; the
+  KDF itself completed through the bridge.
+- **Known limits:** no SQLite/offline cache, no writes/editor, no biometrics.
+  The WebView bridge is an Expo Go stopgap; a dev build with
+  `react-native-quick-crypto` replaces it.
 
 2026-11-26 (Expo client foundation — auth, SecureStore, bearer sync)
 

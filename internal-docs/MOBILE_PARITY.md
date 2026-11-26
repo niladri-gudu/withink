@@ -30,11 +30,11 @@ Status values: `—` not started · `dev` implemented, unverified · `shipped` �
 | Google sign-in | shipped | — | `/api/auth/*` | System browser + deep link on native |
 | Apple sign-in | — | — | `/api/auth/*` | Required by App Store 4.8 |
 | Session / account hint | shipped | dev | `@withink/core` types, `withink-zk` cookie | Expo stores the session in SecureStore; local profile pending |
-| Lock / unlock | shipped | — | `LockService`, `/api/unlock` | Server contract shipped; Expo crypto/unlock pending. Tokens live 15 minutes in `X-Withink-Unlock` |
-| Client-side encryption | shipped | — | `@withink/core` kdf/crypto contracts | Native adapter must match golden vectors |
-| Journal read/write | shipped | dev | `@withink/core/sync-engine` | Manifest read verified on device; encrypted write/decrypt pending |
+| Lock / unlock | shipped | dev | `LockService`, `/api/unlock` | Master-key unlock + 15-minute token verified on Android; biometrics pending |
+| Client-side encryption | shipped | dev | `@withink/core` kdf/crypto contracts | PBKDF2 via WebCrypto bridge; AES-GCM/HKDF in noble; golden vectors pass |
+| Journal read/write | shipped | dev | `@withink/core/sync-engine` | Read + decrypt verified on device; encrypted write/editor pending |
 | Autosave + offline queue | shipped | — | `LocalStore` adapter | SQLite on native |
-| Sync (push/pull/prune) | shipped | — | `planSyncPull` in `@withink/core` | Identical prune/fetch decisions |
+| Sync (push/pull/prune) | shipped | dev | `planSyncPull` in `@withink/core` | Manifest + pull verified; local queue/prune pending |
 | Entry editor | shipped | — | Editor fixtures (planned) | TipTap DOM on web; bridged TipTap preferred on native |
 | Timeline / search / filters | shipped | — | `@withink/core/timeline` | |
 | Calendar | shipped | — | `@withink/core/date` | |

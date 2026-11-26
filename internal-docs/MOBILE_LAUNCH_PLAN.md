@@ -244,8 +244,13 @@ the route. `/api/sync/*` already models the pattern.
   Better Auth's CSRF check.
 - Verified on an Android device via Expo Go: sign-up → sign-in → bearer
   `/api/sync/manifest` → sign-out.
-- Next: the crypto spike (unlock proof + decryption), SQLite `LocalStore`, and
-  the editor round-trip spike.
+- Encrypted read path shipped: `GET /api/mobile/bootstrap` returns safe
+  encryption/lock fields; the client derives PBKDF2 through a hidden WebView's
+  native WebCrypto (pure-JS fallback), exchanges the HKDF proof at
+  `/api/unlock`, pulls the 50 most recent pages and decrypts them in memory.
+  Verified on Android with two seeded encrypted entries.
+- Next: SQLite `LocalStore` + offline queue, encrypted writes/editor, and the
+  native crypto module (replacing the WebView bridge in a dev build).
 
 1. `apps/mobile` with Expo Router + TypeScript, added to the pnpm workspace.
 2. `@withink/tokens/native`: a TS token object generated from the same values as
