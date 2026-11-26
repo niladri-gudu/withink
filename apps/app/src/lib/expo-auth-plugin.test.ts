@@ -17,8 +17,7 @@ describe("expoOriginPlugin", () => {
       {} as never,
     );
 
-    const forwarded =
-      result && "request" in result ? result.request : null;
+    const forwarded = result && "request" in result ? result.request : null;
     expect(forwarded?.headers.get("origin")).toBe("withink://");
   });
 
