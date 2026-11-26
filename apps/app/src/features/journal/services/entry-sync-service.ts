@@ -1,8 +1,6 @@
 import "server-only";
 
-import { z } from "zod";
-
-import { isEncryptedOrEmpty } from "@withink/core/ciphertext";
+import { saveEntrySchema, type SyncPushEntry } from "@withink/contracts";
 import type {
   NotebookSummary,
   SaveEntryResult,
@@ -11,6 +9,8 @@ import type {
   SyncPushRejection,
   SyncPushResult,
 } from "@withink/core";
+import { isEncryptedOrEmpty } from "@withink/core/ciphertext";
+import { z } from "zod";
 
 import { clampViewerToday } from "@/lib/viewer-today";
 import { BusinessRuleError, handleError } from "@/server/errors";
@@ -19,22 +19,8 @@ import { EncryptionSettingsRepository } from "@/features/encryption/repositories
 import { NotebookRepository } from "@/features/notebooks/repositories/notebook-repository";
 import { NotebooksService } from "@/features/notebooks/services/notebook-service";
 
-import { dateStringSchema, saveEntrySchema } from "../validation/entry-schema";
 import { EntryRepository } from "../repositories/entry-repository";
 import { JournalService } from "./journal-service";
-
-/** One entry as accepted by `POST /api/sync/push`. */
-export const syncPushEntrySchema = saveEntrySchema.extend({
-  /** Viewer-local today, used to enforce the plan's backfill window. */
-  today: dateStringSchema,
-  /**
-   * Last `updatedAt` the client saw. When supplied, a push that would
-   * overwrite a newer server copy is rejected instead of clobbering it.
-   */
-  baseUpdatedAt: z.string().optional(),
-});
-
-export type SyncPushEntry = z.infer<typeof syncPushEntrySchema>;
 
 /**
  * Resolves a client-supplied notebook id to a filing target the user owns.

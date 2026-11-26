@@ -1,9 +1,13 @@
 // Browser-compatible native IndexedDB wrapper for Withink cache storage
 // Version 2: Added document_cache and sync_queue stores for full offline support
 
-import type { LocalProfile } from "@withink/core";
+import type { LocalProfile, NotebookSummary } from "@withink/core";
+import type { SyncIndexRecord } from "@withink/core/sync";
 
 import { requestPersistentStorage } from "@/lib/persistent-storage";
+
+// Re-exported for existing consumers; the shape now lives in `@withink/core`.
+export type { SyncIndexRecord };
 
 const DB_NAME = "diary_cache";
 const STORE_NAME = "metadata_cache";
@@ -16,15 +20,10 @@ const SYNC_INDEX_STORE = "sync_index";
 // v4: on-device identity/profile cache (encryption + lock settings + display
 // hint), so the shell can eventually bootstrap without a server read.
 const PROFILE_STORE = "profile";
-const DB_VERSION = 4;
-
-export interface SyncIndexRecord {
-  date: string;
-  /** ISO timestamp; client clock until the push is confirmed by the server. */
-  updatedAt: string;
-  /** Metadata schema version, so a format bump forces a one-time refetch. */
-  v: number;
-}
+// v5: cached notebook summaries, so the editor/timeline can file entries
+// without a server read. Derived data — rebuilt from the sync API.
+const NOTEBOOK_STORE = "notebooks";
+const DB_VERSION = 5;
 
 let dbPromise: Promise<IDBDatabase> | null = null;
 
@@ -65,6 +64,9 @@ function getDB(): Promise<IDBDatabase> {
       }
       if (!db.objectStoreNames.contains(SYNC_INDEX_STORE)) {
         db.createObjectStore(SYNC_INDEX_STORE);
+      }
+      if (!db.objectStoreNames.contains(NOTEBOOK_STORE)) {
+        db.createObjectStore(NOTEBOOK_STORE);
       }
     };
   });
@@ -311,12 +313,56 @@ export const diaryCacheDB = {
     });
   },
 
+  // Cached notebook summaries (derived; one "current" record).
+  async getNotebooks(): Promise<NotebookSummary[]> {
+    try {
+      const db = await getDB();
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction(NOTEBOOK_STORE, "readonly");
+        const store = transaction.objectStore(NOTEBOOK_STORE);
+        const request = store.get("current");
+
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () =>
+          resolve((request.result as NotebookSummary[]) || []);
+      });
+    } catch (err) {
+      console.error("IndexedDB getNotebooks error:", err);
+      return [];
+    }
+  },
+
+  async putNotebooks(notebooks: NotebookSummary[]): Promise<void> {
+    if (typeof window === "undefined") return;
+    try {
+      const db = await getDB();
+      await new Promise<void>((resolve, reject) => {
+        const transaction = db.transaction(NOTEBOOK_STORE, "readwrite");
+        const store = transaction.objectStore(NOTEBOOK_STORE);
+        const request = store.put(notebooks, "current");
+
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => resolve();
+      });
+    } catch (err) {
+      // Derived data; a failed write must not break the caller.
+      console.error("IndexedDB putNotebooks error:", err);
+    }
+  },
+
   async clear(): Promise<void> {
     if (typeof window === "undefined") return;
     const db = await getDB();
     return new Promise((resolve, reject) => {
       const transaction = db.transaction(
-        [STORE_NAME, DOCUMENT_STORE, SYNC_STORE, SYNC_INDEX_STORE, PROFILE_STORE],
+        [
+          STORE_NAME,
+          DOCUMENT_STORE,
+          SYNC_STORE,
+          SYNC_INDEX_STORE,
+          PROFILE_STORE,
+          NOTEBOOK_STORE,
+        ],
         "readwrite",
       );
       transaction.objectStore(STORE_NAME).clear();
@@ -324,6 +370,7 @@ export const diaryCacheDB = {
       transaction.objectStore(SYNC_STORE).clear();
       transaction.objectStore(SYNC_INDEX_STORE).clear();
       transaction.objectStore(PROFILE_STORE).clear();
+      transaction.objectStore(NOTEBOOK_STORE).clear();
 
       transaction.oncomplete = () => resolve();
       transaction.onerror = () => reject(transaction.error);
@@ -342,13 +389,20 @@ export const diaryCacheDB = {
     const db = await getDB();
     return new Promise((resolve, reject) => {
       const transaction = db.transaction(
-        [STORE_NAME, DOCUMENT_STORE, SYNC_STORE, SYNC_INDEX_STORE],
+        [
+          STORE_NAME,
+          DOCUMENT_STORE,
+          SYNC_STORE,
+          SYNC_INDEX_STORE,
+          NOTEBOOK_STORE,
+        ],
         "readwrite",
       );
       transaction.objectStore(STORE_NAME).clear();
       transaction.objectStore(DOCUMENT_STORE).clear();
       transaction.objectStore(SYNC_STORE).clear();
       transaction.objectStore(SYNC_INDEX_STORE).clear();
+      transaction.objectStore(NOTEBOOK_STORE).clear();
 
       transaction.oncomplete = () => resolve();
       transaction.onerror = () => reject(transaction.error);
@@ -397,7 +451,8 @@ export const diaryCacheDB = {
         const request = store.get(date);
 
         request.onerror = () => reject(request.error);
-        request.onsuccess = () => resolve((request.result as SyncIndexRecord) || null);
+        request.onsuccess = () =>
+          resolve((request.result as SyncIndexRecord) || null);
       });
     } catch (err) {
       console.error("IndexedDB getSyncIndex error:", err);

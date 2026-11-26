@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { handleError } from "@/server/errors";
+import { apiErrorFrom } from "@/server/api-error";
 import { EntrySyncService } from "@/features/journal/services/entry-sync-service";
 
 import { requireSyncSession } from "../_lib";
@@ -15,10 +15,6 @@ export async function GET() {
       entries: await EntrySyncService.manifest(auth.userId),
     });
   } catch (error) {
-    const appError = handleError(error);
-    return NextResponse.json(
-      { error: appError.safeMessage },
-      { status: appError.statusCode },
-    );
+    return apiErrorFrom(error);
   }
 }

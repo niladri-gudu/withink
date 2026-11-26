@@ -1,4 +1,4 @@
-import { diaryCacheDB } from "@/lib/diary-cache-db";
+import { indexedDbLocalStore } from "@/lib/local-store";
 
 import { diaryCacheService } from "./diary-cache-service";
 
@@ -155,7 +155,7 @@ export class JournalSyncService {
   }
 
   private async refreshState(): Promise<void> {
-    const items = await diaryCacheDB.getAllSyncItems();
+    const items = await indexedDbLocalStore.getAllSyncItems();
     const pending = new Set(items.map((item) => item.key));
     const changed =
       pending.size !== this.pendingDates.size ||

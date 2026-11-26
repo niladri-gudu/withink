@@ -1,9 +1,10 @@
-import { NextResponse } from "next/server";
 import { headers } from "next/headers";
+import type { NextResponse } from "next/server";
 
 import { getRequestSession } from "@/lib/request-cache";
-import { LockService } from "@/features/lock/services/lock-service";
+import { apiError } from "@/server/api-error";
 import { rateLimit } from "@/server/rate-limit";
+import { LockService } from "@/features/lock/services/lock-service";
 
 export type SyncAuth =
   | { userId: string; response?: never }
@@ -20,9 +21,7 @@ export async function requireSyncSession(
 ): Promise<SyncAuth> {
   const session = await getRequestSession();
   if (!session) {
-    return {
-      response: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
-    };
+    return { response: apiError("UNAUTHORIZED", "Unauthorized") };
   }
 
   const rate = await rateLimit(`sync:${route}:${session.user.id}`, {
@@ -31,9 +30,9 @@ export async function requireSyncSession(
   });
   if (!rate.success) {
     return {
-      response: NextResponse.json(
-        { error: "Too many sync requests. Try again shortly." },
-        { status: 429 },
+      response: apiError(
+        "RATE_LIMITED",
+        "Too many sync requests. Try again shortly.",
       ),
     };
   }
@@ -49,9 +48,7 @@ export async function requireSyncSession(
   if (!isBearer) {
     const unlocked = await LockService.isSessionUnlocked(session.user.id);
     if (!unlocked) {
-      return {
-        response: NextResponse.json({ error: "Locked" }, { status: 403 }),
-      };
+      return { response: apiError("LOCKED", "Locked") };
     }
   }
 

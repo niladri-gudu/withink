@@ -1,3 +1,4 @@
+import { planSyncPull, syncListFingerprint } from "@withink/core/sync-engine";
 import {
   buildSearchText,
   createSnippet,
@@ -95,12 +96,6 @@ interface ServerEntryPayload {
 // read + diff that `syncDiaryCache` would otherwise run every background tick.
 let lastServerSyncFingerprint: { key: CryptoKey; fingerprint: string } | null =
   null;
-
-function syncListFingerprint(
-  entries: { date: string; updatedAt: string }[],
-): string {
-  return entries.map((e) => `${e.date}:${e.updatedAt}`).join("|");
-}
 
 // Single-flight guard for full pulls. Concurrent triggers (unlock, network
 // recovery, visibility change, the provider interval, the entries-page idle
@@ -221,9 +216,7 @@ export const diaryCacheService = {
         );
         if (staleIndex.length > 0) {
           await Promise.all(
-            staleIndex.map((row) =>
-              diaryCacheDB.deleteSyncIndex(row.date),
-            ),
+            staleIndex.map((row) => diaryCacheDB.deleteSyncIndex(row.date)),
           );
         }
       }
@@ -346,33 +339,22 @@ export const diaryCacheService = {
         }
       }
 
-      const localMap: Record<string, string> = {};
-      for (const row of localIndex) {
-        // Records written by older code (before the current metadata version)
-        // are treated as stale so they are re-fetched once.
-        localMap[row.date] =
-          row.v === METADATA_VERSION ? row.updatedAt : "";
-      }
+      // The prune/fetch decision is shared with the native client; the web
+      // only supplies its local index and pending queue.
+      const plan = planSyncPull({
+        serverEntries,
+        localIndex,
+        pendingDates,
+        metadataVersion: METADATA_VERSION,
+        nowMs: Date.now(),
+      });
 
       // 3. Prune entries deleted on other devices (never prune pending local
       //    edits). All stores are purged so nothing resurrects locally. The
       //    queue is re-checked per date immediately before deleting: an entry
       //    created (or edited) while this pull was in flight cannot be in the
       //    start-of-run snapshot, and pruning its queue item would destroy it.
-      const serverDates = new Set(serverEntries.map((e) => e.date));
-      // Never prune a record that was written very recently: a flush can
-      // consume its sync item just before the cloud write becomes visible in
-      // the sync list, and deleting it then loses an entry the user saw as
-      // "Saved · Synced". Two weeks of age is irrelevant; 15 minutes is a
-      // generous boundary for eventual consistency.
-      const PRUNE_GRACE_MS = 15 * 60 * 1000;
-      const pruneKeys = Object.keys(localMap).filter((date) => {
-        if (serverDates.has(date) || pendingDates.has(date)) return false;
-        const localUpdatedAt = new Date(localMap[date] ?? "").getTime();
-        if (!Number.isFinite(localUpdatedAt)) return false;
-        return Date.now() - localUpdatedAt > PRUNE_GRACE_MS;
-      });
-      for (const date of pruneKeys) {
+      for (const date of plan.pruneDates) {
         const nowPending = await diaryCacheDB.getSyncItem(date);
         if (nowPending) continue;
         await diaryCacheDB.delete(date);
@@ -383,19 +365,10 @@ export const diaryCacheService = {
       }
 
       // 4. Identify entries to fetch (missing or updated on server, excluding
-      //    locally-pending edits which are pushed to the cloud instead)
-      const fetchList = serverEntries.filter((serverItem) => {
-        if (pendingDates.has(serverItem.date)) return false;
-        const localUpdatedAt = localMap[serverItem.date];
-        if (!localUpdatedAt) return true; // missing locally
-        // Compare timestamps
-        return (
-          new Date(serverItem.updatedAt).getTime() !==
-          new Date(localUpdatedAt).getTime()
-        );
-      });
+      //    locally-pending edits which are pushed to the cloud instead).
+      const fetchDates = plan.fetchDates;
 
-      if (fetchList.length === 0) {
+      if (fetchDates.length === 0) {
         lastServerSyncFingerprint = { key: masterKey, fingerprint };
         return true; // No sync needed
       }
@@ -406,16 +379,14 @@ export const diaryCacheService = {
       const BULK_FETCH_LIMIT = 50;
       let completedCount = 0;
       let failedCount = 0;
-      onProgress?.(0, fetchList.length);
+      onProgress?.(0, fetchDates.length);
 
-      for (let i = 0; i < fetchList.length; i += BULK_FETCH_LIMIT) {
-        const chunk = fetchList.slice(i, i + BULK_FETCH_LIMIT);
+      for (let i = 0; i < fetchDates.length; i += BULK_FETCH_LIMIT) {
+        const chunk = fetchDates.slice(i, i + BULK_FETCH_LIMIT);
         let bulkEntries: ServerEntryPayload[] = [];
 
         try {
-          const bulk = await getEntriesBulkAction(
-            chunk.map((item) => item.date),
-          );
+          const bulk = await getEntriesBulkAction(chunk);
           if (bulk.success && bulk.data) {
             bulkEntries = bulk.data as ServerEntryPayload[];
           } else {
@@ -425,18 +396,16 @@ export const diaryCacheService = {
           console.error("Failed to fetch entry batch:", e);
         }
 
-        const byDate = new Map(
-          bulkEntries.map((entry) => [entry.date, entry]),
-        );
+        const byDate = new Map(bulkEntries.map((entry) => [entry.date, entry]));
 
-        for (const item of chunk) {
-          const entry = byDate.get(item.date);
+        for (const date of chunk) {
+          const entry = byDate.get(date);
           if (!entry) {
             // Whole batch failed, or the entry vanished between the sync list
             // and the fetch. Leave it out of the fingerprint so it retries.
             failedCount++;
             completedCount++;
-            onProgress?.(completedCount, fetchList.length);
+            onProgress?.(completedCount, fetchDates.length);
             continue;
           }
 
@@ -444,10 +413,10 @@ export const diaryCacheService = {
             await this.ingestServerEntry(entry, masterKey);
           } catch (e) {
             failedCount++;
-            console.error(`Failed to sync entry for ${item.date}:`, e);
+            console.error(`Failed to sync entry for ${date}:`, e);
           } finally {
             completedCount++;
-            onProgress?.(completedCount, fetchList.length);
+            onProgress?.(completedCount, fetchDates.length);
           }
         }
       }
@@ -456,7 +425,10 @@ export const diaryCacheService = {
       // cleanly — otherwise subsequent pulls would skip re-fetching the
       // failed entries until the server list changes or a re-unlock.
       if (failedCount === 0) {
-        lastServerSyncFingerprint = { key: masterKey, fingerprint };
+        lastServerSyncFingerprint = {
+          key: masterKey,
+          fingerprint: plan.fingerprint,
+        };
         return true;
       }
       return false;

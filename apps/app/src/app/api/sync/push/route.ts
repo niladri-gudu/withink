@@ -1,19 +1,14 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { z } from "zod";
+import { syncPushRequestSchema } from "@withink/contracts";
 
-import { SYNC_BULK_LIMIT } from "@withink/core/sync";
-
-import { handleError } from "@/server/errors";
-import {
-  EntrySyncService,
-  syncPushEntrySchema,
-} from "@/features/journal/services/entry-sync-service";
+import { apiError, apiErrorFrom } from "@/server/api-error";
+import { BodyTooLargeError, readJsonBody } from "@/server/request-body";
+import { EntrySyncService } from "@/features/journal/services/entry-sync-service";
 
 import { requireSyncSession } from "../_lib";
 
-const pushSchema = z.object({
-  entries: z.array(syncPushEntrySchema).min(1).max(SYNC_BULK_LIMIT),
-});
+// Generous enough for a full encrypted batch, small enough to bound memory.
+const MAX_BODY_BYTES = 16 * 1024 * 1024;
 
 /**
  * Persists a batch of entries. Each entry is independently validated and
@@ -24,10 +19,19 @@ export async function POST(request: NextRequest) {
   const auth = await requireSyncSession("push", 240);
   if (auth.response) return auth.response;
 
-  const body = await request.json().catch(() => null);
-  const parsed = pushSchema.safeParse(body);
+  let body: unknown;
+  try {
+    body = await readJsonBody(request, MAX_BODY_BYTES);
+  } catch (error) {
+    const tooLarge = error instanceof BodyTooLargeError;
+    return apiError(
+      tooLarge ? "PAYLOAD_TOO_LARGE" : "INVALID_REQUEST",
+      tooLarge ? "Payload too large." : "Invalid request.",
+    );
+  }
+  const parsed = syncPushRequestSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid request." }, { status: 400 });
+    return apiError("INVALID_REQUEST", "Invalid request.");
   }
 
   try {
@@ -35,10 +39,6 @@ export async function POST(request: NextRequest) {
       await EntrySyncService.push(auth.userId, parsed.data.entries),
     );
   } catch (error) {
-    const appError = handleError(error);
-    return NextResponse.json(
-      { error: appError.safeMessage },
-      { status: appError.statusCode },
-    );
+    return apiErrorFrom(error);
   }
 }

@@ -1,6 +1,7 @@
 // Browser-compatible zero-knowledge cryptographic utilities using native Web Crypto API.
 // Works both in browser and modern Node.js environments via globalThis.crypto.
 
+import type { CryptoProvider } from "@withink/core/crypto";
 import { bytesToHex, hexToBytes } from "@withink/core/encoding";
 
 import { isClientCiphertext } from "@/lib/ciphertext";
@@ -202,3 +203,19 @@ export async function safeDecryptText(
     return "";
   }
 }
+
+/**
+ * The web implementation of the shared `CryptoProvider` contract.
+ *
+ * Typed against the interface so `tsc` fails if the portable crypto surface
+ * drifts from what the native client must implement.
+ */
+export const webCryptoProvider: CryptoProvider<CryptoKey> = {
+  generateMasterKey,
+  importKeyFromHex,
+  exportKeyToHex,
+  deriveKeyFromPassword,
+  deriveUnlockProofHex,
+  encryptText,
+  decryptText,
+};
