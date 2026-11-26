@@ -1,0 +1,18 @@
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
+
+group = 'me.withink.crypto'
+version = '0.1.0'
+
+android {
+  namespace "me.withink.crypto"
+  defaultConfig {
+    versionCode 1
+    versionName "0.1.0"
+  }
+  lintOptions {
+    abortOnError false
+  }
+}

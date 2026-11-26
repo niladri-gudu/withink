@@ -12,20 +12,32 @@ and the derived session token authorizes `/api/sync/*`.
 
 ## Run on Android (USB device or emulator)
 
-```bash
-# from the repo root (works for a USB device and an emulator
-# such as Pixel_4; `adb devices` should list one target)
-adb reverse tcp:3000 tcp:3000   # Next.js API
-adb reverse tcp:8081 tcp:8081   # Metro
+Development build (required for the native PBKDF2 module):
 
-pnpm --filter @withink/app dev                              # terminal 1
-pnpm --filter @withink/mobile start -- --localhost --android # terminal 2
+```bash
+# from the repo root; `adb devices` should list one target
+adb reverse tcp:3000 tcp:3000   # Next.js API
+
+pnpm --filter @withink/app dev   # terminal 1
+
+cd apps/mobile
+npx expo run:android             # terminal 2: builds, installs, starts Metro
 ```
 
-`--android` installs Expo Go on the emulator when it is missing.
+The first Gradle build downloads the Android Gradle plugin, SDK platform, NDK
+and React Native artifacts and takes a while; later builds are incremental.
 
-`EXPO_PUBLIC_API_URL` defaults to `http://localhost:3000`; override it for a
-LAN or production origin:
+Expo Go is still supported for JavaScript-only work. It cannot load custom
+native code, so the app falls back to the hidden WebView's WebCrypto for
+PBKDF2:
+
+```bash
+adb reverse tcp:3000 tcp:3000
+adb reverse tcp:8081 tcp:8081
+
+pnpm --filter @withink/app dev                               # terminal 1
+pnpm --filter @withink/mobile start -- --localhost --android # terminal 2
+```
 
 `EXPO_PUBLIC_API_URL` defaults to `http://localhost:3000`; override it for a
 LAN or production origin:
@@ -49,12 +61,15 @@ writes a plaintext sync index, queues an encrypted pending write, and flushes it
 to `/api/sync/push`. On a cold start the list renders from SQLite after unlock,
 and failed pushes stay queued for the next sync.
 
-PBKDF2 runs through a hidden WebView's native WebCrypto (with an audited pure-JS
-fallback); AES-GCM and HKDF use `@noble` primitives validated against the web
-golden vectors. The master key and 15-minute unlock token stay in memory only.
-The editor is plain text and regenerates TipTap-compatible HTML/JSON on save.
+PBKDF2 runs in a local native module (`modules/withink-crypto`, Kotlin/CommonCrypto)
+on a background thread. The module self-tests against a known-answer vector
+before it is trusted; Expo Go and any self-test failure fall back to the hidden
+WebView's WebCrypto bridge and then to an audited pure-JS implementation.
+AES-GCM and HKDF use `@noble` primitives validated against the web golden
+vectors. The master key and 15-minute unlock token stay in memory only. The
+editor is plain text and regenerates TipTap-compatible HTML/JSON on save.
 
-Checks: `pnpm --filter @withink/mobile test` also covers the SQLite adapter and
-the cache/sync flow (25 tests). Remaining slices: rich editor, native crypto
-module for a development build, and the Phase 2 account endpoints; see
+Checks: `pnpm --filter @withink/mobile test` also covers the SQLite adapter, the
+cache/sync flow and the native KDF wrapper (31 tests). Remaining slices: rich
+editor and the Phase 2 account endpoints; see
 `internal-docs/MOBILE_LAUNCH_PLAN.md`.

@@ -1,0 +1,4 @@
+android/build/
+android/.cxx/
+.kotlin/
+node_modules/

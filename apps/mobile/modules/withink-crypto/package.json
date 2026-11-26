@@ -1,0 +1,7 @@
+{
+  "name": "withink-crypto",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Native PBKDF2-HMAC-SHA256 for the Withink app",
+  "main": "src/index.ts"
+}
