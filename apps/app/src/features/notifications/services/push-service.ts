@@ -18,6 +18,37 @@ export interface PushMessage {
   tag: string;
 }
 
+/**
+ * Real Web Push endpoints live on a small set of service origins. Treating the
+ * stored endpoint as an arbitrary URL turns the server into an SSRF relay, so
+ * anything outside this list is rejected at registration and before sending.
+ */
+const ALLOWED_PUSH_HOSTS = [
+  "fcm.googleapis.com",
+  "push.services.mozilla.com",
+  "push.apple.com",
+  "web.push.apple.com",
+  "notify.windows.com",
+  "push.microsoft.com",
+];
+
+function hostMatches(host: string, domain: string): boolean {
+  return host === domain || host.endsWith(`.${domain}`);
+}
+
+/** True for an HTTPS endpoint on a known push-service origin. */
+export function isAllowedPushEndpoint(endpoint: string): boolean {
+  try {
+    const url = new URL(endpoint);
+    if (url.protocol !== "https:") return false;
+    if (url.username || url.password) return false;
+    const host = url.hostname.toLowerCase();
+    return ALLOWED_PUSH_HOSTS.some((domain) => hostMatches(host, domain));
+  } catch {
+    return false;
+  }
+}
+
 let vapidConfigured = false;
 
 /** True when both VAPID keys are present; the UI hides reminders otherwise. */
@@ -64,6 +95,18 @@ export class PushService {
 
     await Promise.all(
       subscriptions.map(async (subscription) => {
+        // Defense in depth for rows stored before the registration check (or
+        // written by any future path): never fetch a non-push URL.
+        if (!isAllowedPushEndpoint(subscription.endpoint)) {
+          failed += 1;
+          await PushSubscriptionRepository.deleteById(subscription.id).catch(
+            () => {},
+          );
+          logger.warn("Dropped push subscription with unsupported endpoint", {
+            userId,
+          });
+          return;
+        }
         try {
           await sendNotification(
             {

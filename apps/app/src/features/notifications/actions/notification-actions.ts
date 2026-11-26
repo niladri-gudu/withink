@@ -6,13 +6,18 @@ import { env } from "@/config/env";
 import { getRequestSession } from "@/lib/request-cache";
 import { handleError } from "@/server/errors";
 import { logger } from "@/server/logger";
+import { rateLimit } from "@/server/rate-limit";
 
 import {
   DEFAULT_NOTIFICATION_SETTINGS,
   NotificationSettingsRepository,
 } from "../repositories/notification-settings-repository";
 import { PushSubscriptionRepository } from "../repositories/push-subscription-repository";
-import { isPushConfigured, PushService } from "../services/push-service";
+import {
+  isAllowedPushEndpoint,
+  isPushConfigured,
+  PushService,
+} from "../services/push-service";
 
 const settingsSchema = z.object({
   dailyReminderEnabled: z.boolean(),
@@ -108,7 +113,8 @@ export async function saveNotificationSettingsAction(input: {
 }): Promise<{ success: boolean; error?: string }> {
   try {
     const session = await getRequestSession();
-    if (!session?.user) return { success: false, error: "You must be signed in." };
+    if (!session?.user)
+      return { success: false, error: "You must be signed in." };
 
     const parsed = settingsSchema.safeParse(input);
     if (!parsed.success) {
@@ -138,11 +144,18 @@ export async function subscribePushAction(input: {
 }): Promise<{ success: boolean; error?: string }> {
   try {
     const session = await getRequestSession();
-    if (!session?.user) return { success: false, error: "You must be signed in." };
+    if (!session?.user)
+      return { success: false, error: "You must be signed in." };
 
     const parsed = subscriptionSchema.safeParse(input);
     if (!parsed.success) {
       return { success: false, error: "Invalid push subscription." };
+    }
+
+    // The endpoint is later fetched by the server. Only known push-service
+    // origins may be stored; anything else would turn sending into SSRF.
+    if (!isAllowedPushEndpoint(parsed.data.endpoint)) {
+      return { success: false, error: "Unsupported push endpoint." };
     }
 
     await PushSubscriptionRepository.upsert(session.user.id, parsed.data);
@@ -163,9 +176,23 @@ export async function sendTestNotificationAction(): Promise<{
 }> {
   try {
     const session = await getRequestSession();
-    if (!session?.user) return { success: false, error: "You must be signed in." };
+    if (!session?.user)
+      return { success: false, error: "You must be signed in." };
     if (!isPushConfigured()) {
       return { success: false, error: "Reminders aren't configured yet." };
+    }
+
+    // Sends hit every subscribed device and an external push service; cap
+    // manual triggers so the action cannot be used as a push/SSRF amplifier.
+    const limit = await rateLimit(`push-test:${session.user.id}`, {
+      limit: 5,
+      windowSeconds: 3_600,
+    });
+    if (!limit.success) {
+      return {
+        success: false,
+        error: "Too many test notifications. Please try again later.",
+      };
     }
 
     const send = await PushService.sendToUser(session.user.id, {
@@ -196,7 +223,8 @@ export async function unsubscribePushAction(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const session = await getRequestSession();
-    if (!session?.user) return { success: false, error: "You must be signed in." };
+    if (!session?.user)
+      return { success: false, error: "You must be signed in." };
 
     const parsed = z.string().url().safeParse(endpoint);
     if (!parsed.success) {
