@@ -46,6 +46,21 @@ LAN or production origin:
 EXPO_PUBLIC_API_URL=https://app.withink.me pnpm --filter @withink/mobile start
 ```
 
+### Troubleshooting the Android build
+
+- **`ninja: manifest 'build.ninja' still dirty after 100 tries`** — pnpm's
+  hashed module paths can exceed Windows' 260-character limit for the Ninja
+  bundled with CMake 3.22. Use Ninja 1.12+ (long-path support) in
+  `cmake/3.22.1/bin/ninja.exe`, or move the checkout to a shorter path.
+- **Kotlin/clang runs out of memory** — build with `--no-daemon
+  --max-workers=1`, set `CMAKE_BUILD_PARALLEL_LEVEL=1`, and keep
+  `org.gradle.jvmargs` near 1.5 GB on a 16 GB machine. If the app's C++ still
+  dies, run `ninja` directly in `app/.cxx/Debug/<hash>/arm64-v8a` without
+  Gradle, then re-run `assembleDebug` to package.
+- **Port 8081 already in use** (e.g. by Tailscale) — run Metro with
+  `--port 8082` and `adb reverse tcp:8081 tcp:8082`, so the device still
+  reaches the bundle on its expected port.
+
 ## Checks
 
 ```bash
