@@ -34,7 +34,9 @@ export function mintUnlockToken(
 
 export function parseUnlockToken(token: string): UnlockTokenPayload | null {
   try {
-    const parsed = JSON.parse(decryptToken(token)) as Partial<UnlockTokenPayload>;
+    const parsed = JSON.parse(
+      decryptToken(token),
+    ) as Partial<UnlockTokenPayload>;
     if (typeof parsed.userId !== "string" || parsed.userId.length === 0) {
       return null;
     }

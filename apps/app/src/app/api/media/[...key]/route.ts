@@ -1,5 +1,5 @@
-import { GetObjectCommand } from "@aws-sdk/client-s3";
 import { NextResponse } from "next/server";
+import { GetObjectCommand } from "@aws-sdk/client-s3";
 
 import { env } from "@/config/env";
 import { r2 } from "@/lib/r2";

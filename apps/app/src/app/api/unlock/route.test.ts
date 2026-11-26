@@ -2,6 +2,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { getRequestSession } from "@/lib/request-cache";
 import { verifyUnlockToken } from "@/lib/unlock-token";
+import { rateLimit } from "@/server/rate-limit";
+import { LockRepository } from "@/features/lock/repositories/lock-repository";
+import { LockService } from "@/features/lock/services/lock-service";
 
 import { POST } from "./route";
 
@@ -30,10 +33,6 @@ vi.mock("@/features/lock/services/lock-service", () => ({
     verifyUnlockProofHash: vi.fn(),
   },
 }));
-
-import { rateLimit } from "@/server/rate-limit";
-import { LockRepository } from "@/features/lock/repositories/lock-repository";
-import { LockService } from "@/features/lock/services/lock-service";
 
 const mockSession = { user: { id: "user-1" } };
 const VALID_PROOF = "a".repeat(64);

@@ -1,8 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { unlockRequestSchema, type UnlockResponse } from "@withink/contracts";
 
-import { getRequestSession } from "@/lib/request-cache";
 import { redis } from "@/lib/redis";
+import { getRequestSession } from "@/lib/request-cache";
 import { mintUnlockToken } from "@/lib/unlock-token";
 import { apiError, apiErrorFrom } from "@/server/api-error";
 import { rateLimit } from "@/server/rate-limit";
