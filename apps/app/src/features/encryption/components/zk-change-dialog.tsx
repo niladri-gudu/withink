@@ -13,7 +13,12 @@ import { Input } from "@withink/ui/input";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
-import { decryptText, encryptText } from "@/lib/crypto-client";
+import {
+  decryptText,
+  deriveUnlockProofHex,
+  encryptText,
+  importKeyFromHex,
+} from "@/lib/crypto-client";
 import { deriveKeyFromPasswordAsync } from "@/lib/crypto-worker-client";
 import { KDF_ITERATIONS } from "@/lib/kdf";
 import { useEncryption } from "@/providers/encryption-provider";
@@ -83,16 +88,27 @@ export function ZkChangeDialog({ open, onOpenChange }: ZkChangeDialogProps) {
         newPasswordKey,
       );
 
-      // 5. Update server
+      // 5. Prove possession of the master key before replacing its wrap. The
+      // server refuses the change without this proof, so a stolen session
+      // cannot lock the account owner out by overwriting the key wrap.
+      const masterKey = await importKeyFromHex(masterKeyHex);
+      const unlockProof = await deriveUnlockProofHex(masterKey);
+
+      // 6. Update server
       const res = await updateDiaryPasswordAction(
         newVerificationCiphertext,
+        unlockProof,
         KDF_ITERATIONS,
       );
       if (!res.success) {
-        throw new Error(res.error || "Failed to update settings on server");
+        throw new Error(
+          res.error === "UNLOCK_PROOF_NOT_BOUND"
+            ? "Unlock verification isn't set up for this account yet. Reopen the app to finish setup, then try again."
+            : res.error || "Failed to update settings on server",
+        );
       }
 
-      // 6. Update local context; other devices must re-auth with the new password
+      // 7. Update local context; other devices must re-auth with the new password
       setEncryptionSettings({
         isClientEncrypted: true,
         encryptionSalt,

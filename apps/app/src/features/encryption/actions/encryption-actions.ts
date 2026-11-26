@@ -3,11 +3,13 @@
 import type { Model } from "mongoose";
 import { z } from "zod";
 
+import { isClientCiphertext } from "@/lib/ciphertext";
 import { connectDB } from "@/lib/db/mongoose";
 import { safeDecrypt } from "@/lib/encryption";
 import { normalizeKdfIterations } from "@/lib/kdf";
 import { getRequestSession } from "@/lib/request-cache";
 import { handleError } from "@/server/errors";
+import { rateLimit } from "@/server/rate-limit";
 import {
   EntryModel,
   type IEntry,
@@ -297,14 +299,67 @@ export async function enableClientEncryptionAction(
   }
 }
 
+const UNLOCK_PROOF_HEX = /^[0-9a-fA-F]{64}$/;
+const MAX_VERIFICATION_CIPHERTEXT_LENGTH = 512;
+
 export async function updateDiaryPasswordAction(
   verificationCiphertext: string,
+  unlockProof: string,
   kdfIterations?: number,
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const session = await getRequestSession();
     if (!session) {
       return { success: false, error: "Unauthorized" };
+    }
+
+    // The wrapped master key is the root of every entry's encryption: a caller
+    // may only replace it after proving they still hold that master key. A
+    // stolen session (or a locked diary) must never be enough.
+    if (
+      typeof verificationCiphertext !== "string" ||
+      !isClientCiphertext(verificationCiphertext) ||
+      verificationCiphertext.length > MAX_VERIFICATION_CIPHERTEXT_LENGTH
+    ) {
+      return { success: false, error: "Invalid verification ciphertext." };
+    }
+
+    if (!(await LockService.isSessionUnlocked(session.user.id))) {
+      return { success: false, error: "Locked" };
+    }
+
+    if (
+      typeof unlockProof !== "string" ||
+      !UNLOCK_PROOF_HEX.test(unlockProof)
+    ) {
+      return { success: false, error: "Invalid unlock proof." };
+    }
+
+    const lockSettings = await LockRepository.getSettings(session.user.id);
+    if (!lockSettings?.unlockProofHash) {
+      // Legacy zero-knowledge accounts must complete the one-time email-code
+      // binding flow before rotating; otherwise there is nothing to verify.
+      return { success: false, error: "UNLOCK_PROOF_NOT_BOUND" };
+    }
+
+    if (
+      !LockService.verifyUnlockProofHash(
+        unlockProof,
+        lockSettings.unlockProofHash,
+      )
+    ) {
+      const limit = await rateLimit(`lock:change-password:${session.user.id}`, {
+        limit: 10,
+        windowSeconds: 300,
+        failClosed: true,
+      });
+      if (!limit.success) {
+        return {
+          success: false,
+          error: "Too many attempts. Please try again in 5 minutes.",
+        };
+      }
+      return { success: false, error: "Unlock verification failed." };
     }
 
     await connectDB();
