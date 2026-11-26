@@ -37,6 +37,11 @@ pnpm --filter @withink/mobile lint
 
 ## Current slice
 
-Sign-up/sign-in, bearer session, and the sync manifest (entry dates). Unlock,
-decryption, the editor, and local SQLite storage are the next slices; see
-`internal-docs/MOBILE_LAUNCH_PLAN.md`.
+Sign-up/sign-in, encrypted unlock, and a decrypted read of the 50 most recent
+pages. PBKDF2 runs through a hidden WebView's native WebCrypto (with an audited
+pure-JS fallback); AES-GCM and HKDF use `@noble` primitives validated against
+the web golden vectors. The master key and 15-minute unlock token stay in
+memory only.
+
+Local SQLite storage, offline queueing, encrypted writes, and the editor are
+the next slices; see `internal-docs/MOBILE_LAUNCH_PLAN.md`.

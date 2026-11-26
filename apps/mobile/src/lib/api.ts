@@ -1,7 +1,9 @@
 import { createApiClient } from "@withink/api-client";
+import { UNLOCK_HEADER_NAME } from "@withink/contracts";
 
 import { getSessionToken } from "./auth-client";
 import { API_URL } from "./config";
+import { getUnlockToken } from "./session-state";
 
 /**
  * Shared sync client. Cookie transport does not exist on native, so every
@@ -16,6 +18,8 @@ export function createDiaryClient() {
       const token = getSessionToken();
       const headers: Record<string, string> = {};
       if (token) headers.Authorization = `Bearer ${token}`;
+      const unlock = getUnlockToken();
+      if (unlock) headers[UNLOCK_HEADER_NAME] = unlock;
       return headers;
     },
   });

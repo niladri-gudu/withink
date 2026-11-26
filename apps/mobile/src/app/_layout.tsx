@@ -4,6 +4,8 @@ import { useColorScheme } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
+import { CryptoWebViewHost } from "@/lib/crypto-webview";
+
 export default function RootLayout() {
   const colorScheme = useColorScheme();
 
@@ -14,6 +16,7 @@ export default function RootLayout() {
           value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
         >
           <Stack screenOptions={{ headerShown: false }} />
+          <CryptoWebViewHost />
           <StatusBar style="auto" />
         </ThemeProvider>
       </SafeAreaProvider>
