@@ -73,8 +73,16 @@ Active work:
   safe encryption/lock fields; the client derives PBKDF2 via a hidden
   WebView's native WebCrypto, exchanges the HKDF proof at `/api/unlock`, pulls
   the 50 most recent pages, and decrypts them in memory. Verified on Android
-  with two seeded encrypted entries. SQLite/offline and encrypted writes/editor
-  are next.
+  with two seeded encrypted entries.
+- Shipped: mobile local-first journal — `apps/mobile` persists encrypted
+  records in SQLite (a `LocalStore` adapter sharing the web record formats,
+  with a memory fallback for web/tests), runs a native port of the cache/sync
+  service over the shared `planSyncPull`, and adds a plain-text editor with
+  debounced local saves and queue flush. Verified on the Pixel 4 emulator:
+  pull → decrypt → edit → autosave → `/api/sync/push` 200, with the server
+  copy decrypted independently from the diary password. Next: native crypto
+  module for a dev build, rich-editor spike, and the remaining Phase 2
+  endpoints.
 
 ---
 

@@ -249,8 +249,14 @@ the route. `/api/sync/*` already models the pattern.
   native WebCrypto (pure-JS fallback), exchanges the HKDF proof at
   `/api/unlock`, pulls the 50 most recent pages and decrypts them in memory.
   Verified on Android with two seeded encrypted entries.
-- Next: SQLite `LocalStore` + offline queue, encrypted writes/editor, and the
-  native crypto module (replacing the WebView bridge in a dev build).
+- SQLite `LocalStore` + local-first write path: `sqlite-store.ts` implements
+  the shared contract (memory fallback for web/tests), `diary-cache-core.ts`
+  ports the web cache/sync flow over `planSyncPull`, and the editor saves
+  encrypted documents + a plaintext sync index + an encrypted queue item
+  before pushing. Verified on the Pixel 4 emulator: edit → autosave →
+  `/api/sync/push` 200, with the server copy decrypted independently.
+- Next: the native crypto module (replacing the WebView bridge in a dev
+  build), the rich-editor spike, and the remaining Phase 2 endpoints.
 
 1. `apps/mobile` with Expo Router + TypeScript, added to the pnpm workspace.
 2. `@withink/tokens/native`: a TS token object generated from the same values as

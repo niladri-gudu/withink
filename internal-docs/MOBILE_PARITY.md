@@ -32,10 +32,10 @@ Status values: `—` not started · `dev` implemented, unverified · `shipped` �
 | Session / account hint | shipped | dev | `@withink/core` types, `withink-zk` cookie | Expo stores the session in SecureStore; local profile pending |
 | Lock / unlock | shipped | dev | `LockService`, `/api/unlock` | Master-key unlock + 15-minute token verified on Android; biometrics pending |
 | Client-side encryption | shipped | dev | `@withink/core` kdf/crypto contracts | PBKDF2 via WebCrypto bridge; AES-GCM/HKDF in noble; golden vectors pass |
-| Journal read/write | shipped | dev | `@withink/core/sync-engine` | Read + decrypt verified on device; encrypted write/editor pending |
-| Autosave + offline queue | shipped | — | `LocalStore` adapter | SQLite on native |
-| Sync (push/pull/prune) | shipped | dev | `planSyncPull` in `@withink/core` | Manifest + pull verified; local queue/prune pending |
-| Entry editor | shipped | — | Editor fixtures (planned) | TipTap DOM on web; bridged TipTap preferred on native |
+| Journal read/write | shipped | dev | `@withink/core/sync-engine` | Read, decrypt and encrypted write verified on the Pixel 4 emulator |
+| Autosave + offline queue | shipped | dev | `LocalStore` adapter | SQLite queue; an offline edit stayed queued and flushed on reconnect |
+| Sync (push/pull/prune) | shipped | dev | `planSyncPull` in `@withink/core` | Push + pull verified on device; prune covered by unit tests |
+| Entry editor | shipped | dev | Editor fixtures (planned) | Plain-text editor on native (regenerates HTML/JSON); TipTap DOM on web |
 | Timeline / search / filters | shipped | — | `@withink/core/timeline` | |
 | Calendar | shipped | — | `@withink/core/date` | |
 | Streaks | shipped | — | `@withink/core/date` | |
