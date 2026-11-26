@@ -1,4 +1,8 @@
-import type { ApiErrorBody } from "@withink/contracts";
+import type {
+  ApiErrorBody,
+  MobileBootstrap,
+  UnlockResponse,
+} from "@withink/contracts";
 import type {
   NotebookSummary,
   SaveEntryPayload,
@@ -41,6 +45,10 @@ export interface ApiClientOptions {
 }
 
 export interface WithinkApiClient {
+  /** Encryption/lock settings for a native unlock. */
+  getBootstrap(): Promise<MobileBootstrap>;
+  /** Exchanges the client-derived HKDF proof for a short-lived token. */
+  unlock(proof: string): Promise<UnlockResponse>;
   getSyncList(): Promise<SyncListItem[]>;
   getEntries(dates: string[]): Promise<SyncEntryPayload[]>;
   saveEntries(

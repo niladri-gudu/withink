@@ -1,4 +1,8 @@
-import type { ApiErrorBody } from "@withink/contracts";
+import type {
+  ApiErrorBody,
+  MobileBootstrap,
+  UnlockResponse,
+} from "@withink/contracts";
 import type {
   NotebookSummary,
   SaveEntryPayload,
@@ -85,6 +89,17 @@ export function createApiClient(options: ApiClientOptions): WithinkApiClient {
   }
 
   return {
+    async getBootstrap() {
+      return await request<MobileBootstrap>("/api/mobile/bootstrap");
+    },
+
+    async unlock(proof: string) {
+      return await request<UnlockResponse>("/api/unlock", {
+        method: "POST",
+        body: JSON.stringify({ proof }),
+      });
+    },
+
     async getSyncList() {
       const result = await request<SyncManifestResponse>("/api/sync/manifest");
       return result.entries;

@@ -183,6 +183,52 @@ describe("createApiClient", () => {
     });
   });
 
+  it("fetches the mobile bootstrap", async () => {
+    const bootstrap = {
+      user: { id: "user-1", name: "Tester", email: "tester@example.com" },
+      encryption: {
+        isClientEncrypted: true,
+        encryptionSalt: "a".repeat(32),
+        verificationCiphertext: "iv:tag:cipher",
+        kdfIterations: 600_000,
+      },
+      lock: { isLockEnabled: true, autoLockTimeout: 300, hasPasscode: true },
+    };
+    const fetchImpl = makeFetch(() => jsonResponse(bootstrap));
+    const client = createApiClient({
+      baseUrl: "https://app.test",
+      fetch: fetchImpl,
+    });
+
+    await expect(client.getBootstrap()).resolves.toEqual(bootstrap);
+    expect(fetchImpl.mock.calls[0]?.[0]).toBe(
+      "https://app.test/api/mobile/bootstrap",
+    );
+  });
+
+  it("exchanges an unlock proof for a token", async () => {
+    const fetchImpl = makeFetch(() =>
+      jsonResponse({
+        token: "unlock-token",
+        expiresAt: "2026-11-26T10:00:00.000Z",
+      }),
+    );
+    const client = createApiClient({
+      baseUrl: "https://app.test",
+      fetch: fetchImpl,
+    });
+
+    const proof = "a".repeat(64);
+    await expect(client.unlock(proof)).resolves.toMatchObject({
+      token: "unlock-token",
+    });
+
+    const [url, init] = fetchImpl.mock.calls[0] ?? [];
+    expect(url).toBe("https://app.test/api/unlock");
+    expect(init?.method).toBe("POST");
+    expect(JSON.parse(String(init?.body))).toEqual({ proof });
+  });
+
   it("covers notebook mutations", async () => {
     const notebook = {
       id: "0123456789abcdef01234567",
