@@ -56,6 +56,11 @@ Active work:
   stale-write rejection on push (`baseUpdatedAt`).
 - Shipped: Sentry browser SDK deferred off the critical path (root JS
   659 KB → 424 KB); Vercel region moved to `bom1` (Mumbai).
+- Shipped: mobile parity foundation — `@withink/contracts` owns the wire
+  schemas and error envelope; `planSyncPull` in `@withink/core` drives the web
+  pull; web adapters declare `LocalStore`/`CryptoProvider`; sync routes return
+  coded errors; CI restored; shared core/contracts/api-client/crypto tests.
+  See `MOBILE_LAUNCH_PLAN.md` and `MOBILE_PARITY.md`.
 
 ---
 
@@ -438,6 +443,32 @@ Note: MongoDB (`mongodb+srv://`) now connects. The earlier `querySrv ECONNREFUSE
 ---
 
 # Recent Decisions
+
+2026-11-26 (Mobile parity foundation — shared contracts, sync planning, adapters, CI)
+
+- **Decision:** the mobile client is an **Expo native app**; a Capacitor shell
+  was rejected because native UX is the priority (see `MOBILE_LAUNCH_PLAN.md`).
+  Parity is enforced, not assumed.
+- **Contracts:** new `@withink/contracts` package owns every sync wire schema
+  (entry, push/pull/delete, notebook mutations) and the `{ error, code,
+  details? }` envelope. `apps/app`'s `entry-schema.ts` is now a re-export; the
+  sync routes and `entry-sync-service` validate from the shared package.
+- **Shared sync planning:** `planSyncPull` + `syncListFingerprint` live in
+  `@withink/core/sync-engine` and drive the web pull, so web and native make
+  identical prune/fetch decisions. The full push/pull loop stays app-local
+  until the native `LocalStore` adapter exists.
+- **Adapters:** the web now declares `LocalStore` (IndexedDB adapter, plus a
+  derived notebooks store at DB v5) and `CryptoProvider`; the duplicate
+  `SyncIndexRecord` was removed.
+- **Errors:** sync routes return machine-readable codes via
+  `server/api-error.ts`; `@withink/api-client` surfaces `code` and `details`.
+- **CI + tests:** CI restored (`lint`, `typecheck`, `test`; Prettier advisory
+  because the repo has a pre-existing baseline). Added 11 sync-planner tests,
+  12 contract-schema tests, 9 API-client tests and 7 crypto golden vectors.
+- **Deferred:** device identity moved to Phase 2 — it needs the synced-device
+  cap; adding it earlier would be dead weight.
+- Verified: tsc clean, eslint 0 errors (3 pre-existing hook warnings), Vitest
+  **316/316**, production build green.
 
 2026-11-26 (Mobile readiness — bearer auth, shared logic, notebook API, stale-write guard)
 
