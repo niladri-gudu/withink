@@ -1,6 +1,12 @@
 import type {
   ApiErrorBody,
+  BillingSummaryView,
+  EncryptionSettingsView,
+  LetterFull,
+  LetterMeta,
+  LockSettingsView,
   MobileBootstrap,
+  NotificationSettingsView,
   UnlockResponse,
 } from "@withink/contracts";
 import type {
@@ -186,6 +192,111 @@ export function createApiClient(options: ApiClientOptions): WithinkApiClient {
       await request<SyncNotebookMutationResponse>("/api/sync/notebooks", {
         method: "POST",
         body: JSON.stringify({ action: "move-entry", date, notebookId }),
+      });
+    },
+
+    async getLockSettings() {
+      return await request<LockSettingsView>("/api/settings/lock");
+    },
+
+    async saveLockSettings(input) {
+      await request("/api/settings/lock", {
+        method: "POST",
+        body: JSON.stringify(input),
+      });
+    },
+
+    async requestPasscodeResetEmail() {
+      await request("/api/settings/lock/reset-email", { method: "POST" });
+    },
+
+    async getEncryptionSettings() {
+      return await request<EncryptionSettingsView>(
+        "/api/settings/encryption",
+      );
+    },
+
+    async mutateEncryption(input) {
+      await request("/api/settings/encryption", {
+        method: "POST",
+        body: JSON.stringify(input),
+      });
+    },
+
+    async getLetters() {
+      return await request<{ letters: LetterMeta[]; today: string }>(
+        "/api/letters",
+      );
+    },
+
+    async getLetter(id: string) {
+      return await request<{ letter: LetterFull; today: string }>(
+        `/api/letters/${encodeURIComponent(id)}`,
+      );
+    },
+
+    async saveLetter(input) {
+      return await request<LetterFull>("/api/letters", {
+        method: "POST",
+        body: JSON.stringify(input),
+      });
+    },
+
+    async sealLetter(id: string) {
+      return await request<LetterFull>(
+        `/api/letters/${encodeURIComponent(id)}/seal`,
+        { method: "POST" },
+      );
+    },
+
+    async revealLetter(id: string) {
+      return await request<LetterFull>(
+        `/api/letters/${encodeURIComponent(id)}/reveal`,
+        { method: "POST" },
+      );
+    },
+
+    async deleteLetter(id: string) {
+      await request(`/api/letters/${encodeURIComponent(id)}`, {
+        method: "DELETE",
+      });
+    },
+
+    async getNotificationSettings() {
+      return await request<NotificationSettingsView>(
+        "/api/notifications/settings",
+      );
+    },
+
+    async saveNotificationSettings(input) {
+      await request("/api/notifications/settings", {
+        method: "POST",
+        body: JSON.stringify(input),
+      });
+    },
+
+    async registerPushDevice(input) {
+      await request("/api/notifications/devices", {
+        method: "POST",
+        body: JSON.stringify(input),
+      });
+    },
+
+    async unregisterPushDevice(token: string) {
+      await request("/api/notifications/devices", {
+        method: "DELETE",
+        body: JSON.stringify({ token }),
+      });
+    },
+
+    async getBillingSummary() {
+      return await request<BillingSummaryView>("/api/billing/summary");
+    },
+
+    async deleteAccount(password?: string) {
+      await request("/api/account/delete", {
+        method: "POST",
+        body: JSON.stringify(password ? { password } : {}),
       });
     },
   };

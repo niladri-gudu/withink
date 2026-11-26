@@ -270,4 +270,122 @@ describe("createApiClient", () => {
       "move-entry",
     ]);
   });
+
+  it("passes a server rule code through for sealed letters", async () => {
+    const fetchImpl = makeFetch(() =>
+      jsonResponse(
+        { error: "This letter isn't ready to open yet.", code: "LETTER_SEALED" },
+        422,
+      ),
+    );
+    const client = createApiClient({
+      baseUrl: "https://app.test",
+      fetch: fetchImpl,
+    });
+
+    await expect(client.revealLetter("0123456789abcdef01234567"))
+      .rejects.toMatchObject({
+        name: "ApiError",
+        status: 422,
+        code: "LETTER_SEALED",
+      });
+    const [url, init] = fetchImpl.mock.calls[0] ?? [];
+    expect(url).toBe(
+      "https://app.test/api/letters/0123456789abcdef01234567/reveal",
+    );
+    expect(init?.method).toBe("POST");
+  });
+
+  it("registers and unregisters an Expo push device", async () => {
+    const fetchImpl = makeFetch(() => jsonResponse({ ok: true }));
+    const client = createApiClient({
+      baseUrl: "https://app.test",
+      fetch: fetchImpl,
+    });
+
+    await client.registerPushDevice({
+      token: "ExpoPushToken[abc]",
+      platform: "android",
+      deviceLabel: "Pixel",
+    });
+    await client.unregisterPushDevice("ExpoPushToken[abc]");
+
+    const [registerUrl, registerInit] = fetchImpl.mock.calls[0] ?? [];
+    expect(registerUrl).toBe("https://app.test/api/notifications/devices");
+    expect(registerInit?.method).toBe("POST");
+    expect(JSON.parse(String(registerInit?.body))).toEqual({
+      token: "ExpoPushToken[abc]",
+      platform: "android",
+      deviceLabel: "Pixel",
+    });
+
+    const [deleteUrl, deleteInit] = fetchImpl.mock.calls[1] ?? [];
+    expect(deleteUrl).toBe("https://app.test/api/notifications/devices");
+    expect(deleteInit?.method).toBe("DELETE");
+    expect(JSON.parse(String(deleteInit?.body))).toEqual({
+      token: "ExpoPushToken[abc]",
+    });
+  });
+
+  it("reads lock, encryption, notification and billing state", async () => {
+    const fetchImpl = makeFetch((url) => {
+      if (url.endsWith("/api/settings/lock")) {
+        return jsonResponse({
+          isLockEnabled: true,
+          hasPasscode: true,
+          autoLockTimeout: 300,
+          lockOnTabHide: false,
+          isUnlocked: false,
+        });
+      }
+      if (url.endsWith("/api/settings/encryption")) {
+        return jsonResponse({
+          isClientEncrypted: true,
+          encryptionSalt: "a".repeat(32),
+          verificationCiphertext: "aa:bb",
+          kdfIterations: 600_000,
+        });
+      }
+      if (url.endsWith("/api/notifications/settings")) {
+        return jsonResponse({
+          configured: true,
+          publicKey: "public-key",
+          deviceCount: 1,
+          settings: {
+            dailyReminderEnabled: true,
+            reminderTime: "09:00",
+            letterAlertsEnabled: false,
+            timezoneOffsetMinutes: 330,
+          },
+        });
+      }
+      return jsonResponse({
+        plan: "plus",
+        status: "active",
+        interval: "yearly",
+        currentPeriodEnd: "2027-01-01T00:00:00.000Z",
+        hasPortal: true,
+      });
+    });
+    const client = createApiClient({
+      baseUrl: "https://app.test",
+      fetch: fetchImpl,
+    });
+
+    await expect(client.getLockSettings()).resolves.toMatchObject({
+      isLockEnabled: true,
+      hasPasscode: true,
+    });
+    await expect(client.getEncryptionSettings()).resolves.toMatchObject({
+      kdfIterations: 600_000,
+    });
+    await expect(client.getNotificationSettings()).resolves.toMatchObject({
+      deviceCount: 1,
+      settings: { reminderTime: "09:00" },
+    });
+    await expect(client.getBillingSummary()).resolves.toMatchObject({
+      plan: "plus",
+      hasPortal: true,
+    });
+  });
 });

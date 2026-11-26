@@ -8,6 +8,7 @@ import { handleError } from "@/server/errors";
 import { logger } from "@/server/logger";
 import { rateLimit } from "@/server/rate-limit";
 
+import { ExpoPushTokenRepository } from "../repositories/expo-push-token-repository";
 import {
   DEFAULT_NOTIFICATION_SETTINGS,
   NotificationSettingsRepository,
@@ -65,10 +66,12 @@ export async function getNotificationSettingsAction(): Promise<GetNotificationSe
       };
     }
 
-    const [doc, deviceCount] = await Promise.all([
+    const [doc, webDevices, expoDevices] = await Promise.all([
       NotificationSettingsRepository.get(session.user.id),
       PushSubscriptionRepository.countByUser(session.user.id),
+      ExpoPushTokenRepository.countByUser(session.user.id),
     ]);
+    const deviceCount = webDevices + expoDevices;
 
     return {
       success: true,

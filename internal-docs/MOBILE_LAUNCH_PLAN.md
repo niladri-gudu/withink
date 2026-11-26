@@ -230,8 +230,17 @@ the route. `/api/sync/*` already models the pattern.
 - The Better Auth Expo client plugin lives in `apps/mobile`. The server half
   (copying `expo-origin` into `Origin` before Better Auth's CSRF check) is a
   small local plugin, so the RN-heavy package never enters the web app.
-- Remaining: settings/lock/encryption endpoints, letters, notification device
-  tokens, billing summary, and account deletion.
+- Shipped: the remaining Phase 2 endpoints — `GET/POST /api/settings/lock`
+  (+ reset-email), `GET/POST /api/settings/encryption` (read, enable ZK,
+  change password), `/api/letters` (`GET/POST/DELETE`, `[id]`, `seal`,
+  `reveal`), `GET/POST /api/notifications/settings`,
+  `POST/DELETE /api/notifications/devices`, `GET /api/billing/summary`, and
+  `POST /api/account/delete`. The lock/letter/encryption schemas moved into
+  `@withink/contracts`; every route uses the shared `requireApiSession` gate
+  (bearer sessions skip the cookie unlock) and the same actions/services.
+- Shipped: Expo push delivery — `ExpoPushToken` stores one token per install,
+  and `PushService` sends to both Web Push and Expo, pruning
+  `DeviceNotRegistered` tokens. The permission/opt-in UI is still to come.
 
 ### Phase 3 — Expo foundation (~4 weeks)
 
@@ -266,7 +275,7 @@ the route. `/api/sync/*` already models the pattern.
   the device. Verified on the Android phone: sign-in, native unlock
   (`/api/unlock` 200), and 122 pages pulled and decrypted, with the device log
   confirming `PBKDF2 via native module`. See §11 decision 8.
-- Next: the rich-editor spike and the remaining Phase 2 endpoints.
+- Next: the rich-editor spike.
 
 1. `apps/mobile` with Expo Router + TypeScript, added to the pnpm workspace.
 2. `@withink/tokens/native`: a TS token object generated from the same values as

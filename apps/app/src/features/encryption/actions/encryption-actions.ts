@@ -3,6 +3,7 @@
 import type { Model } from "mongoose";
 import { z } from "zod";
 
+import { isUnlockedForRequest } from "@/lib/api-auth";
 import { isClientCiphertext } from "@/lib/ciphertext";
 import { connectDB } from "@/lib/db/mongoose";
 import { safeDecrypt } from "@/lib/encryption";
@@ -91,8 +92,7 @@ export async function getPlaintextEntriesForMigrationAction(): Promise<{
       return { success: false, error: "Unauthorized" };
     }
 
-    const unlocked = await LockService.isSessionUnlocked(session.user.id);
-    if (!unlocked) {
+    if (!(await isUnlockedForRequest(session.user.id))) {
       return { success: false, error: "Locked" };
     }
 
@@ -186,8 +186,7 @@ export async function enableClientEncryptionAction(
       return { success: false, error: "Invalid migration payload." };
     }
 
-    const unlocked = await LockService.isSessionUnlocked(session.user.id);
-    if (!unlocked) {
+    if (!(await isUnlockedForRequest(session.user.id))) {
       return { success: false, error: "Locked" };
     }
 
@@ -324,7 +323,7 @@ export async function updateDiaryPasswordAction(
       return { success: false, error: "Invalid verification ciphertext." };
     }
 
-    if (!(await LockService.isSessionUnlocked(session.user.id))) {
+    if (!(await isUnlockedForRequest(session.user.id))) {
       return { success: false, error: "Locked" };
     }
 

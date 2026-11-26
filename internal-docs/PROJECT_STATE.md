@@ -89,8 +89,17 @@ Active work:
   client builds with `expo run:android` (NDK/CMake), installs and launches on
   the Android phone. Verified end to end on the phone: sign-in → native PBKDF2
   unlock (`/api/unlock` 200, device log `PBKDF2 via native module`) → 122 pages
-  pulled and decrypted. Next: rich-editor spike and the remaining Phase 2
-  endpoints.
+  pulled and decrypted.
+- Shipped: native account HTTP surface — `/api/settings/lock` (read, save,
+  reset email), `/api/settings/encryption` (read, enable ZK, change diary
+  password), `/api/letters` (+ `[id]`, `seal`, `reveal`),
+  `/api/notifications/settings` and `/devices`, `/api/billing/summary`, and
+  `/api/account/delete`. The lock/letter/encryption wire schemas moved into
+  `@withink/contracts`; routes share `requireApiSession` (bearer sessions skip
+  the cookie unlock gate exactly like `/api/sync/*`) and call the existing
+  actions/services. Expo push tokens are stored per install and `PushService`
+  sends to both Web Push and Expo, pruning dead tokens.
+  Next: the rich-editor spike.
 
 ---
 

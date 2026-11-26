@@ -1,7 +1,18 @@
 import type {
   ApiErrorBody,
+  BillingSummaryView,
+  EncryptionMutationRequest,
+  EncryptionSettingsView,
+  LetterFull,
+  LetterMeta,
+  LockSettingsView,
   MobileBootstrap,
+  NotificationSettingsRequest,
+  NotificationSettingsView,
+  RegisterPushDeviceRequest,
+  SaveLetterRequest,
   UnlockResponse,
+  UpdateLockSettingsRequest,
 } from "@withink/contracts";
 import type {
   NotebookSummary,
@@ -17,6 +28,16 @@ import type {
  * imports from `@withink/api-client` keep working.
  */
 export type {
+  BillingSummaryView,
+  EncryptionMutationRequest,
+  EncryptionSettingsView,
+  LetterFull,
+  LetterMeta,
+  LockSettingsView,
+  NotificationSettingsRequest,
+  NotificationSettingsView,
+  RegisterPushDeviceRequest,
+  SaveLetterRequest,
   SyncDeleteRequest,
   SyncDeleteResponse,
   SyncManifestResponse,
@@ -26,6 +47,7 @@ export type {
   SyncPullResponse,
   SyncPushRequest,
   SyncPushResponse,
+  UpdateLockSettingsRequest,
 } from "@withink/contracts";
 
 export interface ApiClientOptions {
@@ -65,6 +87,39 @@ export interface WithinkApiClient {
   setDefaultNotebook(id: string): Promise<void>;
   /** Files an existing entry into another notebook. */
   moveEntryToNotebook(date: string, notebookId: string): Promise<void>;
+
+  // Account surface (native settings, letters, reminders, billing).
+
+  getLockSettings(): Promise<LockSettingsView>;
+  saveLockSettings(input: UpdateLockSettingsRequest): Promise<void>;
+  /** Emails the six-digit lock-recovery code; nothing is returned. */
+  requestPasscodeResetEmail(): Promise<void>;
+
+  getEncryptionSettings(): Promise<EncryptionSettingsView>;
+  /** Enables ZK (migration) or re-wraps the master key with a new password. */
+  mutateEncryption(input: EncryptionMutationRequest): Promise<void>;
+
+  getLetters(): Promise<{ letters: LetterMeta[]; today: string }>;
+  getLetter(id: string): Promise<{ letter: LetterFull; today: string }>;
+  /** Creates or auto-saves; throws `ApiError` with the rule code on limits. */
+  saveLetter(input: SaveLetterRequest): Promise<LetterFull>;
+  sealLetter(id: string): Promise<LetterFull>;
+  /** Throws `ApiError` with `LETTER_SEALED` when opened early. */
+  revealLetter(id: string): Promise<LetterFull>;
+  deleteLetter(id: string): Promise<void>;
+
+  getNotificationSettings(): Promise<NotificationSettingsView>;
+  saveNotificationSettings(
+    input: NotificationSettingsRequest,
+  ): Promise<void>;
+  /** Registers this install's Expo push token. */
+  registerPushDevice(input: RegisterPushDeviceRequest): Promise<void>;
+  unregisterPushDevice(token: string): Promise<void>;
+
+  /** Read-only plan state; no checkout/portal URLs on native. */
+  getBillingSummary(): Promise<BillingSummaryView>;
+  /** Irreversible; credential accounts must supply the login password. */
+  deleteAccount(password?: string): Promise<void>;
 }
 
 export class ApiError extends Error {

@@ -35,21 +35,21 @@ Status values: `—` not started · `dev` implemented, unverified · `shipped` �
 | Journal read/write | shipped | dev | `@withink/core/sync-engine` | Read, decrypt and encrypted write verified on the Pixel 4 emulator |
 | Autosave + offline queue | shipped | dev | `LocalStore` adapter | SQLite queue; an offline edit stayed queued and flushed on reconnect |
 | Sync (push/pull/prune) | shipped | dev | `planSyncPull` in `@withink/core` | Push + pull verified on device; prune covered by unit tests |
-| Entry editor | shipped | dev | Editor fixtures (planned) | Plain-text editor on native (regenerates HTML/JSON); TipTap DOM on web |
+| Entry editor | shipped | dev | Editor fixtures (planned) | Plain-text editor on native (regenerates HTML/JSON); TipTap DOM on web; rich-editor spike next |
 | Timeline / search / filters | shipped | — | `@withink/core/timeline` | |
 | Calendar | shipped | — | `@withink/core/date` | |
 | Streaks | shipped | — | `@withink/core/date` | |
 | Notebooks | shipped | — | Sync API + `LocalStore` notebooks | Local store landed in DB v5 |
-| Letters (list/compose/seal/reveal) | shipped | — | Server; HTTP endpoints pending | Server-sealed |
+| Letters (list/compose/seal/reveal) | shipped | — | `/api/letters` + `LettersService` | Server-sealed; HTTP endpoints and typed client shipped, native UI pending |
 | Insights | shipped | — | `@withink/core/insights` | Local computation |
 | Flashbacks | shipped | — | `@withink/core/flashback` | Local selection |
 | Media (upload/view) | shipped | — | Server + R2 | Bearer session + `X-Withink-Unlock` accepted |
 | Export / import | shipped | — | Server ZIP + local import | Bearer + unlock token accepted; native adds share sheet |
-| Settings (profile, appearance, data safety) | shipped | — | `@withink/core` types | |
-| Notifications (web push) | shipped | — | Scheduler + VAPID | Native needs Expo push tokens |
-| Notifications (native push) | n/a | — | Scheduler + device tokens | |
-| Billing (read-only summary) | shipped (checkout) | — | `@withink/core/plans` | No purchase UI in the native app |
-| Account deletion | shipped | — | Server action; HTTP pending | Required by stores |
+| Settings (profile, appearance, data safety) | shipped | — | `@withink/core` types | Lock/encryption/settings HTTP endpoints + client shipped; native UI pending |
+| Notifications (web push) | shipped | — | Scheduler + VAPID | Web subscriptions unchanged |
+| Notifications (native push) | n/a | dev | Scheduler + `ExpoPushToken` | Token registration + Expo sender shipped; permission UI and device verification pending |
+| Billing (read-only summary) | shipped (checkout) | — | `@withink/core/plans` | `/api/billing/summary` shipped; no purchase UI in the native app |
+| Account deletion | shipped | — | Server action + `/api/account/delete` | HTTP endpoint shipped; native UI pending; required by stores |
 | Feedback | shipped | — | Server action; HTTP pending | |
 
 ## Parity enforcement points

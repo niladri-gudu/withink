@@ -1,12 +1,12 @@
 "use server";
 
+import { isUnlockedForRequest } from "@/lib/api-auth";
 import { isEncryptedOrEmpty } from "@/lib/ciphertext";
 import { getRequestSession } from "@/lib/request-cache";
 import { getViewerToday } from "@/lib/viewer-today";
 import { handleError, ValidationError } from "@/server/errors";
 import { rateLimit } from "@/server/rate-limit";
 import { EncryptionSettingsRepository } from "@/features/encryption/repositories/encryption-settings-repository";
-import { LockService } from "@/features/lock/services/lock-service";
 
 import {
   LetterFrozenError,
@@ -32,8 +32,9 @@ export async function listLettersAction(): Promise<{
     const session = await getRequestSession();
     if (!session) return { success: false, error: "Unauthorized" };
 
-    const unlocked = await LockService.isSessionUnlocked(session.user.id);
-    if (!unlocked) return { success: false, error: "Locked" };
+    if (!(await isUnlockedForRequest(session.user.id))) {
+      return { success: false, error: "Locked" };
+    }
 
     const [letters, today] = await Promise.all([
       LettersService.listLetters(session.user.id),
@@ -59,8 +60,9 @@ export async function getLetterForComposeAction(
     const session = await getRequestSession();
     if (!session) return { success: false, error: "Unauthorized" };
 
-    const unlocked = await LockService.isSessionUnlocked(session.user.id);
-    if (!unlocked) return { success: false, error: "Locked" };
+    if (!(await isUnlockedForRequest(session.user.id))) {
+      return { success: false, error: "Locked" };
+    }
 
     const validated = getLetterSchema.parse({ letterId });
     const today = await getViewerToday();
@@ -94,8 +96,9 @@ export async function upsertLetterAction(
     const session = await getRequestSession();
     if (!session) return { success: false, error: "Unauthorized" };
 
-    const unlocked = await LockService.isSessionUnlocked(session.user.id);
-    if (!unlocked) return { success: false, error: "Locked" };
+    if (!(await isUnlockedForRequest(session.user.id))) {
+      return { success: false, error: "Locked" };
+    }
 
     const validated = saveLetterSchema.parse(input) as SaveLetterParsed;
     const isNew = !validated.letterId;
@@ -167,8 +170,9 @@ export async function sealLetterAction(
     const session = await getRequestSession();
     if (!session) return { success: false, error: "Unauthorized" };
 
-    const unlocked = await LockService.isSessionUnlocked(session.user.id);
-    if (!unlocked) return { success: false, error: "Locked" };
+    if (!(await isUnlockedForRequest(session.user.id))) {
+      return { success: false, error: "Locked" };
+    }
 
     const validated = getLetterSchema.parse({ letterId });
 
@@ -200,8 +204,9 @@ export async function deleteLetterAction(
     const session = await getRequestSession();
     if (!session) return { success: false, error: "Unauthorized" };
 
-    const unlocked = await LockService.isSessionUnlocked(session.user.id);
-    if (!unlocked) return { success: false, error: "Locked" };
+    if (!(await isUnlockedForRequest(session.user.id))) {
+      return { success: false, error: "Locked" };
+    }
 
     const validated = getLetterSchema.parse({ letterId });
 
@@ -234,8 +239,9 @@ export async function revealLetterAction(
     const session = await getRequestSession();
     if (!session) return { success: false, error: "Unauthorized" };
 
-    const unlocked = await LockService.isSessionUnlocked(session.user.id);
-    if (!unlocked) return { success: false, error: "Locked" };
+    if (!(await isUnlockedForRequest(session.user.id))) {
+      return { success: false, error: "Locked" };
+    }
 
     const validated = getLetterSchema.parse({ letterId });
 

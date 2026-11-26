@@ -7,6 +7,7 @@ import { sendNotification, setVapidDetails } from "web-push";
 import { env } from "@/config/env";
 import { logger } from "@/server/logger";
 
+import { ExpoPushTokenRepository } from "../repositories/expo-push-token-repository";
 import { PushSubscriptionRepository } from "../repositories/push-subscription-repository";
 
 export interface PushMessage {
@@ -51,7 +52,7 @@ export function isAllowedPushEndpoint(endpoint: string): boolean {
 
 let vapidConfigured = false;
 
-/** True when both VAPID keys are present; the UI hides reminders otherwise. */
+/** True when both VAPID keys are present; the web UI hides reminders otherwise. */
 export function isPushConfigured(): boolean {
   return Boolean(env.NEXT_PUBLIC_VAPID_PUBLIC_KEY && env.VAPID_PRIVATE_KEY);
 }
@@ -78,12 +79,33 @@ function endpointHost(endpoint: string): string {
   }
 }
 
+const EXPO_PUSH_URL = "https://exp.host/--/api/v2/push/send";
+/** Expo accepts at most 100 messages per request. */
+const EXPO_BATCH_SIZE = 100;
+
+interface ExpoTicket {
+  status?: string;
+  details?: { error?: string };
+}
+
 export class PushService {
   /**
-   * Sends one payload to every device the user has registered. Expired
-   * subscriptions (404/410) are pruned so the next send is cheaper.
+   * Sends one payload to every device the user has registered, on both
+   * channels: Web Push (VAPID subscriptions) and Expo Push (native tokens).
+   * Dead devices are pruned so the next send is cheaper.
    */
   static async sendToUser(
+    userId: string,
+    message: PushMessage,
+  ): Promise<{ sent: number; failed: number }> {
+    const [web, expo] = await Promise.all([
+      PushService.sendWebPush(userId, message),
+      PushService.sendExpoPush(userId, message),
+    ]);
+    return { sent: web.sent + expo.sent, failed: web.failed + expo.failed };
+  }
+
+  private static async sendWebPush(
     userId: string,
     message: PushMessage,
   ): Promise<{ sent: number; failed: number }> {
@@ -137,6 +159,91 @@ export class PushService {
         }
       }),
     );
+
+    return { sent, failed };
+  }
+
+  /**
+   * Expo Push needs no server credentials for the public service; an access
+   * token is optional and only used when configured.
+   */
+  private static async sendExpoPush(
+    userId: string,
+    message: PushMessage,
+  ): Promise<{ sent: number; failed: number }> {
+    const devices = await ExpoPushTokenRepository.listByUser(userId);
+    if (devices.length === 0) return { sent: 0, failed: 0 };
+
+    let sent = 0;
+    let failed = 0;
+
+    for (let i = 0; i < devices.length; i += EXPO_BATCH_SIZE) {
+      const batch = devices.slice(i, i + EXPO_BATCH_SIZE);
+      try {
+        const response = await fetch(EXPO_PUSH_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify(
+            batch.map((device) => ({
+              to: device.token,
+              title: message.title,
+              body: message.body,
+              data: { url: message.url, tag: message.tag },
+              sound: "default",
+            })),
+          ),
+        });
+
+        if (!response.ok) {
+          failed += batch.length;
+          logger.error("Expo push batch rejected", undefined, {
+            userId,
+            status: response.status,
+          });
+          continue;
+        }
+
+        const payload = (await response.json()) as {
+          data?: ExpoTicket | ExpoTicket[];
+        };
+        const tickets = Array.isArray(payload.data)
+          ? payload.data
+          : payload.data
+            ? [payload.data]
+            : [];
+
+        for (let j = 0; j < batch.length; j += 1) {
+          const device = batch[j];
+          if (!device) {
+            failed += 1;
+            continue;
+          }
+          const ticket = tickets[j];
+          if (ticket?.status === "ok") {
+            sent += 1;
+            continue;
+          }
+          failed += 1;
+          if (ticket?.details?.error === "DeviceNotRegistered") {
+            // The app was uninstalled or the token rotated: stop sending.
+            await ExpoPushTokenRepository.deleteById(device.id).catch(
+              () => {},
+            );
+          } else {
+            logger.error("Expo push notification failed", undefined, {
+              userId,
+              reason: ticket?.details?.error ?? "unknown",
+            });
+          }
+        }
+      } catch (error) {
+        failed += batch.length;
+        logger.error("Expo push request failed", error as Error, { userId });
+      }
+    }
 
     return { sent, failed };
   }
