@@ -61,6 +61,10 @@ Active work:
   pull; web adapters declare `LocalStore`/`CryptoProvider`; sync routes return
   coded errors; CI restored; shared core/contracts/api-client/crypto tests.
   See `MOBILE_LAUNCH_PLAN.md` and `MOBILE_PARITY.md`.
+- Shipped: native unlock handshake — `POST /api/unlock` verifies the
+  client-derived HKDF proof and mints a 15-minute AES-GCM token; media and
+  export accept it in `X-Withink-Unlock` when a bearer session cannot carry
+  the unlock cookie. Lock settings are read once per check.
 
 ---
 
@@ -443,6 +447,25 @@ Note: MongoDB (`mongodb+srv://`) now connects. The earlier `querySrv ECONNREFUSE
 ---
 
 # Recent Decisions
+
+2026-11-26 (Native unlock handshake — `/api/unlock` + request token)
+
+- **Endpoint:** `POST /api/unlock` accepts `{ proof }` (64-hex HKDF subkey),
+  requires a session (cookie or bearer), and returns `{ token, expiresAt }`.
+  Wrong proofs share the Server Action's `lock:unlock-proof:*` counter; the
+  route adds a 30/min gate. Unbound legacy accounts get
+  `UNLOCK_PROOF_NOT_BOUND` instead of a token.
+- **Token:** 15-minute AES-GCM payload (`{userId, expiresAt}`) minted by
+  `lib/unlock-token.ts`; the web unlock cookie now uses the same helpers. It
+  is not bound to a session id, so an explicit lock does not revoke an
+  outstanding token — it expires within 15 minutes.
+- **Consumption:** media upload, private media reads, and export use
+  `LockService.isRequestUnlocked`, which accepts `X-Withink-Unlock` before
+  falling back to the HttpOnly cookie. Web behavior is unchanged.
+- **Deferred:** the Better Auth Expo plugin lands with `apps/mobile` in Phase
+  3, keeping Expo peer dependencies out of the web app until a client exists.
+- Verified: tsc clean, eslint 0 errors (3 pre-existing warnings), Vitest
+  **331/331**, production build green (new `/api/unlock` route).
 
 2026-11-26 (Mobile parity foundation — shared contracts, sync planning, adapters, CI)
 

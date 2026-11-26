@@ -222,6 +222,16 @@ Rules: every endpoint uses `@withink/contracts` schemas, the shared error envelo
 rate limits comparable to the actions, and the same service layer. No business logic in
 the route. `/api/sync/*` already models the pattern.
 
+**Phase 2 status (2026-11-26): started.**
+
+- `POST /api/unlock` shipped: verifies the HKDF proof and returns a 15-minute
+  AES-GCM token. The web keeps its HttpOnly unlock cookie; native requests
+  send the token in `X-Withink-Unlock`, now accepted by media and export.
+- The Better Auth Expo plugin is deferred to Phase 3 so it lands together with
+  `apps/mobile` instead of adding Expo peer dependencies to the web app.
+- Remaining: settings/lock/encryption endpoints, letters, notification device
+  tokens, billing summary, and account deletion.
+
 ### Phase 3 — Expo foundation (~4 weeks)
 
 1. `apps/mobile` with Expo Router + TypeScript, added to the pnpm workspace.

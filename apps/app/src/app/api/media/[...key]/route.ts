@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { env } from "@/config/env";
 import { r2 } from "@/lib/r2";
 import { getRequestSession } from "@/lib/request-cache";
+import { apiError } from "@/server/api-error";
 import { logger } from "@/server/logger";
 import { LockService } from "@/features/lock/services/lock-service";
 
@@ -31,7 +32,7 @@ export async function GET(_request: Request, context: RouteContext) {
 
     const session = await getRequestSession();
     if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiError("UNAUTHORIZED", "Unauthorized");
     }
 
     const envPrefix = env.IS_PROD ? "" : "dev-";
@@ -44,9 +45,9 @@ export async function GET(_request: Request, context: RouteContext) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    const unlocked = await LockService.isSessionUnlocked(userId, true);
+    const unlocked = await LockService.isRequestUnlocked(userId, true);
     if (!unlocked) {
-      return NextResponse.json({ error: "Locked" }, { status: 403 });
+      return apiError("LOCKED", "Locked");
     }
 
     const object = await r2.send(

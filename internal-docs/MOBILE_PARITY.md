@@ -30,7 +30,7 @@ Status values: `—` not started · `dev` implemented, unverified · `shipped` �
 | Google sign-in | shipped | — | `/api/auth/*` | System browser + deep link on native |
 | Apple sign-in | — | — | `/api/auth/*` | Required by App Store 4.8 |
 | Session / account hint | shipped | — | `@withink/core` types, `withink-zk` cookie | Native uses the local profile + SecureStore |
-| Lock / unlock | shipped | — | `LockService`, `/api/unlock` | Native adds biometrics; crypto vectors shared |
+| Lock / unlock | shipped | — | `LockService`, `/api/unlock` | Server contract shipped; Expo client pending. Native tokens live 15 minutes and travel in `X-Withink-Unlock` |
 | Client-side encryption | shipped | — | `@withink/core` kdf/crypto contracts | Native adapter must match golden vectors |
 | Journal read/write | shipped | — | `@withink/core/sync-engine` | Web uses Server Actions, native uses HTTP |
 | Autosave + offline queue | shipped | — | `LocalStore` adapter | SQLite on native |
@@ -43,8 +43,8 @@ Status values: `—` not started · `dev` implemented, unverified · `shipped` �
 | Letters (list/compose/seal/reveal) | shipped | — | Server; HTTP endpoints pending | Server-sealed |
 | Insights | shipped | — | `@withink/core/insights` | Local computation |
 | Flashbacks | shipped | — | `@withink/core/flashback` | Local selection |
-| Media (upload/view) | shipped | — | Server + R2; bearer/unlock token pending | |
-| Export / import | shipped | — | Server ZIP + local import | Native adds share sheet |
+| Media (upload/view) | shipped | — | Server + R2 | Bearer session + `X-Withink-Unlock` accepted |
+| Export / import | shipped | — | Server ZIP + local import | Bearer + unlock token accepted; native adds share sheet |
 | Settings (profile, appearance, data safety) | shipped | — | `@withink/core` types | |
 | Notifications (web push) | shipped | — | Scheduler + VAPID | Native needs Expo push tokens |
 | Notifications (native push) | n/a | — | Scheduler + device tokens | |

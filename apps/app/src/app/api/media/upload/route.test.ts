@@ -16,6 +16,7 @@ vi.mock("@/server/rate-limit", () => ({
 
 vi.mock("@/features/lock/services/lock-service", () => ({
   LockService: {
+    isRequestUnlocked: vi.fn().mockResolvedValue(true),
     isSessionUnlocked: vi.fn().mockResolvedValue(true),
   },
 }));

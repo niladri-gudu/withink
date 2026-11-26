@@ -5,13 +5,18 @@ import {
   randomInt,
   timingSafeEqual,
 } from "crypto";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
+import { UNLOCK_HEADER_NAME } from "@withink/contracts";
 
 import { env } from "@/config/env";
 import { auth } from "@/lib/auth";
 import { resend } from "@/lib/email";
-import { decryptToken, encrypt } from "@/lib/encryption";
 import { getCachedValue, redis, setCachedValue } from "@/lib/redis";
+import {
+  mintUnlockToken,
+  parseUnlockToken,
+  verifyUnlockToken,
+} from "@/lib/unlock-token";
 import { logger } from "@/server/logger";
 
 import { ResetPasscode } from "../components/emails/reset-passcode";
@@ -19,11 +24,6 @@ import { LockRepository } from "../repositories/lock-repository";
 
 const UNLOCKED_COOKIE_NAME = "withink-unlocked";
 const RESET_CODE_TTL_SECONDS = 900; // 15 minutes
-
-interface UnlockToken {
-  userId: string;
-  expiresAt: number;
-}
 
 export class LockService {
   /** PBKDF2 work factor for stored passcodes. Legacy hashes used 10k. */
@@ -131,9 +131,8 @@ export class LockService {
     }
 
     try {
-      const decrypted = decryptToken(cookie.value);
-      const token = JSON.parse(decrypted) as UnlockToken;
-      if (token.userId !== userId) return false;
+      const token = parseUnlockToken(cookie.value);
+      if (!token || token.userId !== userId) return false;
       if (Date.now() > token.expiresAt) return false;
 
       // Sliding session window: renew the cookie expiration on active verify
@@ -168,21 +167,40 @@ export class LockService {
   }
 
   /**
+   * Unlock check for native-capable routes. Accepts the short-lived
+   * `X-Withink-Unlock` token minted by `/api/unlock`, then falls back to the
+   * web's HttpOnly cookie. Settings are resolved once.
+   */
+  static async isRequestUnlocked(
+    userId: string,
+    readonly = false,
+    settings?: Awaited<ReturnType<typeof LockRepository.getSettings>>,
+  ): Promise<boolean> {
+    const resolvedSettings =
+      settings ?? (await LockRepository.getSettings(userId));
+    if (!resolvedSettings || !resolvedSettings.isLockEnabled) return true;
+
+    const headerStore = await headers();
+    const headerToken = headerStore.get(UNLOCK_HEADER_NAME);
+    if (headerToken && verifyUnlockToken(headerToken, userId)) {
+      // The token is short-lived and renewed explicitly; no sliding needed.
+      return true;
+    }
+
+    return this.isSessionUnlocked(userId, readonly, resolvedSettings);
+  }
+
+  /**
    * Sets the unlocked HTTP-only secure cookie for the user.
    */
   static async setUnlockCookie(
     userId: string,
     durationSeconds: number = 28800,
   ): Promise<void> {
-    const token: UnlockToken = {
-      userId,
-      expiresAt: Date.now() + durationSeconds * 1000,
-    };
-
-    const encryptedToken = encrypt(JSON.stringify(token));
+    const { token } = mintUnlockToken(userId, durationSeconds);
     const cookieStore = await cookies();
 
-    cookieStore.set(UNLOCKED_COOKIE_NAME, encryptedToken, {
+    cookieStore.set(UNLOCKED_COOKIE_NAME, token, {
       httpOnly: true,
       secure: env.IS_PROD,
       sameSite: "lax",

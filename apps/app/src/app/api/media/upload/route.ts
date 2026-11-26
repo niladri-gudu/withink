@@ -10,6 +10,7 @@ import { r2 } from "@/lib/r2";
 import { listAllObjects } from "@/lib/r2-list";
 import { getCachedValue, redis, setCachedValue } from "@/lib/redis";
 import { getRequestSession } from "@/lib/request-cache";
+import { apiError } from "@/server/api-error";
 import { logger } from "@/server/logger";
 import { rateLimit } from "@/server/rate-limit";
 import { BodyTooLargeError, readJsonBody } from "@/server/request-body";
@@ -93,7 +94,7 @@ export async function POST(req: NextRequest) {
   try {
     const session = await getRequestSession();
     if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiError("UNAUTHORIZED", "Unauthorized");
     }
 
     // Rate limit presigns — each one authorizes a PUT into the bucket.
@@ -102,15 +103,15 @@ export async function POST(req: NextRequest) {
       windowSeconds: 600,
     });
     if (!limit.success) {
-      return NextResponse.json(
-        { error: "Too many uploads. Please try again later." },
-        { status: 429 },
+      return apiError(
+        "RATE_LIMITED",
+        "Too many uploads. Please try again later.",
       );
     }
 
-    const unlocked = await LockService.isSessionUnlocked(session.user.id);
+    const unlocked = await LockService.isRequestUnlocked(session.user.id);
     if (!unlocked) {
-      return NextResponse.json({ error: "Locked" }, { status: 403 });
+      return apiError("LOCKED", "Locked");
     }
 
     let body: unknown;

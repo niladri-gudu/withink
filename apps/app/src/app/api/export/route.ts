@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getRequestSession } from "@/lib/request-cache";
+import { apiError } from "@/server/api-error";
 import { handleError } from "@/server/errors";
 import { logger } from "@/server/logger";
 import { rateLimit } from "@/server/rate-limit";
@@ -14,7 +15,7 @@ import { LockService } from "@/features/lock/services/lock-service";
 export async function GET() {
   const session = await getRequestSession();
   if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return apiError("UNAUTHORIZED", "Unauthorized");
   }
 
   // Export is the most expensive endpoint (full DB scan + per-image R2
@@ -25,15 +26,15 @@ export async function GET() {
     windowSeconds: 3600,
   });
   if (!limit.success) {
-    return NextResponse.json(
-      { error: "Export limit reached. Please try again later." },
-      { status: 429 },
+    return apiError(
+      "RATE_LIMITED",
+      "Export limit reached. Please try again later.",
     );
   }
 
-  const unlocked = await LockService.isSessionUnlocked(session.user.id);
+  const unlocked = await LockService.isRequestUnlocked(session.user.id);
   if (!unlocked) {
-    return NextResponse.json({ error: "Locked" }, { status: 403 });
+    return apiError("LOCKED", "Locked");
   }
 
   try {
