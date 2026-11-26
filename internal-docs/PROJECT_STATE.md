@@ -65,6 +65,10 @@ Active work:
   client-derived HKDF proof and mints a 15-minute AES-GCM token; media and
   export accept it in `X-Withink-Unlock` when a bearer session cannot carry
   the unlock cookie. Lock settings are read once per check.
+- Shipped: Expo client foundation (`apps/mobile`, SDK 58) — Better Auth
+  SecureStore session, local `expo-origin` server plugin, and a diary screen
+  that reads `/api/sync/manifest` with a bearer token. Verified end to end on
+  an Android device via Expo Go; unlock/decryption and SQLite are next.
 
 ---
 
@@ -447,6 +451,26 @@ Note: MongoDB (`mongodb+srv://`) now connects. The earlier `querySrv ECONNREFUSE
 ---
 
 # Recent Decisions
+
+2026-11-26 (Expo client foundation — auth, SecureStore, bearer sync)
+
+- **App:** `apps/mobile` (Expo SDK 58, Expo Router, TypeScript) in the pnpm
+  workspace. Metro watches the repo root so `@withink/core`,
+  `@withink/contracts` and `@withink/api-client` ship as source.
+- **Auth:** Better Auth's Expo client plugin stores the session in SecureStore.
+  The web app stays free of React Native dependencies: the server half of the
+  integration is a small local `expoOriginPlugin` that copies the client's
+  `expo-origin` header into `Origin` before Better Auth's CSRF check. Without
+  it, cookie-bearing native POSTs (sign-out) returned 403.
+- **Session transport:** the mobile client derives the bearer token from the
+  stored `better-auth.session_token` cookie and sends it to `/api/sync/*`.
+- **Verified on device:** Expo Go on Android over USB (`adb reverse` 3000/8081).
+  Sign-up → sign-in → `GET /api/sync/manifest 200` → sign-out 200; the diary
+  screen lists synced dates only (ciphertext is not decrypted yet).
+- **Test account:** `mobiletest@withink.local` exists in the local dev DB from
+  this smoke test.
+- Verified: workspace lint/typecheck **9 packages**, Vitest **335/335**,
+  production web build green.
 
 2026-11-26 (Native unlock handshake — `/api/unlock` + request token)
 

@@ -35,7 +35,8 @@ Always prioritize:
 /
 ├── apps/
 │   ├── app/              ← Version 2 Dashboard App Layer (app.withink.me)
-│   └── docs/             ← Public Landing & Policy Pages (withink.me)
+│   ├── docs/             ← Public Landing & Policy Pages (withink.me)
+│   └── mobile/           ← Expo client for iOS and Android
 ├── packages/             ← Shared workspace packages (@withink/ui, @withink/tokens, @withink/utils, ...)
 └── internal-docs/        ← Markdown engineering docs (Architecture, PRD, design system, logs)
 ```
@@ -54,6 +55,15 @@ This directory contains the public marketing landing page, legal philosophy page
 
 ---
 
+## apps/mobile
+
+The Expo (React Native) client. It shares `@withink/core`, `@withink/contracts`
+and `@withink/api-client` with the web app, authenticates with Better Auth over
+SecureStore + bearer, and runs in Expo Go during development. Local run
+instructions live in `apps/mobile/README.md`.
+
+---
+
 ## packages
 
 Shared code extracted into a Turborepo workspace. Currently includes:
@@ -68,10 +78,12 @@ Shared code extracted into a Turborepo workspace. Currently includes:
   helpers, timeline filters, insights aggregation, flashback selection, letter
   rules, plans/entitlements, domain types, and the crypto/storage/sync
   interfaces
+- `@withink/contracts` — zod wire schemas (entries, sync requests, notebook
+  mutations, unlock) and the shared API error envelope
 - `@withink/api-client` — typed fetch client for the versioned sync HTTP API
-  (`/api/sync/*`, cookie or bearer auth), shared by web and the future Expo
-  app; includes notebook mutations and the optional `baseUpdatedAt`
-  stale-write guard
+  (`/api/sync/*`, cookie or bearer auth), shared by web and the Expo app;
+  includes notebook mutations and the optional `baseUpdatedAt` stale-write
+  guard
 
 Packages ship as source and are consumed via `transpilePackages`. Portable
 journal/sync logic lives in `@withink/core`; the server data layer (Mongoose

@@ -227,12 +227,25 @@ the route. `/api/sync/*` already models the pattern.
 - `POST /api/unlock` shipped: verifies the HKDF proof and returns a 15-minute
   AES-GCM token. The web keeps its HttpOnly unlock cookie; native requests
   send the token in `X-Withink-Unlock`, now accepted by media and export.
-- The Better Auth Expo plugin is deferred to Phase 3 so it lands together with
-  `apps/mobile` instead of adding Expo peer dependencies to the web app.
+- The Better Auth Expo client plugin lives in `apps/mobile`. The server half
+  (copying `expo-origin` into `Origin` before Better Auth's CSRF check) is a
+  small local plugin, so the RN-heavy package never enters the web app.
 - Remaining: settings/lock/encryption endpoints, letters, notification device
   tokens, billing summary, and account deletion.
 
 ### Phase 3 — Expo foundation (~4 weeks)
+
+**Phase 3 status (2026-11-26): started.**
+
+- `apps/mobile` scaffolded (Expo SDK 58, Expo Router, TypeScript) and added to
+  the pnpm workspace; Metro resolves the shared source packages.
+- Better Auth Expo client stores the session in SecureStore; a local
+  `expoOriginPlugin` handles the `expo-origin` → `Origin` translation for
+  Better Auth's CSRF check.
+- Verified on an Android device via Expo Go: sign-up → sign-in → bearer
+  `/api/sync/manifest` → sign-out.
+- Next: the crypto spike (unlock proof + decryption), SQLite `LocalStore`, and
+  the editor round-trip spike.
 
 1. `apps/mobile` with Expo Router + TypeScript, added to the pnpm workspace.
 2. `@withink/tokens/native`: a TS token object generated from the same values as

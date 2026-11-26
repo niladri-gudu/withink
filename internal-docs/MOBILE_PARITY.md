@@ -26,13 +26,13 @@ Status values: `—` not started · `dev` implemented, unverified · `shipped` �
 
 | Feature | Web | Expo | Shared owner | Notes |
 | --- | --- | --- | --- | --- |
-| Email/password auth | shipped | — | `/api/auth/*` | Expo uses the Better Auth Expo plugin + SecureStore |
+| Email/password auth | shipped | dev | `/api/auth/*` | Verified on Android Expo Go (SecureStore session + bearer) |
 | Google sign-in | shipped | — | `/api/auth/*` | System browser + deep link on native |
 | Apple sign-in | — | — | `/api/auth/*` | Required by App Store 4.8 |
-| Session / account hint | shipped | — | `@withink/core` types, `withink-zk` cookie | Native uses the local profile + SecureStore |
-| Lock / unlock | shipped | — | `LockService`, `/api/unlock` | Server contract shipped; Expo client pending. Native tokens live 15 minutes and travel in `X-Withink-Unlock` |
+| Session / account hint | shipped | dev | `@withink/core` types, `withink-zk` cookie | Expo stores the session in SecureStore; local profile pending |
+| Lock / unlock | shipped | — | `LockService`, `/api/unlock` | Server contract shipped; Expo crypto/unlock pending. Tokens live 15 minutes in `X-Withink-Unlock` |
 | Client-side encryption | shipped | — | `@withink/core` kdf/crypto contracts | Native adapter must match golden vectors |
-| Journal read/write | shipped | — | `@withink/core/sync-engine` | Web uses Server Actions, native uses HTTP |
+| Journal read/write | shipped | dev | `@withink/core/sync-engine` | Manifest read verified on device; encrypted write/decrypt pending |
 | Autosave + offline queue | shipped | — | `LocalStore` adapter | SQLite on native |
 | Sync (push/pull/prune) | shipped | — | `planSyncPull` in `@withink/core` | Identical prune/fetch decisions |
 | Entry editor | shipped | — | Editor fixtures (planned) | TipTap DOM on web; bridged TipTap preferred on native |
