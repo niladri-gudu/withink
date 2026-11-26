@@ -99,7 +99,13 @@ Active work:
   the cookie unlock gate exactly like `/api/sync/*`) and call the existing
   actions/services. Expo push tokens are stored per install and `PushService`
   sends to both Web Push and Expo, pruning dead tokens.
-  Next: the rich-editor spike.
+- Verified: rich-editor spike — the web TipTap extension list is now a single
+  factory (`createEditorExtensions()`), and ten fixtures (marks, headings,
+  lists, task list, blockquote/code/hr, link, image, Bengali, escaping,
+  long-form) serialized byte-identically in desktop Chrome and the app's
+  Android WebView: HTML, JSON, plain text and JSON→HTML all 10/10. Decision:
+  WebView-hosted TipTap with the shared factory (`MOBILE_LAUNCH_PLAN.md` §11).
+  Next: the WebView editor bridge and the permanent fixture suite.
 
 ---
 

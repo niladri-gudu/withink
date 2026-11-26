@@ -300,6 +300,12 @@ synced → verified against the web account.
 
 ### Phase 4 — Journal parity (~4 weeks)
 
+**Phase 4 status (2026-11-26): editor spike done.** The web extension list is
+now a single factory (`createEditorExtensions()`), and ten fixtures serialize
+identically in desktop Chrome and the app's Android WebView (10/10, HTML +
+JSON + text + JSON→HTML). Next: the WebView bridge (message protocol, focus,
+autosave), the permanent shared fixture suite in CI, then the journal screens.
+
 1. **Editor spike (highest risk).** TipTap/ProseMirror is DOM-only. Evaluate
    `@10play/tentap-editor` (TipTap inside a bridged WebView) first because it preserves
    the extension/schema and the exact `contentHtml`/`contentJson` format. Fallback:
@@ -453,8 +459,16 @@ of this plan. Phase 0 and the Phase 2 HTTP surface remain useful either way.
 ## 11. Decisions
 
 1. **Expo native app** — chosen.
-2. **Editor approach** — bridged TipTap (`@10play/tentap-editor`) preferred; native editor
-   only if round-trip fixtures pass. Decide during the Phase 4 spike.
+2. **Editor approach** — WebView-hosted TipTap using the web's own extension
+   factory (`apps/app/src/features/journal/components/editor/extensions.ts`),
+   not `@10play/tentap-editor`. Spike (2026-11-26): the ten-fixture corpus —
+   marks, headings, lists, task list, blockquote/code/hr, link, image, Bengali,
+   HTML escaping, long-form — serialized identically to desktop Chrome
+   (Chrome/158) inside the app's Android WebView (Chrome/157 `wv`): HTML,
+   JSON, plain text and the JSON→HTML round-trip all matched 10/10. Reusing
+   the web extension list makes schema parity structural instead of a bet on
+   a third-party package's TipTap version. `@10play/tentap-editor` remains the
+   fallback if the bridge, IME or keyboard work proves too costly.
 3. **Push** — Expo Push Service over expo-notifications; keep web push for the PWA.
 4. **Auth** — Better Auth Expo plugin + SecureStore; Apple sign-in added.
 5. **Unlock token** — short-lived signed token from `/api/unlock` for native media/export.

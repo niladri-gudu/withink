@@ -35,7 +35,7 @@ Status values: `—` not started · `dev` implemented, unverified · `shipped` �
 | Journal read/write | shipped | dev | `@withink/core/sync-engine` | Read, decrypt and encrypted write verified on the Pixel 4 emulator |
 | Autosave + offline queue | shipped | dev | `LocalStore` adapter | SQLite queue; an offline edit stayed queued and flushed on reconnect |
 | Sync (push/pull/prune) | shipped | dev | `planSyncPull` in `@withink/core` | Push + pull verified on device; prune covered by unit tests |
-| Entry editor | shipped | dev | Editor fixtures (planned) | Plain-text editor on native (regenerates HTML/JSON); TipTap DOM on web; rich-editor spike next |
+| Entry editor | shipped | dev | `createEditorExtensions()` | Plain-text editor on native today; WebView TipTap spike passed 10/10 fixtures against web; bridge implementation next |
 | Timeline / search / filters | shipped | — | `@withink/core/timeline` | |
 | Calendar | shipped | — | `@withink/core/date` | |
 | Streaks | shipped | — | `@withink/core/date` | |

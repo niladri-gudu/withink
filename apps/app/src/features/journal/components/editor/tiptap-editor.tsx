@@ -2,19 +2,12 @@
 "use client";
 
 import { memo, useCallback, useEffect, useRef, useState } from "react";
-import CharacterCount from "@tiptap/extension-character-count";
-import Highlight from "@tiptap/extension-highlight";
-import ImageExt from "@tiptap/extension-image";
-import Link from "@tiptap/extension-link";
-import Placeholder from "@tiptap/extension-placeholder";
-import TaskItem from "@tiptap/extension-task-item";
-import TaskList from "@tiptap/extension-task-list";
-import UnderlineExt from "@tiptap/extension-underline";
 import { EditorContent, useEditor } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
 import { toast } from "sonner";
 
 import { UpgradeDialog } from "@/features/billing/components/upgrade-dialog";
+
+import { createEditorExtensions } from "./extensions";
 
 let uploadCounter = 0;
 function generateTempId(): string {
@@ -105,27 +98,7 @@ function TiptapEditor({ content = "", onChange, onEditorReady }: EditorProps) {
   }, [flushSnapshot]);
 
   const editor = useEditor({
-    extensions: [
-      StarterKit.configure({
-        heading: { levels: [1, 2, 3] },
-      }),
-      UnderlineExt,
-      ImageExt.configure({ inline: false, allowBase64: true }),
-      Link.configure({
-        openOnClick: false,
-        HTMLAttributes: {
-          rel: "noopener noreferrer",
-          class: "text-accent underline cursor-pointer",
-        },
-      }),
-      Placeholder.configure({
-        placeholder: "Start writing your thoughts...",
-      }),
-      TaskList,
-      TaskItem.configure({ nested: true }),
-      Highlight.configure({ multicolor: true }),
-      CharacterCount,
-    ],
+    extensions: createEditorExtensions(),
     content,
     editorProps: {
       attributes: {
