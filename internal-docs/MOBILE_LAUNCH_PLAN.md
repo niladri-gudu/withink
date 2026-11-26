@@ -263,8 +263,9 @@ the route. `/api/sync/*` already models the pattern.
   (Expo Go) and the audited pure-JS implementation. The algorithm's three
   vectors (self-test, web golden, RFC 8018) pass in a JVM harness, and the
   Android debug client builds with `expo run:android`, installs and launches on
-  the device. The on-device unlock round-trip through the module is pending a
-  device reconnect. See §11 decision 8.
+  the device. Verified on the Android phone: sign-in, native unlock
+  (`/api/unlock` 200), and 122 pages pulled and decrypted, with the device log
+  confirming `PBKDF2 via native module`. See §11 decision 8.
 - Next: the rich-editor spike and the remaining Phase 2 endpoints.
 
 1. `apps/mobile` with Expo Router + TypeScript, added to the pnpm workspace.

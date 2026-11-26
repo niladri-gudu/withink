@@ -31,7 +31,7 @@ Status values: `—` not started · `dev` implemented, unverified · `shipped` �
 | Apple sign-in | — | — | `/api/auth/*` | Required by App Store 4.8 |
 | Session / account hint | shipped | dev | `@withink/core` types, `withink-zk` cookie | Expo stores the session in SecureStore; local profile pending |
 | Lock / unlock | shipped | dev | `LockService`, `/api/unlock` | Master-key unlock + 15-minute token verified on Android; biometrics pending |
-| Client-side encryption | shipped | dev | `@withink/core` kdf/crypto contracts | PBKDF2 in a native module (self-tested) on a background thread; WebView and pure-JS fallbacks; AES-GCM/HKDF in noble; golden vectors pass |
+| Client-side encryption | shipped | dev | `@withink/core` kdf/crypto contracts | PBKDF2 in a native module (self-tested) on a background thread; WebView and pure-JS fallbacks; AES-GCM/HKDF in noble; golden vectors pass; device unlock + decrypt verified |
 | Journal read/write | shipped | dev | `@withink/core/sync-engine` | Read, decrypt and encrypted write verified on the Pixel 4 emulator |
 | Autosave + offline queue | shipped | dev | `LocalStore` adapter | SQLite queue; an offline edit stayed queued and flushed on reconnect |
 | Sync (push/pull/prune) | shipped | dev | `planSyncPull` in `@withink/core` | Push + pull verified on device; prune covered by unit tests |

@@ -87,9 +87,10 @@ Active work:
   known-answer self-test and WebView/pure-JS fallbacks. The algorithm's
   self-test, web golden and RFC 8018 vectors pass in a JVM harness; the debug
   client builds with `expo run:android` (NDK/CMake), installs and launches on
-  the Android phone, and reaches the auth API. The on-device unlock round-trip
-  through the native module is pending a device reconnect. Next: rich-editor
-  spike and the remaining Phase 2 endpoints.
+  the Android phone. Verified end to end on the phone: sign-in → native PBKDF2
+  unlock (`/api/unlock` 200, device log `PBKDF2 via native module`) → 122 pages
+  pulled and decrypted. Next: rich-editor spike and the remaining Phase 2
+  endpoints.
 
 ---
 
