@@ -6,6 +6,9 @@ import type {
   LetterFull,
   LetterMeta,
   LockSettingsView,
+  MediaLibraryResponse,
+  MediaUploadRequest,
+  MediaUploadResponse,
   MobileBootstrap,
   NotificationSettingsRequest,
   NotificationSettingsView,
@@ -34,6 +37,11 @@ export type {
   LetterFull,
   LetterMeta,
   LockSettingsView,
+  MediaFileView,
+  MediaLibraryResponse,
+  MediaStorageStats,
+  MediaUploadRequest,
+  MediaUploadResponse,
   NotificationSettingsRequest,
   NotificationSettingsView,
   RegisterPushDeviceRequest,
@@ -115,6 +123,13 @@ export interface WithinkApiClient {
   /** Registers this install's Expo push token. */
   registerPushDevice(input: RegisterPushDeviceRequest): Promise<void>;
   unregisterPushDevice(token: string): Promise<void>;
+
+  /** Journal media library + quota, newest first. */
+  getMediaLibrary(): Promise<MediaLibraryResponse>;
+  /** Presigns one image upload (quota failures surface as `STORAGE_QUOTA_EXCEEDED`). */
+  createMediaUpload(input: MediaUploadRequest): Promise<MediaUploadResponse>;
+  /** Deletes one object the caller owns; callers must scrub entry references first. */
+  deleteMedia(key: string): Promise<void>;
 
   /** Read-only plan state; no checkout/portal URLs on native. */
   getBillingSummary(): Promise<BillingSummaryView>;

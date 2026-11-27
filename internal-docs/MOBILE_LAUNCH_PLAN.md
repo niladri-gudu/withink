@@ -300,17 +300,22 @@ synced → verified against the web account.
 
 ### Phase 4 — Journal parity (~4 weeks)
 
-**Phase 4 status (2026-11-27): editor bridge done.** The extension factory,
-toolbar-state derivation, fixture corpus and WebView host live in
+**Phase 4 status (2026-11-27): journal parity implemented.** The extension
+factory, toolbar-state derivation, fixture corpus and WebView host live in
 `@withink/editor`; an esbuild script emits the offline editor document into
-the mobile bundle, and the native screen drives it over a versioned message
-protocol (queued commands, debounced snapshots, flush acknowledgement, theme).
-The entry screen now writes the bridge's HTML/text/JSON through the existing
-local-first path, and the parity suite fails if the committed bundle drifts.
-Verified on the Android device: formatting, autosave + sync, formatted reopen,
-cross-client content, and flush-on-back. Next: the rest of the editor chrome
-(formatting sheet, links/media, mood/notebook) and the remaining journal
-screens.
+the mobile bundle. The bridge was verified on the Android device earlier
+(formatting, autosave + sync, formatted reopen, cross-client content,
+flush-on-back). This slice adds the rest of the editor chrome — formatting
+sheet, link dialog, image picker/compress/upload, mood, notebook chip, live
+word count, future/backfill gates, delete and conflict resolution — plus the
+journal screens: Today dashboard, archive with search/filters/calendar/
+pagination/delete/move, insights, flashbacks and notebooks. Navigation
+mirrors the web's Today · Entries · Insights · More bar, and appearance now
+comes from the shared `@withink/tokens` catalogue (palettes, fonts, accents,
+paper scale) instead of a hard-coded five-colour theme. Remaining: iOS
+verification, inline private images in the WebView (the gallery loads them
+with authenticated headers), and a device pass of the new screens (the USB
+connection dropped during verification).
 
 1. **Editor spike (highest risk).** TipTap/ProseMirror is DOM-only. Evaluate
    `@10play/tentap-editor` (TipTap inside a bridged WebView) first because it preserves
@@ -334,6 +339,16 @@ Exit: the journal feature set passes the parity matrix side by side with web.
 Settings (profile, appearance, local data/device safety, sync status, reminders, privacy,
 export/import), lock and encryption flows, letter list/compose/seal/reveal, feedback,
 read-only billing summary, account deletion.
+
+**Phase 5 status (2026-11-27): started.** Shipped the native settings hub
+(profile, plan summary, shared appearance, sync & data, reminders, privacy &
+security, legal, sign-out, account deletion), lock settings with PIN,
+auto-lock and lock-on-background, diary-password rotation, biometric unlock
+(the key is stored in SecureStore behind OS authentication), sign-in password
+change, export through the share sheet, local cache size/rebuild, and the
+forgot/reset password flows. Still open: letters UI, feedback (HTTP endpoint
+pending), archive import, native push token registration, and enabling
+zero-knowledge from the device (the client opens encrypted diaries only).
 
 ### Phase 6 — Store launch (~3 weeks)
 

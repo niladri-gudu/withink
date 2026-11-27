@@ -1,99 +1,86 @@
-import { ApiError } from "@withink/api-client";
-import type { MobileBootstrap } from "@withink/contracts";
-import { useState } from "react";
+import * as React from 'react';
 import {
+  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   StyleSheet,
-  TextInput,
   View,
-} from "react-native";
+} from 'react-native';
 
-import { PrimaryButton } from "@/components/primary-button";
-import { Screen } from "@/components/screen";
-import { ThemedText } from "@/components/themed-text";
-import { Spacing } from "@/constants/theme";
-import { useTheme } from "@/hooks/use-theme";
-import { createDiaryClient } from "@/lib/api";
-import {
-  decryptText,
-  deriveKeyFromPassword,
-  deriveUnlockProofHex,
-  importKeyFromHex,
-  type MasterKey,
-} from "@/lib/crypto";
-import { setUnlockToken } from "@/lib/session-state";
+import { Screen } from '@/components/screen';
+import { ThemedText } from '@/components/themed-text';
+import { Button, Field } from '@/components/ui';
+import { Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
+import { useDiary } from '@/providers/diary-provider';
 
 /**
- * Derives the master key from the diary password, verifies it against the
- * server's verification ciphertext, then exchanges the HKDF proof for a
- * short-lived native unlock token.
+ * The diary gate: password unlock with the derivation done on-device, plus the
+ * biometric fast path when the user has opted in. No secret ever leaves the
+ * phone; the server only receives the HKDF proof.
  */
-export function UnlockGate({
-  bootstrap,
-  onUnlocked,
-}: {
-  bootstrap: MobileBootstrap;
-  onUnlocked: (masterKey: MasterKey) => void;
-}) {
+export function UnlockGate() {
   const theme = useTheme();
-  const [password, setPassword] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    bootstrap,
+    session,
+    biometrics,
+    biometricEnrolled,
+    unlockWithPassword,
+    unlockWithBiometrics,
+    signOut,
+  } = useDiary();
+  const [password, setPassword] = React.useState('');
+  const [busy, setBusy] = React.useState<'password' | 'biometric' | null>(null);
+  const [error, setError] = React.useState<string | null>(null);
 
-  async function submit() {
-    if (password.length === 0) {
-      setError("Enter your diary password.");
-      return;
-    }
-    if (!bootstrap.encryption.verificationCiphertext) {
-      setError("This diary isn't set up for encrypted mobile access yet.");
-      return;
-    }
-
-    setBusy(true);
+  async function submitPassword() {
+    if (busy) return;
+    setBusy('password');
     setError(null);
     try {
-      const passwordKey = await deriveKeyFromPassword(
-        password,
-        bootstrap.encryption.encryptionSalt,
-        bootstrap.encryption.kdfIterations,
-      );
-      const masterKeyHex = await decryptText(
-        bootstrap.encryption.verificationCiphertext,
-        passwordKey,
-      );
-      const masterKey = await importKeyFromHex(masterKeyHex);
-      const proof = await deriveUnlockProofHex(masterKey);
-      const result = await createDiaryClient().unlock(proof);
-
-      setUnlockToken(result.token);
-      setPassword("");
-      onUnlocked(masterKey);
+      await unlockWithPassword(password);
+      setPassword('');
     } catch (err) {
-      if (err instanceof ApiError) {
-        setError(err.message);
-      } else {
-        setError("That password didn't open this diary.");
-      }
+      setError(
+        err instanceof Error
+          ? err.message
+          : "That password didn't open this diary.",
+      );
     } finally {
-      setBusy(false);
+      setBusy(null);
     }
   }
+
+  async function submitBiometric() {
+    if (busy) return;
+    setBusy('biometric');
+    setError(null);
+    try {
+      await unlockWithBiometrics();
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : 'Biometric unlock failed.',
+      );
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  const email = bootstrap?.user.email ?? session?.user.email ?? '';
 
   return (
     <Screen>
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.flex}
       >
         <View style={styles.hero}>
           <ThemedText type="title" style={styles.brand}>
             withink.
           </ThemedText>
-          <ThemedText themeColor="textSecondary">
-            {bootstrap.user.email}
-          </ThemedText>
+          <ThemedText themeColor="textSecondary">{email}</ThemedText>
         </View>
 
         <View style={styles.form}>
@@ -103,44 +90,62 @@ export function UnlockGate({
             sent anywhere.
           </ThemedText>
 
-          <TextInput
+          {biometricEnrolled ? (
+            <>
+              <Button
+                icon="finger-print-outline"
+                label={`Unlock with ${biometrics?.label ?? 'biometrics'}`}
+                loading={busy === 'biometric'}
+                onPress={() => void submitBiometric()}
+              />
+              <View style={styles.orRow}>
+                <View style={[styles.rule, { backgroundColor: theme.border }]} />
+                <ThemedText type="caption" themeColor="textSecondary">
+                  or enter your password
+                </ThemedText>
+                <View style={[styles.rule, { backgroundColor: theme.border }]} />
+              </View>
+            </>
+          ) : null}
+
+          <Field
             autoCapitalize="none"
             autoCorrect={false}
+            error={error}
             onChangeText={setPassword}
-            onSubmitEditing={() => void submit()}
+            onSubmitEditing={() => void submitPassword()}
             placeholder="Diary password"
-            placeholderTextColor={theme.textSecondary}
             secureTextEntry
-            style={[
-              styles.input,
-              {
-                color: theme.text,
-                backgroundColor: theme.backgroundElement,
-                borderColor: theme.backgroundSelected,
-              },
-            ]}
             value={password}
           />
 
-          {busy ? (
-            <ThemedText type="small" themeColor="textSecondary">
-              Opening your diary… strong encryption takes a few seconds on a
-              phone.
-            </ThemedText>
-          ) : null}
-
-          {error ? (
-            <ThemedText type="small" style={styles.error}>
-              {error}
-            </ThemedText>
-          ) : null}
-
-          <PrimaryButton
-            disabled={busy}
+          <Button
+            disabled={busy !== null || password.length === 0}
             label="Unlock diary"
-            loading={busy}
-            onPress={() => void submit()}
+            loading={busy === 'password'}
+            onPress={() => void submitPassword()}
           />
+
+          {busy === 'password' ? (
+            <View style={styles.busyRow}>
+              <ActivityIndicator color={theme.mutedForeground} size="small" />
+              <ThemedText type="caption" themeColor="textSecondary">
+                Strong encryption takes a few seconds on a phone.
+              </ThemedText>
+            </View>
+          ) : null}
+
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => {
+              void signOut();
+            }}
+            style={styles.signOut}
+          >
+            <ThemedText type="small" themeColor="textSecondary">
+              Sign out
+            </ThemedText>
+          </Pressable>
         </View>
       </KeyboardAvoidingView>
     </Screen>
@@ -149,15 +154,19 @@ export function UnlockGate({
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  hero: { flex: 1, justifyContent: "center", gap: Spacing.two },
+  hero: { flex: 1, justifyContent: 'center', gap: Spacing.two },
   brand: { letterSpacing: -1.5 },
   form: { gap: Spacing.three, paddingBottom: Spacing.five },
-  input: {
-    minHeight: 52,
-    borderRadius: 14,
-    borderWidth: StyleSheet.hairlineWidth,
-    paddingHorizontal: Spacing.three,
-    fontSize: 16,
+  orRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
   },
-  error: { color: "#b42318" },
+  rule: { flex: 1, height: StyleSheet.hairlineWidth },
+  busyRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
+  signOut: { alignSelf: 'center', paddingVertical: Spacing.two },
 });

@@ -116,6 +116,35 @@ Active work:
   `pnpm --filter @withink/editor build:webview`; the test suite fails if the
   committed bundle drifts. Decision: WebView-hosted TipTap with the shared
   factory (`MOBILE_LAUNCH_PLAN.md` §11).
+- Shipped (implementation; device pass pending): native journal screens — the
+  Today dashboard (hero, yesterday banner, streak, recent reflections,
+  flashback), the archive (search, mood/time/notebook filters, calendar,
+  pagination, delete, move, pull-to-refresh, sync status), insights,
+  flashbacks and notebooks (CRUD, default, move, plan limits). Navigation
+  mirrors the web's Today · Entries · Insights · More bar.
+- Shipped: shared appearance for both clients — `@withink/tokens/native`
+  owns the palette/accent/font catalogue and an OKLCH→sRGB resolver; the web
+  catalog re-exports it. Mobile renders all four palettes, eight bundled
+  font faces, accent variants and paper scale, gated by the plan.
+- Shipped: native editor chrome — formatting sheet, link dialog, image
+  picker/compress/upload, mood selector, notebook chip, live word count,
+  future/backfill gates, entry deletion and stale-write conflict resolution.
+- Shipped: native account surface — settings hub, profile edit, sync & data
+  (cache size, rebuild, export through the share sheet), reminder
+  preferences, sign-in password change, lock settings, diary-password
+  rotation, biometric unlock (SecureStore key behind OS authentication),
+  legal links and account deletion; forgot/reset password flows.
+- Shipped: native media — `GET /api/media` (library + quota) and
+  `DELETE /api/media/<key>`, a gallery with search/sort/list/grid, a
+  lightbox, quota-aware uploads and reference-scrubbing deletes.
+- Still open on mobile: iOS verification, inline private images inside the
+  WebView editor (the gallery renders them with authenticated headers),
+  native push token registration (needs EAS/FCM credentials), letters and
+  feedback UI, archive import, and enabling zero-knowledge from the device.
+- Verified this slice: mobile 45 tests, editor 25 (bundle reproducible),
+  app 312, core 11, contracts 30, API client 15; typecheck and lint clean on
+  mobile/app. The Android build installs; the on-device pass of the new
+  screens was interrupted when the phone detached from USB.
 
 ---
 

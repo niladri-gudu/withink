@@ -27,6 +27,7 @@
     "@withink/core": "workspace:*",
     "@withink/editor": "workspace:*",
     "@withink/theme": "workspace:*",
+    "@withink/tokens": "workspace:*",
     "@withink/ui": "workspace:*",
     "@withink/utils": "workspace:*",
     "better-auth": "^1.6.0",

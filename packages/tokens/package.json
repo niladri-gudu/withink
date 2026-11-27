@@ -4,6 +4,8 @@
   "private": true,
   "type": "module",
   "exports": {
+    ".": "./src/native.ts",
+    "./native": "./src/native.ts",
     "./theme.css": "./theme.css"
   }
 }

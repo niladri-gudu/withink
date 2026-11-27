@@ -5,6 +5,9 @@ import type {
   LetterFull,
   LetterMeta,
   LockSettingsView,
+  MediaLibraryResponse,
+  MediaUploadRequest,
+  MediaUploadResponse,
   MobileBootstrap,
   NotificationSettingsView,
   UnlockResponse,
@@ -287,6 +290,21 @@ export function createApiClient(options: ApiClientOptions): WithinkApiClient {
         method: "DELETE",
         body: JSON.stringify({ token }),
       });
+    },
+
+    async getMediaLibrary() {
+      return await request<MediaLibraryResponse>("/api/media");
+    },
+
+    async createMediaUpload(input: MediaUploadRequest) {
+      return await request<MediaUploadResponse>("/api/media/upload", {
+        method: "POST",
+        body: JSON.stringify(input),
+      });
+    },
+
+    async deleteMedia(key: string) {
+      await request(`/api/media/${key}`, { method: "DELETE" });
     },
 
     async getBillingSummary() {

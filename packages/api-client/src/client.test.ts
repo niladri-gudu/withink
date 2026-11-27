@@ -389,3 +389,58 @@ describe("createApiClient", () => {
     });
   });
 });
+
+describe("media client", () => {
+  it("lists the library, presigns an upload and deletes by key", async () => {
+    const fetchImpl = makeFetch((url, init) => {
+      if (url.endsWith("/api/media") && init?.method !== "DELETE") {
+        return jsonResponse({
+          files: [
+            {
+              key: "dev-journal/u/1.webp",
+              url: "/api/media/dev-journal/u/1.webp",
+              size: 10,
+              lastModified: null,
+            },
+          ],
+          stats: {
+            usedMB: 0.01,
+            fileCount: 1,
+            limitMB: 100,
+            percentUsed: 0,
+          },
+        });
+      }
+      if (url.endsWith("/api/media/upload")) {
+        return jsonResponse({
+          presignedUrl: "https://r2.test/put",
+          publicUrl: "/api/media/dev-journal/u/2.webp",
+        });
+      }
+      return jsonResponse({ success: true });
+    });
+    const client = createApiClient({
+      baseUrl: "https://app.test",
+      fetch: fetchImpl,
+    });
+
+    await expect(client.getMediaLibrary()).resolves.toMatchObject({
+      stats: { fileCount: 1, limitMB: 100 },
+    });
+    await expect(
+      client.createMediaUpload({
+        filename: "photo.webp",
+        contentType: "image/webp",
+        size: 10,
+      }),
+    ).resolves.toEqual({
+      presignedUrl: "https://r2.test/put",
+      publicUrl: "/api/media/dev-journal/u/2.webp",
+    });
+    await client.deleteMedia("dev-journal/u/2.webp");
+    expect(fetchImpl).toHaveBeenCalledWith(
+      "https://app.test/api/media/dev-journal/u/2.webp",
+      expect.objectContaining({ method: "DELETE" }),
+    );
+  });
+});

@@ -30,6 +30,7 @@ const nextConfig: NextConfig = {
     "@withink/core",
     "@withink/editor",
     "@withink/theme",
+    "@withink/tokens",
     "@withink/ui",
     "@withink/utils",
   ],

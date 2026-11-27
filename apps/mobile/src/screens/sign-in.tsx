@@ -1,55 +1,52 @@
-import { Redirect, useRouter } from "expo-router";
-import { useState } from "react";
+import { Redirect, useRouter } from 'expo-router';
+import { useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
   StyleSheet,
-  TextInput,
   View,
-} from "react-native";
+} from 'react-native';
 
-import { PrimaryButton } from "@/components/primary-button";
-import { Screen } from "@/components/screen";
-import { ThemedText } from "@/components/themed-text";
-import { Spacing } from "@/constants/theme";
-import { useTheme } from "@/hooks/use-theme";
-import { authClient } from "@/lib/auth-client";
+import { Screen } from '@/components/screen';
+import { ThemedText } from '@/components/themed-text';
+import { Button, Field } from '@/components/ui';
+import { Spacing } from '@/constants/theme';
+import { authClient } from '@/lib/auth-client';
 
-type Mode = "sign-in" | "sign-up";
+type Mode = 'sign-in' | 'sign-up';
 
 export function SignInScreen() {
   const router = useRouter();
-  const theme = useTheme();
   const { data: session, isPending } = authClient.useSession();
-  const [mode, setMode] = useState<Mode>("sign-in");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [mode, setMode] = useState<Mode>('sign-in');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   if (!isPending && session) {
-    return <Redirect href="/diary" />;
+    return <Redirect href="/" />;
   }
 
   async function submit() {
     setError(null);
     const address = email.trim();
     if (!address || password.length < 8) {
-      setError("Enter your email and a password of at least 8 characters.");
+      setError('Enter your email and a password of at least 8 characters.');
       return;
     }
 
     setBusy(true);
     try {
-      if (mode === "sign-up") {
+      if (mode === 'sign-up') {
         const created = await authClient.signUp.email({
           email: address,
           password,
-          name: address.split("@")[0] || "Friend",
+          name: address.split('@')[0] || 'Friend',
         });
         if (created.error) {
-          setError(created.error.message ?? "Could not create that account.");
+          setError(created.error.message ?? 'Could not create that account.');
           return;
         }
       }
@@ -59,92 +56,93 @@ export function SignInScreen() {
         password,
       });
       if (signedIn.error) {
-        setError(signedIn.error.message ?? "Could not sign in.");
+        setError(signedIn.error.message ?? 'Could not sign in.');
         return;
       }
 
-      router.replace("/diary");
+      router.replace('/');
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not reach the server.");
+      setError(
+        err instanceof Error ? err.message : 'Could not reach the server.',
+      );
     } finally {
       setBusy(false);
     }
   }
 
-  const inputStyle = [
-    styles.input,
-    {
-      color: theme.text,
-      backgroundColor: theme.backgroundElement,
-      borderColor: theme.backgroundSelected,
-    },
-  ];
-
   return (
     <Screen>
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.flex}
       >
         <View style={styles.hero}>
           <ThemedText type="title" style={styles.brand}>
             withink.
           </ThemedText>
-          <ThemedText themeColor="textSecondary" style={styles.tagline}>
+          <ThemedText type="serif" themeColor="textSecondary">
             A quiet place for your mind.
           </ThemedText>
         </View>
 
         <View style={styles.form}>
-          <TextInput
+          <Field
             autoCapitalize="none"
             autoComplete="email"
             autoCorrect={false}
             keyboardType="email-address"
+            label="Email"
             onChangeText={setEmail}
-            placeholder="Email"
-            placeholderTextColor={theme.textSecondary}
-            style={inputStyle}
+            onSubmitEditing={() => undefined}
+            placeholder="you@example.com"
             value={email}
           />
-          <TextInput
+          <Field
             autoCapitalize="none"
             autoComplete={
-              mode === "sign-in" ? "current-password" : "new-password"
+              mode === 'sign-in' ? 'current-password' : 'new-password'
             }
+            error={error}
+            label="Secret key"
             onChangeText={setPassword}
-            placeholder="Password"
-            placeholderTextColor={theme.textSecondary}
+            onSubmitEditing={() => void submit()}
+            placeholder="At least 8 characters"
             secureTextEntry
-            style={inputStyle}
             value={password}
           />
 
-          {error ? (
-            <ThemedText type="small" style={styles.error}>
-              {error}
-            </ThemedText>
-          ) : null}
-
-          <PrimaryButton
-            label={mode === "sign-in" ? "Open my diary" : "Create my diary"}
+          <Button
+            disabled={busy}
+            label={mode === 'sign-in' ? 'Open my diary' : 'Create my diary'}
             loading={busy}
             onPress={() => void submit()}
           />
+
+          {mode === 'sign-in' ? (
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => router.push('/forgot-password')}
+              style={styles.linkRow}
+            >
+              <ThemedText type="small" themeColor="textSecondary">
+                Forgot your sign-in password?
+              </ThemedText>
+            </Pressable>
+          ) : null}
 
           <Pressable
             accessibilityRole="button"
             disabled={busy}
             onPress={() => {
               setError(null);
-              setMode(mode === "sign-in" ? "sign-up" : "sign-in");
+              setMode(mode === 'sign-in' ? 'sign-up' : 'sign-in');
             }}
             style={styles.switch}
           >
             <ThemedText type="small" themeColor="textSecondary">
-              {mode === "sign-in"
-                ? "New here? Create an account"
-                : "Already have an account? Sign in"}
+              {mode === 'sign-in'
+                ? 'New here? Create an account'
+                : 'Already have an account? Sign in'}
             </ThemedText>
           </Pressable>
         </View>
@@ -155,17 +153,9 @@ export function SignInScreen() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  hero: { flex: 1, justifyContent: "center", gap: Spacing.two },
+  hero: { flex: 1, justifyContent: 'center', gap: Spacing.two },
   brand: { letterSpacing: -1.5 },
-  tagline: { fontSize: 16 },
   form: { gap: Spacing.three, paddingBottom: Spacing.five },
-  input: {
-    minHeight: 52,
-    borderRadius: 14,
-    borderWidth: StyleSheet.hairlineWidth,
-    paddingHorizontal: Spacing.three,
-    fontSize: 16,
-  },
-  error: { color: "#b42318" },
-  switch: { alignItems: "center", paddingVertical: Spacing.two },
+  linkRow: { alignItems: 'center' },
+  switch: { alignItems: 'center', paddingVertical: Spacing.two },
 });

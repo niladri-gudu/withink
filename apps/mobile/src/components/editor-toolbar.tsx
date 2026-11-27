@@ -1,142 +1,103 @@
-import { Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { Ionicons } from '@expo/vector-icons';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
-import type { EditorCommand, FormatState } from "@withink/editor";
+import type { EditorCommand, FormatState } from '@withink/editor';
 
-import { Spacing } from "@/constants/theme";
-import { useTheme } from "@/hooks/use-theme";
+import { Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 
-import { ThemedText } from "./themed-text";
+import { ThemedText } from './themed-text';
 
 interface ToolbarButton {
   command: EditorCommand;
-  label: string;
+  label?: string;
+  icon?: React.ComponentProps<typeof Ionicons>['name'];
   accessibilityLabel: string;
   active?: keyof FormatState;
   bold?: boolean;
 }
 
+/** The web phone toolbar: undo/redo, inline marks, lists, then the sheet. */
 const BUTTONS: ToolbarButton[] = [
   {
-    command: { name: "bold" },
-    label: "B",
-    accessibilityLabel: "Bold",
-    active: "isBold",
+    command: { name: 'undo' },
+    icon: 'arrow-undo-outline',
+    accessibilityLabel: 'Undo',
+    active: 'canUndo',
+  },
+  {
+    command: { name: 'redo' },
+    icon: 'arrow-redo-outline',
+    accessibilityLabel: 'Redo',
+    active: 'canRedo',
+  },
+  {
+    command: { name: 'bold' },
+    label: 'B',
+    accessibilityLabel: 'Bold',
+    active: 'isBold',
     bold: true,
   },
   {
-    command: { name: "italic" },
-    label: "I",
-    accessibilityLabel: "Italic",
-    active: "isItalic",
+    command: { name: 'italic' },
+    label: 'I',
+    accessibilityLabel: 'Italic',
+    active: 'isItalic',
   },
   {
-    command: { name: "underline" },
-    label: "U",
-    accessibilityLabel: "Underline",
-    active: "isUnderline",
+    command: { name: 'underline' },
+    label: 'U',
+    accessibilityLabel: 'Underline',
+    active: 'isUnderline',
   },
   {
-    command: { name: "strike" },
-    label: "S",
-    accessibilityLabel: "Strikethrough",
-    active: "isStrike",
+    command: { name: 'bulletList' },
+    icon: 'list-outline',
+    accessibilityLabel: 'Bullet list',
+    active: 'isBulletList',
   },
   {
-    command: { name: "highlight" },
-    label: "H",
-    accessibilityLabel: "Highlight",
-    active: "isHighlight",
-  },
-  {
-    command: { name: "heading1" },
-    label: "H1",
-    accessibilityLabel: "Heading 1",
-    active: "isH1",
-    bold: true,
-  },
-  {
-    command: { name: "heading2" },
-    label: "H2",
-    accessibilityLabel: "Heading 2",
-    active: "isH2",
-    bold: true,
-  },
-  {
-    command: { name: "heading3" },
-    label: "H3",
-    accessibilityLabel: "Heading 3",
-    active: "isH3",
-    bold: true,
-  },
-  {
-    command: { name: "bulletList" },
-    label: "•",
-    accessibilityLabel: "Bullet list",
-    active: "isBulletList",
-  },
-  {
-    command: { name: "orderedList" },
-    label: "1.",
-    accessibilityLabel: "Numbered list",
-    active: "isOrderedList",
-  },
-  {
-    command: { name: "taskList" },
-    label: "☑",
-    accessibilityLabel: "Task list",
-    active: "isTaskList",
-  },
-  {
-    command: { name: "blockquote" },
-    label: "❝",
-    accessibilityLabel: "Quote",
-    active: "isBlockquote",
-  },
-  {
-    command: { name: "codeBlock" },
-    label: "</>",
-    accessibilityLabel: "Code block",
-    active: "isCodeBlock",
-  },
-  {
-    command: { name: "horizontalRule" },
-    label: "—",
-    accessibilityLabel: "Divider",
-  },
-  {
-    command: { name: "undo" },
-    label: "↶",
-    accessibilityLabel: "Undo",
-    active: "canUndo",
-  },
-  {
-    command: { name: "redo" },
-    label: "↷",
-    accessibilityLabel: "Redo",
-    active: "canRedo",
+    command: { name: 'taskList' },
+    icon: 'checkbox-outline',
+    accessibilityLabel: 'Checklist',
+    active: 'isTaskList',
   },
 ];
 
 interface EditorToolbarProps {
   state: FormatState | null;
+  wordCount: number;
   onCommand(command: EditorCommand): void;
+  onOpenMore(): void;
 }
 
 /**
  * Compact formatting row for the native editor. Commands travel over the
  * WebView bridge; active state comes back from the same derivation the web
- * toolbar uses.
+ * toolbar uses. The full strip lives in the formatting sheet.
  */
-export function EditorToolbar({ state, onCommand }: EditorToolbarProps) {
+export function EditorToolbar({
+  state,
+  wordCount,
+  onCommand,
+  onOpenMore,
+}: EditorToolbarProps) {
   const theme = useTheme();
+  const readingTime = Math.max(1, Math.round(wordCount / 200));
 
   return (
-    <View style={[styles.bar, { borderColor: theme.backgroundSelected }]}>
+    <View
+      style={[
+        styles.wrapper,
+        { borderColor: theme.border, backgroundColor: theme.background },
+      ]}
+    >
       <ScrollView
         contentContainerStyle={styles.content}
         horizontal
         keyboardShouldPersistTaps="always"
         showsHorizontalScrollIndicator={false}
+        style={styles.flex}
       >
         {BUTTONS.map((button) => {
           const active = button.active
@@ -153,45 +114,78 @@ export function EditorToolbar({ state, onCommand }: EditorToolbarProps) {
               style={({ pressed }) => [
                 styles.button,
                 {
-                  backgroundColor: active
-                    ? theme.backgroundSelected
-                    : "transparent",
+                  backgroundColor: active ? theme.muted : 'transparent',
                   opacity: pressed ? 0.5 : 1,
                 },
               ]}
             >
-              <ThemedText
-                style={[
-                  styles.label,
-                  button.bold ? styles.bold : null,
-                  { color: active ? theme.text : theme.textSecondary },
-                ]}
-              >
-                {button.label}
-              </ThemedText>
+              {button.icon ? (
+                <Ionicons
+                  color={active ? theme.accent : theme.mutedForeground}
+                  name={button.icon}
+                  size={19}
+                />
+              ) : (
+                <ThemedText
+                  style={[
+                    styles.label,
+                    button.bold ? styles.bold : null,
+                    { color: active ? theme.accent : theme.foreground },
+                  ]}
+                >
+                  {button.label}
+                </ThemedText>
+              )}
             </Pressable>
           );
         })}
+        <Pressable
+          accessibilityLabel="More formatting"
+          accessibilityRole="button"
+          hitSlop={4}
+          onPress={onOpenMore}
+          style={({ pressed }) => [
+            styles.button,
+            { opacity: pressed ? 0.5 : 1 },
+          ]}
+        >
+          <Ionicons color={theme.mutedForeground} name="add" size={22} />
+        </Pressable>
       </ScrollView>
+
+      <View style={styles.counter}>
+        <ThemedText type="caption" themeColor="textSecondary">
+          {wordCount} {wordCount === 1 ? 'word' : 'words'} · {readingTime}m
+        </ThemedText>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  bar: { borderBottomWidth: StyleSheet.hairlineWidth },
-  content: {
-    alignItems: "center",
-    gap: Spacing.one,
-    paddingVertical: Spacing.two,
+  wrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  button: {
-    alignItems: "center",
-    borderRadius: 8,
-    justifyContent: "center",
-    minWidth: 38,
+  flex: { flex: 1 },
+  content: {
+    alignItems: 'center',
+    gap: Spacing.one,
     paddingHorizontal: Spacing.two,
     paddingVertical: Spacing.one,
   },
+  button: {
+    alignItems: 'center',
+    borderRadius: 8,
+    justifyContent: 'center',
+    minWidth: 38,
+    minHeight: 38,
+    paddingHorizontal: Spacing.one,
+  },
   label: { fontSize: 15, lineHeight: 22 },
-  bold: { fontWeight: "700" },
+  bold: { fontWeight: '700' },
+  counter: { paddingRight: Spacing.three },
 });

@@ -70,7 +70,9 @@ Shared code extracted into a Turborepo workspace. Currently includes:
 
 - `@withink/eslint-config` — shared ESLint flat config
 - `@withink/theme` — theme provider (next-themes + cross-tab cookie sync)
-- `@withink/tokens` — canonical design-token CSS layer (`theme.css`)
+- `@withink/tokens` — canonical design-token CSS layer (`theme.css`) plus
+  `@withink/tokens/native`: the shared palette/accent/font catalogue and the
+  OKLCH→sRGB resolver used by the Expo client (the web catalog re-exports it)
 - `@withink/typescript-config` — shared TypeScript compiler presets
 - `@withink/ui` — shadcn-style UI kit (Button, Card, Input, Textarea, Skeleton, Tooltip, BrandLoader, ThemeToggle)
 - `@withink/utils` — `cn()` and other pure utilities

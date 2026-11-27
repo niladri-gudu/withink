@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { GetObjectCommand } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 
 import { env } from "@/config/env";
 import { r2 } from "@/lib/r2";
@@ -7,6 +7,8 @@ import { getRequestSession } from "@/lib/request-cache";
 import { apiError } from "@/server/api-error";
 import { logger } from "@/server/logger";
 import { LockService } from "@/features/lock/services/lock-service";
+
+import { requireApiSession } from "../../_lib";
 
 // Reads cookies via the session/unlock checks, so this handler is dynamic.
 type RouteContext = { params: Promise<{ key: string[] }> };
@@ -82,5 +84,44 @@ export async function GET(_request: Request, context: RouteContext) {
     }
     logger.error("Media proxy failed", error as Error);
     return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+}
+
+/**
+ * Deletes one object the caller owns. Zero-knowledge clients must scrub entry
+ * references BEFORE calling this (the server cannot read encrypted content);
+ * the ownership prefix check is the only authorization here either way.
+ */
+export async function DELETE(_request: Request, context: RouteContext) {
+  const auth = await requireApiSession("media:delete", 60);
+  if (auth.response) return auth.response;
+
+  const { key: segments } = await context.params;
+  const key = segments.join("/");
+  if (!key || key.includes("..") || key.startsWith("/")) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  const envPrefix = env.IS_PROD ? "" : "dev-";
+  const userId = auth.userId;
+  const owned =
+    key.startsWith(`${envPrefix}journal/${userId}/`) ||
+    key.startsWith(`${envPrefix}avatars/${userId}/`) ||
+    key.startsWith(`${envPrefix}system/${userId}/`);
+  if (!owned) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  try {
+    await r2.send(
+      new DeleteObjectCommand({ Bucket: env.R2_BUCKET_NAME, Key: key }),
+    );
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    logger.error("Media deletion failed", error as Error);
+    return NextResponse.json(
+      { error: "The file could not be deleted." },
+      { status: 500 },
+    );
   }
 }

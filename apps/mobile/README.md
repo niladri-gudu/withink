@@ -70,31 +70,60 @@ pnpm --filter @withink/mobile lint
 
 ## Current slice
 
-Sign-up/sign-in, encrypted unlock, and a local-first journal: pages are pulled,
-decrypted and persisted to SQLite; the editor stores encrypted documents,
-writes a plaintext sync index, queues an encrypted pending write, and flushes it
-to `/api/sync/push`. On a cold start the list renders from SQLite after unlock,
-and failed pushes stay queued for the next sync.
+Sign-up/sign-in, forgot/reset password, encrypted unlock (password or
+biometric), and a local-first journal that mirrors the web:
+
+- **Today** — greeting, yesterday banner, today's page, streak, recent
+  reflections and a flashback card.
+- **Entries** — archive with search, mood/time/notebook filters, a mood
+  calendar, pagination, delete and move-to-notebook.
+- **Insights** — streak, 365-day heatmap, mood and word charts, activity
+  summaries and a monthly overview, all computed from the decrypted local
+  timeline.
+- **Flashbacks** — anniversary-first selection with device-local history.
+- **Notebooks** — create/rename/delete/set-default/move with plan limits.
+- **Media** — gallery/list with search and sort, lightbox, storage quota,
+  quota-aware uploads and reference-scrubbing deletes.
+- **Settings** — profile, shared appearance (palettes, fonts, accents, paper
+  scale), sync & data (cache size, rebuild, export via the share sheet),
+  reminders, lock/encryption/biometrics, sign-in password, legal links and
+  account deletion.
+
+Pages are pulled, decrypted and persisted to SQLite; the editor stores
+encrypted documents, writes a plaintext sync index, queues an encrypted
+pending write, and flushes it to `/api/sync/push`. Failed pushes stay queued;
+foregrounding the app syncs again. The 15-minute unlock token is renewed from
+the in-memory master key while the diary is open.
 
 PBKDF2 runs in a local native module (`modules/withink-crypto`, Kotlin/CommonCrypto)
 on a background thread. The module self-tests against a known-answer vector
 before it is trusted; Expo Go and any self-test failure fall back to the hidden
 WebView's WebCrypto bridge and then to an audited pure-JS implementation.
 AES-GCM and HKDF use `@noble` primitives validated against the web golden
-vectors. The master key and 15-minute unlock token stay in memory only.
+vectors. The master key and unlock token stay in memory; biometric unlock
+stores the key in SecureStore behind an OS authentication prompt.
 
 The entry body is the shared TipTap editor running in a bundled, offline
-WebView (`@withink/editor`). The document is generated from the package's
-bridge entry and committed as
-`src/lib/editor-webview.generated.ts`; after changing an extension or the
-bridge, regenerate it and commit the result:
+WebView (`@withink/editor`), with a formatting sheet, link dialog, image
+upload, mood and notebook chrome. After changing an extension or the bridge,
+regenerate and commit the document:
 
 ```bash
 pnpm --filter @withink/editor build:webview
 pnpm --filter @withink/editor test   # fails if the committed document drifts
 ```
 
-Checks: `pnpm --filter @withink/mobile test` also covers the SQLite adapter, the
-cache/sync flow and the native KDF wrapper (31 tests). Remaining slices:
-editor chrome parity (links/media, mood/notebook), iOS verification, and the
-journal screens; see `internal-docs/MOBILE_LAUNCH_PLAN.md`.
+Adding native modules (local authentication, image picker, sharing) requires a
+fresh development build: `npx expo run:android`. The build bakes the dev-server
+port; if Metro runs on 8082, forward it as well:
+
+```bash
+adb reverse tcp:8082 tcp:8082
+npx expo start --port 8082
+```
+
+Checks: `pnpm --filter @withink/mobile test` (45 tests), plus `typecheck` and
+`lint`. Known gaps: iOS verification, private images inside the WebView editor
+(the media gallery renders them with authenticated headers), native push token
+registration (needs EAS/FCM credentials), letters/feedback UI, archive import,
+and enabling zero-knowledge from the device.
