@@ -677,6 +677,7 @@ export function EntryEditorScreen() {
           horizontal
           keyboardShouldPersistTaps="always"
           showsHorizontalScrollIndicator={false}
+          style={styles.moodScroll}
         >
           {MOODS.map((option) => {
             const active = mood === option.value;
@@ -967,6 +968,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     paddingVertical: Spacing.two,
   },
+  moodScroll: { flexGrow: 0, flexShrink: 0 },
   moodRow: {
     alignItems: 'center',
     gap: Spacing.two,

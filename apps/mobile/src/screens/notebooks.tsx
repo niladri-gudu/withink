@@ -116,7 +116,10 @@ export function NotebooksScreen() {
           <ThemedText type="subtitle">Shelves for your pages</ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
             {notebooks.length} of{' '}
-            {Number.isFinite(limit) ? limit : '∞'} notebooks on {plan}.
+            {Number.isFinite(limit)
+              ? `${limit} ${limit === 1 ? 'notebook' : 'notebooks'}`
+              : 'unlimited notebooks'}{' '}
+            on {plan}.
           </ThemedText>
         </View>
 
@@ -251,8 +254,10 @@ export function NotebooksScreen() {
       >
         <ThemedText themeColor="textSecondary">
           Your {plan} plan includes{' '}
-          {Number.isFinite(limit) ? `${limit} notebooks` : 'unlimited notebooks'}.
-          Existing notebooks keep working on any plan; this only limits new
+          {Number.isFinite(limit)
+            ? `${limit} ${limit === 1 ? 'notebook' : 'notebooks'}`
+            : 'unlimited notebooks'}
+          . Existing notebooks keep working on any plan; this only limits new
           ones.
         </ThemedText>
         <View style={styles.chipRow}>

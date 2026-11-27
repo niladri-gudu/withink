@@ -141,10 +141,20 @@ Active work:
   WebView editor (the gallery renders them with authenticated headers),
   native push token registration (needs EAS/FCM credentials), letters and
   feedback UI, archive import, and enabling zero-knowledge from the device.
-- Verified this slice: mobile 45 tests, editor 25 (bundle reproducible),
+- Verified this slice: mobile 51 tests, editor 25 (bundle reproducible),
   app 312, core 11, contracts 30, API client 15; typecheck and lint clean on
-  mobile/app. The Android build installs; the on-device pass of the new
-  screens was interrupted when the phone detached from USB.
+  mobile/app. On the Android device: encrypted unlock (native PBKDF2), Today,
+  the archive (calendar, search UI, mood/edit/save), editor chrome (mood,
+  formatting sheet, link dialog, image picker/upload, autosave), insights,
+  flashbacks, notebooks + plan limit, settings (appearance gating, paper
+  scale, reminders save, cache size, export share sheet), and the media
+  chain — upload → authenticated private image render → delete with
+  reference scrubbing (server library returned to 0 files). The pass found
+  and fixed four defects: the mood row stealing editor height, the formatting
+  “more” button being clipped, the gallery not refreshing on focus, and media
+  deletion leaving a broken empty image node (now node-aware and unit-tested).
+  Biometric enrollment reaches the OS prompt; completing it needs the device
+  owner's face/fingerprint.
 
 ---
 

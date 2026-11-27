@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { MediaFileView, MediaLibraryResponse, MediaStorageStats } from '@withink/contracts';
 import { Image } from 'expo-image';
+import { useFocusEffect } from 'expo-router';
 import * as React from 'react';
 import {
   ActivityIndicator,
@@ -28,6 +29,7 @@ import { Radii, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { createDiaryClient } from '@/lib/api';
 import { diaryCache } from '@/lib/diary-cache';
+import { scrubDocumentJson, scrubHtmlImages } from '@/lib/media-scrub';
 import {
   absoluteMediaUrl,
   mediaRequestHeaders,
@@ -53,19 +55,6 @@ function formatLimit(mb: number): string {
   return mb >= 1024 ? `${(mb / 1024).toFixed(1)} GB` : `${mb.toFixed(0)} MB`;
 }
 
-function replaceDeep(value: unknown, from: string, to: string): unknown {
-  if (typeof value === 'string') return value.split(from).join(to);
-  if (Array.isArray(value)) return value.map((item) => replaceDeep(item, from, to));
-  if (value && typeof value === 'object') {
-    return Object.fromEntries(
-      Object.entries(value as Record<string, unknown>).map(([key, item]) => [
-        key,
-        replaceDeep(item, from, to),
-      ]),
-    );
-  }
-  return value;
-}
 
 export function MediaScreen() {
   const theme = useTheme();
@@ -98,10 +87,14 @@ export function MediaScreen() {
     }
   }, []);
 
-  React.useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    void load();
-  }, [load]);
+  const hasLoadedRef = React.useRef(false);
+  useFocusEffect(
+    React.useCallback(() => {
+      // Refresh when the gallery is revisited (e.g. after an editor upload).
+      void load(hasLoadedRef.current);
+      hasLoadedRef.current = true;
+    }, [load]),
+  );
 
   const files = React.useMemo(() => {
     const list = [...(library?.files ?? [])];
@@ -144,8 +137,10 @@ export function MediaScreen() {
     try {
       const api = createDiaryClient();
       const timeline = await diaryCache.getLocalTimeline(masterKey);
-      const targets = new Set(
-        [deleteTarget.url, absoluteMediaUrl(deleteTarget.url)].filter(Boolean),
+      const targets = Array.from(
+        new Set(
+          [deleteTarget.url, absoluteMediaUrl(deleteTarget.url)].filter(Boolean),
+        ),
       );
       let scrubbed = 0;
 
@@ -156,20 +151,14 @@ export function MediaScreen() {
         const jsonText = document.contentJson
           ? JSON.stringify(document.contentJson)
           : '';
-        const usesFile = [...targets].some(
+        const usesFile = targets.some(
           (needle) => html.includes(needle) || jsonText.includes(needle),
         );
         if (!usesFile) continue;
 
         setScrubNote(`Updating page ${metadata.date}…`);
-        let nextHtml = html;
-        for (const needle of targets) nextHtml = nextHtml.split(needle).join('');
-        const nextJson = document.contentJson
-          ? Array.from(targets).reduce<unknown>(
-              (value, needle) => replaceDeep(value, needle, ''),
-              document.contentJson,
-            )
-          : document.contentJson;
+        const nextHtml = scrubHtmlImages(html, targets);
+        const nextJson = scrubDocumentJson(document.contentJson, targets);
 
         await diaryCache.saveEntryLocally(
           {

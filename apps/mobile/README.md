@@ -122,7 +122,7 @@ adb reverse tcp:8082 tcp:8082
 npx expo start --port 8082
 ```
 
-Checks: `pnpm --filter @withink/mobile test` (45 tests), plus `typecheck` and
+Checks: `pnpm --filter @withink/mobile test` (51 tests), plus `typecheck` and
 `lint`. Known gaps: iOS verification, private images inside the WebView editor
 (the media gallery renders them with authenticated headers), native push token
 registration (needs EAS/FCM credentials), letters/feedback UI, archive import,

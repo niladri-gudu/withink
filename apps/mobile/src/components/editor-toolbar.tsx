@@ -139,19 +139,20 @@ export function EditorToolbar({
             </Pressable>
           );
         })}
-        <Pressable
-          accessibilityLabel="More formatting"
-          accessibilityRole="button"
-          hitSlop={4}
-          onPress={onOpenMore}
-          style={({ pressed }) => [
-            styles.button,
-            { opacity: pressed ? 0.5 : 1 },
-          ]}
-        >
-          <Ionicons color={theme.mutedForeground} name="add" size={22} />
-        </Pressable>
       </ScrollView>
+
+      <Pressable
+        accessibilityLabel="More formatting"
+        accessibilityRole="button"
+        hitSlop={4}
+        onPress={onOpenMore}
+        style={({ pressed }) => [
+          styles.button,
+          { opacity: pressed ? 0.5 : 1 },
+        ]}
+      >
+        <Ionicons color={theme.mutedForeground} name="add" size={22} />
+      </Pressable>
 
       <View style={styles.counter}>
         <ThemedText type="caption" themeColor="textSecondary">

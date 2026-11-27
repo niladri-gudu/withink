@@ -312,10 +312,10 @@ journal screens: Today dashboard, archive with search/filters/calendar/
 pagination/delete/move, insights, flashbacks and notebooks. Navigation
 mirrors the web's Today · Entries · Insights · More bar, and appearance now
 comes from the shared `@withink/tokens` catalogue (palettes, fonts, accents,
-paper scale) instead of a hard-coded five-colour theme. Remaining: iOS
-verification, inline private images in the WebView (the gallery loads them
-with authenticated headers), and a device pass of the new screens (the USB
-connection dropped during verification).
+paper scale) instead of a hard-coded five-colour theme. Verified on Android: the journal screens, editor chrome, settings and the
+media chain (upload → authenticated render → scrub-delete). Remaining: iOS
+verification and inline private images in the WebView (the gallery loads them
+with authenticated headers; the editor needs an image bridge).
 
 1. **Editor spike (highest risk).** TipTap/ProseMirror is DOM-only. Evaluate
    `@10play/tentap-editor` (TipTap inside a bridged WebView) first because it preserves
