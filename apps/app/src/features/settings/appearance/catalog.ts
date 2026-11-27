@@ -7,12 +7,10 @@
  * the CSS selectors in `globals.css`; `@withink/tokens` owns the values.
  */
 
-import type { ResolvedPlan } from "@/features/billing/config/plans";
 import {
   ACCENTS,
   APPEARANCE_KEYS,
   FONTS,
-  PALETTES,
   getAccent,
   getFont,
   getPalette,
@@ -23,6 +21,7 @@ import {
   isPaletteId,
   isPaletteUnlocked,
   isTierUnlocked,
+  PALETTES,
   type AccentId,
   type AccentOption,
   type AppearanceTier,
@@ -31,6 +30,8 @@ import {
   type PaletteId,
   type PaletteOption,
 } from "@withink/tokens/native";
+
+import type { ResolvedPlan } from "@/features/billing/config/plans";
 
 export {
   ACCENTS,
