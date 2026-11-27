@@ -147,9 +147,11 @@ Active work:
   the archive (calendar, search UI, mood/edit/save), editor chrome (mood,
   formatting sheet, link dialog, image picker/upload, autosave), insights,
   flashbacks, notebooks + plan limit, settings (appearance gating, paper
-  scale, reminders save, cache size, export share sheet), and the media
-  chain — upload → authenticated private image render → delete with
-  reference scrubbing (server library returned to 0 files). The pass found
+  scale, reminders save, cache size, export share sheet), biometric unlock
+  (enroll behind Face ID, Lock now, Face ID unlock), entry creation and
+  deletion (the server manifest lost the deleted date), and the media chain —
+  upload → authenticated private image render → delete with reference
+  scrubbing (server library returned to 0 files). The pass found
   and fixed four defects: the mood row stealing editor height, the formatting
   “more” button being clipped, the gallery not refreshing on focus, and media
   deletion leaving a broken empty image node (now node-aware and unit-tested).
