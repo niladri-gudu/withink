@@ -1,6 +1,9 @@
 import { Editor, type Content } from "@tiptap/core";
 
-import { createEditorExtensions } from "./extensions";
+import {
+  createEditorExtensions,
+  type EditorExtensionOptions,
+} from "./extensions";
 import type { EditorContentInput, EditorSnapshot } from "./types";
 
 /** Matches the web editor: a blank ProseMirror document is stored as "". */
@@ -48,7 +51,7 @@ export function resolveEditorContent(
   return "";
 }
 
-export interface CreateEditorOptions {
+export interface CreateEditorOptions extends EditorExtensionOptions {
   element?: HTMLElement | null;
   content?: Content;
   editable?: boolean;
@@ -68,7 +71,7 @@ export function createEditorInstance(
 ): Editor {
   return new Editor({
     element: options.element ?? undefined,
-    extensions: createEditorExtensions(),
+    extensions: createEditorExtensions({ imageSrc: options.imageSrc }),
     content: options.content ?? "",
     editable: options.editable ?? true,
     editorProps: {

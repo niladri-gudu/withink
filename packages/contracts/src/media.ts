@@ -51,7 +51,7 @@ export const mediaUploadRequestSchema = z.object({
 export type MediaUploadRequest = z.input<typeof mediaUploadRequestSchema>;
 
 export interface MediaUploadResponse {
-  /** Presigned PUT valid for 60 seconds. */
+  /** Presigned PUT valid for one hour. */
   presignedUrl: string;
   /** Stable authenticated delivery URL to store in entry content. */
   publicUrl: string;

@@ -22,6 +22,13 @@ export type HostToEditorMessage =
   | { id: number; type: "blur" }
   | { id: number; type: "setEditable"; editable: boolean }
   | { id: number; type: "setTheme"; theme: EditorTheme }
+  | {
+      id: number;
+      type: "setImageSource";
+      src: string;
+      /** Local data URI the page should display for this stored `src`. */
+      dataUri: string;
+    }
   | { id: number; type: "command"; command: EditorCommand };
 
 export type EditorToHostMessage =

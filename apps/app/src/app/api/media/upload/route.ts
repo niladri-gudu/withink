@@ -219,7 +219,10 @@ export async function POST(req: NextRequest) {
       ContentLength: size,
     });
 
-    const presignedUrl = await getSignedUrl(r2, command, { expiresIn: 60 });
+    // A tight window breaks on slow networks and on clients whose clock
+    // drifts from the storage provider; the key is a random UUID scoped to
+    // this user's prefix, so an hour is safe and matches common practice.
+    const presignedUrl = await getSignedUrl(r2, command, { expiresIn: 3600 });
     // Private folders get a stable authenticated URL; only feedback/system
     // attachments remain on the public bucket (the owner reads those outside
     // the submitter's session).

@@ -35,6 +35,28 @@ let editor: Editor | null = null;
 let snapshotTimer: ReturnType<typeof setTimeout> | null = null;
 let stateTimer: ReturnType<typeof setTimeout> | null = null;
 
+/**
+ * Stored image URL → local data URI. The document keeps the stored URL; this
+ * map only changes what the node view paints.
+ */
+const imageSources = new Map<string, string>();
+
+function imageSource(src: string): string | undefined {
+  return imageSources.get(src);
+}
+
+function applyImageSource(src: string, dataUri: string): void {
+  imageSources.set(src, dataUri);
+  // Node views already in the document read the map on creation; repaint the
+  // ones that were waiting without touching the ProseMirror document.
+  document.querySelectorAll<HTMLImageElement>("img[data-wi-src]").forEach((img) => {
+    if (img.getAttribute("data-wi-src") === src) {
+      img.src = dataUri;
+      img.removeAttribute("data-wi-pending");
+    }
+  });
+}
+
 function post(message: EditorToHostMessage): void {
   try {
     bridgeWindow.ReactNativeWebView?.postMessage(JSON.stringify(message));
@@ -205,6 +227,9 @@ function handleMessage(message: HostToEditorMessage): void {
       case "setTheme":
         applyTheme(message.theme);
         break;
+      case "setImageSource":
+        applyImageSource(message.src, message.dataUri);
+        break;
       case "command":
         runCommand(message.command);
         break;
@@ -224,6 +249,7 @@ function boot(): void {
   editor = createEditorInstance({
     element,
     content: "",
+    imageSrc: imageSource,
     onCreate: () => post({ type: "ready" }),
     onUpdate: scheduleSnapshot,
     onSelectionUpdate: scheduleState,

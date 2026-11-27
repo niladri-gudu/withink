@@ -1,4 +1,5 @@
 export { createEditorExtensions } from "./extensions";
+export type { EditorExtensionOptions } from "./extensions";
 export {
   EMPTY_HTML,
   createEditorInstance,

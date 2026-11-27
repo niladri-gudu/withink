@@ -120,6 +120,12 @@ body {
   border-radius: 8px;
   margin: 0.75em 0;
 }
+/* The native host paints a placeholder until it resolves the private URL. */
+.ProseMirror img[data-wi-pending] {
+  width: 100%;
+  min-height: 140px;
+  background: var(--wi-code);
+}
 .ProseMirror mark { border-radius: 3px; padding: 0 0.1em; }
 .ProseMirror p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
@@ -129,6 +135,71 @@ body {
   pointer-events: none;
 }
 ::selection { background: rgba(32, 138, 239, 0.25); }
+`;
+
+/**
+ * Built-ins TipTap calls that the device WebView may not have.
+ *
+ * esbuild downlevels syntax but never polyfills built-ins. Android WebView is
+ * updated independently of the app, and devices stuck on Chrome < 97 (the
+ * Pixel 4 emulator ships 91) have no `Array.prototype.findLast`; TipTap's
+ * transaction handler calls it on every focus/blur, so the editor otherwise
+ * throws "findLast is not a function" on load.
+ */
+const EDITOR_POLYFILLS = `
+(function () {
+  if (!Array.prototype.findLast) {
+    Object.defineProperty(Array.prototype, "findLast", {
+      configurable: true,
+      writable: true,
+      value: function (predicate, thisArg) {
+        for (var index = this.length - 1; index >= 0; index -= 1) {
+          if (predicate.call(thisArg, this[index], index, this)) return this[index];
+        }
+        return undefined;
+      },
+    });
+  }
+  if (!Array.prototype.findLastIndex) {
+    Object.defineProperty(Array.prototype, "findLastIndex", {
+      configurable: true,
+      writable: true,
+      value: function (predicate, thisArg) {
+        for (var index = this.length - 1; index >= 0; index -= 1) {
+          if (predicate.call(thisArg, this[index], index, this)) return index;
+        }
+        return -1;
+      },
+    });
+  }
+  if (!Array.prototype.at) {
+    Object.defineProperty(Array.prototype, "at", {
+      configurable: true,
+      writable: true,
+      value: function (index) {
+        var length = this.length;
+        var position = index < 0 ? length + index : index;
+        return position < 0 || position >= length ? undefined : this[position];
+      },
+    });
+  }
+  if (!String.prototype.at) {
+    Object.defineProperty(String.prototype, "at", {
+      configurable: true,
+      writable: true,
+      value: function (index) {
+        var value = String(this);
+        var position = index < 0 ? value.length + index : index;
+        return position < 0 || position >= value.length ? undefined : value.charAt(position);
+      },
+    });
+  }
+  if (!Object.hasOwn) {
+    Object.hasOwn = function (object, property) {
+      return Object.prototype.hasOwnProperty.call(object, property);
+    };
+  }
+})();
 `;
 
 /**
@@ -146,6 +217,7 @@ export function renderEditorHtml(bundle: string): string {
 </head>
 <body>
 <div id="editor"></div>
+<script>${EDITOR_POLYFILLS}</script>
 <script>${script}</script>
 </body>
 </html>`;

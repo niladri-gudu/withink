@@ -115,11 +115,12 @@ export function NotebooksScreen() {
           </ThemedText>
           <ThemedText type="subtitle">Shelves for your pages</ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
-            {notebooks.length} of{' '}
+            {notebooks.length}{' '}
+            {notebooks.length === 1 ? 'notebook' : 'notebooks'} ·{' '}
             {Number.isFinite(limit)
-              ? `${limit} ${limit === 1 ? 'notebook' : 'notebooks'}`
-              : 'unlimited notebooks'}{' '}
-            on {plan}.
+              ? `${plan} includes ${limit}`
+              : `unlimited on ${plan}`}
+            .
           </ThemedText>
         </View>
 

@@ -46,12 +46,16 @@ export interface RichTextEditorHandle {
   focus(): void;
   blur(): void;
   setEditable(editable: boolean): void;
+  /** Displays a private image from a local data URI without changing the doc. */
+  addImageSource(src: string, dataUri: string): void;
 }
 
 interface RichTextEditorProps {
   initialContent: EditorContentInput;
   theme: EditorTheme;
   editable?: boolean;
+  /** Stored media URL → local data URI, hydrated by the host. */
+  imageSources?: Record<string, string>;
   onSnapshot(snapshot: EditorSnapshot): void;
   /** Normalized content after `setContent`, used as the save baseline. */
   onLoaded?(snapshot: EditorSnapshot): void;
@@ -65,6 +69,7 @@ function RichTextEditorImpl(
     initialContent,
     theme,
     editable = true,
+    imageSources,
     onSnapshot,
     onLoaded,
     onStateChange,
@@ -84,6 +89,8 @@ function RichTextEditorImpl(
   const themeRef = useRef(theme);
   const editableRef = useRef(editable);
   const initContentIdRef = useRef<number | null>(null);
+  const imageSourcesRef = useRef<Record<string, string>>(imageSources ?? {});
+  const sentImageSourcesRef = useRef<Set<string>>(new Set());
   const handlersRef = useRef({
     onSnapshot,
     onLoaded,
@@ -122,6 +129,18 @@ function RichTextEditorImpl(
     [injectNow],
   );
 
+  const sendImageSource = useCallback(
+    (src: string, dataUri: string) => {
+      imageSourcesRef.current[src] = dataUri;
+      // Before `ready` the page has no editor yet; the ready handler sends
+      // every stored source after `setContent`.
+      if (!readyRef.current) return;
+      sentImageSourcesRef.current.add(src);
+      injectNow({ id: ++nextIdRef.current, type: "setImageSource", src, dataUri });
+    },
+    [injectNow],
+  );
+
   useEffect(() => {
     themeRef.current = theme;
     editableRef.current = editable;
@@ -129,6 +148,14 @@ function RichTextEditorImpl(
     send({ id: ++nextIdRef.current, type: "setTheme", theme });
     send({ id: ++nextIdRef.current, type: "setEditable", editable });
   }, [theme, editable, send]);
+
+  useEffect(() => {
+    if (!imageSources) return;
+    for (const [src, dataUri] of Object.entries(imageSources)) {
+      if (sentImageSourcesRef.current.has(src)) continue;
+      sendImageSource(src, dataUri);
+    }
+  }, [imageSources, sendImageSource]);
 
   const handleMessage = useCallback(
     (event: WebViewMessageEvent) => {
@@ -164,6 +191,17 @@ function RichTextEditorImpl(
               id: ++nextIdRef.current,
               type: "setEditable",
               editable: false,
+            });
+          }
+          // Re-send after `setContent` (and after a WebView reload) so the
+          // node views pick up previews that were resolved before `ready`.
+          for (const [src, dataUri] of Object.entries(imageSourcesRef.current)) {
+            sentImageSourcesRef.current.add(src);
+            injectNow({
+              id: ++nextIdRef.current,
+              type: "setImageSource",
+              src,
+              dataUri,
             });
           }
           break;
@@ -204,6 +242,14 @@ function RichTextEditorImpl(
     [injectNow],
   );
 
+  // A WebView reload (process death, navigation) drops all page state; treat
+  // the next `ready` as a fresh boot so content and previews are re-sent.
+  const handleLoadStart = useCallback(() => {
+    readyRef.current = false;
+    queueRef.current = [];
+    sentImageSourcesRef.current.clear();
+  }, []);
+
   const flush = useCallback((): Promise<EditorSnapshot | null> => {
     if (!readyRef.current) return Promise.resolve(null);
     const id = ++nextIdRef.current;
@@ -230,8 +276,9 @@ function RichTextEditorImpl(
       blur: () => send({ id: ++nextIdRef.current, type: "blur" }),
       setEditable: (value) =>
         send({ id: ++nextIdRef.current, type: "setEditable", editable: value }),
+      addImageSource: (src, dataUri) => sendImageSource(src, dataUri),
     }),
-    [flush, send],
+    [flush, send, sendImageSource],
   );
 
   return (
@@ -245,6 +292,7 @@ function RichTextEditorImpl(
         javaScriptEnabled
         keyboardDisplayRequiresUserAction={false}
         mixedContentMode="never"
+        onLoadStart={handleLoadStart}
         onMessage={handleMessage}
         originWhitelist={["*"]}
         scrollEnabled

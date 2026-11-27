@@ -49,12 +49,14 @@ import { useTheme } from '@/hooks/use-theme';
 import { createDiaryClient } from '@/lib/api';
 import { diaryCache } from '@/lib/diary-cache';
 import { mobileLocalStore } from '@/lib/local-store';
+import { loadMediaPreview, localImagePreview } from '@/lib/media-images';
 import {
   isQuotaError,
   pickImageFromLibrary,
   prepareImage,
   uploadImage,
 } from '@/lib/media-upload';
+import { collectMediaSources } from '@/lib/media-url';
 import { describeError, useDiary } from '@/providers/diary-provider';
 
 const AUTOSAVE_MS = 1200;
@@ -142,6 +144,9 @@ export function EntryEditorScreen() {
   const [notebookId, setNotebookId] = React.useState<string | null>(null);
   const [initialContent, setInitialContent] =
     React.useState<EditorContentInput | null>(null);
+  const [imageSources, setImageSources] = React.useState<
+    Record<string, string>
+  >({});
   const [editorKey, setEditorKey] = React.useState(0);
   const [format, setFormat] = React.useState<FormatState | null>(null);
   const [wordCount, setWordCount] = React.useState(0);
@@ -225,6 +230,31 @@ export function EntryEditorScreen() {
     },
     [],
   );
+
+  // Private images cannot load inside the WebView, so resolve each referenced
+  // URL to a local preview and hand it to the editor. The document keeps the
+  // canonical src; only the painted source changes.
+  React.useEffect(() => {
+    if (!initialContent) return;
+    const sources = collectMediaSources(
+      initialContent.html ?? '',
+      initialContent.json,
+    );
+    if (sources.length === 0) return;
+    let cancelled = false;
+    void (async () => {
+      for (const src of sources) {
+        const dataUri = await loadMediaPreview(src);
+        if (cancelled || !dataUri) continue;
+        setImageSources((current) =>
+          current[src] ? current : { ...current, [src]: dataUri },
+        );
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [initialContent]);
 
   React.useEffect(() => {
     if (!masterKey || !date) {
@@ -458,6 +488,11 @@ export function EntryEditorScreen() {
       if (!picked) return;
       const prepared = await prepareImage(picked);
       const uploaded = await uploadImage(prepared, 'journal');
+      const preview = await localImagePreview(prepared.uri);
+      if (preview) {
+        setImageSources((current) => ({ ...current, [uploaded.url]: preview }));
+        editorRef.current?.addImageSource(uploaded.url, preview);
+      }
       handleCommand({
         name: 'image',
         src: uploaded.url,
@@ -724,6 +759,7 @@ export function EntryEditorScreen() {
 
         <RichTextEditor
           editable
+          imageSources={imageSources}
           initialContent={initialContent}
           key={editorKey}
           onError={setError}

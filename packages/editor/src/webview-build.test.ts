@@ -20,9 +20,70 @@ describe("editor WebView bundle", () => {
     expect(html).not.toContain("</script><b>");
   });
 
+  it("polyfills the built-ins old device WebViews lack", () => {
+    const html = renderEditorHtml("");
+    expect(html).toContain("Array.prototype.findLast");
+    expect(html).toContain("Array.prototype.at");
+    expect(html).toContain("Object.hasOwn");
+  });
+
   it("is reproducible from source", async () => {
     expect(await buildEditorHtml()).toBe(EDITOR_HTML);
   }, 60_000);
+
+  it("keeps the stored image src while a local preview is displayed", async () => {
+    const messages: BridgeMessage[] = [];
+    const dom = new JSDOM(EDITOR_HTML, {
+      runScripts: "dangerously",
+      pretendToBeVisual: true,
+      beforeParse(window) {
+        (window as unknown as Record<string, unknown>).ReactNativeWebView = {
+          postMessage(data: string) {
+            messages.push(JSON.parse(data) as BridgeMessage);
+          },
+        };
+      },
+    });
+
+    try {
+      await waitFor(() => messages.some((message) => message.type === "ready"));
+      const bridge = (
+        dom.window as unknown as {
+          __withinkEditorReceive(message: unknown): void;
+        }
+      ).__withinkEditorReceive;
+
+      const stored = "/api/media/dev-journal/u/one.jpg";
+      bridge({
+        id: 1,
+        type: "setContent",
+        content: { html: `<p>Before</p><img src="${stored}" alt="one">` },
+      });
+      bridge({
+        id: 2,
+        type: "setImageSource",
+        src: stored,
+        dataUri: "data:image/jpeg;base64,AAAA",
+      });
+      bridge({ id: 3, type: "flush" });
+
+      const ack = await waitFor(
+        () =>
+          messages.find(
+            (message) => message.type === "ack" && message.id === 3,
+          ),
+        2_000,
+      );
+
+      expect(ack.snapshot?.html).toContain(`src="${stored}"`);
+      expect(ack.snapshot?.html).not.toContain("data:image/jpeg");
+      const img = dom.window.document.querySelector("img[data-wi-src]");
+      expect(img?.getAttribute("src")).toBe("data:image/jpeg;base64,AAAA");
+      expect(img?.hasAttribute("data-wi-pending")).toBe(false);
+    } finally {
+      dom.window.close();
+    }
+  }, 30_000);
 
   it("boots, loads content and acknowledges a flush", async () => {
     const messages: BridgeMessage[] = [];

@@ -1,3 +1,4 @@
+import type { NodeViewRenderer } from "@tiptap/core";
 import CharacterCount from "@tiptap/extension-character-count";
 import Highlight from "@tiptap/extension-highlight";
 import ImageExt from "@tiptap/extension-image";
@@ -8,6 +9,66 @@ import TaskList from "@tiptap/extension-task-list";
 import UnderlineExt from "@tiptap/extension-underline";
 import StarterKit from "@tiptap/starter-kit";
 
+export interface EditorExtensionOptions {
+  /**
+   * Maps a stored image `src` to what the page should display.
+   *
+   * The native client's media proxy is private, and a WebView cannot attach
+   * Authorization headers to `<img>` loads. The host resolves each URL to a
+   * local data URI and pushes it here; the node view renders that source while
+   * the document keeps the canonical `src`, so snapshots stay byte-identical
+   * to the web editor's.
+   */
+  imageSrc?: (src: string) => string | null | undefined;
+}
+
+/** 1×1 transparent GIF: keeps `img` from painting a broken-image icon. */
+const TRANSPARENT_PIXEL =
+  "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+
+function createImageExtension(imageSrc: EditorExtensionOptions["imageSrc"]) {
+  const base = ImageExt.configure({ inline: false, allowBase64: true });
+  if (!imageSrc) return base;
+  const resolve = imageSrc;
+
+  const addNodeView = (): NodeViewRenderer => ({ node: initialNode }) => {
+    const img = document.createElement("img");
+    let currentNode = initialNode;
+
+    const apply = () => {
+      const source =
+        typeof currentNode.attrs.src === "string" ? currentNode.attrs.src : "";
+      const alt =
+        typeof currentNode.attrs.alt === "string" ? currentNode.attrs.alt : "";
+      img.setAttribute("data-wi-src", source);
+      img.alt = alt;
+      const resolved = source ? resolve(source) : null;
+      if (resolved) {
+        img.src = resolved;
+        img.removeAttribute("data-wi-pending");
+      } else {
+        // Wait for the host behind a neutral block, never a broken icon.
+        img.src = TRANSPARENT_PIXEL;
+        img.setAttribute("data-wi-pending", "true");
+      }
+    };
+
+    apply();
+
+    return {
+      dom: img,
+      update: (updated) => {
+        if (updated.type.name !== currentNode.type.name) return false;
+        currentNode = updated;
+        apply();
+        return true;
+      },
+    };
+  };
+
+  return base.extend({ addNodeView });
+}
+
 /**
  * The one TipTap extension list.
  *
@@ -16,7 +77,9 @@ import StarterKit from "@tiptap/starter-kit";
  * never drift between platforms. Any extension change is a contract change:
  * regenerate the fixtures in the same commit.
  */
-export function createEditorExtensions() {
+export function createEditorExtensions(
+  options: EditorExtensionOptions = {},
+) {
   return [
     StarterKit.configure({
       heading: { levels: [1, 2, 3] },
@@ -27,7 +90,7 @@ export function createEditorExtensions() {
       underline: false,
     }),
     UnderlineExt,
-    ImageExt.configure({ inline: false, allowBase64: true }),
+    createImageExtension(options.imageSrc),
     Link.configure({
       openOnClick: false,
       // These attributes are part of the serialized HTML; both clients keep

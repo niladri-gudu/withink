@@ -122,8 +122,11 @@ adb reverse tcp:8082 tcp:8082
 npx expo start --port 8082
 ```
 
-Checks: `pnpm --filter @withink/mobile test` (51 tests), plus `typecheck` and
-`lint`. Known gaps: iOS verification, private images inside the WebView editor
-(the media gallery renders them with authenticated headers), native push token
-registration (needs EAS/FCM credentials), letters/feedback UI, archive import,
-and enabling zero-knowledge from the device.
+Checks: `pnpm --filter @withink/mobile test` (54 tests), plus `typecheck` and
+`lint`. Private images render inline in the editor: `media-images.ts`
+downloads each referenced URL with the session headers, shrinks it and hands
+the WebView a data URI, while the stored document keeps the canonical URL
+(the editor bundle also polyfills built-ins for old System WebViews). Known
+gaps: iOS verification, native push token registration (needs EAS/FCM
+credentials), letters/feedback UI, archive import, and enabling
+zero-knowledge from the device.

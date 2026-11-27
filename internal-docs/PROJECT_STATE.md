@@ -137,26 +137,38 @@ Active work:
 - Shipped: native media — `GET /api/media` (library + quota) and
   `DELETE /api/media/<key>`, a gallery with search/sort/list/grid, a
   lightbox, quota-aware uploads and reference-scrubbing deletes.
-- Still open on mobile: iOS verification, inline private images inside the
-  WebView editor (the gallery renders them with authenticated headers),
-  native push token registration (needs EAS/FCM credentials), letters and
-  feedback UI, archive import, and enabling zero-knowledge from the device.
-- Verified this slice: mobile 51 tests, editor 25 (bundle reproducible),
-  app 312, core 11, contracts 30, API client 15; typecheck and lint clean on
-  mobile/app. On the Android device: encrypted unlock (native PBKDF2), Today,
-  the archive (calendar, search UI, mood/edit/save), editor chrome (mood,
-  formatting sheet, link dialog, image picker/upload, autosave), insights,
-  flashbacks, notebooks + plan limit, settings (appearance gating, paper
-  scale, reminders save, cache size, export share sheet), biometric unlock
-  (enroll behind Face ID, Lock now, Face ID unlock), entry creation and
-  deletion (the server manifest lost the deleted date), and the media chain —
-  upload → authenticated private image render → delete with reference
-  scrubbing (server library returned to 0 files). The pass found
-  and fixed four defects: the mood row stealing editor height, the formatting
-  “more” button being clipped, the gallery not refreshing on focus, and media
-  deletion leaving a broken empty image node (now node-aware and unit-tested).
-  Biometric enrollment reaches the OS prompt; completing it needs the device
-  owner's face/fingerprint.
+- Shipped: inline private images in the editor WebView. The host resolves
+  each stored `/api/media` URL to a local preview (authenticated download →
+  1200px JPEG → data URI, with one retry for cold routes) and pushes it over
+  the bridge; a mobile-only image node view paints that source while the
+  document keeps the canonical `src`, so snapshots stay byte-identical to the
+  web. Both the insert path (local file) and the reopen path (download) were
+  verified on the emulator.
+- Shipped: WebView compatibility polyfills. esbuild downlevels syntax but
+  never built-ins; Android WebView is updated separately from the app, and
+  the Pixel 4 emulator still ships Chrome 91, where TipTap's
+  `Array.prototype.findLast` call threw on every transaction. The template now
+  defines `findLast`/`findLastIndex`/`at`/`Object.hasOwn` before the bundle.
+- Fixed: presigned uploads expired instantly in environments whose clock lags
+  the storage provider. The window moved from 60 seconds to one hour (the key
+  is a random UUID scoped to the user), and the mobile preview download
+  retries once so a cold route is not a permanent broken image.
+- Still open on mobile: iOS verification, native push token registration
+  (needs EAS/FCM credentials), letters and feedback UI, archive import, and
+  enabling zero-knowledge from the device.
+- Verified this slice: mobile 54 tests, editor 27 (bundle reproducible,
+  image-preview serialization and polyfill coverage), app 312, core 11,
+  contracts 30, API client 15; typecheck and lint clean on mobile/app. On the
+  Pixel 4 emulator (x86_64 build, Chrome 91 WebView): sign-in and encrypted
+  unlock (native PBKDF2), Today, archive (search, filters, calendar), editor
+  (typing, formatting sheet, image upload → inline render → reopen hydration),
+  insights, flashbacks, notebooks (rename, delete confirm, corrected limit
+  copy), settings and appearance, media gallery (uploaded images with
+  authenticated headers). The pass found and fixed the Chrome 91 `findLast`
+  crash, the broken inline-image rendering (plus its data-URI bridge), the
+  too-tight presign expiry, and the notebook limit copy.
+  Earlier device pass (Nothing Phone, arm64): mood-row height, clipped
+  formatting button, gallery focus refresh, node-aware media scrub.
 
 ---
 

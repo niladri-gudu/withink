@@ -35,7 +35,7 @@ Status values: `—` not started · `dev` implemented, unverified · `shipped` �
 | Journal read/write | shipped | dev | `@withink/core/sync-engine` | Read, decrypt and encrypted write verified on Android |
 | Autosave + offline queue | shipped | dev | `LocalStore` adapter | SQLite queue; failed pushes stay queued |
 | Sync (push/pull/prune) | shipped | dev | `planSyncPull` in `@withink/core` | Push + pull, foreground sync, sync-status screen, unlock-token renewal |
-| Entry editor | shipped | dev | `@withink/editor` | WebView TipTap using the shared factory; formatting sheet, link dialog, image upload, mood, notebook chip, word count, date gates, delete, conflict resolution. Verified on Android. Remaining: iOS, inline image rendering inside the WebView (the gallery renders private images with authenticated headers; the WebView shows a broken image until an image bridge lands) |
+| Entry editor | shipped | dev | `@withink/editor` | WebView TipTap using the shared factory; formatting sheet, link dialog, image upload, mood, notebook chip, word count, date gates, delete, conflict resolution. Private images render inline through a host-resolved preview (the document keeps the canonical URL) and the WebView ships polyfills for pre-Chrome-97 devices. Verified on Android (phone + Chrome 91 emulator). Remaining: iOS |
 | Timeline / search / filters | shipped | dev | `@withink/core/timeline` | Archive with search, mood/time/notebook filters, pagination, calendar, delete and move |
 | Calendar | shipped | dev | `@withink/core/date` | Month grid with mood cells and backfill gating |
 | Streaks | shipped | dev | `@withink/core/date` | Shared `computeCurrentStreak` |
@@ -43,7 +43,7 @@ Status values: `—` not started · `dev` implemented, unverified · `shipped` �
 | Letters (list/compose/seal/reveal) | shipped | — | `/api/letters` + `LettersService` | HTTP endpoints and typed client shipped; native UI not built |
 | Insights | shipped | dev | `@withink/core/insights` | Locally computed heatmap, mood, words, activity and monthly overview |
 | Flashbacks | shipped | dev | `@withink/core/flashback` | Local selection + device history; full text from the document cache |
-| Media (upload/view) | shipped | dev | Server + R2 | Gallery/list, search/sort, lightbox, quota and upload; `GET /api/media` + `DELETE /api/media/<key>` added; delete removes matching image nodes (unit-tested) and scrubs references. Verified on Android: upload, authenticated render, delete; remaining: inline WebView images |
+| Media (upload/view) | shipped | dev | Server + R2 | Gallery/list, search/sort, lightbox, quota and upload; `GET /api/media` + `DELETE /api/media/<key>` added; delete removes matching image nodes (unit-tested) and scrubs references. Presigned PUTs use a one-hour window for slow clients and clock drift. Verified on Android: upload, authenticated render, inline editor render, delete |
 | Export / import | shipped | dev | Server ZIP + local import | Export through the native share sheet; import remains web-only |
 | Settings (profile, appearance, data safety) | shipped | dev | `@withink/core` types + `/api/settings/*` | Profile, shared palette/font/accent catalogue, paper scale, sync & data, reminders, security, legal links, account deletion |
 | Notifications (web push) | shipped | — | Scheduler + VAPID | Web subscriptions unchanged |
