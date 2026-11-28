@@ -15,6 +15,11 @@ import {
 } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import {
+  importArchive,
+  pickArchive,
+  type ImportSummary,
+} from '@/lib/archive-import';
 import { diaryCache } from '@/lib/diary-cache';
 import { exportAndShare } from '@/lib/export-zip';
 import { formatBytes, getLocalCacheBytes } from '@/lib/local-cache';
@@ -41,7 +46,11 @@ export function DataSettingsScreen() {
 
   const [cacheBytes, setCacheBytes] = React.useState(0);
   const [lastExport, setLastExport] = React.useState<string | null>(null);
-  const [busy, setBusy] = React.useState<'export' | 'rebuild' | null>(null);
+  const [busy, setBusy] = React.useState<'export' | 'import' | 'rebuild' | null>(
+    null,
+  );
+  const [importResult, setImportResult] =
+    React.useState<ImportSummary | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const [notice, setNotice] = React.useState<string | null>(null);
   const [rebuildOpen, setRebuildOpen] = React.useState(false);
@@ -70,6 +79,42 @@ export function DataSettingsScreen() {
       setLastExport(stamp);
       await SecureStore.setItemAsync(LAST_EXPORT_KEY, stamp);
       setNotice('Export prepared and handed to the share sheet.');
+    } catch (err) {
+      setError(describeError(err));
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function runImport() {
+    if (!masterKey) {
+      setError('Unlock your diary to import.');
+      return;
+    }
+    setBusy('import');
+    setError(null);
+    setNotice(null);
+    setImportResult(null);
+    try {
+      const bytes = await pickArchive();
+      if (!bytes) return;
+      const summary = await importArchive(
+        bytes,
+        masterKey,
+        new Set(entries.map((entry) => entry.date)),
+      );
+      setImportResult(summary);
+      if (summary.imported > 0) {
+        bumpRevision();
+        await syncNow();
+        await refreshLocal();
+        await loadLocal();
+        setNotice(
+          `Imported ${summary.imported} ${summary.imported === 1 ? 'page' : 'pages'}.`,
+        );
+      } else {
+        setNotice('Nothing new to import.');
+      }
     } catch (err) {
       setError(describeError(err));
     } finally {
@@ -209,10 +254,25 @@ export function DataSettingsScreen() {
           />
         </Card>
 
-        <ThemedText type="caption" themeColor="textSecondary">
-          Importing an archive is not available in the native client yet; use
-          the web app to restore a Withink ZIP.
-        </ThemedText>
+        <SectionLabel>Import</SectionLabel>
+        <Card style={styles.gap}>
+          <ThemedText type="caption" themeColor="textSecondary">
+            Restore a Withink ZIP from another device. Dates already here are
+            skipped; imported pages are encrypted locally and queued for sync.
+          </ThemedText>
+          {importResult ? (
+            <ThemedText type="caption" themeColor="textSecondary">
+              Imported {importResult.imported} · Skipped {importResult.skipped}{' '}
+              · Failed {importResult.failed}
+            </ThemedText>
+          ) : null}
+          <Button
+            label="Choose archive…"
+            loading={busy === 'import'}
+            onPress={() => void runImport()}
+            variant="secondary"
+          />
+        </Card>
       </ScrollView>
 
       <ConfirmSheet

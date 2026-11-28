@@ -103,6 +103,23 @@ export interface EncryptionSettingsView {
   kdfIterations: number;
 }
 
+/** Decrypted page handed to a client that is migrating a legacy account. */
+export interface PlaintextMigrationEntry {
+  id: string;
+  date: string;
+  title: string;
+  contentHtml: string;
+  contentText: string;
+  contentJson: unknown;
+  mood: number | null;
+}
+
+export interface PlaintextMigrationView {
+  entries: PlaintextMigrationEntry[];
+  /** Rows an earlier interrupted run already rewrote to ciphertext. */
+  alreadyMigrated: number;
+}
+
 // ---------------------------------------------------------------------------
 // Letters to the future self
 // ---------------------------------------------------------------------------

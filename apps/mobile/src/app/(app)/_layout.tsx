@@ -5,14 +5,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppTabBar, TAB_BAR_HEIGHT } from '@/components/app-tab-bar';
 import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
-import { Button, EmptyState } from '@/components/ui';
+import { Button } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useDiary } from '@/providers/diary-provider';
+import { LegacyMigrationScreen } from '@/screens/legacy-migration';
 import { UnlockGate } from '@/screens/unlock';
 
-/** The editor is a fullscreen surface, like the web's dated entry route. */
-const FULLSCREEN = /^\/entries\/[^/]+$/;
+/** Editors are fullscreen surfaces, like the web's dated entry route. */
+const FULLSCREEN = /^(?:\/entries\/[^/]+|\/letters\/[^/]+)$/;
 
 export default function AppLayout() {
   const theme = useTheme();
@@ -73,23 +74,7 @@ export default function AppLayout() {
   }
 
   if (legacyAccount) {
-    return (
-      <Screen>
-        <View style={styles.center}>
-          <EmptyState
-            title="Legacy diary"
-            body="This account still uses the server-side diary format. Open it on the web to migrate to an encrypted diary, then come back."
-          />
-          <Button
-            label="Sign out"
-            onPress={() => {
-              void signOut();
-            }}
-            variant="secondary"
-          />
-        </View>
-      </Screen>
-    );
+    return <LegacyMigrationScreen />;
   }
 
   if (!masterKey) {

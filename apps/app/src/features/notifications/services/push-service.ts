@@ -229,9 +229,7 @@ export class PushService {
           failed += 1;
           if (ticket?.details?.error === "DeviceNotRegistered") {
             // The app was uninstalled or the token rotated: stop sending.
-            await ExpoPushTokenRepository.deleteById(device.id).catch(
-              () => {},
-            );
+            await ExpoPushTokenRepository.deleteById(device.id).catch(() => {});
           } else {
             logger.error("Expo push notification failed", undefined, {
               userId,

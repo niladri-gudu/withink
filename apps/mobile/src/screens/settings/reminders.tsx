@@ -16,6 +16,7 @@ import { Button, Card, Field, SectionLabel } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { createDiaryClient } from '@/lib/api';
+import { ensurePushRegistration, unregisterPushToken } from '@/lib/push';
 import { describeError } from '@/providers/diary-provider';
 
 const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
@@ -68,7 +69,30 @@ export function ReminderSettingsScreen() {
         letterAlertsEnabled: lettersEnabled,
         timezoneOffsetMinutes: new Date().getTimezoneOffset(),
       });
-      setNotice('Reminder preferences saved.');
+
+      if (!dailyEnabled && !lettersEnabled) {
+        await unregisterPushToken();
+        setNotice('Preferences saved. This device will not receive pushes.');
+        return;
+      }
+
+      const registration = await ensurePushRegistration();
+      if (registration === 'denied') {
+        setNotice(
+          'Preferences saved. Notifications are blocked in system settings.',
+        );
+        return;
+      }
+      if (registration === 'unsupported') {
+        setNotice('Preferences saved. This build has no push credentials yet.');
+        return;
+      }
+
+      const refreshed = await createDiaryClient()
+        .getNotificationSettings()
+        .catch(() => null);
+      if (refreshed) setView(refreshed);
+      setNotice('Preferences saved and this device registered for reminders.');
     } catch (err) {
       setError(describeError(err));
     } finally {
@@ -162,8 +186,8 @@ export function ReminderSettingsScreen() {
           </ThemedText>
           <ThemedText type="caption" themeColor="textSecondary">
             Reminders follow your local timezone and are sent by the server at
-            the chosen time. This install registers only after native push
-            credentials are configured for the build.
+            the chosen time. This device registers when the build has push
+            credentials; otherwise the preference is saved for the web app.
           </ThemedText>
         </Card>
       </ScrollView>

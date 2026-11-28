@@ -1,18 +1,15 @@
 import { timingSafeEqual } from "node:crypto";
-
 import { NextResponse, type NextRequest } from "next/server";
 
 import { env } from "@/config/env";
-import { NotificationScheduler } from "@/features/notifications/services/notification-scheduler";
 import { logger } from "@/server/logger";
+import { NotificationScheduler } from "@/features/notifications/services/notification-scheduler";
 
 function matches(provided: string | null, secret: string): boolean {
   if (!provided) return false;
   const actual = Buffer.from(provided);
   const expected = Buffer.from(secret);
-  return (
-    actual.length === expected.length && timingSafeEqual(actual, expected)
-  );
+  return actual.length === expected.length && timingSafeEqual(actual, expected);
 }
 
 /**
@@ -22,6 +19,13 @@ function matches(provided: string | null, secret: string): boolean {
  * convention); `?secret=` is accepted for manual/self-hosted schedulers.
  */
 export async function GET(request: NextRequest) {
+  // Explicit off-switch: reminders stay disabled in every environment until
+  // someone sets CRON_ENABLED=true deliberately. No vercel.json schedule is
+  // committed, so this also protects a manual/self-hosted scheduler.
+  if (!env.CRON_ENABLED) {
+    return NextResponse.json({ error: "Cron is disabled." }, { status: 503 });
+  }
+
   const secret = env.CRON_SECRET;
   if (!secret) {
     return NextResponse.json(

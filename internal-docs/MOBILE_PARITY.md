@@ -27,11 +27,11 @@ Status values: `—` not started · `dev` implemented, unverified · `shipped` �
 | Feature | Web | Expo | Shared owner | Notes |
 | --- | --- | --- | --- | --- |
 | Email/password auth | shipped | dev | `/api/auth/*` | Verified on Android (SecureStore session + bearer); Expo local profile persisted |
-| Google sign-in | shipped | — | `/api/auth/*` | System browser + deep link on native |
+| Google sign-in | shipped | dev | `/api/auth/*` | Button calls Better Auth `signIn.social`; the Expo plugin opens the system browser and returns via `withink://`. Needs the Google OAuth client callback registered for the native origin |
 | Apple sign-in | — | — | `/api/auth/*` | Required by App Store 4.8 |
 | Session / account hint | shipped | dev | `@withink/core` types, `withink-zk` cookie | SecureStore session + SQLite `LocalProfile` (encryption, lock, plan) |
 | Lock / unlock | shipped | dev | `LockService`, `/api/unlock` | Master-key unlock, auto-renewed 15-minute token, PIN lock settings and auto-lock; biometric unlock stores the key behind OS authentication. Android pass pending |
-| Client-side encryption | shipped | dev | `@withink/core` kdf/crypto contracts | Byte-identical native crypto; change-diary-password implemented on device. Enabling ZK or disabling it remains web-only (the native client opens encrypted diaries only) |
+| Client-side encryption | shipped | dev | `@withink/core` kdf/crypto contracts | Byte-identical native crypto; change-diary-password and a device-side legacy migration implemented. Migration uses `GET /api/mobile/migration/plaintext` (unlock-gated, legacy accounts only) and the idempotent enable action; disabling is not offered on any client |
 | Journal read/write | shipped | dev | `@withink/core/sync-engine` | Read, decrypt and encrypted write verified on Android |
 | Autosave + offline queue | shipped | dev | `LocalStore` adapter | SQLite queue; failed pushes stay queued |
 | Sync (push/pull/prune) | shipped | dev | `planSyncPull` in `@withink/core` | Push + pull, foreground sync, sync-status screen, unlock-token renewal |
@@ -40,17 +40,17 @@ Status values: `—` not started · `dev` implemented, unverified · `shipped` �
 | Calendar | shipped | dev | `@withink/core/date` | Month grid with mood cells and backfill gating |
 | Streaks | shipped | dev | `@withink/core/date` | Shared `computeCurrentStreak` |
 | Notebooks | shipped | dev | Sync API + `LocalStore` notebooks | CRUD, default notebook, move entry, plan limit |
-| Letters (list/compose/seal/reveal) | shipped | — | `/api/letters` + `LettersService` | HTTP endpoints and typed client shipped; native UI not built |
+| Letters (list/compose/seal/reveal) | shipped | dev | `/api/letters` + `LettersService` | Native shelf (arrived/pending/opened), composer on the shared TipTap WebView with month-grid date picker, ZK field encryption, plan gate, seal/reveal/delete. Verified on Android (Pixel 4): compose → autosave 200 → seal → reveal → delete, with `readAt` stamped. The compose-read route now returns the shared `LETTER_SEALED` code (regression test added). Remaining: iOS |
 | Insights | shipped | dev | `@withink/core/insights` | Locally computed heatmap, mood, words, activity and monthly overview |
 | Flashbacks | shipped | dev | `@withink/core/flashback` | Local selection + device history; full text from the document cache |
 | Media (upload/view) | shipped | dev | Server + R2 | Gallery/list, search/sort, lightbox, quota and upload; `GET /api/media` + `DELETE /api/media/<key>` added; delete removes matching image nodes (unit-tested) and scrubs references. Presigned PUTs use a one-hour window for slow clients and clock drift. Verified on Android: upload, authenticated render, inline editor render, delete |
-| Export / import | shipped | dev | Server ZIP + local import | Export through the native share sheet; import remains web-only |
+| Export / import | shipped | dev | Server ZIP + `@withink/core/archive` | Export through the native share sheet; import reads a ZIP with fflate + the document picker, parses paths/metadata with the shared core helpers, skips dates already present and queues encrypted pages. The parsing split remains duplicated on the web side until its importer adopts the core helpers |
 | Settings (profile, appearance, data safety) | shipped | dev | `@withink/core` types + `/api/settings/*` | Profile, shared palette/font/accent catalogue, paper scale, sync & data, reminders, security, legal links, account deletion |
 | Notifications (web push) | shipped | — | Scheduler + VAPID | Web subscriptions unchanged |
-| Notifications (native push) | n/a | dev | Scheduler + `ExpoPushToken` | Preference UI shipped; device-token registration needs EAS/FCM credentials and is not enabled in this build |
+| Notifications (native push) | n/a | dev | Scheduler + `ExpoPushToken` | Permission, channel and token registration implemented; saving reminders registers the device (or unregisters when both toggles are off), sign-out prunes the token. Returns `unsupported` until an EAS `projectId` and FCM credentials exist |
 | Billing (read-only summary) | shipped (checkout) | dev | `@withink/core/plans` | `/api/billing/summary` rendered read-only; no purchase UI |
 | Account deletion | shipped | dev | Server action + `/api/account/delete` | In-app deletion with password confirmation (store requirement) |
-| Feedback | shipped | — | Server action; HTTP pending | |
+| Feedback | shipped | dev | `/api/feedback` + `feedbackSchema` | Schema moved to `@withink/contracts`; the route wraps the same action (session, attachment ownership, hourly limit, team email); native form under Settings → Support |
 
 ## Parity enforcement points
 

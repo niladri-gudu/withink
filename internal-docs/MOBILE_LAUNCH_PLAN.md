@@ -198,7 +198,9 @@ Already shipped: manifest/icons/shortcuts, iOS standalone meta, service-worker p
 
 Remaining: Safari editor toolbar/keyboard overlap (`PROJECT_STATE.md:1017`), proactive
 backup nudge (E5 partial), local notebooks (E3 tail — also needed for native parity),
-cron schedule in `apps/app/vercel.json`, push env vars, device verification.
+push env vars, device verification. Scheduled reminders stay off deliberately: the
+cron route now requires `CRON_ENABLED=true` (default false) plus `CRON_SECRET`, and no
+schedule is committed to `vercel.json` in either environment.
 
 ### Phase 2 — Server surface for native (~3 weeks, overlaps mobile phases)
 
@@ -350,9 +352,17 @@ security, legal, sign-out, account deletion), lock settings with PIN,
 auto-lock and lock-on-background, diary-password rotation, biometric unlock
 (the key is stored in SecureStore behind OS authentication), sign-in password
 change, export through the share sheet, local cache size/rebuild, and the
-forgot/reset password flows. Still open: letters UI, feedback (HTTP endpoint
-pending), archive import, native push token registration, and enabling
-zero-knowledge from the device (the client opens encrypted diaries only).
+forgot/reset password flows. Letters are shipped too: shelf, composer,
+seal, reveal and delete, verified on Android against the encrypted test
+account. The remaining account gaps are implemented as well: feedback
+(contract + `POST /api/feedback` + native form), archive import (shared
+`@withink/core/archive` parsing, fflate + document picker, encrypted queue),
+native push registration (gated on an EAS project id), Google sign-in (Better
+Auth `signIn.social` via the Expo plugin), and device-side zero-knowledge
+migration for legacy accounts (unlock-gated plaintext route, idempotent enable
+action, in-app migration screen). Still open: iOS verification, EAS/FCM and
+Google OAuth native credential setup, Sign in with Apple, and importing media
+from an archive.
 
 ### Phase 6 — Store launch (~3 weeks)
 

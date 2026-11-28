@@ -223,6 +223,17 @@ export function SettingsHubScreen() {
           />
         </Card>
 
+        <SectionLabel>Support</SectionLabel>
+        <Card style={styles.list}>
+          <ListRow
+            detail="Report a bug or send an idea"
+            icon="chatbubble-ellipses-outline"
+            label="Feedback"
+            last
+            onPress={() => router.push('/feedback')}
+          />
+        </Card>
+
         <SectionLabel>Privacy & security</SectionLabel>
         <Card style={styles.list}>
           <ListRow

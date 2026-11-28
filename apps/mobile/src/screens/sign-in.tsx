@@ -29,6 +29,28 @@ export function SignInScreen() {
     return <Redirect href="/" />;
   }
 
+  async function continueWithGoogle() {
+    setError(null);
+    setBusy(true);
+    try {
+      // The Expo plugin opens the system browser and deep-links back to
+      // `withink://`; the session observer above redirects once it lands.
+      const result = await authClient.signIn.social({
+        provider: 'google',
+        callbackURL: '/',
+      });
+      if (result.error) {
+        setError(result.error.message ?? 'Could not start Google sign-in.');
+      }
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : 'Could not reach the server.',
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function submit() {
     setError(null);
     const address = email.trim();
@@ -118,6 +140,21 @@ export function SignInScreen() {
             onPress={() => void submit()}
           />
 
+          <ThemedText
+            type="small"
+            themeColor="textSecondary"
+            style={styles.divider}
+          >
+            or
+          </ThemedText>
+
+          <Button
+            disabled={busy}
+            label="Continue with Google"
+            onPress={() => void continueWithGoogle()}
+            variant="secondary"
+          />
+
           {mode === 'sign-in' ? (
             <Pressable
               accessibilityRole="button"
@@ -157,5 +194,6 @@ const styles = StyleSheet.create({
   brand: { letterSpacing: -1.5 },
   form: { gap: Spacing.three, paddingBottom: Spacing.five },
   linkRow: { alignItems: 'center' },
+  divider: { textAlign: 'center' },
   switch: { alignItems: 'center', paddingVertical: Spacing.two },
 });

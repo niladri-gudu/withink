@@ -20,7 +20,10 @@ import {
   type SaveLetterParsed,
 } from "../validation/letter-schema";
 
-export type { LetterFullRecord, LetterMetaRecord } from "../services/letter-service";
+export type {
+  LetterFullRecord,
+  LetterMetaRecord,
+} from "../services/letter-service";
 
 export async function listLettersAction(): Promise<{
   success: boolean;
@@ -48,13 +51,12 @@ export async function listLettersAction(): Promise<{
 }
 
 /** Owner-only full payload (ciphertext under ZK) for the composer/reader. */
-export async function getLetterForComposeAction(
-  letterId: string,
-): Promise<{
+export async function getLetterForComposeAction(letterId: string): Promise<{
   success: boolean;
   data?: Awaited<ReturnType<typeof LettersService.getLetter>>;
   today?: string;
   error?: string;
+  code?: "LETTER_SEALED";
 }> {
   try {
     const session = await getRequestSession();
@@ -73,6 +75,11 @@ export async function getLetterForComposeAction(
     );
     return { success: true, data: letter, today };
   } catch (err) {
+    // The reader cannot tell a missing letter from a resting one by copy
+    // alone; both clients branch on the rule code, so preserve it here.
+    if (err instanceof LetterSealedError) {
+      return { success: false, error: err.safeMessage, code: err.kind };
+    }
     const appError = handleError(err);
     return { success: false, error: appError.safeMessage };
   }
@@ -83,9 +90,7 @@ export async function getLetterForComposeAction(
  * Capacity is asserted server-side at the creation moment only — editing
  * existing active letters is grandfathered against any plan change.
  */
-export async function upsertLetterAction(
-  input: unknown,
-): Promise<{
+export async function upsertLetterAction(input: unknown): Promise<{
   success: boolean;
   data?: Awaited<ReturnType<typeof LettersService.upsertLetter>>;
   error?: string;
@@ -105,8 +110,9 @@ export async function upsertLetterAction(
 
     // Zero-knowledge accounts may only persist ciphertext (the client is
     // untrusted — never embed plaintext in an encrypted letter).
-    const encryptionSettings =
-      await EncryptionSettingsRepository.getSettings(session.user.id);
+    const encryptionSettings = await EncryptionSettingsRepository.getSettings(
+      session.user.id,
+    );
     if (encryptionSettings?.isClientEncrypted) {
       const contentFields = [
         ["title", validated.title],
@@ -159,9 +165,7 @@ export async function upsertLetterAction(
   }
 }
 
-export async function sealLetterAction(
-  letterId: string,
-): Promise<{
+export async function sealLetterAction(letterId: string): Promise<{
   success: boolean;
   data?: Awaited<ReturnType<typeof LettersService.sealLetter>>;
   error?: string;
@@ -227,9 +231,7 @@ export async function deleteLetterAction(
 }
 
 /** Opening a sealed letter early is refused server-side, code for the toast. */
-export async function revealLetterAction(
-  letterId: string,
-): Promise<{
+export async function revealLetterAction(letterId: string): Promise<{
   success: boolean;
   data?: Awaited<ReturnType<typeof LettersService.revealLetter>>;
   error?: string;

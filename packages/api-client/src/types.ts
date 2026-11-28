@@ -3,6 +3,7 @@ import type {
   BillingSummaryView,
   EncryptionMutationRequest,
   EncryptionSettingsView,
+  FeedbackRequest,
   LetterFull,
   LetterMeta,
   LockSettingsView,
@@ -12,6 +13,7 @@ import type {
   MobileBootstrap,
   NotificationSettingsRequest,
   NotificationSettingsView,
+  PlaintextMigrationView,
   RegisterPushDeviceRequest,
   SaveLetterRequest,
   UnlockResponse,
@@ -34,6 +36,7 @@ export type {
   BillingSummaryView,
   EncryptionMutationRequest,
   EncryptionSettingsView,
+  FeedbackRequest,
   LetterFull,
   LetterMeta,
   LockSettingsView,
@@ -44,6 +47,7 @@ export type {
   MediaUploadResponse,
   NotificationSettingsRequest,
   NotificationSettingsView,
+  PlaintextMigrationView,
   RegisterPushDeviceRequest,
   SaveLetterRequest,
   SyncDeleteRequest,
@@ -106,6 +110,8 @@ export interface WithinkApiClient {
   getEncryptionSettings(): Promise<EncryptionSettingsView>;
   /** Enables ZK (migration) or re-wraps the master key with a new password. */
   mutateEncryption(input: EncryptionMutationRequest): Promise<void>;
+  /** Decrypted pages for a device-driven ZK migration (legacy accounts only). */
+  getMigrationPlaintext(): Promise<PlaintextMigrationView>;
 
   getLetters(): Promise<{ letters: LetterMeta[]; today: string }>;
   getLetter(id: string): Promise<{ letter: LetterFull; today: string }>;
@@ -135,6 +141,9 @@ export interface WithinkApiClient {
   getBillingSummary(): Promise<BillingSummaryView>;
   /** Irreversible; credential accounts must supply the login password. */
   deleteAccount(password?: string): Promise<void>;
+
+  /** Sends feedback to the team; the hourly per-user limit throws `RATE_LIMITED`. */
+  submitFeedback(input: FeedbackRequest): Promise<void>;
 }
 
 export class ApiError extends Error {

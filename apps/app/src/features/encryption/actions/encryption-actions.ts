@@ -84,6 +84,8 @@ export async function getPlaintextEntriesForMigrationAction(): Promise<{
     contentJson: unknown;
     mood: number | null;
   }>;
+  /** Rows a previous interrupted enable already rewrote to ciphertext. */
+  alreadyMigrated?: number;
   error?: string;
 }> {
   try {
@@ -112,8 +114,18 @@ export async function getPlaintextEntriesForMigrationAction(): Promise<{
     // Fetch all entries for the user
     const entries = await EntryRepository.getAllEntries(session.user.id);
 
+    // A previous enable attempt may have rewritten some rows before failing
+    // (the flag only flips after every write succeeds). Those rows are already
+    // ciphertext: skip them so a retry never double-encrypts or wipes them.
+    const pending = entries.filter(
+      (entry) =>
+        !isClientCiphertext(entry.contentHtml) &&
+        !isClientCiphertext(entry.contentText),
+    );
+    const alreadyMigrated = entries.length - pending.length;
+
     // Decrypt on the server using the static server key
-    const decryptedEntries = entries.map((entry) => {
+    const decryptedEntries = pending.map((entry) => {
       const contentHtml = (safeDecrypt(entry.contentHtml) as string) || "";
       const contentText = (safeDecrypt(entry.contentText) as string) || "";
       const decryptedJsonStr = (safeDecrypt(entry.contentJson) as string) || "";
@@ -137,7 +149,7 @@ export async function getPlaintextEntriesForMigrationAction(): Promise<{
       };
     });
 
-    return { success: true, entries: decryptedEntries };
+    return { success: true, entries: decryptedEntries, alreadyMigrated };
   } catch (err) {
     const appError = handleError(err);
     return { success: false, error: appError.safeMessage };
@@ -221,12 +233,17 @@ export async function enableClientEncryptionAction(
       return { success: false, error: "Invalid verification ciphertext." };
     }
 
-    // Verify every entry was migrated before enabling zero-knowledge
-    const totalEntries = await (EntryModel as Model<IEntry>).countDocuments({
-      userId: session.user.id,
-    });
+    // Verify every still-plaintext entry was migrated before enabling. Rows
+    // rewritten by an interrupted earlier run are already ciphertext and are
+    // excluded, so retrying is safe rather than data-destroying.
+    const plaintextEntries = await (EntryModel as Model<IEntry>).countDocuments(
+      {
+        userId: session.user.id,
+        contentHtml: { $not: /^[0-9a-f]{24}:[0-9a-f]{32,}$/i },
+      },
+    );
     const validEntries = parsedEntries.data;
-    if (validEntries.length !== totalEntries) {
+    if (validEntries.length !== plaintextEntries) {
       return {
         success: false,
         error: "Some entries were not migrated. Please try again.",
@@ -261,7 +278,7 @@ export async function enableClientEncryptionAction(
       migratedCount += result.matchedCount || 0;
     }
 
-    if (migratedCount !== totalEntries) {
+    if (migratedCount !== plaintextEntries) {
       return {
         success: false,
         error: "Could not verify that all entries were migrated.",

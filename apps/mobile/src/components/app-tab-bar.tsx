@@ -29,6 +29,7 @@ const PRIMARY = [
 
 const SECONDARY = [
   { label: 'Notebooks', href: '/notebooks', icon: 'library-outline' },
+  { label: 'Letters', href: '/letters', icon: 'mail-outline' },
   { label: 'Flashbacks', href: '/flashbacks', icon: 'sparkles-outline' },
   { label: 'Media', href: '/media', icon: 'images-outline' },
   { label: 'Settings', href: '/settings', icon: 'settings-outline' },

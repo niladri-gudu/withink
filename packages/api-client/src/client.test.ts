@@ -296,6 +296,28 @@ describe("createApiClient", () => {
     expect(init?.method).toBe("POST");
   });
 
+  it("submits feedback to the shared endpoint", async () => {
+    const fetchImpl = makeFetch(() => jsonResponse({ ok: true }));
+    const client = createApiClient({
+      baseUrl: "https://app.test",
+      fetch: fetchImpl,
+    });
+
+    await client.submitFeedback({
+      category: "bug",
+      subject: "Sync stalls",
+      message: "The queue stops after a long offline stretch.",
+    });
+
+    const [url, init] = fetchImpl.mock.calls[0] ?? [];
+    expect(url).toBe("https://app.test/api/feedback");
+    expect(init?.method).toBe("POST");
+    expect(JSON.parse(String(init?.body))).toMatchObject({
+      category: "bug",
+      subject: "Sync stalls",
+    });
+  });
+
   it("registers and unregisters an Expo push device", async () => {
     const fetchImpl = makeFetch(() => jsonResponse({ ok: true }));
     const client = createApiClient({

@@ -2,6 +2,7 @@ import type {
   ApiErrorBody,
   BillingSummaryView,
   EncryptionSettingsView,
+  FeedbackRequest,
   LetterFull,
   LetterMeta,
   LockSettingsView,
@@ -10,6 +11,7 @@ import type {
   MediaUploadResponse,
   MobileBootstrap,
   NotificationSettingsView,
+  PlaintextMigrationView,
   UnlockResponse,
 } from "@withink/contracts";
 import type {
@@ -311,10 +313,23 @@ export function createApiClient(options: ApiClientOptions): WithinkApiClient {
       return await request<BillingSummaryView>("/api/billing/summary");
     },
 
+    async getMigrationPlaintext() {
+      return await request<PlaintextMigrationView>(
+        "/api/mobile/migration/plaintext",
+      );
+    },
+
     async deleteAccount(password?: string) {
       await request("/api/account/delete", {
         method: "POST",
         body: JSON.stringify(password ? { password } : {}),
+      });
+    },
+
+    async submitFeedback(input: FeedbackRequest) {
+      await request("/api/feedback", {
+        method: "POST",
+        body: JSON.stringify(input),
       });
     },
   };

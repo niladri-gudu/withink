@@ -122,11 +122,17 @@ adb reverse tcp:8082 tcp:8082
 npx expo start --port 8082
 ```
 
-Checks: `pnpm --filter @withink/mobile test` (54 tests), plus `typecheck` and
+Checks: `pnpm --filter @withink/mobile test` (58 tests), plus `typecheck` and
 `lint`. Private images render inline in the editor: `media-images.ts`
 downloads each referenced URL with the session headers, shrinks it and hands
 the WebView a data URI, while the stored document keeps the canonical URL
-(the editor bundle also polyfills built-ins for old System WebViews). Known
-gaps: iOS verification, native push token registration (needs EAS/FCM
-credentials), letters/feedback UI, archive import, and enabling
-zero-knowledge from the device.
+(the editor bundle also polyfills built-ins for old System WebViews). Letters
+live under More → Letters: a shelf split into arrived/pending/opened, a
+composer on the shared TipTap WebView, and seal/reveal/delete against
+`/api/letters` (image insertion included). Settings → Support sends feedback
+through `POST /api/feedback`; Sync & data imports a Withink ZIP; Reminders
+registers this install's Expo push token once an EAS project id exists; the
+sign-in screen offers Google; and a legacy (server-encrypted) account is
+migrated to zero-knowledge in-app instead of being sent to the web. Known gaps:
+iOS verification, EAS/FCM plus Google OAuth native credentials, Sign in with
+Apple (store requirement), and importing media from an archive.

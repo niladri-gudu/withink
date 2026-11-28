@@ -59,6 +59,14 @@ const serverEnvSchema = z.object({
   VAPID_PRIVATE_KEY: z.string().min(1).optional(),
   VAPID_SUBJECT: z.string().min(1).optional(),
 
+  // Scheduled reminders are opt-in twice over: this flag (false by default in
+  // every environment) and the bearer secret below. No cron schedule is
+  // committed to vercel.json; the route is 503 until both are set on purpose.
+  CRON_ENABLED: z
+    .enum(["true", "false"])
+    .default("false")
+    .transform((value) => value === "true"),
+
   // Bearer secret for /api/cron/notifications. The route returns 503 when unset.
   CRON_SECRET: z.string().min(1).optional(),
 });

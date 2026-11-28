@@ -1,5 +1,7 @@
 "use server";
 
+import type { ApiErrorCode } from "@withink/contracts";
+
 import { env } from "@/config/env";
 import { LIMITS } from "@/constants/limits";
 import { getRequestSession } from "@/lib/request-cache";
@@ -13,7 +15,12 @@ import {
   type FeedbackInput,
 } from "../validation/feedback-schema";
 
-export type SubmitFeedbackResult = { success: boolean; error?: string };
+export type SubmitFeedbackResult = {
+  success: boolean;
+  error?: string;
+  /** Wire code for HTTP callers; the web form only reads `error`. */
+  code?: ApiErrorCode;
+};
 
 /**
  * Returns true only when `imageUrl` points at this user's own feedback uploads
@@ -36,6 +43,7 @@ export async function submitFeedbackAction(
       return {
         success: false,
         error: "You must be signed in to send feedback.",
+        code: "UNAUTHORIZED",
       };
     }
 
@@ -46,7 +54,7 @@ export async function submitFeedbackAction(
     if (!parsed.success) {
       const first =
         parsed.error.issues[0]?.message ?? "Please check your submission.";
-      return { success: false, error: first };
+      return { success: false, error: first, code: "INVALID_REQUEST" };
     }
 
     const { category, subject, message, imageUrl } = parsed.data;
@@ -56,6 +64,7 @@ export async function submitFeedbackAction(
       return {
         success: false,
         error: "That attachment could not be verified.",
+        code: "BUSINESS_RULE",
       };
     }
 
@@ -69,6 +78,7 @@ export async function submitFeedbackAction(
         success: false,
         error:
           "You've sent a lot of feedback recently. Please try again later.",
+        code: "RATE_LIMITED",
       };
     }
 
@@ -89,6 +99,6 @@ export async function submitFeedbackAction(
       "Feedback submission failed",
       err instanceof Error ? err : undefined,
     );
-    return { success: false, error: appError.safeMessage };
+    return { success: false, error: appError.safeMessage, code: "INTERNAL" };
   }
 }

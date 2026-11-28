@@ -26,6 +26,7 @@ import {
 import { mobileLocalStore } from '@/lib/local-store';
 import { clearMasterKey, setMasterKey } from '@/lib/master-key';
 import { buildLocalProfile } from '@/lib/profile';
+import { unregisterPushToken } from '@/lib/push';
 import { clearUnlockToken, setUnlockToken } from '@/lib/session-state';
 
 export type SyncState = 'idle' | 'syncing' | 'offline';
@@ -64,6 +65,8 @@ interface DiaryContextValue {
   biometrics: BiometricAvailability | null;
   biometricEnrolled: boolean;
   unlockWithPassword: (password: string) => Promise<void>;
+  /** Adopts the key created while migrating a legacy account in-app. */
+  completeMigration: (key: MasterKey) => Promise<void>;
   unlockWithBiometrics: () => Promise<void>;
   enrollBiometrics: () => Promise<void>;
   disableBiometrics: () => Promise<void>;
@@ -295,6 +298,22 @@ export function DiaryProvider({ children }: { children: React.ReactNode }) {
     [bootstrap, finishUnlock],
   );
 
+  /**
+   * Adopts a master key the device just created during an in-app legacy
+   * migration: binds the unlock token and loads the freshly encrypted journal.
+   * (`unlockWithPassword` cannot be used here — its bootstrap predates the
+   * enable call.)
+   */
+  const completeMigration = React.useCallback(
+    async (key: MasterKey) => {
+      const proof = await deriveUnlockProofHex(key);
+      const result = await createDiaryClient().unlock(proof);
+      setUnlockToken(result.token);
+      await finishUnlock(key);
+    },
+    [finishUnlock],
+  );
+
   const unlockWithBiometrics = React.useCallback(async () => {
     const key = await loadBiometricKey();
     const proof = await deriveUnlockProofHex(key);
@@ -333,6 +352,9 @@ export function DiaryProvider({ children }: { children: React.ReactNode }) {
     setNotebooks([]);
     setProfile(null);
     setBootstrap(null);
+    // Drop this install's push token while the session still authorizes the
+    // request, so reminders never land on a signed-out device.
+    await unregisterPushToken();
     // The encrypted cache is account-scoped only by convention; purge it so a
     // different account on the same device never sees another user's pages.
     await mobileLocalStore.clear();
@@ -419,6 +441,7 @@ export function DiaryProvider({ children }: { children: React.ReactNode }) {
       biometrics,
       biometricEnrolled,
       unlockWithPassword,
+      completeMigration,
       unlockWithBiometrics,
       enrollBiometrics,
       disableBiometrics,
@@ -451,6 +474,7 @@ export function DiaryProvider({ children }: { children: React.ReactNode }) {
       biometrics,
       biometricEnrolled,
       unlockWithPassword,
+      completeMigration,
       unlockWithBiometrics,
       enrollBiometrics,
       disableBiometrics,
