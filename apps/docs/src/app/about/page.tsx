@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 
-import { Button } from "@withink/ui/button";
+import { ReadingPage } from "@/components/reading-shell";
+import { SiteFooter } from "@/components/site-footer";
+import { SiteHeader } from "@/components/site-header";
 
 export const metadata: Metadata = {
-  title: "About Us - withink.",
+  title: "About",
   description:
-    "Learn about the mission, values, and story behind withink., your digital diary.",
+    "The mission behind withink.: a private, client-side encrypted daily journal, built for the quiet habit of showing up.",
   alternates: {
     canonical: "/about",
   },
@@ -14,85 +15,55 @@ export const metadata: Metadata = {
 
 export default function AboutPage() {
   return (
-    <div className="animate-in fade-in mx-auto flex max-w-2xl flex-1 flex-col space-y-8 px-6 py-10 duration-300 md:py-16">
-      <div className="space-y-4">
-        <Link
-          href="/"
-          className="text-muted-foreground/80 hover:text-foreground focus-visible:ring-ring inline-flex min-h-11 items-center rounded p-0.5 px-2 -ml-2 font-mono text-xs tracking-widest uppercase transition-colors focus-visible:ring-1"
-        >
-          ← Back to Diary
-        </Link>
-        <h1 className="text-h1 text-foreground font-serif font-bold tracking-tight">
-          Our Story
-        </h1>
-        <p className="text-subtitle text-muted-foreground font-sans leading-relaxed">
-          Creating a quiet library in a world full of noise.
-        </p>
-      </div>
-
-      <div className="text-body-small text-muted-foreground space-y-6 font-sans leading-relaxed">
+    <div className="flex min-h-screen flex-col">
+      <SiteHeader />
+      <ReadingPage
+        eyebrow="The Field Ledger"
+        title="Our story"
+        intro={<p>Creating a quiet library in a world full of noise.</p>}
+      >
         <p>
-          At <strong>withink.</strong>, we believe your personal reflections
-          deserve a diary. In an era dominated by instant notifications, data
-          harvesting, and scrollable feeds, the simple act of taking a pen to
-          paper (or fingers to keys) has been lost to the noise.
+          At <strong className="text-foreground">withink.</strong>, we believe
+          your personal reflections deserve a diary. In an era of instant
+          notifications, data harvesting, and scrollable feeds, the simple act
+          of taking a pen to paper (or fingers to keys) gets lost in the noise.
         </p>
         <p>
-          We set out to recreate the peaceful atmosphere of a silent library—a
-          digital journal constructed with warmth, intent, and complete privacy.
+          We set out to recreate the peaceful atmosphere of a quiet desk — a
+          digital journal built with warmth, intent, and privacy that is
+          structural rather than a promise.
         </p>
 
-        <h2 className="text-foreground pt-4 font-serif text-xl font-bold">
-          The Three Pillars of withink.
-        </h2>
+        <h2>The three pillars of withink.</h2>
 
-        <div className="border-primary/20 space-y-4 border-l-2 py-1 pl-4">
+        <div className="border-accent/60 space-y-4 border-l-2 py-1 pl-4">
           <div>
-            <h3 className="text-foreground font-serif text-base font-bold">
-              1. Absolute Privacy
-            </h3>
-            <p className="text-sm">
-              We encrypt your entries server-side. Your thoughts are yours
-              alone—free from trackers, ads, or data monetisation.
+            <h3>1. Absolute privacy</h3>
+            <p className="mt-1">
+              Entries are encrypted in your browser, before anything leaves your
+              device. Your Diary Password derives the key; the server only ever
+              stores ciphertext and cannot read your pages.
             </p>
           </div>
           <div>
-            <h3 className="text-foreground font-serif text-base font-bold">
-              2. Thoughtful Design
-            </h3>
-            <p className="text-sm">
-              Inspired by Sand Light and Moon Dark themes, every element has
-              been tailored to soothe the eyes and encourage the flow of
-              thoughts.
+            <h3>2. Thoughtful design</h3>
+            <p className="mt-1">
+              Inspired by Sand Light and Moon Dark themes, every element is
+              tuned to soothe the eyes and let the words flow.
             </p>
           </div>
           <div>
-            <h3 className="text-foreground font-serif text-base font-bold">
-              3. Gentle Reflections
-            </h3>
-            <p className="text-sm">
-              We resurface flashbacks slowly and intentionally. There are no
-              gamified streaks or social loops—just space to observe your
-              growth.
+            <h3>3. Gentle reflections</h3>
+            <p className="mt-1">
+              Flashbacks resurface slowly and intentionally. There are no social
+              loops — just space to observe your growth.
             </p>
           </div>
         </div>
 
-        <p className="pt-4">
-          Thank you for choosing to write with us. Welcome to your digital
-          diary.
-        </p>
-      </div>
-
-      <div className="border-border flex items-center justify-between border-t pt-6">
-        <Button
-          variant="ghost"
-          asChild
-          className="focus-visible:ring-ring h-11 focus-visible:ring-2 md:h-10"
-        >
-          <Link href="/">Back to Diary</Link>
-        </Button>
-      </div>
+        <p>Thank you for choosing to write with us. Welcome to your diary.</p>
+      </ReadingPage>
+      <SiteFooter />
     </div>
   );
 }

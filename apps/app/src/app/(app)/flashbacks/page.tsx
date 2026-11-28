@@ -7,6 +7,7 @@ import {
   getRequestSession,
 } from "@/lib/request-cache";
 import { getViewerToday } from "@/lib/viewer-today";
+import { logger } from "@/server/logger";
 import { FlashbackView } from "@/features/flashbacks/components/flashback-view";
 import { FlashbackViewLocal } from "@/features/flashbacks/components/flashback-view-local";
 import { FlashbackService } from "@/features/flashbacks/services/flashback-service";
@@ -34,16 +35,31 @@ export default async function FlashbacksPage() {
     return <FlashbackViewLocal localToday={today} />;
   }
 
-  const flashback = await FlashbackService.getFlashbackForToday(
-    session.user.id,
-    today,
-  );
+  // The read can fail (cache/db hiccup). The page itself must still render, so
+  // the failure becomes a visible, retryable error state — logged, never
+  // swallowed.
+  let flashback: Awaited<
+    ReturnType<typeof FlashbackService.getFlashbackForToday>
+  > = null;
+  let loadError = false;
+  try {
+    flashback = await FlashbackService.getFlashbackForToday(
+      session.user.id,
+      today,
+    );
+  } catch (error) {
+    loadError = true;
+    logger.error("Failed to load today's flashback", error as Error, {
+      userId: session.user.id,
+    });
+  }
 
   return (
     <FlashbackView
       initialEntry={flashback ? flashback.entry : null}
       initialLabel={flashback ? flashback.label : ""}
       localToday={today}
+      initialError={loadError}
     />
   );
 }

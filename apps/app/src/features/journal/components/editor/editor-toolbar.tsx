@@ -31,6 +31,7 @@ import {
 import { toast } from "sonner";
 
 import { UpgradeDialog } from "@/features/billing/components/upgrade-dialog";
+
 import { useFormatState } from "./format-state";
 import { FormattingSheet, type FormatAction } from "./formatting-sheet";
 import { LinkDialog } from "./link-dialog";
@@ -57,13 +58,21 @@ function generateTempId(): string {
 function ToolbarButton({
   onClick,
   active,
+  pressed,
   disabled,
   title,
   className,
   children,
 }: {
   onClick: () => void;
+  /** Visual "on" state (accent tint). */
   active?: boolean;
+  /**
+   * Pressed-toggle semantics. Pass `true` on formatting toggles so assistive
+   * tech announces the on/off state; omit it entirely for action buttons
+   * (undo, link, clear, image…) so they are never read as toggles.
+   */
+  pressed?: boolean;
   disabled?: boolean;
   title?: string;
   className?: string;
@@ -73,6 +82,7 @@ function ToolbarButton({
     <Button
       variant="ghost"
       size="icon"
+      aria-pressed={pressed}
       onMouseDown={(e) => {
         e.preventDefault();
       }}
@@ -85,7 +95,7 @@ function ToolbarButton({
       disabled={disabled}
       title={title}
       aria-label={title}
-      className={`h-10 w-10 shrink-0 cursor-pointer touch-manipulation rounded-lg p-0 transition-all sm:h-9 sm:w-9 sm:rounded-md ${
+      className={`h-11 w-11 shrink-0 cursor-pointer touch-manipulation rounded-lg p-0 transition-all sm:h-9 sm:w-9 sm:rounded-md ${
         active
           ? "bg-accent/20 text-foreground border-accent/40 border font-semibold shadow-xs"
           : "text-muted-foreground hover:text-foreground hover:bg-muted/70 active:bg-muted"
@@ -319,11 +329,13 @@ export function EditorToolbar({
       <div
         role="toolbar"
         aria-label="Formatting options"
-        className="flex w-full min-w-0 items-center gap-1 px-1 py-1"
+        className="flex w-full min-w-0 items-center gap-1 px-1 py-1 pl-0 md:pl-1"
       >
-        {/* Primary cluster. Scrolls only as a last-resort safety net on
-            sub-360px screens; at the 375px baseline everything fits. */}
-        <div className="no-scrollbar flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto">
+        {/* Primary cluster. Phone padding is tightened so the undo…checklist
+            run (8 × 44px) + the "+" trigger + count fit inside 375px; the
+            scroll remains a last-resort safety net on narrower screens, with
+            the strip chip pinned outside it so overflow is always reachable. */}
+        <div className="no-scrollbar flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto md:gap-1">
           <ToolbarButton
             onClick={() => editor.chain().focus().undo().run()}
             disabled={!state.canUndo}
@@ -344,6 +356,7 @@ export function EditorToolbar({
           <ToolbarButton
             onClick={() => editor.chain().focus().toggleBold().run()}
             active={state.isBold}
+            pressed={state.isBold}
             title="Bold (Ctrl+B)"
           >
             <Bold className="h-4 w-4" />
@@ -351,6 +364,7 @@ export function EditorToolbar({
           <ToolbarButton
             onClick={() => editor.chain().focus().toggleItalic().run()}
             active={state.isItalic}
+            pressed={state.isItalic}
             title="Italic (Ctrl+I)"
           >
             <Italic className="h-4 w-4" />
@@ -358,6 +372,7 @@ export function EditorToolbar({
           <ToolbarButton
             onClick={() => editor.chain().focus().toggleUnderline().run()}
             active={state.isUnderline}
+            pressed={state.isUnderline}
             title="Underline (Ctrl+U)"
           >
             <Underline className="h-4 w-4" />
@@ -368,6 +383,7 @@ export function EditorToolbar({
           <ToolbarButton
             onClick={() => editor.chain().focus().toggleBulletList().run()}
             active={state.isBulletList}
+            pressed={state.isBulletList}
             title="Bullet list"
           >
             <List className="h-4 w-4" />
@@ -375,6 +391,7 @@ export function EditorToolbar({
           <ToolbarButton
             onClick={() => editor.chain().focus().toggleTaskList().run()}
             active={state.isTaskList}
+            pressed={state.isTaskList}
             title="Checklist / Task list"
           >
             <SquareCheck className="h-4 w-4" />
@@ -389,6 +406,7 @@ export function EditorToolbar({
                 editor.chain().focus().toggleHeading({ level: 1 }).run()
               }
               active={state.isH1}
+              pressed={state.isH1}
               title="Heading 1"
             >
               <Heading1 className="h-4 w-4" />
@@ -398,6 +416,7 @@ export function EditorToolbar({
                 editor.chain().focus().toggleHeading({ level: 2 }).run()
               }
               active={state.isH2}
+              pressed={state.isH2}
               title="Heading 2"
             >
               <Heading2 className="h-4 w-4" />
@@ -407,6 +426,7 @@ export function EditorToolbar({
                 editor.chain().focus().toggleHeading({ level: 3 }).run()
               }
               active={state.isH3}
+              pressed={state.isH3}
               title="Heading 3"
             >
               <Heading3 className="h-4 w-4" />
@@ -417,6 +437,7 @@ export function EditorToolbar({
             <ToolbarButton
               onClick={() => editor.chain().focus().toggleStrike().run()}
               active={state.isStrike}
+              pressed={state.isStrike}
               title="Strikethrough"
             >
               <Strikethrough className="h-4 w-4" />
@@ -424,6 +445,7 @@ export function EditorToolbar({
             <ToolbarButton
               onClick={() => editor.chain().focus().toggleHighlight().run()}
               active={state.isHighlight}
+              pressed={state.isHighlight}
               title="Highlight text"
             >
               <Highlighter className="h-4 w-4" />
@@ -431,6 +453,7 @@ export function EditorToolbar({
             <ToolbarButton
               onClick={() => editor.chain().focus().toggleOrderedList().run()}
               active={state.isOrderedList}
+              pressed={state.isOrderedList}
               title="Numbered list"
             >
               <ListOrdered className="h-4 w-4" />
@@ -438,6 +461,7 @@ export function EditorToolbar({
             <ToolbarButton
               onClick={() => editor.chain().focus().toggleBlockquote().run()}
               active={state.isBlockquote}
+              pressed={state.isBlockquote}
               title="Blockquote"
             >
               <Quote className="h-4 w-4" />
@@ -445,6 +469,7 @@ export function EditorToolbar({
             <ToolbarButton
               onClick={() => editor.chain().focus().toggleCodeBlock().run()}
               active={state.isCodeBlock || state.isCode}
+              pressed={state.isCodeBlock || state.isCode}
               title="Code block"
             >
               <Code className="h-4 w-4" />
@@ -489,6 +514,7 @@ export function EditorToolbar({
               <ToolbarButton
                 onClick={onToggleTypewriter}
                 active={typewriterEnabled}
+                pressed={typewriterEnabled}
                 title={
                   typewriterEnabled
                     ? "Mute Typewriter Clicks"
@@ -505,6 +531,7 @@ export function EditorToolbar({
             <ToolbarButton
               onClick={cycleAmbient}
               active={ambientSound !== "none"}
+              pressed={ambientSound !== "none"}
               title="Change Ambience (Rain/Library/Forest)"
             >
               <Headphones

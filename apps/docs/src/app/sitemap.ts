@@ -1,38 +1,49 @@
 import type { MetadataRoute } from "next";
 
-const SITE_URL =
-  process.env.IS_PROD === "true"
-    ? "https://withink.me"
-    : "http://localhost:3001";
+import { siteUrl } from "@/config/env";
 
 export default function sitemap(): MetadataRoute.Sitemap {
+  const base = siteUrl();
+
   return [
     {
-      url: `${SITE_URL}/`,
+      url: `${base}/`,
       lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 1,
     },
     {
-      url: `${SITE_URL}/about`,
+      url: `${base}/about`,
       lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 0.7,
     },
     {
-      url: `${SITE_URL}/contact`,
+      url: `${base}/pricing`,
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.6,
+    },
+    {
+      url: `${base}/faq`,
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.6,
+    },
+    {
+      url: `${base}/contact`,
       lastModified: new Date(),
       changeFrequency: "yearly",
       priority: 0.4,
     },
     {
-      url: `${SITE_URL}/privacy`,
+      url: `${base}/privacy`,
       lastModified: new Date(),
       changeFrequency: "yearly",
       priority: 0.3,
     },
     {
-      url: `${SITE_URL}/terms`,
+      url: `${base}/terms`,
       lastModified: new Date(),
       changeFrequency: "yearly",
       priority: 0.3,

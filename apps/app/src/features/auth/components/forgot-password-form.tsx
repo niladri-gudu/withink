@@ -94,7 +94,7 @@ export function ForgotPasswordForm() {
         <>
           <div className="space-y-1.5 text-center sm:text-left">
             <h1 className="text-h2 text-foreground font-serif font-bold">
-              Forgot secret.
+              Forgot password?
             </h1>
             <p className="text-running-head text-muted-foreground">
               We&apos;ll send recovery instructions to your email

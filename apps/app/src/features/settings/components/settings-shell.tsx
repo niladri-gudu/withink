@@ -39,7 +39,6 @@ import { ZkSetupDialog } from "@/features/encryption/components/zk-setup-dialog"
 import { DataExportCard } from "@/features/export/components/data-export-card";
 import { DataImportCard } from "@/features/export/components/data-import-card";
 import { SyncStatusCard } from "@/features/journal/components/sync-status-card";
-import { LocalDataCard } from "@/features/settings/components/local-data-card";
 import {
   getLockSettingsAction,
   saveLockSettingsAction,
@@ -50,6 +49,7 @@ import { NotificationSettings } from "@/features/notifications/components/notifi
 import { InstallAppCard } from "@/features/pwa/components/install-app-card";
 import { AppearanceSettings } from "@/features/settings/appearance/appearance-settings";
 import { DeleteAccountDialog } from "@/features/settings/components/delete-account-dialog";
+import { LocalDataCard } from "@/features/settings/components/local-data-card";
 import { SettingsGroup } from "@/features/settings/components/settings-group";
 
 const PAPER_SCALE_KEY = "withink-paper-scale";
@@ -805,7 +805,9 @@ export function SettingsShell({ initialUser, plan }: SettingsShellProps) {
                     aria-label="Enable Diary Lock"
                     onClick={() => handleToggleDiaryLock(!diaryLockEnabled)}
                     className={cn(
-                      "focus:ring-ring relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:ring-2 focus:ring-offset-2 focus:outline-none",
+                      // The ::after splay extends the hit area to 44px tall on
+                      // phones without changing the switch's visual size.
+                      "focus:ring-ring relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out after:absolute after:top-1/2 after:left-1/2 after:h-11 after:w-11 after:-translate-x-1/2 after:-translate-y-1/2 after:content-[''] focus:ring-2 focus:ring-offset-2 focus:outline-none sm:after:hidden",
                       diaryLockEnabled ? "bg-accent" : "bg-muted",
                     )}
                   >
@@ -887,7 +889,7 @@ export function SettingsShell({ initialUser, plan }: SettingsShellProps) {
                           setDiaryLockOnTabHide(!diaryLockOnTabHide)
                         }
                         className={cn(
-                          "focus:ring-ring relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:ring-2 focus:ring-offset-2 focus:outline-none",
+                          "focus:ring-ring relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out after:absolute after:top-1/2 after:left-1/2 after:h-11 after:w-11 after:-translate-x-1/2 after:-translate-y-1/2 after:content-[''] focus:ring-2 focus:ring-offset-2 focus:outline-none sm:after:hidden",
                           diaryLockOnTabHide ? "bg-accent" : "bg-muted",
                         )}
                       >

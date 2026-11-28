@@ -45,7 +45,7 @@ export function DayVignetteDialog({
       >
         {day !== null && vignette ? (
           <>
-            <div className="border-border/70 flex items-center gap-3 border-b pb-4 pr-8">
+            <div className="border-border/70 flex items-center gap-3 border-b pr-8 pb-4">
               <span className="text-foreground font-serif text-base font-bold">
                 July {day}
               </span>

@@ -299,32 +299,14 @@ export function LandingPageContent({
     return { key, vignette: pool[(dayVal - 1) % pool.length]! };
   };
 
-  // --- Tile 6: Zip Export Simulation ---
-  const [exportProgress, setExportProgress] = React.useState<number>(-1); // -1 = idle
-  const [exportStage, setExportStage] = React.useState<string>("");
+  // --- Tile 6: Export preview (illustrative, downloads nothing) ---
+  const [exportProgress, setExportProgress] = React.useState<boolean>(false);
 
   const triggerExport = () => {
-    if (exportProgress >= 0) return;
-    setExportProgress(0);
-    setExportStage("Preparing archive…");
-
-    const interval = setInterval(() => {
-      setExportProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setExportStage("Ready!");
-          setTimeout(() => {
-            setExportProgress(-1);
-          }, 3000);
-          return 100;
-        }
-        const next = prev + 5;
-        if (next === 25) setExportStage("Gathering your photos…");
-        if (next === 55) setExportStage("Setting your pages in order…");
-        if (next === 85) setExportStage("Numbering the pages…");
-        return next;
-      });
-    }, 150);
+    setExportProgress(true);
+    // This tile only illustrates how export looks; no file is produced here.
+    // Real exports live inside the diary after you sign up.
+    setTimeout(() => setExportProgress(false), 3200);
   };
 
   // Spring animations configs
@@ -400,7 +382,7 @@ export function LandingPageContent({
             <motion.h1
               variants={fadeInVariants}
               custom={0}
-              className="text-hero text-foreground mx-auto max-w-xl font-serif tracking-tight text-balance md:text-display"
+              className="text-hero text-foreground md:text-display mx-auto max-w-xl font-serif tracking-tight text-balance"
             >
               Your ordinary days are{" "}
               <em className="font-normal italic">worth keeping.</em>
@@ -556,7 +538,7 @@ export function LandingPageContent({
               <motion.div
                 variants={fadeInVariants}
                 custom={0}
-                className="border-border/80 bg-card relative flex flex-col justify-between rounded-xl border shadow-sm md:min-h-95 md:col-span-2"
+                className="border-border/80 bg-card relative flex flex-col justify-between rounded-xl border shadow-sm md:col-span-2 md:min-h-95"
               >
                 {/*<div className="from-accent/40 via-foreground/25 to-accent/40 absolute left-0 right-0 top-0 h-[2px] rounded-t-xl bg-gradient-to-r" />*/}
 
@@ -870,7 +852,11 @@ export function LandingPageContent({
                         prefersReduced
                           ? { rotate: p.tilt }
                           : {
-                              rotate: [p.tilt - 1.5, p.tilt + 1.5, p.tilt - 1.5],
+                              rotate: [
+                                p.tilt - 1.5,
+                                p.tilt + 1.5,
+                                p.tilt - 1.5,
+                              ],
                             }
                       }
                       transition={
@@ -889,7 +875,7 @@ export function LandingPageContent({
                           : { scale: 1.06, y: -8, rotate: p.tilt / 4 }
                       }
                       style={{ left: `calc(50% - 60px + ${idx * 16 - 16}px)` }}
-                      className="bg-card border-border/40 absolute w-32 cursor-zoom-in rounded-xl border p-2 pb-3 shadow-md transition-shadow duration-300 hover:shadow-xl focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none"
+                      className="bg-card border-border/40 focus-visible:ring-ring absolute w-32 cursor-zoom-in rounded-xl border p-2 pb-3 shadow-md transition-shadow duration-300 hover:shadow-xl focus-visible:ring-2 focus-visible:outline-none"
                       aria-label={`Enlarge: ${p.caption}`}
                     >
                       <div className="bg-secondary/20 relative aspect-4/3 w-full overflow-hidden rounded-md">
@@ -923,18 +909,19 @@ export function LandingPageContent({
                 custom={4}
                 className="border-border/80 bg-card flex flex-col justify-between rounded-xl border shadow-sm md:min-h-80"
               >
-                <div className="text-muted-foreground border-border/70 flex items-center space-x-2 border-b p-6 pb-3 font-serif text-xs tracking-[0.16em] uppercase">
-                  <Archive className="h-3 w-3" />
-                  <span>Export anytime</span>
+                <div className="text-muted-foreground border-border/70 flex items-center justify-between border-b p-6 pb-3 font-serif text-xs tracking-[0.16em] uppercase">
+                  <span className="flex items-center space-x-2">
+                    <Archive className="h-3 w-3" />
+                    <span>Export anytime</span>
+                  </span>
+                  <span className="border-border/70 rounded-full border px-2 py-0.5 text-[10px] tracking-[0.14em]">
+                    Preview
+                  </span>
                 </div>
 
                 <div className="my-auto flex flex-col items-center justify-center space-y-3 p-6 text-center">
                   <div className="bg-secondary/50 border-border/50 text-muted-foreground/70 flex h-12 w-12 items-center justify-center rounded-xl border shadow-inner">
-                    {exportProgress === 100 ? (
-                      <Check className="text-accent h-5 w-5" />
-                    ) : (
-                      <Archive className="h-5 w-5" />
-                    )}
+                    <Archive className="h-5 w-5" />
                   </div>
                   <div className="space-y-1">
                     <h3 className="text-foreground font-serif text-lg font-bold">
@@ -942,34 +929,28 @@ export function LandingPageContent({
                     </h3>
                     <p className="text-muted-foreground mx-auto max-w-[24ch] text-xs leading-normal">
                       One click, and your whole journal becomes plain pages,
-                      photos, and dates you can keep forever. Leave anytime,
-                      take it all.
+                      photos, and dates you keep forever. Leave anytime, take it
+                      all.
                     </p>
                   </div>
                 </div>
 
                 <div className="border-border/70 space-y-2 border-t p-6 pt-4">
-                  {exportProgress >= 0 ? (
-                    <div className="space-y-2">
-                      <div className="bg-secondary/35 border-border/20 h-2.5 w-full overflow-hidden rounded-full border">
-                        <motion.div
-                          className="bg-primary h-full"
-                          style={{ width: `${exportProgress}%` }}
-                          transition={{ ease: "easeOut" }}
-                        />
-                      </div>
-                      <div className="text-muted-foreground flex items-center justify-between font-serif text-xs">
-                        <span>{exportStage}</span>
-                        <span>{exportProgress}%</span>
-                      </div>
-                    </div>
+                  {exportProgress ? (
+                    <p
+                      aria-live="polite"
+                      className="text-muted-foreground min-h-11 text-center font-serif text-xs leading-relaxed"
+                    >
+                      This is a preview. In your diary, this turns your journal
+                      into a plain-text ZIP you keep forever.
+                    </p>
                   ) : (
                     <Button
                       onClick={triggerExport}
                       className="focus-visible:ring-ring h-11 w-full gap-1.5 rounded-xl font-serif text-xs tracking-[0.16em] uppercase focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
                     >
                       <Download className="h-3.5 w-3.5" />
-                      Export My Diary
+                      Preview export
                     </Button>
                   )}
                 </div>
@@ -979,13 +960,18 @@ export function LandingPageContent({
               <motion.div
                 variants={fadeInVariants}
                 custom={5}
-                className="border-border/80 bg-card relative flex flex-col justify-between rounded-xl border shadow-sm md:min-h-75 md:col-span-3"
+                className="border-border/80 bg-card relative flex flex-col justify-between rounded-xl border shadow-sm md:col-span-3 md:min-h-75"
               >
                 <div className="border-border/70 border-b-2 p-6 pb-4 md:p-7 md:pb-4">
                   <div className="flex flex-wrap items-center justify-between gap-3">
-                    <span className="text-muted-foreground flex items-center gap-1.5 font-serif text-xs tracking-[0.16em] uppercase">
-                      <BarChart2 className="h-3.5 w-3.5" /> Your year at a
-                      glance
+                    <span className="text-muted-foreground flex flex-wrap items-center gap-2 font-serif text-xs tracking-[0.16em] uppercase">
+                      <span className="flex items-center gap-1.5">
+                        <BarChart2 className="h-3.5 w-3.5" /> Your year at a
+                        glance
+                      </span>
+                      <span className="border-border/70 rounded-full border px-2 py-0.5 text-[10px] tracking-[0.14em] normal-case">
+                        Example data
+                      </span>
                     </span>
                     <span className="text-muted-foreground flex items-center gap-1 font-serif text-xs">
                       <Flame className="fill-accent text-accent h-3.5 w-3.5" />
@@ -993,6 +979,9 @@ export function LandingPageContent({
                       <strong className="text-foreground">
                         12 days writing
                       </strong>
+                      <span className="text-[10px] tracking-[0.12em] uppercase">
+                        · example
+                      </span>
                     </span>
                   </div>
                 </div>
@@ -1049,8 +1038,11 @@ export function LandingPageContent({
                   </div>
 
                   <div className="lg:border-border/70 space-y-4 lg:border-l lg:pl-7">
-                    <span className="text-muted-foreground block font-serif text-xs">
+                    <span className="text-muted-foreground flex items-center gap-2 font-serif text-xs">
                       Moods · last 30 days
+                      <span className="border-border/70 rounded-full border px-2 py-0.5 text-[10px] tracking-[0.12em] uppercase">
+                        Example
+                      </span>
                     </span>
 
                     <div className="space-y-2.5">
@@ -1113,6 +1105,9 @@ export function LandingPageContent({
                       <span>Mean entry length:</span>
                       <strong className="text-foreground flex items-center gap-0.5">
                         <TrendingUp className="text-accent h-3 w-3" /> 410 words
+                        <span className="text-muted-foreground ml-0.5 text-[10px] font-normal tracking-[0.12em] uppercase">
+                          · example
+                        </span>
                       </strong>
                     </div>
                   </div>

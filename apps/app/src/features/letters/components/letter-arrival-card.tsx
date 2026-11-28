@@ -1,11 +1,11 @@
 "use client";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Mail } from "lucide-react";
 
-import Link from "next/link";
-import { useEffect, useState } from "react";
-
-import { formatDisplayDate } from "@/lib/utils/date";
 import { decryptText, isCiphertext } from "@/lib/crypto-client";
+import { formatDisplayDate } from "@/lib/utils/date";
 import { useEncryption } from "@/providers/encryption-provider";
 import type { LetterMetaRecord } from "@/features/letters/services/letter-service";
 
@@ -73,7 +73,7 @@ export function LetterArrivalCard({
     <Link
       href="/letters"
       aria-label={`A letter arrived: ${ready ? titles[letter.id] || "an untitled letter" : "loading"}. Open your letters.`}
-      className="group bg-card focus-visible:ring-ring relative block w-full cursor-pointer overflow-hidden rounded-xl border transition-all duration-200 hover:border-accent/40 hover:shadow-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+      className="group bg-card border-border focus-visible:ring-ring hover:border-accent/40 relative block w-full cursor-pointer overflow-hidden rounded-[0.75rem] border transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
     >
       <GoldEdge />
       <div className="relative flex items-start gap-4 p-5">

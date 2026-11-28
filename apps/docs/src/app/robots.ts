@@ -1,9 +1,6 @@
 import type { MetadataRoute } from "next";
 
-const SITE_URL =
-  process.env.IS_PROD === "true"
-    ? "https://withink.me"
-    : "http://localhost:3001";
+import { siteUrl } from "@/config/env";
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -11,6 +8,6 @@ export default function robots(): MetadataRoute.Robots {
       userAgent: "*",
       allow: "/",
     },
-    sitemap: `${SITE_URL}/sitemap.xml`,
+    sitemap: `${siteUrl()}/sitemap.xml`,
   };
 }

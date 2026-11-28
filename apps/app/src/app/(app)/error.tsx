@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@withink/ui/button";
 import { Waves } from "lucide-react";
 
@@ -17,6 +18,8 @@ interface ErrorProps {
  * and recovers inside the page region instead of blanking the whole frame.
  */
 export default function AppError({ error, reset }: ErrorProps) {
+  const router = useRouter();
+
   useEffect(() => {
     console.error("App boundary caught error:", error);
     reportClientError(error, "app");
@@ -41,7 +44,9 @@ export default function AppError({ error, reset }: ErrorProps) {
         <Button onClick={() => reset()} variant="default">
           Try Again
         </Button>
-        <Button onClick={() => (window.location.href = "/")} variant="ghost">
+        {/* Client-side navigation keeps the in-memory encryption key alive;
+            a full reload would force the writer to unlock again. */}
+        <Button onClick={() => router.push("/")} variant="ghost">
           Return Home
         </Button>
       </div>

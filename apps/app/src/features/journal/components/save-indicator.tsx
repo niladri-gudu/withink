@@ -143,85 +143,88 @@ export function SaveIndicator({
     );
   }
 
+  // The live region itself NEVER remounts — only its animated child swaps via
+  // AnimatePresence. Rendering role="status" on the keyed AnimatePresence node
+  // (as before) rebuilt the live region on every state change, which made some
+  // screen readers drop the announcement entirely. The wrapper may always be in
+  // the tree; with no child it has zero size and announces nothing.
   return (
-    <AnimatePresence mode="wait">
-      {status !== "idle" ? (
-        <motion.div
-          key={`${status}:${syncState}`}
-          role="status"
-          aria-live="polite"
-          initial={{ opacity: 0, y: 12, scale: 0.95 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 8, scale: 0.95 }}
-          transition={reduceMotion ? { duration: 0 } : SPRING}
-          className={cn(
-            "flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-xs shadow-sm backdrop-blur-md",
-            status === "saving" &&
-              "bg-background/90 text-muted-foreground border-border",
-            status === "saved" &&
-              "bg-background/90 border-accent/20 text-accent",
-            status === "offline" &&
-              "bg-background/90 border-accent/20 text-accent",
-            status === "locked" &&
-              "bg-background/90 border-accent/20 text-accent",
-            status === "error" &&
-              "bg-destructive/10 text-destructive border-destructive/20",
-          )}
-        >
-          {status === "saving" && (
-            <>
-              <Loader2 className="text-muted-foreground h-3 w-3 animate-spin" />
-              <span>Saving…</span>
-            </>
-          )}
-          {status === "saved" && syncState === "synced" && (
-            <>
-              <CheckCheck className="text-accent h-3 w-3" />
-              <span>Saved · Synced</span>
-            </>
-          )}
-          {status === "saved" && syncState === "pending" && (
-            <>
-              <Save className="text-accent h-3 w-3" />
-              <span>Saved locally · Syncing</span>
-            </>
-          )}
-          {status === "offline" && (
-            <>
-              <Save className="text-accent h-3 w-3" />
-              <span>Saved locally · Will sync</span>
-            </>
-          )}
-          {status === "locked" && (
-            <>
-              <Lock className="text-accent h-3 w-3" />
-              <span>Session locked — pending save</span>
-            </>
-          )}
-          {status === "error" && (
-            <>
-              <WifiOff className="h-3 w-3" />
-              <span>Save failed</span>
-            </>
-          )}
-        </motion.div>
-      ) : (
-        !isOnline && (
+    <div role="status" aria-live="polite">
+      <AnimatePresence mode="wait">
+        {status !== "idle" ? (
           <motion.div
-            key="offline-badge"
-            role="status"
-            aria-live="polite"
+            key={`${status}:${syncState}`}
             initial={{ opacity: 0, y: 12, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.95 }}
             transition={reduceMotion ? { duration: 0 } : SPRING}
-            className="border-accent/20 bg-accent/5 text-accent flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-medium backdrop-blur-md"
+            className={cn(
+              "flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-xs shadow-sm backdrop-blur-md",
+              status === "saving" &&
+                "bg-background/90 text-muted-foreground border-border",
+              status === "saved" &&
+                "bg-background/90 border-accent/20 text-accent",
+              status === "offline" &&
+                "bg-background/90 border-accent/20 text-accent",
+              status === "locked" &&
+                "bg-background/90 border-accent/20 text-accent",
+              status === "error" &&
+                "bg-destructive/10 text-destructive border-destructive/20",
+            )}
           >
-            <WifiOff className="h-3 w-3" />
-            <span>Working offline</span>
+            {status === "saving" && (
+              <>
+                <Loader2 className="text-muted-foreground h-3 w-3 animate-spin" />
+                <span>Saving…</span>
+              </>
+            )}
+            {status === "saved" && syncState === "synced" && (
+              <>
+                <CheckCheck className="text-accent h-3 w-3" />
+                <span>Saved · Synced</span>
+              </>
+            )}
+            {status === "saved" && syncState === "pending" && (
+              <>
+                <Save className="text-accent h-3 w-3" />
+                <span>Saved locally · Syncing</span>
+              </>
+            )}
+            {status === "offline" && (
+              <>
+                <Save className="text-accent h-3 w-3" />
+                <span>Saved locally · Will sync</span>
+              </>
+            )}
+            {status === "locked" && (
+              <>
+                <Lock className="text-accent h-3 w-3" />
+                <span>Session locked — pending save</span>
+              </>
+            )}
+            {status === "error" && (
+              <>
+                <WifiOff className="h-3 w-3" />
+                <span>Save failed</span>
+              </>
+            )}
           </motion.div>
-        )
-      )}
-    </AnimatePresence>
+        ) : (
+          !isOnline && (
+            <motion.div
+              key="offline-badge"
+              initial={{ opacity: 0, y: 12, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 8, scale: 0.95 }}
+              transition={reduceMotion ? { duration: 0 } : SPRING}
+              className="border-accent/20 bg-accent/5 text-accent flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-medium backdrop-blur-md"
+            >
+              <WifiOff className="h-3 w-3" />
+              <span>Working offline</span>
+            </motion.div>
+          )
+        )}
+      </AnimatePresence>
+    </div>
   );
 }

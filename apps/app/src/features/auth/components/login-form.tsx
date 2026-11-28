@@ -14,7 +14,7 @@ import { ROUTES } from "@/constants/routes";
 import { signIn } from "@/lib/auth-client";
 
 import { loginSchema, type LoginInput } from "../validation/auth";
-import { GoogleIcon } from "./google";
+import { GoogleOAuthButton } from "./google";
 
 export function LoginForm() {
   const router = useRouter();
@@ -48,7 +48,7 @@ export function LoginForm() {
       if (res.error) {
         if (res.error.status === 401) {
           setError("email", { message: "Invalid credentials" });
-          setError("password", { message: "Check secret key" });
+          setError("password", { message: "Check password" });
         } else {
           toast.error(res.error.message || "Authentication failed");
         }
@@ -61,19 +61,6 @@ export function LoginForm() {
       setIsLoading(false);
       const errorMessage =
         err instanceof Error ? err.message : "An unexpected error occurred.";
-      toast.error(errorMessage);
-    }
-  };
-
-  const handleGoogleSignIn = async () => {
-    try {
-      await signIn.social({
-        provider: "google",
-        callbackURL: ROUTES.APP.DASHBOARD,
-      });
-    } catch (err: unknown) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Google authentication failed.";
       toast.error(errorMessage);
     }
   };
@@ -101,6 +88,7 @@ export function LoginForm() {
             {errors.email?.message && (
               <span
                 id="email-error"
+                role="alert"
                 className="text-destructive animate-in fade-in font-serif text-[10px] tracking-tight uppercase"
               >
                 {errors.email.message}
@@ -129,11 +117,12 @@ export function LoginForm() {
               htmlFor="password"
               className="text-helper text-muted-foreground/80 ml-1 font-serif tracking-wider"
             >
-              Secret Key
+              Password
             </label>
             {errors.password?.message && (
               <span
                 id="password-error"
+                role="alert"
                 className="text-destructive animate-in fade-in font-serif text-[10px] tracking-tight uppercase"
               >
                 {errors.password.message}
@@ -145,7 +134,7 @@ export function LoginForm() {
               id="password"
               type={showPassword ? "text" : "password"}
               autoComplete="current-password"
-              placeholder="••••••••"
+              placeholder="Your password"
               aria-invalid={!!errors.password}
               aria-describedby={errors.password ? "password-error" : undefined}
               className={`h-11 px-4 pr-12 text-base ${
@@ -158,7 +147,7 @@ export function LoginForm() {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              aria-label={showPassword ? "Hide secret key" : "Show secret key"}
+              aria-label={showPassword ? "Hide password" : "Show password"}
               aria-pressed={showPassword}
               className="text-muted-foreground/60 hover:text-foreground focus-visible:ring-ring absolute top-1/2 right-1.5 flex h-11 w-11 -translate-y-1/2 items-center justify-center self-center font-serif text-xs tracking-wider uppercase transition-colors focus-visible:rounded focus-visible:ring-2 focus-visible:outline-none"
             >
@@ -190,15 +179,10 @@ export function LoginForm() {
             </div>
           </Button>
 
-          <Button
-            type="button"
-            variant="outline"
-            className="text-muted-foreground hover:bg-muted/40 hover:text-foreground h-11 w-full cursor-pointer font-serif text-xs uppercase transition-transform hover:scale-[1.01] active:scale-[0.99]"
-            onClick={handleGoogleSignIn}
-          >
-            <GoogleIcon />
-            Continue with Google
-          </Button>
+          <GoogleOAuthButton
+            callbackURL={ROUTES.APP.DASHBOARD}
+            formDisabled={isLoading}
+          />
         </div>
       </form>
 

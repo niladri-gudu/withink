@@ -16,7 +16,12 @@ interface FlashbackViewProps {
   initialEntry: DecryptedEntry | null;
   initialLabel: string;
   localToday: string;
+  /** The server read failed before the page rendered. */
+  initialError?: boolean;
 }
+
+const LOAD_ERROR_COPY =
+  "Your memories couldn't be fetched just now — nothing is lost. Try again in a moment.";
 
 /**
  * Server-entry flashback path (legacy accounts): the server chose today's
@@ -27,14 +32,18 @@ export function FlashbackView({
   initialEntry,
   initialLabel,
   localToday,
+  initialError = false,
 }: FlashbackViewProps) {
   const [entry, setEntry] = useState<DecryptedEntry | null>(initialEntry);
   const [label, setLabel] = useState<string>(initialLabel);
+  const [error, setError] = useState<string | null>(
+    initialError ? LOAD_ERROR_COPY : null,
+  );
   const [isPending, startTransition] = useTransition();
   const { isClientEncrypted, masterKey } = useEncryption();
 
   const [display, setDisplay] = useState<FlashbackDisplayEntry | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!initialError);
 
   useEffect(() => {
     let cancelled = false;
@@ -79,16 +88,20 @@ export function FlashbackView({
     };
   }, [entry, isClientEncrypted, masterKey]);
 
-  const handleRefresh = () => {
+  const load = () => {
     startTransition(async () => {
       const result = await refreshFlashbackAction(localToday);
-      if (result.success && result.data) {
-        setEntry(result.data.entry);
-        setLabel(result.data.label);
+      if (result.success) {
+        // A null payload is a legitimate "no other memory" answer; only a
+        // failed call is an error.
+        setError(null);
+        setLoading(false);
+        setEntry(result.data?.entry ?? null);
+        setLabel(result.data?.label ?? "");
       } else {
-        // Fallback or empty state if no other flashback available.
-        setEntry(null);
-        setLabel("");
+        // Keep whatever memory is on screen and surface the failure.
+        setLoading(false);
+        setError(LOAD_ERROR_COPY);
       }
     });
   };
@@ -99,8 +112,10 @@ export function FlashbackView({
       label={label}
       localToday={localToday}
       loading={loading}
-      onRefresh={handleRefresh}
+      onRefresh={load}
       isRefreshing={isPending}
+      error={error}
+      onRetry={load}
     />
   );
 }

@@ -1,9 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useTransition,
+} from "react";
+import type { Route } from "next";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import type { Route } from "next";
 import { Button } from "@withink/ui/button";
 import {
   Dialog,
@@ -22,16 +28,17 @@ import {
   Pencil,
   Plus,
   Trash2,
+  X,
 } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import { toast } from "sonner";
 
+import { decryptText, isCiphertext } from "@/lib/crypto-client";
 import { formatDisplayDate } from "@/lib/utils/date";
+import { useEncryption } from "@/providers/encryption-provider";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { UpgradeDialog } from "@/features/billing/components/upgrade-dialog";
 import type { ResolvedPlan } from "@/features/billing/config/plans";
-import { useEncryption } from "@/providers/encryption-provider";
-import { decryptText, isCiphertext } from "@/lib/crypto-client";
 
 import {
   deleteLetterAction,
@@ -50,6 +57,8 @@ interface LettersShellProps {
   today: string;
   /** Whether the account stores client-encrypted content (ZK). */
   accountEncrypted: boolean;
+  /** Set when compose bounced back because the letter can't be edited. */
+  notice?: "unavailable" | null;
 }
 
 /** Heuristic twins of the editor's cipher detection (`"iv:cipher"` payloads). */
@@ -81,7 +90,12 @@ function GoldEdge() {
 
 /** Faint ledger ruling behind a letter slip — the open page, not a grid. */
 function SlipRules() {
-  return <div aria-hidden="true" className="ledger-rules pointer-events-none absolute inset-0 opacity-70" />;
+  return (
+    <div
+      aria-hidden="true"
+      className="ledger-rules pointer-events-none absolute inset-0 opacity-70"
+    />
+  );
 }
 
 export function LettersShell({
@@ -90,6 +104,7 @@ export function LettersShell({
   limit,
   today,
   accountEncrypted,
+  notice = null,
 }: LettersShellProps) {
   const [letters, setLetters] = useState(initialLetters);
   const [paywallOpen, setPaywallOpen] = useState(false);
@@ -140,7 +155,8 @@ export function LettersShell({
   }, [encrypted, masterKey, letters]);
 
   const titleOf = useCallback(
-    (letter: LetterMetaRecord) => (encrypted ? (decryptedTitles[letter.id] ?? "") : letter.title),
+    (letter: LetterMetaRecord) =>
+      encrypted ? (decryptedTitles[letter.id] ?? "") : letter.title,
     [encrypted, decryptedTitles],
   );
 
@@ -215,9 +231,7 @@ export function LettersShell({
         }
         setLetters((prev) =>
           prev.map((l) =>
-            l.id === letter.id
-              ? { ...l, readAt: new Date().toISOString() }
-              : l,
+            l.id === letter.id ? { ...l, readAt: new Date().toISOString() } : l,
           ),
         );
         router.refresh();
@@ -248,8 +262,8 @@ export function LettersShell({
               <span className="text-accent font-normal">future you.</span>
             </h1>
             <p className="text-body-small text-muted-foreground mt-1">
-              Write today what you want to read later. Each letter opens on
-              the day you choose — never before.
+              Write today what you want to read later. Each letter opens on the
+              day you choose — never before.
             </p>
           </div>
           <Button onClick={handleNewClick} className="h-11 shrink-0">
@@ -257,6 +271,8 @@ export function LettersShell({
           </Button>
         </div>
       </header>
+
+      {notice === "unavailable" && <UnavailableNotice />}
 
       {/* Arrived and unopened: seals intact, waiting to be broken. */}
       {arrivedUnread.length > 0 && (
@@ -396,6 +412,38 @@ export function LettersShell({
   );
 }
 
+/**
+ * The compose-bounce notice: a quiet Field Ledger line explaining why the
+ * letter can't be edited, dismissible without touching the URL history.
+ */
+function UnavailableNotice() {
+  const [visible, setVisible] = useState(true);
+  if (!visible) return null;
+
+  return (
+    <div
+      role="status"
+      className="border-border bg-card flex items-start gap-3 rounded-[0.75rem] border px-4 py-3"
+    >
+      <div className="min-w-0 flex-1 space-y-0.5">
+        <p className="text-running-head text-muted-foreground/70">Field note</p>
+        <p className="text-foreground/85 font-serif text-sm leading-relaxed">
+          That letter can&apos;t be edited right now — it&apos;s already sealed
+          or has been delivered, and those pages stay as they were written.
+        </p>
+      </div>
+      <IconButton
+        variant="ghost"
+        aria-label="Dismiss notice"
+        className="text-muted-foreground/60 hover:text-foreground -mt-1 -mr-1 shrink-0"
+        onClick={() => setVisible(false)}
+      >
+        <X className="h-4 w-4" />
+      </IconButton>
+    </div>
+  );
+}
+
 function SlipMeta({ letter }: { letter: LetterMetaRecord }) {
   return (
     <span className="text-caption text-muted-foreground/50 shrink-0 tabular-nums">
@@ -474,7 +522,7 @@ function LetterSlip({
           <IconButton
             variant="ghost"
             aria-label={`Delete ${title || "untitled letter"}`}
-            className="text-muted-foreground/50 opacity-70 hover:text-destructive hover:opacity-100"
+            className="text-muted-foreground/50 hover:text-destructive opacity-70 hover:opacity-100"
             onClick={onDelete}
           >
             <Trash2 className="h-4 w-4" />
@@ -493,7 +541,7 @@ function LetterSlip({
       <div
         aria-label={`${title || "An untitled letter"} — sealed until it opens`}
         className={cn(
-          "bg-card relative overflow-hidden rounded-xl border p-5 select-none",
+          "bg-card border-border relative overflow-hidden rounded-[0.75rem] border p-5 select-none",
           muted && "bg-card/60",
         )}
       >
@@ -507,7 +555,7 @@ function LetterSlip({
       type="button"
       onClick={onClick}
       className={cn(
-        "group bg-card relative w-full cursor-pointer overflow-hidden rounded-xl border p-5 text-left transition-all duration-200 focus-visible:ring-ring hover:border-accent/40 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none hover:shadow-sm",
+        "group bg-card border-border focus-visible:ring-ring hover:border-accent/40 relative w-full cursor-pointer overflow-hidden rounded-[0.75rem] border p-5 text-left transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
         muted && "bg-card/60",
       )}
     >
@@ -519,7 +567,7 @@ function LetterSlip({
 function EmptyLetters({ onNew }: { onNew: () => void }) {
   return (
     <div className="mx-auto max-w-md">
-      <div className="bg-card/50 border-border/60 relative overflow-hidden rounded-xl border">
+      <div className="bg-card/50 border-border relative overflow-hidden rounded-[0.75rem] border">
         <SlipRules />
         <div className="relative flex flex-col items-center px-6 py-10 text-center">
           <p className="text-muted-foreground/70 font-hand text-xl leading-snug">
@@ -617,14 +665,16 @@ function LetterReaderDialog({
   const note = state ? countdownFor(state.unlockDate, today) : null;
 
   return (
-    <Dialog open={letterId !== null} onOpenChange={(open) => !open && onClose()}>
+    <Dialog
+      open={letterId !== null}
+      onOpenChange={(open) => !open && onClose()}
+    >
       <DialogContent size="md" className="max-h-[85vh] overflow-y-auto">
         {failed ? (
           <DialogHeader>
             <DialogTitle>Something went wrong</DialogTitle>
             <DialogDescription>
-              The letter couldn&apos;t be read just now. Try again in a
-              moment.
+              The letter couldn&apos;t be read just now. Try again in a moment.
             </DialogDescription>
           </DialogHeader>
         ) : !state || state.loading ? (
@@ -655,7 +705,7 @@ function LetterReaderDialog({
                 {/* The wax seal itself: embossed "w.", broken on first read. */}
                 <span
                   aria-hidden="true"
-                  className="bg-accent text-accent-foreground shadow-inner ring-accent-foreground/20 flex size-12 items-center justify-center rounded-full ring-1 ring-inset"
+                  className="bg-accent text-accent-foreground ring-accent-foreground/20 flex size-12 items-center justify-center rounded-full shadow-inner ring-1 ring-inset"
                 >
                   <span className="font-serif text-base leading-none font-semibold italic">
                     w
@@ -664,7 +714,11 @@ function LetterReaderDialog({
               </motion.div>
             )}
             <motion.div
-              initial={unsealing && !sealBroken ? { opacity: 0.35, scale: 0.985 } : false}
+              initial={
+                unsealing && !sealBroken
+                  ? { opacity: 0.35, scale: 0.985 }
+                  : false
+              }
               animate={{ opacity: 1, scale: 1 }}
               transition={
                 reduceMotion
@@ -698,8 +752,8 @@ function LetterReaderDialog({
                 <div className="relative py-2">
                   {state.paragraphs.length === 0 ? (
                     <p className="text-muted-foreground font-serif text-base italic">
-                      (This letter is still empty — the words never made it
-                      onto the page.)
+                      (This letter is still empty — the words never made it onto
+                      the page.)
                     </p>
                   ) : (
                     state.paragraphs.map((paragraph, index) => {

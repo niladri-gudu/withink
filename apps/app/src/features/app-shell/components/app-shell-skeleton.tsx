@@ -10,7 +10,7 @@ import { Skeleton } from "@withink/ui/skeleton";
 export function AppShellSkeleton() {
   return (
     <div
-      className="bg-background flex h-screen w-full overflow-hidden"
+      className="bg-background flex h-dvh w-full overflow-hidden"
       aria-busy="true"
       aria-label="Opening Withink"
     >

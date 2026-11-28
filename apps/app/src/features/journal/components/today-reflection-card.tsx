@@ -10,13 +10,17 @@ import {
   CardHeader,
   CardTitle,
 } from "@withink/ui/card";
-import { CheckCircle2, Loader2 } from "lucide-react";
+import { CheckCircle2, Loader2, ShieldCheck, X } from "lucide-react";
 
 import { ROUTES } from "@/constants/routes";
 import { safeDecryptText } from "@/lib/crypto-client";
+import { safeStorage } from "@/lib/safe-storage";
 import { useEncryption } from "@/providers/encryption-provider";
 
 import type { DecryptedEntry } from "../services/journal-service";
+
+/** One warm first-entry nudge; dismissal is per-device and permanent. */
+const PROMPT_DISMISS_KEY = "withink-first-entry-prompt-dismissed";
 
 interface TodayReflectionCardProps {
   entry: DecryptedEntry | null;
@@ -34,6 +38,22 @@ export function TodayReflectionCard({
   const [decryptedTitle, setDecryptedTitle] = useState<string | null>(null);
   const [decryptedText, setDecryptedText] = useState<string | null>(null);
   const [decryptedHtml, setDecryptedHtml] = useState<string | null>(null);
+
+  // Resolved post-mount so the server HTML and hydration agree (storage is a
+  // client-only signal). While unresolved we show the prompt, matching SSR.
+  const [promptDismissed, setPromptDismissed] = useState(false);
+  useEffect(() => {
+    const dismissed = safeStorage.getItem(PROMPT_DISMISS_KEY) === "true";
+    if (dismissed) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- client-only storage signal, intentionally set after mount
+      setPromptDismissed(true);
+    }
+  }, []);
+
+  const dismissPrompt = () => {
+    safeStorage.setItem(PROMPT_DISMISS_KEY, "true");
+    setPromptDismissed(true);
+  };
 
   useEffect(() => {
     const decrypt = async () => {
@@ -77,11 +97,34 @@ export function TodayReflectionCard({
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-1 flex-col justify-between gap-6 pt-2">
-          <p className="text-muted-foreground font-serif text-sm leading-relaxed">
-            Take a brief moment to sit back, breathe, and write about how your
-            day is going. Reflections keep your mind clear and your memories
-            alive.
-          </p>
+          {promptDismissed ? (
+            <p className="text-muted-foreground font-serif text-sm leading-relaxed">
+              Take a brief moment to sit back, breathe, and write about how your
+              day is going. Reflections keep your mind clear and your memories
+              alive.
+            </p>
+          ) : (
+            <div className="border-border/60 bg-muted/20 relative rounded-[0.75rem] border px-4 py-3.5">
+              <button
+                type="button"
+                onClick={dismissPrompt}
+                aria-label="Dismiss writing prompt"
+                className="text-muted-foreground/60 hover:text-foreground focus-visible:ring-ring absolute top-2 right-2 cursor-pointer rounded-full p-1 transition-colors focus-visible:ring-2 focus-visible:outline-none"
+              >
+                <X className="h-3.5 w-3.5" aria-hidden="true" />
+              </button>
+              <p className="text-foreground/80 pr-6 font-serif text-base leading-relaxed italic">
+                What made today feel like today?
+              </p>
+              <p className="text-caption text-muted-foreground mt-2 flex items-center gap-1.5">
+                <ShieldCheck
+                  className="text-accent/70 h-3.5 w-3.5 shrink-0"
+                  aria-hidden="true"
+                />
+                Saves as you write — private, and only yours.
+              </p>
+            </div>
+          )}
 
           {/* The blank page: faint ruled lines waiting for ink */}
           <div className="space-y-3 pt-2" aria-hidden="true">

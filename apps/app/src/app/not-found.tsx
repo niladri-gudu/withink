@@ -4,7 +4,7 @@ import { Feather } from "lucide-react";
 
 export default function NotFound() {
   return (
-    <div className="mx-auto flex h-screen w-full max-w-md flex-col items-center justify-center space-y-6 p-6 text-center">
+    <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col items-center justify-center space-y-6 p-6 text-center">
       <div className="space-y-2">
         <span className="border-border bg-secondary/50 text-muted-foreground mx-auto flex h-16 w-16 items-center justify-center rounded-full border">
           <Feather className="h-7 w-7" />

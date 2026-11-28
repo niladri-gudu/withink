@@ -24,7 +24,8 @@ const buttonVariants = cva(
         default: "h-10 px-4 py-2",
         sm: "h-9 rounded-xl px-3",
         lg: "h-11 rounded-xl px-8",
-        icon: "h-10 w-10",
+        // 44px touch target on phones; desktop density from md up.
+        icon: "h-11 w-11 md:h-10 md:w-10",
       },
     },
     defaultVariants: {

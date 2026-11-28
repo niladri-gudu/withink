@@ -64,6 +64,9 @@ export function LockScreen({
   // Password Recovery States
   const [loginPassword, setLoginPassword] = React.useState("");
   const [isSubmittingPassword, setIsSubmittingPassword] = React.useState(false);
+  // Explicit acknowledgement that recovery removes the local PIN.
+  const [recoveryAcknowledged, setRecoveryAcknowledged] = React.useState(false);
+  const [recoveryError, setRecoveryError] = React.useState<string | null>(null);
 
   const handleKeyPress = React.useCallback(
     (digit: string) => {
@@ -71,7 +74,7 @@ export function LockScreen({
       if (typeof navigator !== "undefined" && navigator.vibrate) {
         navigator.vibrate(10);
       }
-      if (pin.length < 6 && /^\d$/.test(digit)) {
+      if (pin.length < 4 && /^\d$/.test(digit)) {
         setPin((prev) => prev + digit);
       }
     },
@@ -218,13 +221,15 @@ export function LockScreen({
 
   const submitPasswordRecovery = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!loginPassword) return;
+    if (!loginPassword || !recoveryAcknowledged) return;
 
+    setRecoveryError(null);
     setIsSubmittingPassword(true);
     const toastId = toast.loading("Verifying your Diary Password…");
     const success = await unlockWithPassword(loginPassword);
 
     if (success) {
+      // Consequence the user just confirmed: the per-device PIN wrap is gone.
       localStorage.removeItem("withink_encrypted_master_key");
       toast.success("Diary Lock disabled successfully", { id: toastId });
       onUnlockSuccess();
@@ -235,6 +240,7 @@ export function LockScreen({
     }
     if (isMounted.current) {
       toast.error("Incorrect Diary Password", { id: toastId });
+      setRecoveryError("Incorrect Diary Password. Please try again.");
       setIsSubmittingPassword(false);
     }
   };
@@ -372,43 +378,86 @@ export function LockScreen({
                 Diary Lock
               </p>
             </div>
-            <p className="text-body-small text-muted-foreground mt-2 mb-6 max-w-xs">
-              Enter your Diary Password to disable the PIN lock and access your
-              diary.
+            <p className="text-body-small text-muted-foreground mt-2 mb-6 max-w-sm text-pretty">
+              Enter your Diary Password to unlock your diary. Verifying it also{" "}
+              <span className="text-foreground font-medium">
+                removes the 4-digit PIN from this device
+              </span>{" "}
+              — you can set a new PIN later in Settings.
             </p>
 
             <form
               onSubmit={submitPasswordRecovery}
               className="w-full space-y-4"
             >
-              <Input
-                id="login-password"
-                type="password"
-                placeholder="Enter Diary Password"
-                value={loginPassword}
-                onChange={(e) => setLoginPassword(e.target.value)}
-                className="h-12 rounded-xl"
-                autoComplete="current-password"
-                autoFocus
-                required
-              />
+              <div className="space-y-1.5">
+                <label htmlFor="login-password" className="sr-only">
+                  Diary Password
+                </label>
+                <Input
+                  id="login-password"
+                  type="password"
+                  placeholder="Enter Diary Password"
+                  value={loginPassword}
+                  onChange={(e) => {
+                    setLoginPassword(e.target.value);
+                    if (recoveryError) setRecoveryError(null);
+                  }}
+                  aria-invalid={recoveryError ? true : undefined}
+                  aria-describedby={
+                    recoveryError ? "recovery-password-error" : undefined
+                  }
+                  className="h-12 rounded-xl"
+                  autoComplete="current-password"
+                  autoFocus
+                  required
+                />
+                {recoveryError && (
+                  <p
+                    id="recovery-password-error"
+                    role="alert"
+                    className="text-destructive px-1 font-serif text-[10px] tracking-tight uppercase"
+                  >
+                    {recoveryError}
+                  </p>
+                )}
+              </div>
+
+              <label
+                htmlFor="recovery-acknowledge"
+                className="border-border/80 bg-secondary/30 flex cursor-pointer items-start gap-3 rounded-xl border p-3 select-none"
+              >
+                <input
+                  id="recovery-acknowledge"
+                  type="checkbox"
+                  checked={recoveryAcknowledged}
+                  onChange={(e) => setRecoveryAcknowledged(e.target.checked)}
+                  className="accent-accent focus-visible:ring-ring mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+                />
+                <span className="text-body-small text-foreground text-left leading-snug">
+                  I understand this removes the 4-digit PIN from this device
+                </span>
+              </label>
 
               <Button
                 type="submit"
                 className="w-full rounded-xl py-6"
-                disabled={isSubmittingPassword}
+                disabled={isSubmittingPassword || !recoveryAcknowledged}
               >
                 {isSubmittingPassword ? (
                   <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                 ) : null}
-                Unlock with Password
+                Verify & remove PIN
               </Button>
 
               <Button
                 type="button"
                 variant="ghost"
                 className="text-muted-foreground hover:text-foreground mt-2 w-full gap-2 rounded-xl py-5"
-                onClick={() => setView("pin")}
+                onClick={() => {
+                  setRecoveryError(null);
+                  setView("pin");
+                }}
               >
                 <ArrowLeft className="h-4 w-4" />
                 <span>Back to PIN</span>

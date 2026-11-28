@@ -2,6 +2,8 @@
 
 import * as React from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { Button } from "@withink/ui/button";
+import { ArrowRight, Lock, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 
 import { FULLSCREEN_ROUTE_PATTERN } from "@/constants/routes";
@@ -16,6 +18,7 @@ import { LockScreen } from "../../lock/components/lock-screen";
 import { LockSetupOnboarding } from "../../lock/components/lock-setup-onboarding";
 import { UnlockProofBindCard } from "../../lock/components/unlock-proof-bind-card";
 import { useLockTimer } from "../../lock/hooks/use-lock-timer";
+import { useSignOut } from "../hooks/use-sign-out";
 import { Header } from "./header";
 import { Sidebar } from "./sidebar";
 import { TabBar } from "./tab-bar";
@@ -33,6 +36,97 @@ interface EncryptionSettingsSeed {
   verificationCiphertext: string;
   /** Stored PBKDF2 work factor (omitted by legacy rows → 100k default). */
   kdfIterations?: number;
+}
+
+const WELCOME_SEEN_KEY = "withink-welcome-seen";
+
+/**
+ * One-time, client-only welcome shown before the Diary Password setup. It
+ * explains the zero-knowledge model in plain language before the user picks a
+ * password they can never recover. Purely presentational — no crypto runs
+ * here; "Continue" reveals the unchanged MandatoryDiarySetup underneath.
+ */
+function FirstRunWelcome({
+  onContinue,
+  onSignOut,
+}: {
+  onContinue: () => void;
+  onSignOut: () => void;
+}) {
+  const headingRef = React.useRef<HTMLHeadingElement>(null);
+
+  // Focus the heading on mount so keyboard and screen-reader users land in
+  // the gate rather than at the top of the document.
+  React.useEffect(() => {
+    headingRef.current?.focus();
+  }, []);
+
+  const points = [
+    {
+      Icon: Lock,
+      title: "Entries are encrypted in your browser",
+      body: "Everything you write is locked on your device before it is saved. What reaches our servers is unreadable ciphertext.",
+    },
+    {
+      Icon: ShieldCheck,
+      title: "We cannot read your diary",
+      body: "Your Diary Password never leaves your device and is never sent to us — so not even we can open your entries.",
+    },
+    {
+      Icon: ArrowRight,
+      title: "Remember your Diary Password",
+      body: "Because we cannot read your data, we also cannot reset your password. If you forget it, your entries cannot be recovered — by you or by us.",
+    },
+  ];
+
+  return (
+    <div className="bg-background flex min-h-dvh w-full items-center justify-center px-6 py-12">
+      <div className="border-border bg-card w-full max-w-md rounded-2xl border p-8 shadow-sm">
+        <p className="text-running-head text-muted-foreground">
+          Before you begin
+        </p>
+        <h1
+          ref={headingRef}
+          tabIndex={-1}
+          className="text-foreground mt-2 font-serif text-2xl leading-snug font-semibold focus:outline-none"
+        >
+          Your diary stays yours
+        </h1>
+        <p className="text-body-small text-muted-foreground mt-2">
+          A quick note on how Withink keeps your writing private, before you set
+          your Diary Password.
+        </p>
+
+        <ul className="mt-6 space-y-5">
+          {points.map(({ Icon, title, body }) => (
+            <li key={title} className="flex items-start gap-3">
+              <span className="bg-secondary/40 text-accent mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg">
+                <Icon aria-hidden="true" className="h-4 w-4" />
+              </span>
+              <div className="min-w-0">
+                <p className="text-foreground text-sm font-medium">{title}</p>
+                <p className="text-caption mt-0.5">{body}</p>
+              </div>
+            </li>
+          ))}
+        </ul>
+
+        <div className="mt-8 flex flex-col gap-3">
+          <Button onClick={onContinue} className="w-full">
+            Continue to set up
+            <ArrowRight aria-hidden="true" className="ml-2 h-4 w-4" />
+          </Button>
+          <button
+            type="button"
+            onClick={onSignOut}
+            className="text-muted-foreground hover:text-foreground focus-visible:ring-ring -mx-2 min-h-11 cursor-pointer rounded-lg px-2 text-xs font-medium underline-offset-4 transition-colors hover:underline focus-visible:ring-2 focus-visible:outline-none"
+          >
+            Sign out
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 interface AppShellProps {
@@ -62,8 +156,24 @@ export function AppShell({
 }: AppShellProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const signOut = useSignOut();
   const [isCollapsed, setIsCollapsed] = React.useState(false);
   const [mounted, setMounted] = React.useState(false);
+
+  // Client-only first-run welcome flag. `null` until the storage read
+  // completes after mount, so SSR and the hydration render agree (the setup
+  // screen renders on the server exactly as before; the welcome only appears
+  // once JS has confirmed it hasn't been seen).
+  const [welcomeSeen, setWelcomeSeen] = React.useState<boolean | null>(null);
+  React.useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setWelcomeSeen(safeStorage.getItem(WELCOME_SEEN_KEY) === "true");
+  }, []);
+
+  const handleContinueFromWelcome = React.useCallback(() => {
+    safeStorage.setItem(WELCOME_SEEN_KEY, "true");
+    setWelcomeSeen(true);
+  }, []);
 
   // The editor route is a TRUE fullscreen writing surface: no mobile
   // masthead, no tab bar, and none of the page-content padding — the editor
@@ -328,6 +438,16 @@ export function AppShell({
     !isClientEncrypted &&
     (!initialEncryptionSettings || !initialEncryptionSettings.isClientEncrypted)
   ) {
+    // First run only: a plain-language explainer before the user chooses a
+    // password they can never recover. Falls through to the unchanged setup.
+    if (welcomeSeen === false) {
+      return (
+        <FirstRunWelcome
+          onContinue={handleContinueFromWelcome}
+          onSignOut={() => void signOut()}
+        />
+      );
+    }
     return (
       <MandatoryDiarySetup
         diaryLockEnabled={isLockEnabled}
@@ -371,7 +491,7 @@ export function AppShell({
       {user && proofBindingRequired && <UnlockProofBindCard />}
 
       <div
-        className="bg-background flex h-screen w-full overflow-hidden"
+        className="bg-background flex h-dvh w-full overflow-hidden"
         inert={isGated ? true : undefined}
         style={
           {

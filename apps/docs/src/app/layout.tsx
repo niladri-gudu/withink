@@ -1,9 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { Alegreya, Caveat } from "next/font/google";
-import Script from "next/script";
 
 import { cn } from "@withink/utils";
 
+import { siteUrl } from "@/config/env";
 import { AppProviders } from "@/providers/app-providers";
 
 import "./globals.css";
@@ -14,6 +14,10 @@ const alegreya = Alegreya({
   style: ["normal", "italic"],
 });
 
+/* Resolved per build so previews and local dev do not advertise the
+   production URL in Open Graph tags. */
+const siteOrigin = siteUrl();
+
 const caveat = Caveat({
   variable: "--font-caveat",
   subsets: ["latin"],
@@ -21,7 +25,7 @@ const caveat = Caveat({
 
 export const metadata: Metadata = {
   title: {
-    default: "withink. - your private journal",
+    default: "withink. — your private journal",
     template: "%s | withink.",
   },
   description:
@@ -40,11 +44,7 @@ export const metadata: Metadata = {
   creator: "withink.",
   publisher: "withink.",
   applicationName: "withink.",
-  metadataBase: new URL(
-    process.env.IS_PROD === "true"
-      ? "https://withink.me"
-      : "http://localhost:3001",
-  ),
+  metadataBase: new URL(siteOrigin),
   icons: {
     icon: [
       { rel: "icon", url: "/favicon.svg", sizes: "any", type: "image/svg+xml" },
@@ -81,10 +81,10 @@ export const metadata: Metadata = {
     },
   },
   openGraph: {
-    title: "withink. - your private journal",
+    title: "withink. — your private journal",
     description:
       "A private, encrypted journal. One entry a day, saved offline and exported anytime as plain text - no trackers, no noise.",
-    url: "https://withink.me",
+    url: siteOrigin,
     siteName: "withink.",
     locale: "en_US",
     type: "website",
@@ -93,13 +93,13 @@ export const metadata: Metadata = {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "withink. - your private journal",
+        alt: "withink. — your private journal",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "withink. - your private journal",
+    title: "withink. — your private journal",
     description:
       "A private, encrypted journal. One entry a day, saved offline and exported anytime as plain text - no trackers, no noise.",
     creator: "@withinkme",
@@ -146,35 +146,13 @@ export default function RootLayout({ children }: RootLayoutProps) {
         />
       </head>
       <body className="bg-background text-foreground selection:bg-accent selection:text-accent-foreground h-full antialiased">
-        <div
-          aria-hidden="true"
-          dangerouslySetInnerHTML={{
-            __html: `<!-- withink docs world · The Field Ledger, kept as a diary
-THESIS: A private journal as a warm field notebook — your ordinary days are worth keeping. Warm old-paper gold accent, no collect-everything framing, no reading-room cliché.
-OWN-WORLD: manila kraft ground, iron-gall sepia ink, one warm old-paper gold accent (oklch 0.70 0.10 75); rounded corners matching the app (0.75rem), hairline borders over soft shadows; two type voices only — Alegreya serif for everything printed, Caveat hand for field notes.
-STORY: A visitor believes their ordinary days deserve keeping, understands the diary is private and encrypted, and opens it.
-FIRST VIEWPORT: Words on the open desk — one-line promise set in serif with an italic accent, a hand-written note, the promise explained, and two imprints (Open Your Diary / Read Privacy Philosophy).
-FORM: Field Ledger refined by user feedback (plate removed, 2 fonts, gold accent, nav CTA); seed ea00c61c retained.
-FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md -->`,
-          }}
-        />
+        <a
+          href="#content"
+          className="bg-card text-foreground border-border sr-only rounded-lg border px-4 py-2 font-serif text-sm shadow-sm focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+        >
+          Skip to content
+        </a>
         <AppProviders>{children}</AppProviders>
-        {process.env.IS_PROD === "true" ? (
-          <>
-            <Script
-              strategy="afterInteractive"
-              src="https://www.googletagmanager.com/gtag/js?id=G-P4ZY1SLYJD"
-            />
-            <Script id="gtag-init" strategy="afterInteractive">
-              {`
-                window.dataLayer = window.dataLayer || [];
-                function gtag(){dataLayer.push(arguments);}
-                gtag('js', new Date());
-                gtag('config', 'G-P4ZY1SLYJD');
-              `}
-            </Script>
-          </>
-        ) : null}
       </body>
     </html>
   );

@@ -8,8 +8,8 @@ import { cn } from "@withink/utils";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { ROUTES } from "@/constants/routes";
-import { UpgradeDialog } from "@/features/billing/components/upgrade-dialog";
 import { backfillWindowStart } from "@/lib/utils/date";
+import { UpgradeDialog } from "@/features/billing/components/upgrade-dialog";
 
 import type { CalendarEntry } from "../actions/entry-actions";
 
@@ -247,7 +247,7 @@ export function EntriesCalendar({
                   disabled={!isClickable}
                   aria-label={dayLabel}
                   className={cn(
-                    "focus-visible:ring-ring relative flex aspect-square flex-col items-center justify-center rounded-lg text-xs transition-all duration-200 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
+                    "focus-visible:ring-ring relative flex aspect-square min-h-11 flex-col items-center justify-center rounded-lg text-xs transition-all duration-200 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none sm:min-h-0",
                     isClickable && "cursor-pointer",
                     isToday && "ring-primary font-bold ring-2 ring-offset-2",
                     cellColorClass,

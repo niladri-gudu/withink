@@ -10,6 +10,7 @@ import {
   Angry,
   ArrowLeft,
   Frown,
+  History,
   MailOpen,
   Meh,
   RefreshCw,
@@ -66,6 +67,10 @@ interface FlashbackReaderProps {
   /** Omitted when there is no "another memory" source (e.g. local, no data). */
   onRefresh?: () => void;
   isRefreshing?: boolean;
+  /** Friendly copy for a failed load; renders a retry instead of the empty state. */
+  error?: string | null;
+  /** Retry the failed load (shown only with `error` and `onRetry`). */
+  onRetry?: () => void;
 }
 
 /**
@@ -81,6 +86,8 @@ export function FlashbackReader({
   loading = false,
   onRefresh,
   isRefreshing = false,
+  error = null,
+  onRetry,
 }: FlashbackReaderProps) {
   if (loading) {
     return (
@@ -129,37 +136,71 @@ export function FlashbackReader({
           }
         />
 
-        <Card className="border-border border">
-          <CardContent className="flex flex-col items-center justify-center space-y-6 py-20 text-center">
-            <div className="bg-muted/20 text-muted-foreground border-border/10 mx-auto flex h-16 w-16 items-center justify-center rounded-xl border">
-              <MailOpen className="h-8 w-8" />
-            </div>
-            <div className="max-w-md space-y-2">
-              <span className="text-running-head text-accent/70 block">
-                Flashback
-              </span>
-              <h2 className="text-foreground font-serif text-2xl font-bold tracking-tight">
-                No memories from the past yet
-              </h2>
-              <p className="text-body-small text-muted-foreground leading-relaxed">
-                Once you write entries and let them settle, Withink will float
-                historical memories back to you here.
-              </p>
-            </div>
-            <Button asChild className="cursor-pointer px-6">
-              <Link
-                href={
-                  `${ROUTES.APP.ENTRY(localToday)}?today=${localToday}` as unknown as ComponentPropsWithoutRef<
-                    typeof Link
-                  >["href"]
-                }
-              >
-                <Reply className="mr-2 h-4 w-4" />
-                Write Today
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
+        {error ? (
+          <Card className="border-border border" role="alert">
+            <CardContent className="flex flex-col items-center justify-center space-y-6 py-20 text-center">
+              <div className="bg-muted/20 text-muted-foreground border-border/10 mx-auto flex h-16 w-16 items-center justify-center rounded-xl border">
+                <History className="h-8 w-8" />
+              </div>
+              <div className="max-w-md space-y-2">
+                <span className="text-running-head text-accent/70 block">
+                  Flashback
+                </span>
+                <h2 className="text-foreground font-serif text-2xl font-bold tracking-tight">
+                  This memory slipped out of reach
+                </h2>
+                <p className="text-body-small text-muted-foreground leading-relaxed">
+                  {error}
+                </p>
+              </div>
+              {onRetry && (
+                <Button
+                  onClick={onRetry}
+                  disabled={isRefreshing}
+                  variant="outline"
+                  className="h-11 cursor-pointer gap-1.5 px-6"
+                >
+                  <RefreshCw
+                    className={cn("h-4 w-4", isRefreshing && "animate-spin")}
+                  />
+                  Try again
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+        ) : (
+          <Card className="border-border border">
+            <CardContent className="flex flex-col items-center justify-center space-y-6 py-20 text-center">
+              <div className="bg-muted/20 text-muted-foreground border-border/10 mx-auto flex h-16 w-16 items-center justify-center rounded-xl border">
+                <MailOpen className="h-8 w-8" />
+              </div>
+              <div className="max-w-md space-y-2">
+                <span className="text-running-head text-accent/70 block">
+                  Flashback
+                </span>
+                <h2 className="text-foreground font-serif text-2xl font-bold tracking-tight">
+                  No memories from the past yet
+                </h2>
+                <p className="text-body-small text-muted-foreground leading-relaxed">
+                  Once you write entries and let them settle, Withink will float
+                  historical memories back to you here.
+                </p>
+              </div>
+              <Button asChild className="cursor-pointer px-6">
+                <Link
+                  href={
+                    `${ROUTES.APP.ENTRY(localToday)}?today=${localToday}` as unknown as ComponentPropsWithoutRef<
+                      typeof Link
+                    >["href"]
+                  }
+                >
+                  <Reply className="mr-2 h-4 w-4" />
+                  Write Today
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+        )}
       </div>
     );
   }
@@ -222,7 +263,7 @@ export function FlashbackReader({
         aria-busy={isRefreshing}
         aria-live="polite"
         className={cn(
-          "border-border w-full rounded-xl border shadow-sm transition-all duration-300",
+          "border-border w-full rounded-[0.75rem] border transition-[opacity,scale,filter] duration-300",
           isRefreshing && "scale-[0.99] opacity-60 blur-[1px]",
         )}
       >

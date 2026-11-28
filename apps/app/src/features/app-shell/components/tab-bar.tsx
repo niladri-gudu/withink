@@ -8,6 +8,7 @@ import {
   Sheet,
   SheetClose,
   SheetContent,
+  SheetDescription,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
@@ -223,14 +224,15 @@ function MoreSheet({ pathname, user }: MoreSheetProps) {
   }, []);
 
   return (
-    <SheetContent side="auto" aria-describedby={undefined}>
+    <SheetContent side="auto">
       <SheetHeader>
         <SheetTitle className="text-running-head text-muted-foreground/70">
           More
         </SheetTitle>
-        <p className="text-hand text-muted-foreground leading-snug">
-          {todayNote}
-        </p>
+        <SheetDescription className="text-muted-foreground leading-snug">
+          {todayNote ? `${todayNote} · ` : ""}
+          Everything else in your diary.
+        </SheetDescription>
       </SheetHeader>
 
       <nav aria-label="Secondary" className="mt-3">

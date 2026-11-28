@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Route } from "next";
 import { redirect } from "next/navigation";
 
 import { ROUTES } from "@/constants/routes";
@@ -8,7 +8,6 @@ import { EntitlementsService } from "@/features/billing/services/entitlements-se
 import { EncryptionSettingsRepository } from "@/features/encryption/repositories/encryption-settings-repository";
 import { LetterComposer } from "@/features/letters/components/letter-composer";
 import { LettersService } from "@/features/letters/services/letter-service";
-import type { Route } from "next";
 
 export const metadata: Metadata = {
   title: "Compose Letter",
@@ -19,7 +18,9 @@ interface ComposePageProps {
   searchParams: Promise<{ id?: string }>;
 }
 
-export default async function ComposeLetterPage({ searchParams }: ComposePageProps) {
+export default async function ComposeLetterPage({
+  searchParams,
+}: ComposePageProps) {
   const session = await getRequestSession();
   if (!session) {
     redirect(ROUTES.AUTH.LOGIN);
@@ -34,19 +35,33 @@ export default async function ComposeLetterPage({ searchParams }: ComposePagePro
   // sealed letter's body is refused here as defense-in-depth), and delivered
   // letters are frozen history. Both route back to the shelf.
   let initialLetter = null;
-  if (id && /^[a-f\d]{24}$/i.test(id)) {
-    try {
-      const letter = await LettersService.getLetter(
-        session.user.id,
-        id,
-        today,
-      );
-      if (letter.sealed || letter.unlockDate <= today) {
-        redirect("/letters" as Route);
+  if (id) {
+    let unavailable = false;
+    // Only the read is guarded: the decision + redirect live outside the try
+    // so a thrown redirect() is never re-caught and re-labelled.
+    if (/^[a-f\d]{24}$/i.test(id)) {
+      try {
+        const letter = await LettersService.getLetter(
+          session.user.id,
+          id,
+          today,
+        );
+        if (letter.sealed || letter.unlockDate <= today) {
+          unavailable = true;
+        } else {
+          initialLetter = letter;
+        }
+      } catch {
+        unavailable = true;
       }
-      initialLetter = letter;
-    } catch {
-      redirect("/letters" as Route);
+    } else {
+      // An id-shaped slug that isn't an ObjectId can't name any letter.
+      unavailable = true;
+    }
+    // Carries a one-line Field Ledger notice on the shelf instead of a
+    // silent bounce home.
+    if (unavailable) {
+      redirect("/letters?notice=unavailable" as Route);
     }
   }
 

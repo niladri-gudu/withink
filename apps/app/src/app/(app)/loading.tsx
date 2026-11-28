@@ -12,7 +12,7 @@ export default function DashboardLoading() {
       <PageLoadingHeader
         runningHead="Today"
         eyebrow="writer's page, one day at a time"
-        title="Good morning,"
+        title="Hello,"
         accent="writer."
         description="A fresh page for today's reflection"
       />

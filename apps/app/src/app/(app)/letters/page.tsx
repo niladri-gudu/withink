@@ -14,12 +14,17 @@ export const metadata: Metadata = {
   description: "Write to your future self — sealed until the day you choose.",
 };
 
-export default async function LettersPage() {
+interface LettersPageProps {
+  searchParams: Promise<{ notice?: string }>;
+}
+
+export default async function LettersPage({ searchParams }: LettersPageProps) {
   const session = await getRequestSession();
   if (!session) {
     redirect(ROUTES.AUTH.LOGIN);
   }
 
+  const { notice } = await searchParams;
   const today = await getViewerToday();
 
   const [letters, entitlements, encryptionSettings] = await Promise.all([
@@ -35,6 +40,7 @@ export default async function LettersPage() {
       limit={entitlements.futureLetterLimit}
       today={today}
       accountEncrypted={!!encryptionSettings?.isClientEncrypted}
+      notice={notice === "unavailable" ? "unavailable" : null}
     />
   );
 }

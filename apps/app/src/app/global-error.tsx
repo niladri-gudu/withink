@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { Button } from "@withink/ui/button";
+import { Feather } from "lucide-react";
 
 import { reportClientError } from "@/lib/monitoring/report-client-error";
 
@@ -18,9 +19,11 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
 
   return (
     <html lang="en" className="h-full">
-      <body className="bg-background text-foreground flex h-full flex-col items-center justify-center space-y-6 p-6 text-center antialiased">
+      <body className="bg-background text-foreground flex min-h-dvh flex-col items-center justify-center space-y-6 p-6 text-center antialiased">
         <div className="mx-auto max-w-md space-y-2">
-          <span className="text-4xl">🍂</span>
+          <span className="border-border bg-secondary/50 text-muted-foreground mx-auto mb-2 flex h-16 w-16 items-center justify-center rounded-full border">
+            <Feather className="h-7 w-7" />
+          </span>
           <h1 className="font-serif text-2xl font-semibold tracking-tight">
             A critical error occurred
           </h1>

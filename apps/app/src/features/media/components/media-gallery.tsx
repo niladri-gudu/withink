@@ -132,7 +132,7 @@ export function MediaGallery({
   return (
     <div className="space-y-6">
       {/* Storage stats card — compact single row on phones, two-part on md+ */}
-      <Card className="border-border overflow-hidden rounded-xl border">
+      <Card className="border-border overflow-hidden rounded-[0.75rem] border">
         <CardContent className="flex flex-col gap-3 p-4 select-none sm:p-5 md:flex-row md:items-center md:gap-5">
           <div className="flex min-w-0 flex-1 items-center gap-3.5">
             <span className="bg-accent/10 text-accent hidden shrink-0 rounded-xl p-3 md:block">
@@ -265,7 +265,7 @@ export function MediaGallery({
           </p>
         </div>
       ) : filteredFiles.length === 0 ? (
-        <Card className="border-border/60 rounded-xl border border-dashed py-20">
+        <Card className="border-border rounded-[0.75rem] border-dashed py-20">
           <CardContent className="mx-auto flex max-w-sm flex-col items-center justify-center space-y-4 text-center">
             <div className="bg-secondary/65 text-muted-foreground/60 rounded-full p-4 shadow-inner">
               <ImageIcon className="h-8 w-8" />
@@ -306,7 +306,7 @@ export function MediaGallery({
                 type="button"
                 onClick={() => setLightboxIndex(index)}
                 aria-label={`View memory: ${filename}, ${dateStr}`}
-                className="border-border/60 bg-card focus-visible:ring-ring group relative aspect-square cursor-pointer overflow-hidden rounded-xl border text-left shadow-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+                className="bg-card border-border focus-visible:ring-ring group relative aspect-square cursor-pointer overflow-hidden rounded-[0.75rem] border text-left focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
               >
                 <Image
                   src={file.url}
@@ -323,6 +323,11 @@ export function MediaGallery({
                   <span className="text-[10px] tracking-wide text-white/70">
                     {dateStr}
                   </span>
+                </span>
+                {/* Open affordance: fades in on hover, but stays visible on
+                    touch (no hover) so the tap target is never guessed. */}
+                <span className="absolute top-2 right-2 flex size-7 items-center justify-center rounded-full bg-black/45 text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100 [@media(hover:none)]:opacity-100">
+                  <ChevronRight className="h-4 w-4" aria-hidden="true" />
                 </span>
               </button>
             );
@@ -348,7 +353,7 @@ export function MediaGallery({
                 type="button"
                 onClick={() => setLightboxIndex(index)}
                 aria-label={`View memory: ${filename}`}
-                className="border-border/50 bg-card/40 hover:bg-card hover:border-border focus-visible:ring-ring group flex w-full cursor-pointer items-center justify-between rounded-xl border p-3.5 text-left shadow-sm transition-all select-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+                className="bg-card/40 border-border/50 hover:bg-card hover:border-accent/40 focus-visible:ring-ring group flex w-full cursor-pointer items-center justify-between rounded-[0.75rem] border p-3.5 text-left transition-colors select-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
               >
                 <div className="flex min-w-0 items-center gap-4">
                   <div className="border-border/40 bg-secondary relative h-12 w-12 shrink-0 overflow-hidden rounded-lg border">

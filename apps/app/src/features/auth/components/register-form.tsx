@@ -1,26 +1,61 @@
 "use client";
 
+import * as React from "react";
 import { useState } from "react";
 import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@withink/ui/button";
 import { Input } from "@withink/ui/input";
-import { Loader2, PenLine } from "lucide-react";
+import { Loader2, Mail, PenLine } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 import { ROUTES } from "@/constants/routes";
-import { signIn, signUp } from "@/lib/auth-client";
+import { authClient, signUp } from "@/lib/auth-client";
 
 import { checkIdentityExists } from "../actions/auth";
 import { registerSchema, type RegisterInput } from "../validation/auth";
-import { GoogleIcon } from "./google";
+import { GoogleOAuthButton } from "./google";
+
+// Survives a refresh of the "Check your ink." pending card. Session-scoped so
+// it disappears when the tab closes.
+const PENDING_EMAIL_KEY = "withink.pendingVerificationEmail";
+
+function readPendingEmail(): string {
+  if (typeof window === "undefined") return "";
+  try {
+    return sessionStorage.getItem(PENDING_EMAIL_KEY) ?? "";
+  } catch {
+    return "";
+  }
+}
+
+function writePendingEmail(email: string | null): void {
+  if (typeof window === "undefined") return;
+  try {
+    if (email) sessionStorage.setItem(PENDING_EMAIL_KEY, email);
+    else sessionStorage.removeItem(PENDING_EMAIL_KEY);
+  } catch {
+    // Private mode / storage disabled — the card just won't survive refresh.
+  }
+}
 
 export function RegisterForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  // Seeded from sessionStorage so the "Check your ink." card survives a
+  // refresh. sessionStorage is empty on the server, so the first client render
+  // matches the server and the pending card appears after hydration.
+  const [pendingEmail, setPendingEmail] = useState(readPendingEmail);
   const [verifyPending, setVerifyPending] = useState(false);
-  const [registeredEmail, setRegisteredEmail] = useState("");
+  const [isResending, setIsResending] = useState(false);
+  const [resendNote, setResendNote] = useState<{
+    tone: "success" | "error";
+    message: string;
+  } | null>(null);
+  const { data: session, isPending: isSessionPending } =
+    authClient.useSession();
+  const showVerifyPending = verifyPending || pendingEmail !== "";
 
   const {
     register,
@@ -62,7 +97,9 @@ export function RegisterForm() {
         return;
       }
 
-      setRegisteredEmail(data.email);
+      setPendingEmail(data.email);
+      writePendingEmail(data.email);
+      setResendNote(null);
       setVerifyPending(true);
       toast.success("diary pending. Check your ink.");
     } catch (err: unknown) {
@@ -73,22 +110,68 @@ export function RegisterForm() {
     }
   };
 
-  const handleGoogleSignIn = async () => {
+  /**
+   * Resend the verification email.
+   *
+   * Better Auth's `sendVerificationEmail({ email })` needs an active session
+   * for the same address (`src/lib/auth.ts` -> `emailVerification`), which a
+   * brand-new sign-up does not have (`autoSignIn: false`). Rather than guess
+   * at an unauthenticated endpoint, the control is only offered once the
+   * session is known and matches the pending email; otherwise we explain that
+   * the user has to sign in first.
+   */
+  const sessionEmail = session?.user?.email?.toLowerCase() ?? null;
+  const canResend =
+    !isSessionPending &&
+    sessionEmail !== null &&
+    sessionEmail === pendingEmail.toLowerCase();
+
+  const handleResend = async () => {
+    if (isResending || !canResend) return;
+    setIsResending(true);
+    setResendNote(null);
     try {
-      await signIn.social({
-        provider: "google",
-        callbackURL: ROUTES.APP.DASHBOARD,
+      const res = await authClient.sendVerificationEmail({
+        email: pendingEmail,
+        callbackURL: ROUTES.AUTH.VERIFIED,
+      });
+
+      if (res.error) {
+        setResendNote({
+          tone: "error",
+          message:
+            res.error.message ||
+            "Could not resend the email. Please try again shortly.",
+        });
+        return;
+      }
+      setResendNote({
+        tone: "success",
+        message: "A fresh verification link is on its way.",
       });
     } catch (err: unknown) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Google authentication failed.";
-      toast.error(errorMessage);
+      setResendNote({
+        tone: "error",
+        message:
+          err instanceof Error
+            ? err.message
+            : "Could not resend the email. Please try again shortly.",
+      });
+    } finally {
+      setIsResending(false);
     }
+  };
+
+  const handleStartOver = () => {
+    writePendingEmail(null);
+    setPendingEmail("");
+    setVerifyPending(false);
+    setResendNote(null);
   };
 
   return (
     <div className="bg-card border-border/80 animate-in fade-in mx-auto w-full max-w-md space-y-6 rounded-xl border p-6 shadow-sm duration-300 select-none sm:space-y-8 sm:p-8">
-      {verifyPending ? (
+      {showVerifyPending ? (
         <div className="animate-in fade-in zoom-in space-y-6 text-center duration-500 sm:text-left">
           <div className="space-y-1.5">
             <h2 className="text-h2 text-foreground font-serif font-bold">
@@ -101,18 +184,75 @@ export function RegisterForm() {
           <p className="text-muted-foreground font-serif text-sm leading-relaxed">
             A verification link has been dispatched to:
             <span className="text-foreground decoration-accent/40 mt-2 block font-serif text-xs break-all underline underline-offset-4">
-              {registeredEmail}
+              {pendingEmail}
             </span>
           </p>
-          <Button
-            variant="ghost"
-            onClick={() => setVerifyPending(false)}
-            className="text-muted-foreground/60 hover:text-foreground h-auto cursor-pointer p-0 font-serif text-xs tracking-wider uppercase"
-          >
-            <span className="border-muted-foreground/20 hover:border-foreground border-b pb-0.5">
-              Edit Identity
+
+          <p className="text-muted-foreground flex items-start justify-center gap-2 text-xs leading-relaxed sm:justify-start">
+            <Mail
+              aria-hidden="true"
+              className="text-muted-foreground/60 mt-0.5 h-3.5 w-3.5 shrink-0"
+            />
+            <span>
+              Open your inbox and click the link to activate your notebook. It
+              can take a minute to arrive — check spam if it doesn&apos;t.
             </span>
-          </Button>
+          </p>
+
+          {canResend ? (
+            <div className="space-y-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleResend}
+                disabled={isResending}
+                className="h-10 w-full cursor-pointer font-serif text-xs uppercase"
+              >
+                {isResending ? (
+                  <Loader2 className="mr-2 h-4 w-4 shrink-0 animate-spin motion-reduce:animate-none" />
+                ) : null}
+                {isResending ? "Sending…" : "Resend email"}
+              </Button>
+              {resendNote && (
+                <p
+                  role="status"
+                  aria-live="polite"
+                  className={`font-serif text-[10px] tracking-tight uppercase ${
+                    resendNote.tone === "success"
+                      ? "text-muted-foreground"
+                      : "text-destructive"
+                  }`}
+                >
+                  {resendNote.message}
+                </p>
+              )}
+            </div>
+          ) : (
+            <p className="text-muted-foreground/70 font-serif text-[10px] leading-relaxed tracking-tight">
+              {/* Resend needs an active session for this email; new sign-ups
+                  have none (autoSignIn is off). */}
+              To resend the link, sign in with this email first.
+            </p>
+          )}
+
+          <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-between">
+            <Button
+              variant="ghost"
+              onClick={handleStartOver}
+              className="text-muted-foreground/60 hover:text-foreground h-auto cursor-pointer p-0 font-serif text-xs tracking-wider uppercase"
+            >
+              <span className="border-muted-foreground/20 hover:border-foreground border-b pb-0.5">
+                Edit Identity
+              </span>
+            </Button>
+            <Link
+              href={ROUTES.AUTH.LOGIN}
+              onClick={() => writePendingEmail(null)}
+              className="text-muted-foreground/60 hover:text-foreground border-muted-foreground/20 hover:border-foreground border-b pb-0.5 font-serif text-xs tracking-widest uppercase italic transition-colors"
+            >
+              Wrong email? Start over
+            </Link>
+          </div>
         </div>
       ) : (
         <>
@@ -137,6 +277,7 @@ export function RegisterForm() {
                 {errors.name?.message && (
                   <span
                     id="name-error"
+                    role="alert"
                     className="text-destructive animate-in fade-in font-serif text-[10px] tracking-tight uppercase"
                   >
                     {errors.name.message}
@@ -169,6 +310,7 @@ export function RegisterForm() {
                 {errors.email?.message && (
                   <span
                     id="email-error"
+                    role="alert"
                     className="text-destructive animate-in fade-in font-serif text-[10px] tracking-tight uppercase"
                   >
                     {errors.email.message}
@@ -202,6 +344,7 @@ export function RegisterForm() {
                 {errors.password?.message && (
                   <span
                     id="password-error"
+                    role="alert"
                     className="text-destructive animate-in fade-in font-serif text-[10px] tracking-tight uppercase"
                   >
                     {errors.password.message}
@@ -263,15 +406,10 @@ export function RegisterForm() {
                 </div>
               </Button>
 
-              <Button
-                type="button"
-                variant="outline"
-                className="text-muted-foreground hover:bg-muted/40 hover:text-foreground h-11 w-full cursor-pointer font-serif text-xs uppercase transition-transform hover:scale-[1.01] active:scale-[0.99]"
-                onClick={handleGoogleSignIn}
-              >
-                <GoogleIcon />
-                Continue with Google
-              </Button>
+              <GoogleOAuthButton
+                callbackURL={ROUTES.APP.DASHBOARD}
+                formDisabled={isLoading}
+              />
             </div>
           </form>
 

@@ -1,22 +1,18 @@
 import type { Metadata, Route } from "next";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { Button } from "@withink/ui/button";
 
 import { ROUTES } from "@/constants/routes";
-import { EntitlementsService } from "@/features/billing/services/entitlements-service";
-import {
-  NotebookRepository,
-} from "@/features/notebooks/repositories/notebook-repository";
-import {
-  NotebooksService,
-} from "@/features/notebooks/services/notebook-service";
 import { getRequestSession } from "@/lib/request-cache";
 import { backfillWindowStart, isDateString } from "@/lib/utils/date";
 import { getViewerToday } from "@/lib/viewer-today";
+import { EntitlementsService } from "@/features/billing/services/entitlements-service";
 import { EditorSkeleton } from "@/features/journal/components/editor-skeleton";
 import { JournalService } from "@/features/journal/services/journal-service";
+import { NotebookRepository } from "@/features/notebooks/repositories/notebook-repository";
+import { NotebooksService } from "@/features/notebooks/services/notebook-service";
 
 export const metadata: Metadata = {
   title: "Journal Entry",
@@ -54,8 +50,10 @@ export default async function EntryPage({
   const { today: searchParamsToday, notebook: notebookParam } =
     await searchParams;
 
+  // A malformed slug is a bad link, not a dashboard visit: surface the 404
+  // page instead of bouncing home with no explanation.
   if (!isDateString(date)) {
-    redirect(ROUTES.APP.DASHBOARD);
+    notFound();
   }
 
   const session = await getRequestSession();

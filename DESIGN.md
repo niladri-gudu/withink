@@ -123,7 +123,7 @@ A warm, low-chroma archival band in OKLCH. Never pure white, pure black, or satu
 - **Background / Manila** (`oklch(0.925 0.022 82)`) · **Card / Ledger Paper** (`oklch(0.972 0.013 85)`) · **Foreground / Ink** (`oklch(0.24 0.028 48)`) · **Muted / Ink Fade** (`oklch(0.47 0.02 52)`) · **Border / Hairline** (`oklch(0.84 0.018 79)`) · **Secondary / Desk Sand** (`oklch(0.948 0.017 84)`).
 
 ### The One Accent — hardened for WCAG
-- **Light** `--accent`/`--ring`: `oklch(0.5 0.105 75)` — deep antique gold, ≥4.5:1 on manila (measured 4.90:1). The pale marketing gold (`oklch(0.70 0.10 75)` ≈ #C39553) failed text contrast at ~2.2:1 and is **docs-site only**.
+- **Light** `--accent`/`--ring`: `oklch(0.5 0.105 75)` — deep antique gold, ≥4.5:1 on manila (measured 4.90:1). Both surfaces use this hardened gold (the old pale marketing gold `oklch(0.70 0.10 75)` failed text contrast at ~2.2:1 and was retired from `apps/docs`).
 - **Dark** `--accent`/`--ring`: `oklch(0.74 0.11 75)` — night gold (7.58:1 on umber).
 - **Destructive / Vermilion**: light `oklch(0.5 0.15 30)`; dark `oklch(0.66 0.13 30)` (4.76:1 vs dark card). Danger only — no decorative stamps.
 

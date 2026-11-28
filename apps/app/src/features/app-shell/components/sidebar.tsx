@@ -47,10 +47,29 @@ export function Sidebar({ isCollapsed, onToggleCollapse, user }: SidebarProps) {
   const pathname = usePathname();
   const [userMenuOpen, setUserMenuOpen] = React.useState(false);
   const userMenuRef = React.useRef<HTMLDivElement>(null);
+  // One trigger id shared by both presentations (expanded rail / collapsed
+  // rail) — only one renders at a time, and the panel's aria-controls points
+  // back at whichever trigger is live.
+  const userMenuId = React.useId();
+  const triggerId = `${userMenuId}-trigger`;
+  const panelId = `${userMenuId}-panel`;
 
-  // Close user menu on outside click
+  const closeUserMenu = React.useCallback(
+    (refocus = false) => {
+      setUserMenuOpen(false);
+      if (refocus) {
+        document.getElementById(`${userMenuId}-trigger`)?.focus();
+      }
+    },
+    [userMenuId],
+  );
+
+  // Disclosure behavior: click-outside or Escape closes, and Escape returns
+  // focus to the trigger so keyboard users are never stranded.
   React.useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
+    if (!userMenuOpen) return;
+
+    function handleClickOutside(event: MouseEvent | TouchEvent) {
       if (
         userMenuRef.current &&
         !userMenuRef.current.contains(event.target as Node)
@@ -58,11 +77,22 @@ export function Sidebar({ isCollapsed, onToggleCollapse, user }: SidebarProps) {
         setUserMenuOpen(false);
       }
     }
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeUserMenu(true);
+      }
+    }
+
     document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("touchstart", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
     };
-  }, []);
+  }, [userMenuOpen, closeUserMenu]);
 
   const signOut = useSignOut();
 
@@ -270,13 +300,17 @@ export function Sidebar({ isCollapsed, onToggleCollapse, user }: SidebarProps) {
           className="border-sidebar-border bg-sidebar-accent/20 relative shrink-0 border-t px-3 py-4"
           ref={userMenuRef}
         >
+          {/* A disclosure panel, not a menu: plain content + a plain button,
+              so no menu keyboard contract (roving focus, arrow keys) is
+              implied. Tab moves through it, Escape/click-outside close it. */}
           {userMenuOpen && (
             <div
+              id={panelId}
+              aria-labelledby={triggerId}
               className={cn(
                 "bg-popover text-popover-foreground border-border animate-in slide-in-from-bottom-2 absolute right-4 bottom-16 left-4 z-10 rounded-xl border p-2 shadow-lg duration-150",
                 collapsed && "bottom-16 left-2 w-48",
               )}
-              role="menu"
             >
               <div className="border-border/50 border-b px-3 py-2">
                 <p className="text-foreground truncate text-xs font-semibold">
@@ -288,9 +322,9 @@ export function Sidebar({ isCollapsed, onToggleCollapse, user }: SidebarProps) {
               </div>
               <div className="pt-1.5">
                 <button
+                  type="button"
                   onClick={() => void signOut()}
-                  role="menuitem"
-                  className="text-destructive hover:bg-destructive/10 focus-visible:ring-destructive flex w-full cursor-pointer items-center space-x-2 rounded-md px-3 py-2 text-left text-xs transition-colors focus-visible:ring-2 focus-visible:outline-none"
+                  className="text-destructive hover:bg-destructive/10 focus-visible:ring-destructive flex min-h-11 w-full cursor-pointer items-center space-x-2 rounded-md px-3 py-2 text-left text-xs transition-colors focus-visible:ring-2 focus-visible:outline-none"
                 >
                   <LogOut className="h-3.5 w-3.5" />
                   <span>Log Out</span>
@@ -303,11 +337,13 @@ export function Sidebar({ isCollapsed, onToggleCollapse, user }: SidebarProps) {
             <div className="flex flex-col items-center gap-3">
               <ThemeToggle />
               <button
-                onClick={() => setUserMenuOpen(!userMenuOpen)}
-                className="hover:bg-sidebar-accent focus-visible:ring-ring flex w-full cursor-pointer items-center justify-center rounded-lg p-1 transition-all focus-visible:ring-2 focus-visible:outline-none"
-                aria-haspopup="menu"
+                id={triggerId}
+                type="button"
+                onClick={() => setUserMenuOpen((open) => !open)}
+                className="hover:bg-sidebar-accent focus-visible:ring-ring flex min-h-11 w-full cursor-pointer items-center justify-center rounded-lg p-1 transition-all focus-visible:ring-2 focus-visible:outline-none"
                 aria-expanded={userMenuOpen}
-                aria-label="User menu"
+                aria-controls={panelId}
+                aria-label="Account"
               >
                 <UserAvatar user={user} className="h-8 w-8" />
               </button>
@@ -321,11 +357,12 @@ export function Sidebar({ isCollapsed, onToggleCollapse, user }: SidebarProps) {
                 <ThemeToggle />
               </div>
               <button
-                onClick={() => setUserMenuOpen(!userMenuOpen)}
-                className="hover:bg-sidebar-accent focus-visible:ring-ring flex w-full cursor-pointer items-center gap-3 rounded-lg p-2 text-left transition-all focus-visible:ring-2 focus-visible:outline-none"
-                aria-haspopup="menu"
+                id={triggerId}
+                type="button"
+                onClick={() => setUserMenuOpen((open) => !open)}
+                className="hover:bg-sidebar-accent focus-visible:ring-ring flex min-h-11 w-full cursor-pointer items-center gap-3 rounded-lg p-2 text-left transition-all focus-visible:ring-2 focus-visible:outline-none"
                 aria-expanded={userMenuOpen}
-                aria-label="User menu"
+                aria-controls={panelId}
               >
                 <UserAvatar user={user} className="h-8 w-8" />
 
@@ -353,7 +390,7 @@ export function Sidebar({ isCollapsed, onToggleCollapse, user }: SidebarProps) {
   return (
     <aside
       style={{ width: isCollapsed ? 76 : 264 }}
-      className="z-30 hidden h-screen shrink-0 flex-col overflow-hidden transition-[width] duration-300 ease-in-out md:flex"
+      className="z-30 hidden h-dvh shrink-0 flex-col overflow-hidden transition-[width] duration-300 ease-in-out md:flex"
     >
       <div
         className="flex h-full shrink-0 flex-col"

@@ -4,9 +4,9 @@ import { redirect } from "next/navigation";
 
 import { ROUTES } from "@/constants/routes";
 import { getRequestSession, getRequestViewerToday } from "@/lib/request-cache";
-import { addDays } from "@/lib/utils/date";
-import { PageHeader } from "@/features/app-shell/components/page-header";
+import { addDays, formatDisplayDate } from "@/lib/utils/date";
 import { CloudRestorePrompt } from "@/features/journal/components/cloud-restore-prompt";
+import { DashboardGreeting } from "@/features/journal/components/dashboard-greeting";
 import {
   DashboardHero,
   DashboardHeroSkeleton,
@@ -33,19 +33,22 @@ export default async function DashboardPage() {
   // 2. Header renders instantly from session + date; the data-dependent hero
   //    (banner, today's card, streak) and the below-the-fold sections stream
   //    in via their own Suspense boundaries.
-  const firstName = session.user.name
-    ? session.user.name.split(" ")[0]
+  const firstName: string = session.user.name
+    ? (session.user.name.split(" ")[0] ?? "Writer")
     : "Writer";
 
   return (
     <div className="animate-in fade-in w-full space-y-8 duration-300">
-      <PageHeader
-        runningHead="Today"
-        note={`${firstName}'s page, one day at a time`}
-        title="Good morning,"
-        accent={`${firstName}.`}
-        description="A fresh page for today's reflection"
-        today={today}
+      {/* Greeting settles to the viewer's local hour on the client; the
+          server paints a neutral "Hello," so hydration never mismatches. */}
+      <DashboardGreeting
+        firstName={firstName}
+        displayDate={formatDisplayDate(today, {
+          weekday: "long",
+          month: "long",
+          day: "numeric",
+          year: "numeric",
+        })}
       />
 
       <CloudRestorePrompt />

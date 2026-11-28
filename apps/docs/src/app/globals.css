@@ -6,9 +6,9 @@
 @source "../../../../packages/ui/src";
 @source "../../../../packages/theme/src";
 
-/* The Field Ledger â€” the docs surface's own visual world (see the direction
-   contract comment in layout.tsx). The app keeps The Quiet Diary tokens;
-   these overrides re-theme the marketing site only. */
+/* The Field Ledger - the docs surface's own visual world. Alegreya serif is
+   the only printed voice besides Caveat hand; font-mono is pointed at the
+   serif so no stray utility can introduce a third typeface. */
 @theme {
   --font-sans: var(--font-alegreya);
   --font-serif: var(--font-alegreya);
@@ -37,15 +37,16 @@
     --muted: oklch(0.948 0.017 84);
     --muted-foreground: oklch(0.47 0.02 52);
 
-    --accent: oklch(0.7 0.1 75);
-    --accent-foreground: oklch(0.24 0.028 48);
+    /* WCAG-hardened gold (passes 4.5:1 on manila) - matches the app accent. */
+    --accent: oklch(0.5 0.105 75);
+    --accent-foreground: oklch(0.962 0.013 85);
 
     --destructive: oklch(0.5 0.15 30);
     --destructive-foreground: oklch(0.962 0.013 85);
 
     --border: oklch(0.84 0.018 79);
     --input: oklch(0.84 0.018 79);
-    --ring: oklch(0.7 0.1 75);
+    --ring: oklch(0.5 0.105 75);
 
     --radius: 0.75rem;
 
@@ -56,7 +57,7 @@
     --sidebar-accent: oklch(0.93 0.02 82);
     --sidebar-accent-foreground: oklch(0.24 0.028 48);
     --sidebar-border: oklch(0.84 0.018 79);
-    --sidebar-ring: oklch(0.7 0.1 75);
+    --sidebar-ring: oklch(0.5 0.105 75);
 
     /* Mood rating colors, tuned for manila paper: darker text, stronger
        badge fills so 12px mood labels hold 4.5:1 (app tokens stay shared). */

@@ -35,7 +35,7 @@ Confirmed capabilities: email+password and Google sign-in; one-entry-per-day jou
 
 Confirmed constraints and business rules: entries are encrypted client-side and the server never decrypts user content (zero-knowledge); only the lock-session token and legacy migration use server decryption; one entry per day (no backfilling outside the grace window, no future entries); strict per-user ownership on every action; media ownership with broken-reference cleanup; rate-limited feedback/auth flows; client input is never trusted.
 
-Explicitly undecided: the details of a future paid tier (what it charges for, pricing) — the product is free today with paid plans planned.
+Pricing (decided in `internal-docs/MONETIZATION_PLAN.md` v1.1, canonical in `@withink/core/plans`): Free forever and local-first; Plus ($4.99/mo · $39/yr) and Pro ($9.99/mo · $79/yr) add cloud sync, backup, more devices, notebooks, photo storage, letters, and export formats. Privacy (zero-knowledge encryption, diary lock, offline writing, search, basic export) is never gated, and nothing created under a higher tier becomes inaccessible on downgrade. Checkout runs through Dodo Payments as merchant of record.
 
 ## Brand Commitments
 
