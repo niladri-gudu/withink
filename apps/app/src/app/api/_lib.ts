@@ -4,8 +4,28 @@ import { API_ERROR_CODES, type ApiErrorCode } from "@withink/contracts";
 import { isBearerRequest } from "@/lib/api-auth";
 import { getRequestSession } from "@/lib/request-cache";
 import { apiError } from "@/server/api-error";
+import { logger } from "@/server/logger";
 import { rateLimit } from "@/server/rate-limit";
 import { LockService } from "@/features/lock/services/lock-service";
+
+/**
+ * Better Auth throws `APIError("Failed to get session")` when the session
+ * store read fails or a concurrent sign-out deletes the row mid-refresh. Let
+ * it escape and the route surfaces as an unhandled 500 (Sentry `handled: no`)
+ * on every background sync that happens to race a sign-out. Translate it into
+ * the shared envelope instead: 401 when the session is gone, 500 when the
+ * lookup itself failed.
+ */
+function sessionLookupError(error: unknown): NextResponse {
+  const statusCode = (error as { statusCode?: number } | null)?.statusCode;
+  logger.error(
+    "Session lookup failed",
+    error instanceof Error ? error : undefined,
+  );
+  return statusCode === 401
+    ? apiError("UNAUTHORIZED", "Your session has expired. Sign in again.")
+    : apiError("INTERNAL", "Could not verify your session. Please try again.");
+}
 
 export type ApiSession =
   | { userId: string; response?: never }
@@ -21,7 +41,12 @@ export async function requireApiSession(
   scope: string,
   limit = 120,
 ): Promise<ApiSession> {
-  const session = await getRequestSession();
+  let session: Awaited<ReturnType<typeof getRequestSession>>;
+  try {
+    session = await getRequestSession();
+  } catch (error) {
+    return { response: sessionLookupError(error) };
+  }
   if (!session) {
     return { response: apiError("UNAUTHORIZED", "Unauthorized") };
   }
